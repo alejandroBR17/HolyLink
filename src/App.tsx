@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film } from 'lucide-react';
+import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, Pin, PinOff, Repeat } from 'lucide-react';
 import QRCode from "react-qr-code";
 import { WEEK_SCHEDULES, VERSES, SOCIAL, DONATION, CAMPAIGNS, CHURCH_INFO, ALERTS } from './data';
 import { getNextMeeting, getAllMediaItems, saveMediaItem, deleteMediaItem } from './utils';
@@ -971,7 +971,7 @@ export default function App() {
                             {media.name}
                           </h4>
                           
-                          <div className="flex items-center gap-3 mt-1.5">
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
                             {/* Duration control for images, read-only for videos */}
                             {media.type === 'image' ? (
                               <div className="flex items-center gap-1 bg-stone-950 px-1.5 py-0.5 rounded border border-stone-850">
@@ -1015,68 +1015,64 @@ export default function App() {
                                 🎬 {(media.duration / 1000).toFixed(1)}s (Completo)
                               </div>
                             )}
-
-                            {media.type === 'video' && (
-                              <div className="flex items-center gap-3">
-                                <label className="flex items-center gap-1 cursor-pointer text-[10px] text-stone-400 select-none" title="Silenciar vídeo">
-                                  <input
-                                    type="checkbox"
-                                    checked={media.videoMuted}
-                                    onChange={async (e) => {
+                            {/* Toggles */}
+                            <div className="flex items-center bg-stone-950 rounded border border-stone-850 overflow-hidden">
+                              {media.type === 'video' && (
+                                <>
+                                  <button 
+                                    onClick={async () => {
                                       const dbItems = await getAllMediaItems();
                                       const target = dbItems.find(item => item.id === media.id);
                                       if (target) {
-                                        target.videoMuted = e.target.checked;
+                                        target.videoMuted = !target.videoMuted;
                                         await saveMediaItem(target);
                                         updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                       }
                                     }}
-                                    className="accent-yellow-500 rounded-sm w-3 h-3"
-                                  />
-                                  Mudo
-                                </label>
-                                <label className="flex items-center gap-1 cursor-pointer text-[10px] text-stone-400 select-none" title="Soltar vídeo fixo ao fim">
-                                  <input
-                                    type="checkbox"
-                                    checked={media.unpinOnEnd}
-                                    onChange={async (e) => {
+                                    className={`px-2 py-1 border-r border-stone-850 hover:bg-stone-800 transition-colors cursor-pointer ${media.videoMuted ? 'text-yellow-500 bg-stone-900' : 'text-stone-500'}`}
+                                    title={media.videoMuted ? 'Desativar Mudo' : 'Silenciar Vídeo'}
+                                  >
+                                    {media.videoMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                                  </button>
+                                  <button 
+                                    onClick={async () => {
                                       const dbItems = await getAllMediaItems();
                                       const target = dbItems.find(item => item.id === media.id);
                                       if (target) {
-                                        target.unpinOnEnd = e.target.checked;
+                                        target.unpinOnEnd = !target.unpinOnEnd;
                                         await saveMediaItem(target);
                                         updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                       }
                                     }}
-                                    className="accent-yellow-500 rounded-sm w-3 h-3"
-                                  />
-                                  Desafixar ao fim
-                                </label>
-                              </div>
-                            )}
-                            {/* Enabled in loop checkbox */}
-                            <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-stone-400 select-none">
-                              <input
-                                type="checkbox"
-                                checked={media.enabledInLoop}
-                                onChange={async (e) => {
+                                    className={`px-2 py-1 border-r border-stone-850 hover:bg-stone-800 transition-colors cursor-pointer ${media.unpinOnEnd ? 'text-yellow-500 bg-stone-900' : 'text-stone-500'}`}
+                                    title={media.unpinOnEnd ? 'Manter fixo ao fim' : 'Desafixar ao fim'}
+                                  >
+                                    {media.unpinOnEnd ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                                  </button>
+                                </>
+                              )}
+                              <button 
+                                onClick={async () => {
                                   const dbItems = await getAllMediaItems();
                                   const target = dbItems.find(item => item.id === media.id);
                                   if (target) {
-                                    target.enabledInLoop = e.target.checked;
+                                    target.enabledInLoop = !target.enabledInLoop;
                                     await saveMediaItem(target);
                                     updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                   }
                                 }}
-                                className="rounded border-stone-800 bg-stone-950 text-yellow-500 focus:ring-0 focus:ring-offset-0 w-3 h-3"
-                              />
-                              <span>Fila Automática</span>
-                            </label>
+                                className={`px-2 py-1 flex items-center gap-1 hover:bg-stone-800 transition-colors cursor-pointer ${media.enabledInLoop ? 'text-yellow-500 bg-stone-900' : 'text-stone-500'}`}
+                                title={media.enabledInLoop ? 'Remover da Fila Automática' : 'Adicionar à Fila Automática'}
+                              >
+                                <Repeat className="w-3 h-3" />
+                                <span className="text-[10px] font-medium hidden sm:inline">Auto</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-shrink-0 flex-col sm:flex-row">
                           <button
                             onClick={() => {
                               updateStateAndBroadcast('manualSlideOverride', isSlideOverridden ? null : media.id);
