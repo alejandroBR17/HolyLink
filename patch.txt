@@ -1,0 +1,28 @@
+const VerseSlide = ({ currentTime, verseIndexOffset = 0 }: { currentTime: Date, verseIndexOffset?: number }) => {
+  const baseVerseIdx = Math.floor(currentTime.getTime() / 15000);
+  const verseIdx = (baseVerseIdx + verseIndexOffset) % VERSES.length;
+  const verse = VERSES[verseIdx];
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full w-full px-40 text-center z-50 relative">
+       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-yellow-600/5 blur-[150px] rounded-full pointer-events-none" />
+       <AnimatePresence mode="wait">
+         <motion.div
+           key={verseIdx}
+           initial={{ opacity: 0, scale: 0.98 }}
+           animate={{ opacity: 1, scale: 1 }}
+           exit={{ opacity: 0, scale: 1.02 }}
+           transition={{ duration: 1.5, ease: "easeInOut" }}
+           className="relative z-10"
+         >
+           <h2 className="text-[4.5rem] text-stone-100 leading-snug font-medium tracking-normal max-w-5xl mx-auto">
+             "{verse.text}"
+           </h2>
+           <p className="text-yellow-500 text-[2rem] font-bold mt-12 tracking-[0.2em] uppercase">
+             {verse.ref}
+           </p>
+         </motion.div>
+       </AnimatePresence>
+    </div>
+  );
+};

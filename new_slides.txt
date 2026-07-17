@@ -1,0 +1,56 @@
+const DonationSlide = () => {
+  return (
+    <motion.div
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       className="flex items-center justify-between w-full max-w-7xl px-20"
+    >
+      <div className="flex-1 text-left pr-20">
+        <motion.div className="flex items-center gap-4 mb-6">
+          <HeartHandshake className="w-16 h-16 text-yellow-500" strokeWidth={1.5} />
+          <span className="text-yellow-500 font-bold uppercase tracking-[0.4em] text-2xl">Dízimos e Ofertas</span>
+        </motion.div>
+        <h1 className="font-sans font-black text-[5rem] tracking-tight text-white leading-none mb-6">
+          Faça sua <br />Devolução
+        </h1>
+        <p className="text-[2.25rem] text-stone-200 font-normal mt-2 leading-snug max-w-3xl mb-10">
+          Acesse <span className="text-yellow-500 font-bold">universal.org/doar</span> ou escaneie o QR Code ao lado.
+        </p>
+        <div className="bg-white/[0.03] border border-white/[0.08] p-6 rounded-2xl inline-block">
+           <p className="text-stone-300 text-xl font-medium">Lembre-se de enviar o comprovante</p>
+           <p className="text-stone-400 text-lg mt-1">O WhatsApp está disponível no site.</p>
+        </div>
+      </div>
+      <motion.div className="flex-shrink-0 bg-white p-6 rounded-3xl">
+        <QrCode className="w-[300px] h-[300px] text-black" strokeWidth={1} />
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const CampaignSlide = () => {
+  return (
+    <motion.div
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       className="flex flex-col items-center justify-center text-center max-w-6xl w-full"
+    >
+      <CalendarDays className="w-32 h-32 text-yellow-500 mb-10" strokeWidth={1.5} />
+      <h1 className="font-sans font-black text-[5.5rem] tracking-tight text-white leading-none mb-12">
+        Propósitos Atuais
+      </h1>
+      <div className="grid grid-cols-2 gap-10 w-full">
+        <div className="bg-white/[0.03] border border-white/[0.08] p-12 rounded-3xl flex flex-col items-center text-center">
+           <Flame className="w-16 h-16 text-yellow-500 mb-6" strokeWidth={1.5} />
+           <h3 className="text-white font-bold text-4xl mb-4">Fogueira Santa<br />do Monte Sião</h3>
+           <p className="text-yellow-500 text-2xl uppercase tracking-[0.2em] font-medium">Até final de Julho</p>
+        </div>
+        <div className="bg-white/[0.03] border border-white/[0.08] p-12 rounded-3xl flex flex-col items-center text-center">
+           <AlertTriangle className="w-16 h-16 text-yellow-500 mb-6" strokeWidth={1.5} />
+           <h3 className="text-white font-bold text-4xl mb-4">Jejum de<br />Daniel</h3>
+           <p className="text-yellow-500 text-2xl uppercase tracking-[0.2em] font-medium">Até 2 de Agosto</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};

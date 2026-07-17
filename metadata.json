@@ -1,0 +1,6 @@
+{
+  "name": "Painel de Reuniões - Jardim Osasco",
+  "description": "Painel visual com contagem regressiva para a próxima reunião e agenda semanal da Universal Jardim Osasco.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
