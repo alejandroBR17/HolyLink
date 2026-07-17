@@ -533,6 +533,10 @@ export default function App() {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('projection_customVerseRef');
   });
+  const [dismissedJustStarted, setDismissedJustStarted] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('projection_dismissedJustStarted') === 'true';
+  });
 
   // Custom Media States
   const [mediaUpdateTrigger, setMediaUpdateTrigger] = useState<string>(() => {
@@ -656,6 +660,7 @@ export default function App() {
     else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value, 10) : null);
     else if (key === 'customVerseText') setCustomVerseText(value);
     else if (key === 'customVerseRef') setCustomVerseRef(value);
+    else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
     else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
 
     try {
@@ -684,6 +689,7 @@ export default function App() {
           else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value, 10) : null);
           else if (key === 'customVerseText') setCustomVerseText(value);
           else if (key === 'customVerseRef') setCustomVerseRef(value);
+          else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
           else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
         }
       };
@@ -705,6 +711,7 @@ export default function App() {
         else if (key === 'activeVerseIndex') setActiveVerseIndex(val ? parseInt(val, 10) : null);
         else if (key === 'customVerseText') setCustomVerseText(val);
         else if (key === 'customVerseRef') setCustomVerseRef(val);
+        else if (key === 'dismissedJustStarted') setDismissedJustStarted(val === 'true');
         else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(val || '0');
       }
     };
@@ -925,13 +932,13 @@ export default function App() {
   // Compute Meeting State
   const { nextMeeting, nextMeetingDate, ongoingMeeting } = getNextMeeting(currentTime);
   
-  let isJustStarted = false;
+  let isJustStartedRaw = false;
   if (ongoingMeeting) {
     const mStart = new Date(currentTime);
     mStart.setHours(ongoingMeeting.hours, ongoingMeeting.minutes, 0, 0);
     const elapsedSinceStart = currentTime.getTime() - mStart.getTime();
     if (elapsedSinceStart >= 0 && elapsedSinceStart <= 30 * 60 * 1000) {
-      isJustStarted = true;
+      isJustStartedRaw = true;
     }
   }
 
@@ -940,9 +947,11 @@ export default function App() {
 
   // Se o cronômetro terminou (chegou a zero ou passou),
   // força a exibição dos versículos bíblicos (reunião iniciada) para evitar telas pretas ou vazias.
-  if (!isJustStarted && diffMs <= 0) {
-    isJustStarted = true;
+  if (!isJustStartedRaw && diffMs <= 0) {
+    isJustStartedRaw = true;
   }
+
+  const isJustStarted = isJustStartedRaw && !dismissedJustStarted;
 
   let diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
   
@@ -956,6 +965,13 @@ export default function App() {
   const isFinalMinute = !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
   const isFinalFiveMinutes = !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
   const isLooping = !isJustStarted && diffSeconds > 300;
+
+  // Auto-reset dismissedJustStarted when countdown is active (meaning far before a meeting)
+  useEffect(() => {
+    if (diffSeconds > 300 && dismissedJustStarted) {
+      updateStateAndBroadcast('dismissedJustStarted', false);
+    }
+  }, [diffSeconds, dismissedJustStarted]);
 
   // Render Slide Machine
   const activeSlides: SlideType[] = [
@@ -1143,6 +1159,43 @@ export default function App() {
             </button>
           </div>
         </header>
+
+        {/* CULTO INICIADO BANNER */}
+        {isJustStartedRaw && (
+          <div className={`px-4 py-3 border-b flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all z-10 ${
+            dismissedJustStarted 
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
+              : "bg-yellow-500/10 border-yellow-500/20 text-yellow-500"
+          }`}>
+            <div className="flex items-center gap-2.5 text-xs sm:text-sm font-medium">
+              {dismissedJustStarted ? (
+                <>
+                  <span className="flex h-2.5 w-2.5 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <span><strong>Carrossel de Slides Liberado:</strong> Os anúncios, PIX e mídias estão rodando de forma automática e manual na projeção.</span>
+                </>
+              ) : (
+                <>
+                  <BookOpen className="w-4 h-4 animate-pulse shrink-0" />
+                  <span><strong>Modo Culto Iniciado Ativo:</strong> A TV de projeção está exibindo os Versículos Bíblicos. O carrossel automático está em pausa.</span>
+                </>
+              )}
+            </div>
+            
+            <button
+              onClick={() => updateStateAndBroadcast('dismissedJustStarted', !dismissedJustStarted)}
+              className={`text-xs font-bold px-4 py-2 rounded-lg transition-all cursor-pointer shadow-md shrink-0 w-full md:w-auto text-center ${
+                dismissedJustStarted 
+                  ? "bg-emerald-500 hover:bg-emerald-600 text-black shadow-emerald-500/10" 
+                  : "bg-yellow-500 hover:bg-yellow-600 text-black shadow-yellow-500/10"
+              }`}
+            >
+              {dismissedJustStarted ? "Mostrar Versículos na TV" : "Liberar Carrossel de Slides"}
+            </button>
+          </div>
+        )}
 
         {/* MOBILE TABS BAR (Only visible on screens smaller than lg) */}
         <div className="lg:hidden flex bg-[#121212] border-b border-stone-850 sticky top-0 z-20 shrink-0">
