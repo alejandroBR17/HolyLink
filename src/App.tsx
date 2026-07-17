@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2 } from 'lucide-react';
+import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search } from 'lucide-react';
 import QRCode from "react-qr-code";
 import { WEEK_SCHEDULES, VERSES, SOCIAL, DONATION, CAMPAIGNS, CHURCH_INFO, ALERTS } from './data';
 import { getNextMeeting } from './utils';
@@ -574,6 +574,124 @@ export default function App() {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Local Bible API states
+  const [bibleTab, setBibleTab] = useState<'favorites' | 'api'>('favorites');
+  const [apiSearchQuery, setApiSearchQuery] = useState('');
+  const [apiSearchResult, setApiSearchResult] = useState<{ text: string; ref: string } | null>(null);
+  const [apiSearchLoading, setApiSearchLoading] = useState(false);
+  const [apiSearchError, setApiSearchError] = useState<string | null>(null);
+
+  const parseAndMapReference = (rawRef: string) => {
+    const normalized = rawRef.trim().toLowerCase();
+    const regex = /^(\d+)?\s*([a-záéíóúçâêôûãõ\s]+)\s+(\d+)(?:[:\.](\d+))?(-(\d+))?$/i;
+    const match = normalized.match(regex);
+    if (!match) return rawRef;
+
+    const bookNumber = match[1] ? match[1].trim() + " " : "";
+    const rawBookName = match[2].trim();
+    const chapter = match[3];
+    const startVerse = match[4] || "";
+    const endVerse = match[6] ? "-" + match[6] : "";
+
+    const bookMap: Record<string, string> = {
+      "gênesis": "genesis", "genesis": "genesis", "gn": "genesis",
+      "êxodo": "exodus", "exodo": "exodus", "ex": "exodus",
+      "levítico": "leviticus", "levitico": "leviticus", "lv": "leviticus",
+      "números": "numbers", "numeros": "numbers", "nm": "numbers",
+      "deuteronômio": "deuteronomy", "deuteronomio": "deuteronomy", "dt": "deuteronomy",
+      "josué": "joshua", "josue": "joshua", "js": "joshua",
+      "juízes": "judges", "juizes": "judges", "jz": "judges",
+      "rute": "ruth", "rt": "ruth",
+      "samuel": "samuel", "sm": "samuel",
+      "reis": "kings", "re": "kings",
+      "crônicas": "chronicles", "cronicas": "chronicles", "cr": "chronicles",
+      "esdras": "ezra", "es": "ezra",
+      "neemias": "neemiah", "ne": "neemiah",
+      "ester": "esther", "et": "esther",
+      "jó": "job",
+      "salmos": "psalms", "salmo": "psalms", "sl": "psalms",
+      "provérbios": "proverbs", "proverbios": "proverbs", "pv": "proverbs",
+      "eclesiastes": "ecclesiastes", "ec": "ecclesiastes",
+      "cantares": "song of solomon", "cântico dos cânticos": "song of solomon", "cantico dos canticos": "song of solomon", "ct": "song of solomon",
+      "isaías": "isaiah", "isaias": "isaiah", "is": "isaiah",
+      "jeremias": "jeremiah", "jr": "jeremiah",
+      "lamentações": "lamentations", "lamentacoes": "lamentations", "lm": "lamentations",
+      "ezequiel": "ezekiel", "ez": "ezekiel",
+      "daniel": "daniel", "dn": "daniel",
+      "oséias": "hosea", "oseias": "hosea", "os": "hosea",
+      "joel": "joel", "jl": "joel",
+      "amós": "amos", "amos": "amos", "am": "amos",
+      "obadias": "obadiah", "ob": "obadiah",
+      "jonas": "jonah", "jn": "jonah",
+      "miquéias": "micah", "miqueias": "micah", "mq": "micah",
+      "naum": "nahum", "na": "nahum",
+      "habacuque": "habakkuk", "hc": "habakkuk",
+      "sofonias": "zephaniah", "sf": "zephaniah",
+      "ageu": "haggai", "ag": "haggai",
+      "zacarias": "zechariah", "zc": "zechariah",
+      "malaquias": "malachi", "ml": "malachi",
+      "mateus": "matthew", "mt": "matthew",
+      "marcos": "mark", "mc": "mark",
+      "lucas": "luke", "lc": "luke",
+      "joão": "john", "joao": "john", "jo": "john",
+      "atos": "acts", "at": "acts",
+      "romanos": "romans", "rm": "romans",
+      "coríntios": "corinthians", "corintios": "corinthians", "co": "corinthians",
+      "gálatas": "galatians", "galatas": "galatians", "gl": "galatians",
+      "efésios": "ephesians", "efesios": "ephesians", "ef": "ephesians",
+      "filipenses": "philippians", "fp": "philippians",
+      "colossenses": "colossians", "cl": "colossians",
+      "tessalonicenses": "thessalonians", "ts": "thessalonians",
+      "timóteo": "timothy", "timoteo": "timothy", "tm": "timothy",
+      "tito": "titus", "tt": "titus",
+      "filemom": "philemon", "fl": "philemon",
+      "hebreus": "hebrew", "hb": "hebrew",
+      "tiago": "james", "tg": "james",
+      "pedro": "peter", "pe": "peter",
+      "judas": "judas", "jd": "judas",
+      "apocalipse": "revelation", "ap": "revelation"
+    };
+
+    const englishBook = bookMap[rawBookName] || rawBookName;
+    let finalRef = `${bookNumber}${englishBook} ${chapter}`;
+    if (startVerse) {
+      finalRef += `:${startVerse}${endVerse}`;
+    }
+    return finalRef;
+  };
+
+  const handleBibleSearch = async (queryStr: string) => {
+    if (!queryStr.trim()) return;
+    setApiSearchLoading(true);
+    setApiSearchError(null);
+    setApiSearchResult(null);
+
+    try {
+      const parsedRef = parseAndMapReference(queryStr);
+      const response = await fetch(`https://bible-api.com/${encodeURIComponent(parsedRef)}?translation=almeida`);
+      if (!response.ok) {
+        throw new Error('Versículo não encontrado. Verifique a grafia e tente novamente (ex: João 3:16 ou Sl 23:1).');
+      }
+      
+      const data = await response.json();
+      if (!data.text || data.text.trim() === '') {
+        throw new Error('Não foi possível obter o texto do versículo.');
+      }
+
+      const formattedQuery = queryStr.trim().replace(/^\w/, (c) => c.toUpperCase());
+      
+      setApiSearchResult({
+        text: data.text.trim(),
+        ref: formattedQuery
+      });
+    } catch (err: any) {
+      console.error('Error fetching verse:', err);
+      setApiSearchError(err.message || 'Erro ao buscar o versículo na Bíblia Online.');
+    } finally {
+      setApiSearchLoading(false);
+    }
+  };
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen()
@@ -938,7 +1056,7 @@ export default function App() {
                   </div>
                 ) : activeVerseIndex !== null ? (
                   <div>
-                    <span className="text-stone-500">Exibindo Versículo Fixo ({activeVerseIndex + 1}/17):</span>
+                    <span className="text-stone-500">Exibindo Versículo Fixo ({activeVerseIndex + 1}/{VERSES.length}):</span>
                     <p className="font-bold text-yellow-500 italic mt-0.5">"{VERSES[activeVerseIndex].text}"</p>
                     <p className="text-stone-400 text-[10px] mt-0.5">— {VERSES[activeVerseIndex].ref}</p>
                   </div>
@@ -980,33 +1098,145 @@ export default function App() {
                 </button>
               </div>
 
-              {/* LIST OF AVAILABLE BIBLE VERSES (1-17) */}
-              <div>
-                <label className="text-stone-500 text-[10px] font-bold uppercase tracking-wider mb-2 block">Selecionar Versículo da Bíblia (ACF/ARA)</label>
-                <div className="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto pr-1 border border-stone-850/60 bg-stone-950/40 p-2 rounded-xl">
-                  {VERSES.map((verse, idx) => {
-                    const isSelected = activeVerseIndex === idx && !customVerseText;
-                    return (
-                      <button
-                        key={idx}
-                        title={verse.ref}
-                        onClick={() => {
-                          updateStateAndBroadcast('customVerseText', null);
-                          updateStateAndBroadcast('customVerseRef', null);
-                          updateStateAndBroadcast('activeVerseIndex', idx);
-                        }}
-                        className={`w-8 h-8 rounded-lg font-mono text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
-                          isSelected
-                            ? "bg-yellow-500 text-black font-black scale-105 shadow-[0_2px_8px_rgba(234,179,8,0.25)]"
-                            : "bg-stone-900 text-stone-300 border border-stone-850 hover:bg-stone-800 hover:text-white"
-                        }`}
-                      >
-                        {idx + 1}
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* TABS SELECTOR */}
+              <div className="flex border-b border-stone-850/40 pb-1 mt-1">
+                <button
+                  onClick={() => setBibleTab('favorites')}
+                  className={`flex-1 pb-1.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                    bibleTab === 'favorites'
+                      ? "border-yellow-500 text-yellow-500"
+                      : "border-transparent text-stone-500 hover:text-stone-300"
+                  }`}
+                >
+                  Favoritos ({VERSES.length})
+                </button>
+                <button
+                  onClick={() => setBibleTab('api')}
+                  className={`flex-1 pb-1.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                    bibleTab === 'api'
+                      ? "border-yellow-500 text-yellow-500"
+                      : "border-transparent text-stone-500 hover:text-stone-300"
+                  }`}
+                >
+                  Bíblia Online (API)
+                </button>
               </div>
+
+              {bibleTab === 'favorites' ? (
+                /* LIST OF AVAILABLE BIBLE VERSES */
+                <div>
+                  <label className="text-stone-500 text-[10px] font-bold uppercase tracking-wider mb-2 block">Selecionar Versículo da Bíblia (ACF/ARA)</label>
+                  <div className="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto pr-1 border border-stone-850/60 bg-stone-950/40 p-2 rounded-xl">
+                    {VERSES.map((verse, idx) => {
+                      const isSelected = activeVerseIndex === idx && !customVerseText;
+                      return (
+                        <button
+                          key={idx}
+                          title={verse.ref}
+                          onClick={() => {
+                            updateStateAndBroadcast('customVerseText', null);
+                            updateStateAndBroadcast('customVerseRef', null);
+                            updateStateAndBroadcast('activeVerseIndex', idx);
+                          }}
+                          className={`w-8 h-8 rounded-lg font-mono text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
+                            isSelected
+                              ? "bg-yellow-500 text-black font-black scale-105 shadow-[0_2px_8px_rgba(234,179,8,0.25)]"
+                              : "bg-stone-900 text-stone-300 border border-stone-850 hover:bg-stone-800 hover:text-white"
+                          }`}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* BIBLE ONLINE API SEARCH */
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="text-stone-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">
+                      Pesquisar Referência na Bíblia
+                    </label>
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        placeholder="Ex: João 3:16 ou Sl 23:1"
+                        value={apiSearchQuery}
+                        onChange={(e) => setApiSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleBibleSearch(apiSearchQuery);
+                          }
+                        }}
+                        className="flex-1 bg-stone-900 border border-stone-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-700 font-sans"
+                      />
+                      <button
+                        onClick={() => handleBibleSearch(apiSearchQuery)}
+                        disabled={apiSearchLoading || !apiSearchQuery.trim()}
+                        className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-stone-850 disabled:text-stone-600 text-black px-3.5 rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer transition-all shrink-0"
+                      >
+                        {apiSearchLoading ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Search className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* QUICK SUGGESTIONS */}
+                  <div className="flex flex-wrap gap-1 items-center">
+                    <span className="text-stone-500 text-[9px] uppercase tracking-wider mr-1">Sugestões:</span>
+                    {["João 3:16", "Salmos 23:1", "Isaías 41:10", "Filipenses 4:13"].map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        onClick={() => {
+                          setApiSearchQuery(suggestion);
+                          handleBibleSearch(suggestion);
+                        }}
+                        className="text-[9px] bg-stone-900/60 border border-stone-850 hover:border-stone-700 text-stone-400 hover:text-stone-200 px-2 py-0.5 rounded-md font-medium transition-all cursor-pointer"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* ERROR MESSAGE */}
+                  {apiSearchError && (
+                    <div className="text-red-500 text-[11px] leading-tight bg-red-950/20 border border-red-900/30 p-2.5 rounded-xl text-left">
+                      {apiSearchError}
+                    </div>
+                  )}
+
+                  {/* SEARCH RESULT PREVIEW */}
+                  {apiSearchResult && (
+                    <div className="bg-stone-950/60 border border-stone-850/60 rounded-xl p-3 flex flex-col gap-2 text-left">
+                      <div className="flex items-center justify-between border-b border-stone-900 pb-1.5">
+                        <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">
+                          Prévia Encontrada:
+                        </span>
+                        <span className="text-stone-300 font-bold text-xs font-mono">
+                          {apiSearchResult.ref}
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-400 italic leading-relaxed">
+                        "{apiSearchResult.text}"
+                      </p>
+                      <button
+                        onClick={() => {
+                          updateStateAndBroadcast('activeVerseIndex', null);
+                          updateStateAndBroadcast('customVerseText', apiSearchResult.text);
+                          updateStateAndBroadcast('customVerseRef', apiSearchResult.ref);
+                        }}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-black text-[11px] font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 mt-1 transition-all cursor-pointer shadow-md"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        Projetar na Tela Grande
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* CUSTOM TEXT TRANSMITTER FORM */}
               <div className="border-t border-stone-850 pt-4 flex flex-col gap-3">
