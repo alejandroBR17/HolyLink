@@ -84,6 +84,8 @@ export interface DBMediaItem {
   duration: number; // in milliseconds
   enabledInLoop: boolean;
   blob: Blob;
+  videoMuted?: boolean;
+  unpinOnEnd?: boolean;
 }
 
 export function openDB(): Promise<IDBDatabase> {

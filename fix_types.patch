@@ -1,0 +1,11 @@
+--- src/types.ts
++++ src/types.ts
+@@ -6,6 +6,8 @@
+   duration: number; // in milliseconds
+   enabledInLoop: boolean;
+   url: string;
++  videoMuted?: boolean;
++  unpinOnEnd?: boolean;
+ }
+ 
+ export interface Meeting {

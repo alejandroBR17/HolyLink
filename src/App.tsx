@@ -11,17 +11,9 @@ import { ptBR } from 'date-fns/locale';
 // 1. DATA CONSTANTS
 // ==========================================
 
-type SlideType = string;
-
-interface CustomMedia {
-  id: string;
-  type: 'image' | 'video';
-  name: string;
-  duration: number; // in milliseconds
-  enabledInLoop: boolean;
-  url: string;
-}
-
+import { ParticlesBackground } from './components/ParticlesBackground';
+import { IconSlide, WorldGodSlide, AgendaDaySlide, VerseSlide, DonationSlide, CampaignSlide, VideoSlide } from './components/Slides';
+import { CustomMedia, SlideType } from './types';
 const getSlideDuration = (slideId: string, customMedia: CustomMedia[] = []): number => {
   if (slideId.startsWith('custom_')) {
     const item = customMedia.find(m => m.id === slideId);
@@ -36,452 +28,7 @@ const getSlideDuration = (slideId: string, customMedia: CustomMedia[] = []): num
   if (slideId === 'donations') return 20000;
   return 10000;
 };
-
-// ==========================================
 // PARTICLES BACKGROUND
-// ==========================================
-const ParticlesBackground = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let width = canvas.width = 1920;
-    let height = canvas.height = 1080;
-
-    const particles: any[] = [];
-    const colors = ['#dc2626', '#b91c1c', '#f59e0b', '#fbbf24']; // reds and yellows
-    for (let i = 0; i < 70; i++) {
-      particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5 - 0.1, // slight upward drift
-        size: Math.random() * 2.5 + 0.5,
-        alpha: Math.random() * 0.5 + 0.1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        pulseSpeed: Math.random() * 0.02 + 0.005,
-        angle: Math.random() * Math.PI * 2
-      });
-    }
-
-    let animationFrameId: number;
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-      
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.angle += p.pulseSpeed;
-
-        if (p.x < 0) p.x = width;
-        if (p.x > width) p.x = 0;
-        if (p.y < 0) p.y = height + 10;
-        if (p.y > height + 10) p.y = -10;
-
-        const currentAlpha = p.alpha + Math.sin(p.angle) * 0.2;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = p.color;
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.shadowBlur = 0;
-      });
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-
-  return (
-    <canvas 
-      ref={canvasRef} 
-      className="absolute inset-0 z-0 pointer-events-none opacity-60 mix-blend-screen"
-    />
-  );
-};
-
-// ==========================================
-// 2. SLIDE COMPONENTS
-// ==========================================
-
-const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout = 'center' }: any) => {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.2, delayChildren: 0.3 }
-    }
-  };
-  
-  const item = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
-  };
-
-  if (layout === 'split-left') {
-    return (
-      <motion.div 
-        variants={container} 
-        initial="hidden" 
-        animate="show" 
-        className="flex items-center justify-between w-full max-w-[95%] px-12"
-      >
-        <div className="flex-1 text-left pr-20">
-          <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
-            {title}
-          </motion.h1>
-          <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%]">
-            {subtitle}
-          </motion.p>
-        </div>
-        <motion.div 
-          variants={item} 
-          className="flex-shrink-0"
-        >
-          <Icon className={`w-[450px] h-[450px] text-yellow-500 opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
-        </motion.div>
-      </motion.div>
-    );
-  }
-
-  if (layout === 'split-right') {
-    return (
-      <motion.div 
-        variants={container} 
-        initial="hidden" 
-        animate="show" 
-        className="flex items-center justify-between w-full max-w-[95%] px-12"
-      >
-        <motion.div 
-          variants={item} 
-          className="flex-shrink-0"
-        >
-          <Icon className={`w-[450px] h-[450px] text-yellow-500 opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
-        </motion.div>
-        <div className="flex-1 text-right pl-20">
-          <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
-            {title}
-          </motion.h1>
-          <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%] ml-auto">
-            {subtitle}
-          </motion.p>
-        </div>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div 
-      variants={container} 
-      initial="hidden" 
-      animate="show" 
-      className="flex flex-col items-center justify-center text-center max-w-[85%]"
-    >
-      <motion.div 
-        variants={item}
-      >
-        <Icon className={`w-56 h-56 text-yellow-500 mb-12 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
-      </motion.div>
-      <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
-        {title}
-      </motion.h1>
-      <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%]">
-        {subtitle}
-      </motion.p>
-    </motion.div>
-  );
-};
-
-const WorldGodSlide = () => {
-  const [phase, setPhase] = useState<'world' | 'god'>('world');
-  
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setPhase('god');
-    }, 7500);
-    return () => clearTimeout(t);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center justify-center text-center max-w-5xl h-full w-full">
-      <AnimatePresence mode="wait">
-        {phase === 'world' ? (
-          <motion.div 
-            key="world"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col items-center"
-          >
-            <Globe className="w-64 h-64 text-stone-500 mb-14 animate-[spin_20s_linear_infinite]" strokeWidth={1} />
-            <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none uppercase">
-              Desligue-se do mundo
-            </h1>
-          </motion.div>
-        ) : (
-          <motion.div 
-            key="god"
-            initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-            className="flex flex-col items-center"
-          >
-            <motion.div>
-              <Flame className="w-64 h-64 text-yellow-500 mb-14" strokeWidth={1.5} />
-            </motion.div>
-            <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-yellow-500 leading-none uppercase drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]">
-              Ligue-se com Deus
-            </h1>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const AgendaDaySlide = ({ dayIndex, currentTime }: { dayIndex: number; currentTime: Date }) => {
-  const schedule = WEEK_SCHEDULES.find(s => s.dayIndex === dayIndex) || WEEK_SCHEDULES[0];
-  const isToday = currentTime.getDay() === dayIndex;
-  
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.2 }
-    }
-  };
-  
-  const item = {
-    hidden: { opacity: 0, x: -40 },
-    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 60 } }
-  };
-
-  const itemRight = {
-    hidden: { opacity: 0, scale: 0.9 },
-    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 60 } }
-  };
-
-  return (
-    <motion.div 
-      variants={container} 
-      initial="hidden" 
-      animate="show" 
-      className="flex items-center justify-between max-w-[95%] w-full px-10"
-    >
-      <div className="flex-1 text-left pr-16 border-r border-white/[0.1]">
-        <motion.span variants={item} className="text-yellow-500 font-bold uppercase tracking-[0.4em] mb-6 text-3xl block">
-          {isToday ? 'Reuniões de Hoje' : 'Agenda Semanal'}
-        </motion.span>
-        <motion.h3 variants={item} className="text-stone-200 font-bold uppercase tracking-[0.3em] mb-6 text-[2.5rem]">
-          {schedule.dayName}
-        </motion.h3>
-        <motion.h2 variants={item} className="text-[7.5rem] text-white font-black uppercase tracking-tight leading-none mt-4">
-          {schedule.theme}
-        </motion.h2>
-      </div>
-      <div className="flex-1 pl-16">
-        <motion.div variants={itemRight} className="grid grid-cols-2 gap-6">
-          {schedule.times.map((t, i) => (
-            <motion.div 
-              key={t} 
-              className="bg-white/[0.03] border border-white/[0.08] px-12 py-10 rounded-3xl shadow-xl flex items-center justify-center relative overflow-hidden group"
-            >
-               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-               <span className="font-mono text-[4.5rem] font-black tracking-wider relative z-10 text-white">{t}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
-
-const VerseSlide = ({ 
-  currentTime, 
-  verseIndexOffset = 0, 
-  loopIteration,
-  customVerseText,
-  customVerseRef,
-  activeVerseIndex,
-}: { 
-  currentTime: Date; 
-  verseIndexOffset?: number; 
-  loopIteration?: number; 
-  customVerseText?: string | null;
-  customVerseRef?: string | null;
-  activeVerseIndex?: number | null;
-}) => {
-  let verse = { text: "", ref: "" };
-  let keyId = "verse";
-
-  if (customVerseText) {
-    verse = { text: customVerseText, ref: customVerseRef || "Mensagem" };
-    keyId = "custom";
-  } else if (activeVerseIndex !== null && activeVerseIndex !== undefined) {
-    const safeIdx = Math.max(0, Math.min(activeVerseIndex, VERSES.length - 1));
-    verse = VERSES[safeIdx];
-    keyId = `idx_${safeIdx}`;
-  } else {
-    let verseIdx = 0;
-    if (loopIteration !== undefined) {
-      verseIdx = (loopIteration + verseIndexOffset) % VERSES.length;
-    } else {
-      const baseVerseIdx = Math.floor(currentTime.getTime() / 15000);
-      verseIdx = (baseVerseIdx + verseIndexOffset) % VERSES.length;
-    }
-    verse = VERSES[verseIdx];
-    keyId = `auto_${verseIdx}`;
-  }
-
-  const getFontSizeClass = (text: string) => {
-    const len = text.length;
-    if (len < 60) return 'text-[5.5rem]';
-    if (len < 90) return 'text-[4.5rem]';
-    if (len < 130) return 'text-[3.8rem]';
-    return 'text-[3.2rem]';
-  };
-
-  const getMarginClass = (text: string) => {
-    const len = text.length;
-    if (len < 90) return 'mt-12';
-    return 'mt-8';
-  };
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full w-full px-24 text-center z-50 relative">
-       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-yellow-600/5 blur-[150px] rounded-full pointer-events-none" />
-       <AnimatePresence mode="wait">
-         <motion.div
-           key={keyId}
-           initial={{ opacity: 0, scale: 0.98 }}
-           animate={{ opacity: 1, scale: 1 }}
-           exit={{ opacity: 0, scale: 1.02 }}
-           transition={{ duration: 1.5, ease: "easeInOut" }}
-           className="relative z-10 w-full"
-         >
-           <h2 className={`${getFontSizeClass(verse.text)} text-stone-100 leading-snug font-semibold tracking-tight max-w-[95%] mx-auto`}>
-             "{verse.text}"
-           </h2>
-           <p className={`text-yellow-500 text-[2.5rem] font-bold ${getMarginClass(verse.text)} tracking-[0.2em] uppercase`}>
-             {verse.ref}
-           </p>
-         </motion.div>
-       </AnimatePresence>
-    </div>
-  );
-};
-
-// ==========================================
-// 3. MAIN APP
-const DonationSlide = () => {
-  return (
-    <motion.div
-       initial={{ opacity: 0 }}
-       animate={{ opacity: 1 }}
-       className="flex items-center justify-between w-full max-w-[95%] px-20"
-    >
-      <div className="flex-1 text-left pr-20">
-        <motion.div className="flex items-center gap-4 mb-6">
-          <HeartHandshake className="w-24 h-24 text-yellow-500" strokeWidth={1.5} />
-          <span className="text-yellow-500 font-bold uppercase tracking-[0.4em] text-3xl">Dízimos e Ofertas</span>
-        </motion.div>
-        <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
-          Faça sua <br />Doação
-        </h1>
-        <p className="text-[3.5rem] text-stone-200 font-normal mt-6 leading-snug max-w-[90%] mb-12">
-          Acesse <span className="text-yellow-500 font-bold">{DONATION.url.replace(/^https?:\/\//, '')}</span> ou escaneie o QR Code ao lado.
-        </p>
-        <div className="bg-white/[0.03] border border-white/[0.08] p-6 rounded-2xl inline-block">
-           <p className="text-stone-300 text-3xl font-medium">Lembre-se de enviar o comprovante</p>
-           <p className="text-stone-400 text-2xl mt-2">O WhatsApp está disponível no site.</p>
-        </div>
-      </div>
-      <motion.div className="flex-shrink-0 bg-white p-6 rounded-3xl">
-        <QRCode value={DONATION.url} size={480} />
-      </motion.div>
-    </motion.div>
-  );
-};
-
-const CampaignSlide = () => {
-  return (
-    <motion.div
-       initial={{ opacity: 0 }}
-       animate={{ opacity: 1 }}
-       className="flex flex-col items-center justify-center text-center max-w-[95%] w-full"
-    >
-      <CalendarDays className="w-16 h-16 text-stone-500 mb-4" strokeWidth={1.5} />
-      <h1 className="font-sans font-semibold text-4xl tracking-wide text-stone-400 uppercase mb-16">
-        Propósitos Atuais
-      </h1>
-      <div className="grid grid-cols-2 gap-10 w-full">
-        {CAMPAIGNS.map((campaign, index) => {
-          const Icon = campaign.type === 'jejum_daniel' ? WifiOff : Flame;
-          return (
-            <div key={index} className="bg-white/[0.03] border border-white/[0.08] p-16 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl relative overflow-hidden group">
-               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-               <Icon className="w-48 h-48 text-yellow-500 mb-12" strokeWidth={1} />
-               <h3 className="text-white font-black text-[6rem] mb-8 tracking-tight leading-none drop-shadow-[0_0_30px_rgba(234,179,8,0.3)] whitespace-pre-line">{campaign.title}</h3>
-               <p className="text-yellow-500 text-4xl uppercase tracking-[0.2em] font-bold mt-6">{campaign.duration}</p>
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-};
-// ==========================================
-
-const VideoSlide = ({ media, currentSlideId }: { media: CustomMedia; currentSlideId: string }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (currentSlideId === media.id) {
-      video.currentTime = 0;
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((e) => {
-          console.log("Autoplay unmuted blocked, playing muted", e);
-          video.muted = true;
-          video.play().catch((err) => console.error("Could not play video even muted", err));
-        });
-      }
-    } else {
-      video.pause();
-    }
-  }, [currentSlideId, media.id]);
-
-  return (
-    <div className="w-full h-full flex items-center justify-center relative">
-      <video
-        ref={videoRef}
-        src={media.url}
-        className="max-w-full max-h-full object-contain"
-        playsInline
-        controls={false}
-      />
-    </div>
-  );
-};
 
 export default function App() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -569,7 +116,9 @@ export default function App() {
             name: item.name,
             duration: item.duration,
             enabledInLoop: item.enabledInLoop,
-            url: URL.createObjectURL(item.blob)
+            url: URL.createObjectURL(item.blob),
+            videoMuted: item.videoMuted,
+            unpinOnEnd: item.unpinOnEnd
           }));
         });
       } catch (err) {
@@ -628,7 +177,9 @@ export default function App() {
         name: file.name,
         duration,
         enabledInLoop: true,
-        blob: file
+        blob: file,
+        videoMuted: false,
+        unpinOnEnd: true
       });
 
       // Broadcast update
@@ -1053,6 +604,15 @@ export default function App() {
   const minutesStr = countMinutes.toString().padStart(2, '0');
 
   // Animation Variants based on slide type
+  const handleVideoEnd = () => {
+    if (manualSlideOverride && manualSlideOverride.startsWith('custom_vid_')) {
+      const media = customMediaList.find(m => m.id === manualSlideOverride);
+      if (media && media.unpinOnEnd) {
+        updateStateAndBroadcast('manualSlideOverride', null);
+      }
+    }
+  };
+
   const getTransitionVariants = (slideId: SlideType) => {
     return {
       initial: { opacity: 0 },
@@ -1080,7 +640,7 @@ export default function App() {
         );
       } else if (media.type === 'video') {
         return (
-          <VideoSlide media={media} currentSlideId={currentSlideId} />
+          <VideoSlide media={media} currentSlideId={currentSlideId} onVideoEnd={handleVideoEnd} />
         );
       }
     }
@@ -1456,6 +1016,44 @@ export default function App() {
                               </div>
                             )}
 
+                            {media.type === 'video' && (
+                              <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-1 cursor-pointer text-[10px] text-stone-400 select-none" title="Silenciar vídeo">
+                                  <input
+                                    type="checkbox"
+                                    checked={media.videoMuted}
+                                    onChange={async (e) => {
+                                      const dbItems = await getAllMediaItems();
+                                      const target = dbItems.find(item => item.id === media.id);
+                                      if (target) {
+                                        target.videoMuted = e.target.checked;
+                                        await saveMediaItem(target);
+                                        updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                      }
+                                    }}
+                                    className="accent-yellow-500 rounded-sm w-3 h-3"
+                                  />
+                                  Mudo
+                                </label>
+                                <label className="flex items-center gap-1 cursor-pointer text-[10px] text-stone-400 select-none" title="Soltar vídeo fixo ao fim">
+                                  <input
+                                    type="checkbox"
+                                    checked={media.unpinOnEnd}
+                                    onChange={async (e) => {
+                                      const dbItems = await getAllMediaItems();
+                                      const target = dbItems.find(item => item.id === media.id);
+                                      if (target) {
+                                        target.unpinOnEnd = e.target.checked;
+                                        await saveMediaItem(target);
+                                        updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                      }
+                                    }}
+                                    className="accent-yellow-500 rounded-sm w-3 h-3"
+                                  />
+                                  Desafixar ao fim
+                                </label>
+                              </div>
+                            )}
                             {/* Enabled in loop checkbox */}
                             <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-stone-400 select-none">
                               <input
