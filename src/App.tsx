@@ -471,7 +471,7 @@ const VideoSlide = ({ media, currentSlideId }: { media: CustomMedia; currentSlid
   }, [currentSlideId, media.id]);
 
   return (
-    <div className="w-full h-full flex items-center justify-center relative bg-black">
+    <div className="w-full h-full flex items-center justify-center relative">
       <video
         ref={videoRef}
         src={media.url}
@@ -951,7 +951,7 @@ export default function App() {
     isJustStartedRaw = true;
   }
 
-  const isJustStarted = isJustStartedRaw && !dismissedJustStarted;
+  let isJustStarted = isJustStartedRaw && !dismissedJustStarted;
 
   let diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
   
@@ -962,9 +962,17 @@ export default function App() {
   const formatMinutesPart = Math.floor(diffSeconds / 60).toString().padStart(2, '0');
   const formatSecondsPart = (diffSeconds % 60).toString().padStart(2, '0');
 
-  const isFinalMinute = !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
-  const isFinalFiveMinutes = !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
-  const isLooping = !isJustStarted && diffSeconds > 300;
+  let isFinalMinute = !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
+  let isFinalFiveMinutes = !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
+  let isLooping = !isJustStarted && diffSeconds > 300;
+
+  if (manualSlideOverride) {
+    if (isFinalMinute || isJustStarted) {
+      isFinalMinute = false;
+      isJustStarted = false;
+      isLooping = true;
+    }
+  }
 
   // Auto-reset dismissedJustStarted when countdown is active (meaning far before a meeting)
   useEffect(() => {
@@ -1061,7 +1069,7 @@ export default function App() {
       if (!media) return <div className="text-stone-500 text-3xl font-bold flex items-center justify-center h-full w-full bg-black">Mídia não encontrada</div>;
       if (media.type === 'image') {
         return (
-          <div className="w-full h-full flex items-center justify-center relative p-6 bg-black">
+          <div className="w-full h-full flex items-center justify-center relative p-6">
             <img 
               src={media.url} 
               alt={media.name} 
@@ -2030,20 +2038,7 @@ export default function App() {
                   </AnimatePresence>
 
                   <AnimatePresence mode="wait">
-                    {manualSlideOverride && (
-                      <motion.div
-                        key={`manual-${manualSlideOverride}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="absolute inset-0 w-full h-full flex items-center justify-center"
-                      >
-                        {clearContentEnabled ? null : renderSlide(manualSlideOverride)}
-                      </motion.div>
-                    )}
-
-                    {!manualSlideOverride && isLooping && (
+                    {isLooping && (
                       <motion.div
                         key="looping"
                         initial={{ opacity: 0 }}
@@ -2084,7 +2079,7 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    {!manualSlideOverride && isFinalFiveMinutes && (
+                    {isFinalFiveMinutes && (
                       <motion.div
                         key="final-five"
                         initial={{ opacity: 0 }}
@@ -2131,7 +2126,7 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    {!manualSlideOverride && isFinalMinute && (
+                    {isFinalMinute && (
                       <motion.div
                         key="final-minute"
                         initial={{ opacity: 0 }}
@@ -2167,7 +2162,7 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    {!manualSlideOverride && isJustStarted && (
+                    {isJustStarted && (
                       <motion.div
                         key="just-started"
                         initial={{ opacity: 0 }}
@@ -2259,20 +2254,7 @@ export default function App() {
         </AnimatePresence>
         
         <AnimatePresence mode="wait">
-          {manualSlideOverride && (
-            <motion.div
-              key={`manual-${manualSlideOverride}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 w-full h-full flex items-center justify-center"
-            >
-              {clearContentEnabled ? null : renderSlide(manualSlideOverride)}
-            </motion.div>
-          )}
-
-          {!manualSlideOverride && isLooping && (
+                  {isLooping && (
             <motion.div
               key="looping"
               initial={{ opacity: 0 }}
@@ -2332,7 +2314,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {!manualSlideOverride && isFinalFiveMinutes && (
+          {isFinalFiveMinutes && (
             <motion.div
               key="final-five"
               initial={{ opacity: 0 }}
@@ -2379,7 +2361,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {!manualSlideOverride && isFinalMinute && (
+          {isFinalMinute && (
             <motion.div
               key="final-minute"
               initial={{ opacity: 0 }}
@@ -2415,7 +2397,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {!manualSlideOverride && isJustStarted && (
+          {isJustStarted && (
             <motion.div
               key="just-started"
               initial={{ opacity: 0 }}
