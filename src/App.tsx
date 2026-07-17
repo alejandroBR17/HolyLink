@@ -648,6 +648,9 @@ export default function App() {
     diffSeconds = pausedSeconds;
   }
 
+  const formatMinutesPart = Math.floor(diffSeconds / 60).toString().padStart(2, '0');
+  const formatSecondsPart = (diffSeconds % 60).toString().padStart(2, '0');
+
   const isFinalMinute = !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
   const isFinalFiveMinutes = !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
   const isLooping = !isJustStarted && diffSeconds > 300;
@@ -775,7 +778,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <Tv className="w-6 h-6 text-yellow-500" />
             <h1 className="text-white font-bold tracking-tight text-lg">
-              Universal Play <span className="text-stone-400 text-sm font-medium ml-2 border-l border-stone-800 pl-2">Painel do Operador</span>
+              HolyLink <span className="text-stone-400 text-sm font-medium ml-2 border-l border-stone-800 pl-2">Painel do Operador</span>
             </h1>
           </div>
           
@@ -1301,80 +1304,141 @@ export default function App() {
                     )}
                   </AnimatePresence>
 
-                  {isLooping && (
-                    <>
-                      <header className="h-[145px] px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-transparent z-40 absolute top-0 left-0 right-0">
-                        <div>
-                          <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
-                            {CHURCH_INFO.name}
-                          </h1>
-                          <p className="text-xl font-bold tracking-[0.62em] text-yellow-500 uppercase mt-2">
-                            {CHURCH_INFO.location}
-                          </p>
-                        </div>
+                  <AnimatePresence mode="wait">
+                    {isLooping && (
+                      <motion.div
+                        key="looping"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="absolute inset-0 flex flex-col justify-between"
+                      >
+                        <header className="h-[145px] px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-transparent z-40 absolute top-0 left-0 right-0">
+                          <div>
+                            <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
+                              {CHURCH_INFO.name}
+                            </h1>
+                            <p className="text-xl font-bold tracking-[0.62em] text-yellow-500 uppercase mt-2">
+                              {CHURCH_INFO.location}
+                            </p>
+                          </div>
 
-                        <div className="flex items-center gap-10">
-                          <div className="text-right">
-                            <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
-                              A Reunião Começa em:
-                            </span>
-                            <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
-                              <span>{hoursStr}</span>
-                              <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
-                              <span>:</span>
-                              <span>{minutesStr}</span>
-                              <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
+                          <div className="flex items-center gap-10">
+                            <div className="text-right">
+                              <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
+                                A Reunião Começa em:
+                              </span>
+                              <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
+                                <span>{hoursStr}</span>
+                                <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
+                                <span>:</span>
+                                <span>{minutesStr}</span>
+                                <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </header>
+                        </header>
 
-                      <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px]">
-                        {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                      </main>
-                    </>
-                  )}
-
-                  {isFinalFiveMinutes && (
-                    <div className="flex w-full h-full bg-black relative">
-                      <div className="w-1/2 h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
-                        <span className="text-yellow-500 text-[2.5rem] font-bold uppercase tracking-[0.4em] mb-4">
-                          Faltam
-                        </span>
-                        <div className="font-sans text-[16rem] text-white font-black leading-none tracking-tighter">
-                          {Math.ceil(diffSeconds / 60)}
-                        </div>
-                        <span className="text-stone-300 text-6xl font-medium tracking-[0.3em] mt-4 uppercase">
-                          Minutos
-                        </span>
-                      </div>
-                      <div className="w-1/2 h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
-                        <div className="w-[1920px] h-[1080px] absolute transform scale-[0.5] origin-center flex flex-col items-center justify-center">
+                        <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px]">
                           {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                        </main>
+                      </motion.div>
+                    )}
+
+                    {isFinalFiveMinutes && (
+                      <motion.div
+                        key="final-five"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="absolute inset-0 flex w-full h-full bg-black relative"
+                      >
+                        <div className="w-[38%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
+                          <span className="text-yellow-500 text-[2rem] font-bold uppercase tracking-[0.4em] mb-4">
+                            Faltam
+                          </span>
+                          <motion.div
+                            key={diffSeconds}
+                            initial={{ opacity: 0.85, y: 3 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.15, ease: "easeOut" }}
+                            className="font-mono text-[8rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_60px_rgba(255,255,255,0.05)]"
+                          >
+                            {formatMinutesPart}:{formatSecondsPart}
+                          </motion.div>
+                          <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
+                            Minutos e Segundos
+                          </span>
                         </div>
-                      </div>
-                    </div>
-                  )}
+                        <div className="w-[62%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
+                          <div className="w-[1920px] h-[1080px] absolute transform scale-[0.6] origin-center flex flex-col items-center justify-center">
+                            <AnimatePresence mode="wait">
+                              <motion.div
+                                key={currentSlideId}
+                                {...getTransitionVariants(currentSlideId)}
+                                className="w-full h-full flex items-center justify-center"
+                              >
+                                {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                              </motion.div>
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
 
-                  {isFinalMinute && (
-                    <div className="flex flex-col items-center justify-center w-full h-full bg-black relative">
-                      <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-12 animate-pulse">
-                        A Reunião Começa Em
-                      </span>
-                      <div className="font-mono text-[22rem] text-white font-black leading-none tracking-tighter">
-                        00:{diffSeconds.toString().padStart(2, '0')}
-                      </div>
-                    </div>
-                  )}
+                    {isFinalMinute && (
+                      <motion.div
+                        key="final-minute"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative"
+                      >
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-yellow-600/10 blur-[200px] rounded-full pointer-events-none" />
+                        <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-12 animate-pulse">
+                          A Reunião Começa Em
+                        </span>
+                        <AnimatePresence mode="popLayout">
+                          <motion.div
+                            key={diffSeconds}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 1.05 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="flex flex-col items-center justify-center"
+                          >
+                            <div className="font-sans text-[22rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums">
+                              {diffSeconds}
+                            </div>
+                            <span className="text-stone-300 text-6xl font-medium tracking-[0.3em] mt-8 uppercase">
+                              {diffSeconds === 1 ? "Segundo" : "Segundos"}
+                            </span>
+                          </motion.div>
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
 
-                  {isJustStarted && (
-                    <VerseSlide 
-                      currentTime={currentTime} 
-                      customVerseText={customVerseText} 
-                      customVerseRef={customVerseRef} 
-                      activeVerseIndex={activeVerseIndex} 
-                    />
-                  )}
+                    {isJustStarted && (
+                      <motion.div
+                        key="just-started"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="absolute inset-0 w-full h-full"
+                      >
+                        <VerseSlide 
+                          currentTime={currentTime} 
+                          customVerseText={customVerseText} 
+                          customVerseRef={customVerseRef} 
+                          activeVerseIndex={activeVerseIndex} 
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
@@ -1448,84 +1512,95 @@ export default function App() {
           )}
         </AnimatePresence>
         
-        {/* ==================== STATE 1: REGULAR LOOP ==================== */}
-        {isLooping && (
-          <>
-            <header className="h-[145px] px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-transparent z-40 absolute top-0 left-0 right-0">
-              <div>
-                <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
-                  {CHURCH_INFO.name}
-                </h1>
-                <p className="text-xl font-bold tracking-[0.62em] text-yellow-500 uppercase mt-2">
-                  {CHURCH_INFO.location}
-                </p>
-              </div>
+        <AnimatePresence mode="wait">
+          {isLooping && (
+            <motion.div
+              key="looping"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 flex flex-col justify-between"
+            >
+              <header className="h-[145px] px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-transparent z-40 absolute top-0 left-0 right-0">
+                <div>
+                  <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
+                    {CHURCH_INFO.name}
+                  </h1>
+                  <p className="text-xl font-bold tracking-[0.62em] text-yellow-500 uppercase mt-2">
+                    {CHURCH_INFO.location}
+                  </p>
+                </div>
 
-              <div className="flex items-center gap-10">
-                <div className="text-right">
-                  <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
-                    A Reunião Começa em:
-                  </span>
-                  <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
-                    <span>{hoursStr}</span>
-                    <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
-                    <span className="text-yellow-500 animate-pulse">:</span>
-                    <span>{minutesStr}</span>
-                    <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
+                <div className="flex items-center gap-10">
+                  <div className="text-right">
+                    <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
+                      A Reunião Começa em:
+                    </span>
+                    <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
+                      <span>{hoursStr}</span>
+                      <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
+                      <span className="text-yellow-500 animate-pulse">:</span>
+                      <span>{minutesStr}</span>
+                      <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
+                    </div>
+                  </div>
+                  
+                  <div className="h-12 w-[1px] bg-white/[0.1]" />
+                  
+                  <div className="bg-white/[0.02] border border-white/[0.05] px-6 py-3 rounded-xl flex flex-col items-center justify-center">
+                    <span className="font-mono text-3xl font-bold tracking-wider text-stone-200">
+                      {format(currentTime, 'HH:mm:ss')}
+                    </span>
+                    <span className="font-sans text-xs tracking-[0.2em] text-stone-500 uppercase mt-1">
+                      {format(currentTime, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                    </span>
                   </div>
                 </div>
-                
-                <div className="h-12 w-[1px] bg-white/[0.1]" />
-                
-                <div className="bg-white/[0.02] border border-white/[0.05] px-6 py-3 rounded-xl flex flex-col items-center justify-center">
-                  <span className="font-mono text-3xl font-bold tracking-wider text-stone-200">
-                    {format(currentTime, 'HH:mm:ss')}
-                  </span>
-                  <span className="font-sans text-xs tracking-[0.2em] text-stone-500 uppercase mt-1">
-                    {format(currentTime, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                  </span>
-                </div>
-              </div>
-            </header>
+              </header>
 
-            <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px]">
-              <AnimatePresence mode="wait">
+              <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px]">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentSlideId}
+                    {...getTransitionVariants(currentSlideId)}
+                    className="w-full h-full flex items-center justify-center"
+                  >
+                    {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                  </motion.div>
+                </AnimatePresence>
+              </main>
+            </motion.div>
+          )}
+
+          {isFinalFiveMinutes && (
+            <motion.div
+              key="final-five"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 flex w-full h-full bg-black relative"
+            >
+              <div className="w-[38%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
+                <span className="text-yellow-500 text-[2rem] font-bold uppercase tracking-[0.4em] mb-4">
+                  Faltam
+                </span>
                 <motion.div
-                  key={currentSlideId}
-                  {...getTransitionVariants(currentSlideId)}
-                  className="w-full h-full flex items-center justify-center"
+                  key={diffSeconds}
+                  initial={{ opacity: 0.85, y: 3 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="font-mono text-[8rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_60px_rgba(255,255,255,0.05)]"
                 >
-                  {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                  {formatMinutesPart}:{formatSecondsPart}
                 </motion.div>
-              </AnimatePresence>
-            </main>
-          </>
-        )}
-
-        {/* ==================== STATE 1.5: FINAL 5 MINUTES WARNING ==================== */}
-        {isFinalFiveMinutes && (
-          <div className="flex w-full h-full bg-black relative">
-            <div className="w-1/2 h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
-               <motion.div 
-                 key={Math.ceil(diffSeconds / 60)} 
-                 initial={{ opacity: 0, scale: 0.95 }} 
-                 animate={{ opacity: 1, scale: 1 }} 
-                 className="flex flex-col items-center justify-center"
-               >
-                 <span className="text-yellow-500 text-[2.5rem] font-bold uppercase tracking-[0.4em] mb-4">
-                     Faltam
-                 </span>
-                 <div className="font-sans text-[16rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.05)]">
-                    {Math.ceil(diffSeconds / 60)}
-                 </div>
-                 <span className="text-stone-300 text-6xl font-medium tracking-[0.3em] mt-4 uppercase">
-                    Minutos
-                 </span>
-               </motion.div>
-            </div>
-            
-            <div className="w-1/2 h-full flex items-center justify-center relative overflow-hidden bg-black">
-               <div className="w-[1920px] h-[1080px] absolute transform scale-[0.5] origin-center flex flex-col items-center justify-center">
+                <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
+                  Minutos e Segundos
+                </span>
+              </div>
+              <div className="w-[62%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
+                <div className="w-[1920px] h-[1080px] absolute transform scale-[0.6] origin-center flex flex-col items-center justify-center">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentSlideId}
@@ -1535,33 +1610,62 @@ export default function App() {
                       {clearContentEnabled ? null : renderSlide(currentSlideId)}
                     </motion.div>
                   </AnimatePresence>
-               </div>
-            </div>
-          </div>
-        )}
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-        {/* ==================== STATE 2: FINAL 60 SECONDS ==================== */}
-        {isFinalMinute && (
-          <div className="flex flex-col items-center justify-center w-full h-full bg-black relative">
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-yellow-600/10 blur-[200px] rounded-full pointer-events-none" />
-             <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-12 animate-pulse">
-               A Reunião Começa Em
-             </span>
-             <div className="font-mono text-[22rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_50px_rgba(255,255,255,0.1)]">
-               00:{diffSeconds.toString().padStart(2, '0')}
-             </div>
-          </div>
-        )}
+          {isFinalMinute && (
+            <motion.div
+              key="final-minute"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative"
+            >
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-yellow-600/10 blur-[200px] rounded-full pointer-events-none" />
+              <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-12 animate-pulse">
+                A Reunião Começa Em
+              </span>
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  key={diffSeconds}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.05 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="flex flex-col items-center justify-center"
+                >
+                  <div className="font-sans text-[22rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums">
+                    {diffSeconds}
+                  </div>
+                  <span className="text-stone-300 text-6xl font-medium tracking-[0.3em] mt-8 uppercase">
+                    {diffSeconds === 1 ? "Segundo" : "Segundos"}
+                  </span>
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          )}
 
-        {/* ==================== STATE 3: MEETING IN PROGRESS (VERSES) ==================== */}
-        {isJustStarted && (
-           <VerseSlide 
-             currentTime={currentTime} 
-             customVerseText={customVerseText} 
-             customVerseRef={customVerseRef} 
-             activeVerseIndex={activeVerseIndex} 
-           />
-        )}
+          {isJustStarted && (
+            <motion.div
+              key="just-started"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 w-full h-full"
+            >
+              <VerseSlide 
+                currentTime={currentTime} 
+                customVerseText={customVerseText} 
+                customVerseRef={customVerseRef} 
+                activeVerseIndex={activeVerseIndex} 
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
 
