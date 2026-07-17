@@ -642,6 +642,13 @@ export default function App() {
 
   const adjustedNextMeetingDate = new Date(nextMeetingDate.getTime() + countdownOffset);
   const diffMs = adjustedNextMeetingDate.getTime() - currentTime.getTime();
+
+  // Se o cronômetro terminou (chegou a zero ou passou),
+  // força a exibição dos versículos bíblicos (reunião iniciada) para evitar telas pretas ou vazias.
+  if (!isJustStarted && diffMs <= 0) {
+    isJustStarted = true;
+  }
+
   let diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
   
   if (countdownPaused && pausedSeconds !== null) {
@@ -1355,25 +1362,30 @@ export default function App() {
                         transition={{ duration: 0.5 }}
                         className="absolute inset-0 flex w-full h-full bg-black relative"
                       >
-                        <div className="w-[38%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
+                        <div className="w-[35%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
                           <span className="text-yellow-500 text-[2rem] font-bold uppercase tracking-[0.4em] mb-4">
                             Faltam
                           </span>
-                          <motion.div
-                            key={diffSeconds}
-                            initial={{ opacity: 0.85, y: 3 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.15, ease: "easeOut" }}
-                            className="font-mono text-[8rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_60px_rgba(255,255,255,0.05)]"
-                          >
-                            {formatMinutesPart}:{formatSecondsPart}
-                          </motion.div>
+                          <div className="relative h-[12rem] w-full flex items-center justify-center overflow-hidden">
+                            <AnimatePresence mode="popLayout">
+                              <motion.div
+                                key={diffSeconds}
+                                initial={{ opacity: 0, y: 25 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -25 }}
+                                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                className="absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]"
+                              >
+                                {formatMinutesPart}:{formatSecondsPart}
+                              </motion.div>
+                            </AnimatePresence>
+                          </div>
                           <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
                             Minutos e Segundos
                           </span>
                         </div>
-                        <div className="w-[62%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
-                          <div className="w-[1920px] h-[1080px] absolute transform scale-[0.6] origin-center flex flex-col items-center justify-center">
+                        <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
+                          <div className="w-[1920px] h-[1080px] absolute transform scale-[0.65] origin-center flex flex-col items-center justify-center">
                             <AnimatePresence mode="wait">
                               <motion.div
                                 key={currentSlideId}
@@ -1395,29 +1407,32 @@ export default function App() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.5 }}
-                        className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative"
+                        className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative overflow-hidden"
                       >
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-yellow-600/10 blur-[200px] rounded-full pointer-events-none" />
-                        <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-12 animate-pulse">
+                        
+                        <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-8 animate-pulse z-10">
                           A Reunião Começa Em
                         </span>
-                        <AnimatePresence mode="popLayout">
-                          <motion.div
-                            key={diffSeconds}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.05 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            className="flex flex-col items-center justify-center"
-                          >
-                            <div className="font-sans text-[22rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums">
+                        
+                        <div className="relative h-[24rem] w-full flex items-center justify-center overflow-hidden z-10">
+                          <AnimatePresence mode="popLayout">
+                            <motion.div
+                              key={diffSeconds}
+                              initial={{ opacity: 0, y: 60 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -60 }}
+                              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                              className="absolute font-sans text-[24rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums"
+                            >
                               {diffSeconds}
-                            </div>
-                            <span className="text-stone-300 text-6xl font-medium tracking-[0.3em] mt-8 uppercase">
-                              {diffSeconds === 1 ? "Segundo" : "Segundos"}
-                            </span>
-                          </motion.div>
-                        </AnimatePresence>
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
+                        
+                        <span className="text-stone-300 text-5xl font-medium tracking-[0.3em] mt-12 uppercase z-10">
+                          {diffSeconds === 1 ? "Segundo" : "Segundos"}
+                        </span>
                       </motion.div>
                     )}
 
@@ -1582,25 +1597,30 @@ export default function App() {
               transition={{ duration: 0.5 }}
               className="absolute inset-0 flex w-full h-full bg-black relative"
             >
-              <div className="w-[38%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
+              <div className="w-[35%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
                 <span className="text-yellow-500 text-[2rem] font-bold uppercase tracking-[0.4em] mb-4">
                   Faltam
                 </span>
-                <motion.div
-                  key={diffSeconds}
-                  initial={{ opacity: 0.85, y: 3 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="font-mono text-[8rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_60px_rgba(255,255,255,0.05)]"
-                >
-                  {formatMinutesPart}:{formatSecondsPart}
-                </motion.div>
+                <div className="relative h-[12rem] w-full flex items-center justify-center overflow-hidden">
+                  <AnimatePresence mode="popLayout">
+                    <motion.div
+                      key={diffSeconds}
+                      initial={{ opacity: 0, y: 25 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -25 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]"
+                    >
+                      {formatMinutesPart}:{formatSecondsPart}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
                 <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
                   Minutos e Segundos
                 </span>
               </div>
-              <div className="w-[62%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
-                <div className="w-[1920px] h-[1080px] absolute transform scale-[0.6] origin-center flex flex-col items-center justify-center">
+              <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
+                <div className="w-[1920px] h-[1080px] absolute transform scale-[0.65] origin-center flex flex-col items-center justify-center">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentSlideId}
@@ -1622,29 +1642,32 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
-              className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative"
+              className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative overflow-hidden"
             >
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-yellow-600/10 blur-[200px] rounded-full pointer-events-none" />
-              <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-12 animate-pulse">
+              
+              <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-8 animate-pulse z-10">
                 A Reunião Começa Em
               </span>
-              <AnimatePresence mode="popLayout">
-                <motion.div
-                  key={diffSeconds}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.05 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                  className="flex flex-col items-center justify-center"
-                >
-                  <div className="font-sans text-[22rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums">
+              
+              <div className="relative h-[24rem] w-full flex items-center justify-center overflow-hidden z-10">
+                <AnimatePresence mode="popLayout">
+                  <motion.div
+                    key={diffSeconds}
+                    initial={{ opacity: 0, y: 60 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -60 }}
+                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute font-sans text-[24rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums"
+                  >
                     {diffSeconds}
-                  </div>
-                  <span className="text-stone-300 text-6xl font-medium tracking-[0.3em] mt-8 uppercase">
-                    {diffSeconds === 1 ? "Segundo" : "Segundos"}
-                  </span>
-                </motion.div>
-              </AnimatePresence>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              
+              <span className="text-stone-300 text-5xl font-medium tracking-[0.3em] mt-12 uppercase z-10">
+                {diffSeconds === 1 ? "Segundo" : "Segundos"}
+              </span>
             </motion.div>
           )}
 
