@@ -574,6 +574,27 @@ export default function App() {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Responsive Operator's Panel states
+  const [activeMobileTab, setActiveMobileTab] = useState<'slides' | 'controls' | 'monitor'>('slides');
+  const monitorContainerRef = useRef<HTMLDivElement>(null);
+  const [monitorScale, setMonitorScale] = useState(0.13);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (monitorContainerRef.current) {
+        const w = monitorContainerRef.current.clientWidth;
+        setMonitorScale(w / 1920);
+      }
+    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    const timer = setTimeout(updateScale, 200);
+    return () => {
+      window.removeEventListener('resize', updateScale);
+      clearTimeout(timer);
+    };
+  }, [activeMobileTab]);
+
   // Local Bible API states
   const [bibleTab, setBibleTab] = useState<'favorites' | 'api'>('favorites');
   const [apiSearchQuery, setApiSearchQuery] = useState('');
@@ -899,29 +920,31 @@ export default function App() {
     return (
       <div className="w-screen h-screen bg-[#0c0c0c] text-stone-200 flex flex-col font-sans select-none overflow-hidden">
         {/* TOP BAR */}
-        <header className="h-16 px-6 bg-[#121212] border-b border-stone-850 flex items-center justify-between z-10 shrink-0">
-          <div className="flex items-center gap-3">
-            <Tv className="w-6 h-6 text-yellow-500" />
-            <h1 className="text-white font-bold tracking-tight text-lg">
-              HolyLink <span className="text-stone-400 text-sm font-medium ml-2 border-l border-stone-800 pl-2">Painel do Operador</span>
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-[#1a1a1a] border border-stone-800 px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Sincronização Ativa
+        <header className="h-auto lg:h-16 px-4 lg:px-6 py-3.5 lg:py-0 bg-[#121212] border-b border-stone-850 flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-10 shrink-0">
+          <div className="flex items-center justify-between w-full lg:w-auto gap-3">
+            <div className="flex items-center gap-2">
+              <Tv className="w-5 h-5 text-yellow-500" />
+              <h1 className="text-white font-bold tracking-tight text-base">
+                HolyLink <span className="text-stone-400 text-xs font-medium ml-1.5 sm:ml-2 border-l border-stone-800 pl-1.5 sm:pl-2">Painel do Operador</span>
+              </h1>
             </div>
             
+            <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-stone-800 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-stone-400 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              Sincronizado
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 w-full lg:w-auto">
             <button
               onClick={() => {
                 setIsLocalProjection(true);
                 toggleFullscreen();
               }}
-              className="bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer"
+              className="flex-1 lg:flex-none bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             >
-              <Monitor className="w-4 h-4" />
-              Projetar nesta Tela
+              <Monitor className="w-3.5 h-3.5" />
+              <span>Projetar Aqui</span>
             </button>
 
             <button
@@ -929,19 +952,56 @@ export default function App() {
                 const url = window.location.origin + window.location.pathname + '?projection';
                 window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
               }}
-              className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-2 shadow-[0_4px_12px_rgba(234,179,8,0.2)] transition-all cursor-pointer"
+              className="flex-1 lg:flex-none bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-xs px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(234,179,8,0.2)] transition-all cursor-pointer"
             >
-              <ExternalLink className="w-4 h-4" />
-              Abrir Projeção (2ª Tela)
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Abrir Projeção (2ª Tela)</span>
             </button>
           </div>
         </header>
 
+        {/* MOBILE TABS BAR (Only visible on screens smaller than lg) */}
+        <div className="lg:hidden flex bg-[#121212] border-b border-stone-850 sticky top-0 z-20 shrink-0">
+          <button
+            onClick={() => setActiveMobileTab('slides')}
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1.5 transition-all ${
+              activeMobileTab === 'slides'
+                ? "text-yellow-500 border-b-2 border-yellow-500 bg-stone-900/40"
+                : "text-stone-500 hover:text-stone-300"
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Slides ({activeSlides.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveMobileTab('controls')}
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1.5 transition-all ${
+              activeMobileTab === 'controls'
+                ? "text-yellow-500 border-b-2 border-yellow-500 bg-stone-900/40"
+                : "text-stone-500 hover:text-stone-300"
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Controles</span>
+          </button>
+          <button
+            onClick={() => setActiveMobileTab('monitor')}
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1.5 transition-all ${
+              activeMobileTab === 'monitor'
+                ? "text-yellow-500 border-b-2 border-yellow-500 bg-stone-900/40"
+                : "text-stone-500 hover:text-stone-300"
+            }`}
+          >
+            <Tv className="w-4 h-4" />
+            <span>Monitor</span>
+          </button>
+        </div>
+
         {/* CONTAINER */}
-        <div className="flex-1 flex overflow-hidden min-h-0">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
           
           {/* LEFT: SLIDES MATRIX */}
-          <div className="w-[45%] border-r border-stone-800 bg-[#0d0d0d] p-6 overflow-y-auto flex flex-col">
+          <div className={`w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r border-stone-800 bg-[#0d0d0d] p-4 lg:p-6 overflow-y-auto flex flex-col ${activeMobileTab === 'slides' ? 'flex' : 'hidden lg:flex'}`}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider">Playlists / Slides</h2>
               {manualSlideOverride ? (
@@ -959,7 +1019,7 @@ export default function App() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 lg:gap-3 pb-8">
               {activeSlides.map((slideId) => {
                 const isActive = currentSlideId === slideId;
                 const isOverridden = manualSlideOverride === slideId;
@@ -1292,7 +1352,7 @@ export default function App() {
           </div>
 
           {/* MIDDLE: TIMERS & ALERTS */}
-          <div className="flex-1 bg-[#090909] p-6 overflow-y-auto flex flex-col gap-6">
+          <div className={`flex-1 bg-[#090909] p-4 lg:p-6 overflow-y-auto flex flex-col gap-6 ${activeMobileTab === 'controls' ? 'flex' : 'hidden lg:flex'}`}>
             
             {/* CONTROLE DE PROJEÇÃO */}
             <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 flex flex-col gap-4">
@@ -1311,8 +1371,8 @@ export default function App() {
                 >
                   <EyeOff className={`w-6 h-6 ${blackoutEnabled ? "animate-pulse text-white" : "text-stone-400"}`} />
                   <div className="text-center">
-                    <p className="font-bold">{blackoutEnabled ? "Tela Preta Ativa" : "Tela Preta (Blackout)"}</p>
-                    <p className="text-[10px] text-stone-400 font-normal mt-0.5">Oculta toda a saída HDMI</p>
+                    <p className="font-bold text-xs sm:text-sm">{blackoutEnabled ? "Tela Preta Ativa" : "Tela Preta"}</p>
+                    <p className="text-[9px] sm:text-[10px] text-stone-400 font-normal mt-0.5">Oculta toda a saída HDMI</p>
                   </div>
                 </button>
 
@@ -1326,8 +1386,8 @@ export default function App() {
                 >
                   <Sparkles className={`w-6 h-6 ${clearContentEnabled ? "text-black" : "text-stone-400"}`} />
                   <div className="text-center">
-                    <p className="font-bold">{clearContentEnabled ? "Slides Ocultados" : "Limpar Slide"}</p>
-                    <p className="text-[10px] text-stone-400 font-normal mt-0.5">Mantém apenas o fundo</p>
+                    <p className="font-bold text-xs sm:text-sm">{clearContentEnabled ? "Slides Ocultados" : "Limpar Slide"}</p>
+                    <p className="text-[9px] sm:text-[10px] text-stone-400 font-normal mt-0.5">Mantém apenas o fundo</p>
                   </div>
                 </button>
               </div>
@@ -1336,15 +1396,15 @@ export default function App() {
             {/* TIMERS SECTION */}
             <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5">
               <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider mb-3">Cronômetro de Reunião</h2>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 sm:items-center justify-between">
                 <div>
                   <p className="text-xs text-stone-500 font-medium">Horário da Próxima Reunião:</p>
-                  <p className="text-lg font-bold text-white mt-1">
+                  <p className="text-sm sm:text-lg font-bold text-white mt-1 leading-snug">
                     <span className="text-yellow-500">{nextMeeting.dayName}</span> às {nextMeeting.time} — <span className="text-stone-300 font-normal">{nextMeeting.theme}</span>
                   </p>
                 </div>
                 
-                <div className="text-center bg-[#1a1a1a] border border-stone-800 px-6 py-3 rounded-xl min-w-[150px]">
+                <div className="text-center bg-[#1a1a1a] border border-stone-800 px-6 py-3 rounded-xl w-full sm:w-auto sm:min-w-[150px]">
                   <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Tempo Restante</p>
                   <p className="text-3xl font-mono font-black text-yellow-500 tracking-wider mt-0.5">
                     {hoursStr}:{minutesStr}
@@ -1499,19 +1559,22 @@ export default function App() {
           </div>
 
           {/* RIGHT: MINIATURE SCREEN PREVIEW */}
-          <div className="w-[30%] border-l border-stone-800 bg-[#080808] p-6 flex flex-col gap-4 overflow-y-auto">
+          <div className={`w-full lg:w-[32%] border-t lg:border-t-0 lg:border-l border-stone-800 bg-[#080808] p-4 lg:p-6 flex flex-col gap-4 overflow-y-auto ${activeMobileTab === 'monitor' ? 'flex' : 'hidden lg:flex'}`}>
             <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
               <Monitor className="w-4 h-4 text-yellow-500" />
               Monitor de Transmissão
             </h2>
 
-            <div className="w-full aspect-video bg-black border border-stone-800 rounded-xl overflow-hidden relative shadow-2xl">
+            <div 
+              ref={monitorContainerRef}
+              className="w-full aspect-video bg-black border border-stone-800 rounded-xl overflow-hidden relative shadow-2xl"
+            >
               <div 
                 className="absolute origin-top-left pointer-events-none"
                 style={{
                   width: '1920px',
                   height: '1080px',
-                  transform: 'scale(0.13)'
+                  transform: `scale(${monitorScale})`
                 }}
               >
                 <div className="w-full h-full relative select-none font-sans overflow-hidden bg-[#050000] text-white flex flex-col justify-between">
