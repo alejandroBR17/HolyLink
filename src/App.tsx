@@ -1977,7 +1977,20 @@ export default function App() {
                   </AnimatePresence>
 
                   <AnimatePresence mode="wait">
-                    {isLooping && (
+                    {manualSlideOverride && (
+                      <motion.div
+                        key={`manual-${manualSlideOverride}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="absolute inset-0 w-full h-full flex items-center justify-center"
+                      >
+                        {clearContentEnabled ? null : renderSlide(manualSlideOverride)}
+                      </motion.div>
+                    )}
+
+                    {!manualSlideOverride && isLooping && (
                       <motion.div
                         key="looping"
                         initial={{ opacity: 0 }}
@@ -2018,7 +2031,7 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    {isFinalFiveMinutes && (
+                    {!manualSlideOverride && isFinalFiveMinutes && (
                       <motion.div
                         key="final-five"
                         initial={{ opacity: 0 }}
@@ -2065,7 +2078,7 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    {isFinalMinute && (
+                    {!manualSlideOverride && isFinalMinute && (
                       <motion.div
                         key="final-minute"
                         initial={{ opacity: 0 }}
@@ -2101,7 +2114,7 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    {isJustStarted && (
+                    {!manualSlideOverride && isJustStarted && (
                       <motion.div
                         key="just-started"
                         initial={{ opacity: 0 }}
@@ -2193,7 +2206,20 @@ export default function App() {
         </AnimatePresence>
         
         <AnimatePresence mode="wait">
-          {isLooping && (
+          {manualSlideOverride && (
+            <motion.div
+              key={`manual-${manualSlideOverride}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 w-full h-full flex items-center justify-center"
+            >
+              {clearContentEnabled ? null : renderSlide(manualSlideOverride)}
+            </motion.div>
+          )}
+
+          {!manualSlideOverride && isLooping && (
             <motion.div
               key="looping"
               initial={{ opacity: 0 }}
@@ -2253,7 +2279,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {isFinalFiveMinutes && (
+          {!manualSlideOverride && isFinalFiveMinutes && (
             <motion.div
               key="final-five"
               initial={{ opacity: 0 }}
@@ -2300,7 +2326,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {isFinalMinute && (
+          {!manualSlideOverride && isFinalMinute && (
             <motion.div
               key="final-minute"
               initial={{ opacity: 0 }}
@@ -2336,7 +2362,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {isJustStarted && (
+          {!manualSlideOverride && isJustStarted && (
             <motion.div
               key="just-started"
               initial={{ opacity: 0 }}
