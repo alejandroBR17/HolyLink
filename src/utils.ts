@@ -69,3 +69,76 @@ export function getNextMeeting(now: Date): {
     ongoingMeeting
   };
 }
+
+// ==========================================
+// INDEXEDDB STORAGE FOR CUSTOM MEDIA
+// ==========================================
+
+const DB_NAME = 'holyrics_media_db';
+const STORE_NAME = 'media_items';
+
+export interface DBMediaItem {
+  id: string;
+  type: 'image' | 'video';
+  name: string;
+  duration: number; // in milliseconds
+  enabledInLoop: boolean;
+  blob: Blob;
+}
+
+export function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    try {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+export async function saveMediaItem(item: DBMediaItem): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(item);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function getAllMediaItems(): Promise<DBMediaItem[]> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (e) {
+    console.warn("IndexedDB not supported or accessible in this environment:", e);
+    return [];
+  }
+}
+
+export async function deleteMediaItem(id: string): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.delete(id);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+

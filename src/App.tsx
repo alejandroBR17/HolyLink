@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search } from 'lucide-react';
+import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film } from 'lucide-react';
 import QRCode from "react-qr-code";
 import { WEEK_SCHEDULES, VERSES, SOCIAL, DONATION, CAMPAIGNS, CHURCH_INFO, ALERTS } from './data';
-import { getNextMeeting } from './utils';
+import { getNextMeeting, getAllMediaItems, saveMediaItem, deleteMediaItem } from './utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,7 +13,20 @@ import { ptBR } from 'date-fns/locale';
 
 type SlideType = string;
 
-const getSlideDuration = (slideId: string): number => {
+interface CustomMedia {
+  id: string;
+  type: 'image' | 'video';
+  name: string;
+  duration: number; // in milliseconds
+  enabledInLoop: boolean;
+  url: string;
+}
+
+const getSlideDuration = (slideId: string, customMedia: CustomMedia[] = []): number => {
+  if (slideId.startsWith('custom_')) {
+    const item = customMedia.find(m => m.id === slideId);
+    return item ? item.duration : 10000;
+  }
   if (slideId.startsWith('agenda_day_')) return 12000;
   if (slideId.startsWith('verse_')) return 15000;
   if (slideId === 'world_god') return 15000;
@@ -435,6 +448,41 @@ const CampaignSlide = () => {
 };
 // ==========================================
 
+const VideoSlide = ({ media, currentSlideId }: { media: CustomMedia; currentSlideId: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (currentSlideId === media.id) {
+      video.currentTime = 0;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((e) => {
+          console.log("Autoplay unmuted blocked, playing muted", e);
+          video.muted = true;
+          video.play().catch((err) => console.error("Could not play video even muted", err));
+        });
+      }
+    } else {
+      video.pause();
+    }
+  }, [currentSlideId, media.id]);
+
+  return (
+    <div className="w-full h-full flex items-center justify-center relative bg-black">
+      <video
+        ref={videoRef}
+        src={media.url}
+        className="max-w-full max-h-full object-contain"
+        playsInline
+        controls={false}
+      />
+    </div>
+  );
+};
+
 export default function App() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [manualRotateMode, setManualRotateMode] = useState<'auto' | 'force-landscape'>('auto');
@@ -486,6 +534,111 @@ export default function App() {
     return localStorage.getItem('projection_customVerseRef');
   });
 
+  // Custom Media States
+  const [mediaUpdateTrigger, setMediaUpdateTrigger] = useState<string>(() => {
+    if (typeof window === 'undefined') return '0';
+    return localStorage.getItem('projection_mediaUpdateTrigger') || '0';
+  });
+  const [customMediaList, setCustomMediaList] = useState<CustomMedia[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Load custom media files from DB on trigger or mount
+  useEffect(() => {
+    let active = true;
+    const loadMedia = async () => {
+      try {
+        const items = await getAllMediaItems();
+        if (!active) return;
+        
+        // Revoke old object URLs to avoid memory leaks
+        setCustomMediaList((prevList) => {
+          prevList.forEach((m) => {
+            if (m.url && m.url.startsWith('blob:')) {
+              URL.revokeObjectURL(m.url);
+            }
+          });
+          
+          return items.map((item) => ({
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            duration: item.duration,
+            enabledInLoop: item.enabledInLoop,
+            url: URL.createObjectURL(item.blob)
+          }));
+        });
+      } catch (err) {
+        console.error("Failed to load custom media from DB", err);
+      }
+    };
+
+    loadMedia();
+
+    return () => {
+      active = false;
+    };
+  }, [mediaUpdateTrigger]);
+
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+
+    if (!isImage && !isVideo) {
+      setUploadError("Por favor, selecione apenas arquivos de imagem ou vídeo.");
+      setIsUploading(false);
+      return;
+    }
+
+    try {
+      let duration = 10000; // default 10 seconds for images
+
+      if (isVideo) {
+        // Measure exact duration of video
+        duration = await new Promise<number>((resolve) => {
+          const video = document.createElement('video');
+          video.preload = 'metadata';
+          const objectUrl = URL.createObjectURL(file);
+          video.src = objectUrl;
+          video.onloadedmetadata = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(Math.round(video.duration * 1000));
+          };
+          video.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(10000); // fallback if metadata fails
+          };
+        });
+      }
+
+      const id = `custom_${isVideo ? 'vid' : 'img'}_${Date.now()}`;
+      await saveMediaItem({
+        id,
+        type: isVideo ? 'video' : 'image',
+        name: file.name,
+        duration,
+        enabledInLoop: true,
+        blob: file
+      });
+
+      // Broadcast update
+      updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+    } catch (err: any) {
+      console.error("Error saving uploaded file:", err);
+      setUploadError("Não foi possível salvar o arquivo. Limite de armazenamento pode ter sido excedido.");
+    } finally {
+      setIsUploading(false);
+      // Reset input value to allow uploading same file again
+      e.target.value = '';
+    }
+  };
+
   const updateStateAndBroadcast = (key: string, value: any) => {
     if (value === null || value === undefined) {
       localStorage.removeItem(`projection_${key}`);
@@ -503,6 +656,7 @@ export default function App() {
     else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value, 10) : null);
     else if (key === 'customVerseText') setCustomVerseText(value);
     else if (key === 'customVerseRef') setCustomVerseRef(value);
+    else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
 
     try {
       const bc = new BroadcastChannel('holyrics_projection_sync');
@@ -530,6 +684,7 @@ export default function App() {
           else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value, 10) : null);
           else if (key === 'customVerseText') setCustomVerseText(value);
           else if (key === 'customVerseRef') setCustomVerseRef(value);
+          else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
         }
       };
     } catch (e) {
@@ -550,6 +705,7 @@ export default function App() {
         else if (key === 'activeVerseIndex') setActiveVerseIndex(val ? parseInt(val, 10) : null);
         else if (key === 'customVerseText') setCustomVerseText(val);
         else if (key === 'customVerseRef') setCustomVerseRef(val);
+        else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(val || '0');
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -822,11 +978,19 @@ export default function App() {
     'agenda_day_6',
     'world_god'
   ];
+
+  // Append enabled custom media to the active slides loop
+  customMediaList.forEach((media) => {
+    if (media.enabledInLoop) {
+      activeSlides.push(media.id);
+    }
+  });
+
   if (diffSeconds <= 15 * 60) {
     activeSlides.push('soon');
   }
 
-  const totalDuration = activeSlides.reduce((sum, id) => sum + getSlideDuration(id), 0);
+  const totalDuration = activeSlides.reduce((sum, id) => sum + getSlideDuration(id, customMediaList), 0);
   const timeInLoop = currentTime.getTime() % totalDuration;
   const loopIteration = Math.floor(currentTime.getTime() / totalDuration);
   let accumulatedTime = 0;
@@ -836,7 +1000,7 @@ export default function App() {
     currentSlideId = manualSlideOverride;
   } else {
     for (const id of activeSlides) {
-      const duration = getSlideDuration(id);
+      const duration = getSlideDuration(id, customMediaList);
       if (timeInLoop >= accumulatedTime && timeInLoop < accumulatedTime + duration) {
         currentSlideId = id;
         break;
@@ -876,6 +1040,26 @@ export default function App() {
 
   // Renders the specific slide component
   const renderSlide = (slideId: SlideType) => {
+    if (slideId.startsWith("custom_")) {
+      const media = customMediaList.find(m => m.id === slideId);
+      if (!media) return <div className="text-stone-500 text-3xl font-bold flex items-center justify-center h-full w-full bg-black">Mídia não encontrada</div>;
+      if (media.type === 'image') {
+        return (
+          <div className="w-full h-full flex items-center justify-center relative p-6 bg-black">
+            <img 
+              src={media.url} 
+              alt={media.name} 
+              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        );
+      } else if (media.type === 'video') {
+        return (
+          <VideoSlide media={media} currentSlideId={currentSlideId} />
+        );
+      }
+    }
     if (slideId.startsWith("agenda_day_")) {
       const dayIndex = parseInt(slideId.replace("agenda_day_", ""), 10);
       return <AgendaDaySlide dayIndex={dayIndex} currentTime={currentTime} />;
@@ -1035,6 +1219,10 @@ export default function App() {
                   const offset = parseInt(slideId.replace("verse_", ""), 10) || 0;
                   name = `Versículo ${offset}`;
                   desc = "Leitura de versículo bíblico";
+                } else if (slideId.startsWith("custom_")) {
+                  const media = customMediaList.find(m => m.id === slideId);
+                  name = media ? media.name : "Mídia Customizada";
+                  desc = media ? `Mídia: ${media.type === 'image' ? 'Imagem' : 'Vídeo'}` : "Mídia da fila";
                 } else {
                   switch (slideId) {
                     case 'seat': name = "Fique à vontade"; desc = "Procurar assento"; break;
@@ -1070,7 +1258,7 @@ export default function App() {
                     <p className="text-xs text-stone-500 mt-1">{desc}</p>
                     <div className="flex items-center justify-between mt-3 text-[10px] text-stone-400">
                       <span className="font-mono bg-stone-800 px-1.5 py-0.5 rounded text-stone-400">
-                        {getSlideDuration(slideId) / 1000}s
+                        {getSlideDuration(slideId, customMediaList) / 1000}s
                       </span>
                       {isOverridden && (
                         <span className="text-yellow-500 font-bold uppercase tracking-wider text-[9px]">
@@ -1081,6 +1269,190 @@ export default function App() {
                   </button>
                 );
               })}
+            </div>
+
+            {/* GERENCIADOR DE IMAGENS E VÍDEOS */}
+            <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 mb-4 flex flex-col gap-4 shrink-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+                  <Film className="w-4 h-4 text-yellow-500" />
+                  Mídias Customizadas (Fila)
+                </h2>
+                <span className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  IndexedDB Ativo
+                </span>
+              </div>
+
+              {/* UPLOAD BOX */}
+              <div className="relative border-2 border-dashed border-stone-850 hover:border-stone-700 rounded-xl p-4 transition-all bg-stone-950/20 text-center group cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  disabled={isUploading}
+                />
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <Plus className="w-8 h-8 text-yellow-500 group-hover:scale-110 transition-transform" />
+                  <div>
+                    <p className="text-xs font-bold text-white">Clique para Adicionar Imagem ou Vídeo</p>
+                    <p className="text-[10px] text-stone-500 mt-1">Imagens (JPG/PNG) ou Vídeos (MP4)</p>
+                  </div>
+                </div>
+              </div>
+
+              {isUploading && (
+                <div className="flex items-center justify-center gap-2.5 text-xs text-yellow-500 bg-yellow-500/5 border border-yellow-500/10 p-3 rounded-xl">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Processando e salvando arquivo de mídia...</span>
+                </div>
+              )}
+
+              {uploadError && (
+                <div className="text-red-500 text-[11px] leading-tight bg-red-950/20 border border-red-900/30 p-3 rounded-xl text-left">
+                  {uploadError}
+                </div>
+              )}
+
+              {/* MEDIA LIST */}
+              {customMediaList.length === 0 ? (
+                <p className="text-xs text-stone-500 text-center py-4 italic">Nenhuma imagem ou vídeo adicionado ainda.</p>
+              ) : (
+                <div className="flex flex-col gap-2.5 max-h-[250px] overflow-y-auto pr-1">
+                  {customMediaList.map((media) => {
+                    const isSlideActive = currentSlideId === media.id;
+                    const isSlideOverridden = manualSlideOverride === media.id;
+
+                    return (
+                      <div
+                        key={media.id}
+                        className={`p-3 rounded-xl border flex items-center justify-between gap-3 bg-stone-900/60 ${
+                          isSlideActive
+                            ? "border-yellow-500/50 shadow-[0_2px_10px_rgba(234,179,8,0.05)]"
+                            : "border-stone-850"
+                        }`}
+                      >
+                        {/* Preview / Icon */}
+                        <div className="w-12 h-12 rounded-lg bg-stone-950/80 flex items-center justify-center overflow-hidden flex-shrink-0 relative border border-stone-800">
+                          {media.type === 'image' ? (
+                            <img src={media.url} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            <Film className="w-5 h-5 text-yellow-500" />
+                          )}
+                          <div className="absolute bottom-0 right-0 bg-stone-950/80 px-1 py-0.5 text-[8px] font-bold text-stone-400 uppercase rounded-tl border-t border-l border-stone-800">
+                            {media.type === 'image' ? 'Img' : 'Vid'}
+                          </div>
+                        </div>
+
+                        {/* Info & Controls */}
+                        <div className="flex-1 min-w-0 text-left">
+                          <h4 className="text-xs font-bold text-white truncate" title={media.name}>
+                            {media.name}
+                          </h4>
+                          
+                          <div className="flex items-center gap-3 mt-1.5">
+                            {/* Duration control for images, read-only for videos */}
+                            {media.type === 'image' ? (
+                              <div className="flex items-center gap-1 bg-stone-950 px-1.5 py-0.5 rounded border border-stone-850">
+                                <span className="text-[10px] text-stone-500 font-medium">Tempo:</span>
+                                <span className="text-[10px] text-yellow-500 font-bold font-mono">{media.duration / 1000}s</span>
+                                <div className="flex flex-col ml-1">
+                                  <button
+                                    onClick={async () => {
+                                      const newDur = Math.max(2000, media.duration + 1000);
+                                      const dbItems = await getAllMediaItems();
+                                      const target = dbItems.find(item => item.id === media.id);
+                                      if (target) {
+                                        target.duration = newDur;
+                                        await saveMediaItem(target);
+                                        updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                      }
+                                    }}
+                                    className="text-stone-500 hover:text-stone-300 hover:scale-110 active:scale-95 cursor-pointer leading-none"
+                                  >
+                                    ▲
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      const newDur = Math.max(2000, media.duration - 1000);
+                                      const dbItems = await getAllMediaItems();
+                                      const target = dbItems.find(item => item.id === media.id);
+                                      if (target) {
+                                        target.duration = newDur;
+                                        await saveMediaItem(target);
+                                        updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                      }
+                                    }}
+                                    className="text-stone-500 hover:text-stone-300 hover:scale-110 active:scale-95 cursor-pointer leading-none"
+                                  >
+                                    ▼
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="bg-stone-950 px-2 py-0.5 rounded border border-stone-850 text-[10px] text-stone-400 font-medium font-mono">
+                                🎬 {(media.duration / 1000).toFixed(1)}s (Completo)
+                              </div>
+                            )}
+
+                            {/* Enabled in loop checkbox */}
+                            <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-stone-400 select-none">
+                              <input
+                                type="checkbox"
+                                checked={media.enabledInLoop}
+                                onChange={async (e) => {
+                                  const dbItems = await getAllMediaItems();
+                                  const target = dbItems.find(item => item.id === media.id);
+                                  if (target) {
+                                    target.enabledInLoop = e.target.checked;
+                                    await saveMediaItem(target);
+                                    updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                  }
+                                }}
+                                className="rounded border-stone-800 bg-stone-950 text-yellow-500 focus:ring-0 focus:ring-offset-0 w-3 h-3"
+                              />
+                              <span>Fila Automática</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => {
+                              updateStateAndBroadcast('manualSlideOverride', isSlideOverridden ? null : media.id);
+                            }}
+                            title={isSlideOverridden ? "Voltar ao Automático" : "Projetar esta mídia agora"}
+                            className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
+                              isSlideOverridden
+                                ? "bg-yellow-500 text-black hover:bg-yellow-600"
+                                : "bg-stone-800 hover:bg-stone-750 text-yellow-500"
+                            }`}
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+                          
+                          <button
+                            onClick={async () => {
+                              if (confirm(`Tem certeza que deseja excluir "${media.name}"?`)) {
+                                if (currentSlideId === media.id || manualSlideOverride === media.id) {
+                                  updateStateAndBroadcast('manualSlideOverride', null);
+                                }
+                                await deleteMediaItem(media.id);
+                                updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                              }
+                            }}
+                            title="Excluir Mídia"
+                            className="p-1.5 bg-stone-800 hover:bg-red-950/40 text-stone-400 hover:text-red-500 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* GERENCIADOR DE VERSÍCULOS E MENSAGENS CUSTOMIZADAS */}
