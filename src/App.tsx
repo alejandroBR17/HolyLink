@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, Pin, PinOff, Repeat } from 'lucide-react';
+import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, ArrowUp, ArrowDown } from 'lucide-react';
 import QRCode from "react-qr-code";
 import { WEEK_SCHEDULES, VERSES, SOCIAL, DONATION, CAMPAIGNS, CHURCH_INFO, ALERTS } from './data';
 import { getNextMeeting, getAllMediaItems, saveMediaItem, deleteMediaItem } from './utils';
@@ -11,9 +11,40 @@ import { ptBR } from 'date-fns/locale';
 // 1. DATA CONSTANTS
 // ==========================================
 
-import { ParticlesBackground } from './components/ParticlesBackground';
-import { IconSlide, WorldGodSlide, AgendaDaySlide, VerseSlide, DonationSlide, CampaignSlide, VideoSlide } from './components/Slides';
-import { CustomMedia, SlideType } from './types';
+type SlideType = string;
+
+const DEFAULT_SLIDES: SlideType[] = [
+  'agenda_day_0',
+  'seat',
+  'verse_1',
+  'campaigns',
+  'agenda_day_1',
+  'bathroom',
+  'agenda_day_2',
+  'verse_2',
+  'donations',
+  'agenda_day_3',
+  'phone',
+  'agenda_day_4',
+  'social',
+  'verse_3',
+  'agenda_day_5',
+  'no_chat',
+  'agenda_day_6',
+  'world_god'
+];
+
+interface CustomMedia {
+  id: string;
+  type: 'image' | 'video';
+  name: string;
+  duration: number; // in milliseconds
+  enabledInLoop: boolean;
+  url: string;
+  muted?: boolean;
+  order?: number;
+}
+
 const getSlideDuration = (slideId: string, customMedia: CustomMedia[] = []): number => {
   if (slideId.startsWith('custom_')) {
     const item = customMedia.find(m => m.id === slideId);
@@ -28,7 +59,466 @@ const getSlideDuration = (slideId: string, customMedia: CustomMedia[] = []): num
   if (slideId === 'donations') return 20000;
   return 10000;
 };
+
+// ==========================================
 // PARTICLES BACKGROUND
+// ==========================================
+const ParticlesBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let width = canvas.width = 1920;
+    let height = canvas.height = 1080;
+
+    const particles: any[] = [];
+    const colors = ['#dc2626', '#b91c1c', '#f59e0b', '#fbbf24']; // reds and yellows
+    for (let i = 0; i < 70; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5 - 0.1, // slight upward drift
+        size: Math.random() * 2.5 + 0.5,
+        alpha: Math.random() * 0.5 + 0.1,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        pulseSpeed: Math.random() * 0.02 + 0.005,
+        angle: Math.random() * Math.PI * 2
+      });
+    }
+
+    let animationFrameId: number;
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+      
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.angle += p.pulseSpeed;
+
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height + 10;
+        if (p.y > height + 10) p.y = -10;
+
+        const currentAlpha = p.alpha + Math.sin(p.angle) * 0.2;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        ctx.shadowBlur = 0;
+      });
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      className="absolute inset-0 z-0 pointer-events-none opacity-60 mix-blend-screen"
+    />
+  );
+};
+
+// ==========================================
+// 2. SLIDE COMPONENTS
+// ==========================================
+
+const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout = 'center' }: any) => {
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.2, delayChildren: 0.3 }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
+  };
+
+  if (layout === 'split-left') {
+    return (
+      <motion.div 
+        variants={container} 
+        initial="hidden" 
+        animate="show" 
+        className="flex items-center justify-between w-full max-w-[95%] px-12"
+      >
+        <div className="flex-1 text-left pr-20">
+          <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+            {title}
+          </motion.h1>
+          <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%]">
+            {subtitle}
+          </motion.p>
+        </div>
+        <motion.div 
+          variants={item} 
+          className="flex-shrink-0"
+        >
+          <Icon className={`w-[450px] h-[450px] text-yellow-500 opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  if (layout === 'split-right') {
+    return (
+      <motion.div 
+        variants={container} 
+        initial="hidden" 
+        animate="show" 
+        className="flex items-center justify-between w-full max-w-[95%] px-12"
+      >
+        <motion.div 
+          variants={item} 
+          className="flex-shrink-0"
+        >
+          <Icon className={`w-[450px] h-[450px] text-yellow-500 opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
+        </motion.div>
+        <div className="flex-1 text-right pl-20">
+          <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+            {title}
+          </motion.h1>
+          <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%] ml-auto">
+            {subtitle}
+          </motion.p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div 
+      variants={container} 
+      initial="hidden" 
+      animate="show" 
+      className="flex flex-col items-center justify-center text-center max-w-[85%]"
+    >
+      <motion.div 
+        variants={item}
+      >
+        <Icon className={`w-56 h-56 text-yellow-500 mb-12 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
+      </motion.div>
+      <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+        {title}
+      </motion.h1>
+      <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%]">
+        {subtitle}
+      </motion.p>
+    </motion.div>
+  );
+};
+
+const WorldGodSlide = () => {
+  const [phase, setPhase] = useState<'world' | 'god'>('world');
+  
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPhase('god');
+    }, 7500);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center text-center max-w-5xl h-full w-full">
+      <AnimatePresence mode="wait">
+        {phase === 'world' ? (
+          <motion.div 
+            key="world"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
+            transition={{ duration: 0.8 }}
+            className="flex flex-col items-center"
+          >
+            <Globe className="w-64 h-64 text-stone-500 mb-14 animate-[spin_20s_linear_infinite]" strokeWidth={1} />
+            <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none uppercase">
+              Desligue-se do mundo
+            </h1>
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="god"
+            initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            className="flex flex-col items-center"
+          >
+            <motion.div>
+              <Flame className="w-64 h-64 text-yellow-500 mb-14" strokeWidth={1.5} />
+            </motion.div>
+            <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-yellow-500 leading-none uppercase drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]">
+              Ligue-se com Deus
+            </h1>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const AgendaDaySlide = ({ dayIndex, currentTime }: { dayIndex: number; currentTime: Date }) => {
+  const schedule = WEEK_SCHEDULES.find(s => s.dayIndex === dayIndex) || WEEK_SCHEDULES[0];
+  const isToday = currentTime.getDay() === dayIndex;
+  
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15, delayChildren: 0.2 }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, x: -40 },
+    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 60 } }
+  };
+
+  const itemRight = {
+    hidden: { opacity: 0, scale: 0.9 },
+    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 60 } }
+  };
+
+  return (
+    <motion.div 
+      variants={container} 
+      initial="hidden" 
+      animate="show" 
+      className="flex items-center justify-between max-w-[95%] w-full px-10"
+    >
+      <div className="flex-1 text-left pr-16 border-r border-white/[0.1]">
+        <motion.span variants={item} className="text-yellow-500 font-bold uppercase tracking-[0.4em] mb-6 text-3xl block">
+          {isToday ? 'Reuniões de Hoje' : 'Agenda Semanal'}
+        </motion.span>
+        <motion.h3 variants={item} className="text-stone-200 font-bold uppercase tracking-[0.3em] mb-6 text-[2.5rem]">
+          {schedule.dayName}
+        </motion.h3>
+        <motion.h2 variants={item} className="text-[7.5rem] text-white font-black uppercase tracking-tight leading-none mt-4">
+          {schedule.theme}
+        </motion.h2>
+      </div>
+      <div className="flex-1 pl-16">
+        <motion.div variants={itemRight} className="grid grid-cols-2 gap-6">
+          {schedule.times.map((t, i) => (
+            <motion.div 
+              key={t} 
+              className="bg-white/[0.03] border border-white/[0.08] px-12 py-10 rounded-3xl shadow-xl flex items-center justify-center relative overflow-hidden group"
+            >
+               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+               <span className="font-mono text-[4.5rem] font-black tracking-wider relative z-10 text-white">{t}</span>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+const VerseSlide = ({ 
+  currentTime, 
+  verseIndexOffset = 0, 
+  loopIteration,
+  customVerseText,
+  customVerseRef,
+  activeVerseIndex,
+}: { 
+  currentTime: Date; 
+  verseIndexOffset?: number; 
+  loopIteration?: number; 
+  customVerseText?: string | null;
+  customVerseRef?: string | null;
+  activeVerseIndex?: number | null;
+}) => {
+  let verse = { text: "", ref: "" };
+  let keyId = "verse";
+
+  if (customVerseText) {
+    verse = { text: customVerseText, ref: customVerseRef || "Mensagem" };
+    keyId = "custom";
+  } else if (activeVerseIndex !== null && activeVerseIndex !== undefined) {
+    const safeIdx = Math.max(0, Math.min(activeVerseIndex, VERSES.length - 1));
+    verse = VERSES[safeIdx];
+    keyId = `idx_${safeIdx}`;
+  } else {
+    let verseIdx = 0;
+    if (loopIteration !== undefined) {
+      verseIdx = (loopIteration + verseIndexOffset) % VERSES.length;
+    } else {
+      const baseVerseIdx = Math.floor(currentTime.getTime() / 15000);
+      verseIdx = (baseVerseIdx + verseIndexOffset) % VERSES.length;
+    }
+    verse = VERSES[verseIdx];
+    keyId = `auto_${verseIdx}`;
+  }
+
+  const getFontSizeClass = (text: string) => {
+    const len = text.length;
+    if (len < 60) return 'text-[5.5rem]';
+    if (len < 90) return 'text-[4.5rem]';
+    if (len < 130) return 'text-[3.8rem]';
+    return 'text-[3.2rem]';
+  };
+
+  const getMarginClass = (text: string) => {
+    const len = text.length;
+    if (len < 90) return 'mt-12';
+    return 'mt-8';
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full w-full px-24 text-center z-50 relative">
+       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-yellow-600/5 blur-[150px] rounded-full pointer-events-none" />
+       <AnimatePresence mode="wait">
+         <motion.div
+           key={keyId}
+           initial={{ opacity: 0, scale: 0.98 }}
+           animate={{ opacity: 1, scale: 1 }}
+           exit={{ opacity: 0, scale: 1.02 }}
+           transition={{ duration: 1.5, ease: "easeInOut" }}
+           className="relative z-10 w-full"
+         >
+           <h2 className={`${getFontSizeClass(verse.text)} text-stone-100 leading-snug font-semibold tracking-tight max-w-[95%] mx-auto`}>
+             "{verse.text}"
+           </h2>
+           <p className={`text-yellow-500 text-[2.5rem] font-bold ${getMarginClass(verse.text)} tracking-[0.2em] uppercase`}>
+             {verse.ref}
+           </p>
+         </motion.div>
+       </AnimatePresence>
+    </div>
+  );
+};
+
+// ==========================================
+// 3. MAIN APP
+const DonationSlide = () => {
+  return (
+    <motion.div
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       className="flex items-center justify-between w-full max-w-[95%] px-20"
+    >
+      <div className="flex-1 text-left pr-20">
+        <motion.div className="flex items-center gap-4 mb-6">
+          <HeartHandshake className="w-24 h-24 text-yellow-500" strokeWidth={1.5} />
+          <span className="text-yellow-500 font-bold uppercase tracking-[0.4em] text-3xl">Dízimos e Ofertas</span>
+        </motion.div>
+        <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+          Faça sua <br />Doação
+        </h1>
+        <p className="text-[3.5rem] text-stone-200 font-normal mt-6 leading-snug max-w-[90%] mb-12">
+          Acesse <span className="text-yellow-500 font-bold">{DONATION.url.replace(/^https?:\/\//, '')}</span> ou escaneie o QR Code ao lado.
+        </p>
+        <div className="bg-white/[0.03] border border-white/[0.08] p-6 rounded-2xl inline-block">
+           <p className="text-stone-300 text-3xl font-medium">Lembre-se de enviar o comprovante</p>
+           <p className="text-stone-400 text-2xl mt-2">O WhatsApp está disponível no site.</p>
+        </div>
+      </div>
+      <motion.div className="flex-shrink-0 bg-white p-6 rounded-3xl">
+        <QRCode value={DONATION.url} size={480} />
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const CampaignSlide = () => {
+  return (
+    <motion.div
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       className="flex flex-col items-center justify-center text-center max-w-[95%] w-full"
+    >
+      <CalendarDays className="w-16 h-16 text-stone-500 mb-4" strokeWidth={1.5} />
+      <h1 className="font-sans font-semibold text-4xl tracking-wide text-stone-400 uppercase mb-16">
+        Propósitos Atuais
+      </h1>
+      <div className="grid grid-cols-2 gap-10 w-full">
+        {CAMPAIGNS.map((campaign, index) => {
+          const Icon = campaign.type === 'jejum_daniel' ? WifiOff : Flame;
+          return (
+            <div key={index} className="bg-white/[0.03] border border-white/[0.08] p-16 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl relative overflow-hidden group">
+               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+               <Icon className="w-48 h-48 text-yellow-500 mb-12" strokeWidth={1} />
+               <h3 className="text-white font-black text-[6rem] mb-8 tracking-tight leading-none drop-shadow-[0_0_30px_rgba(234,179,8,0.3)] whitespace-pre-line">{campaign.title}</h3>
+               <p className="text-yellow-500 text-4xl uppercase tracking-[0.2em] font-bold mt-6">{campaign.duration}</p>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+};
+// ==========================================
+
+const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnded }: { media: CustomMedia; currentSlideId: string; videoPinBehavior?: string; onVideoEnded?: () => void }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (currentSlideId === media.id) {
+      if (video.src !== media.url) {
+        video.src = media.url;
+        video.currentTime = 0;
+      }
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((e) => {
+          console.log("Autoplay unmuted blocked, playing muted", e);
+          video.muted = true;
+          video.play().catch((err) => console.error("Could not play video even muted", err));
+        });
+      }
+    } else {
+      video.pause();
+    }
+  }, [currentSlideId, media.id, media.url]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = media.muted !== undefined ? media.muted : true;
+  }, [media.muted]);
+
+  return (
+    <div className="w-full h-full flex items-center justify-center relative">
+      <video
+        ref={videoRef}
+        className="max-w-full max-h-full object-contain"
+        playsInline
+        controls={false}
+        loop={videoPinBehavior !== 'unpin'}
+        onEnded={() => {
+          if (onVideoEnded) {
+            onVideoEnded();
+          }
+        }}
+      />
+    </div>
+  );
+};
 
 export default function App() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -80,9 +570,26 @@ export default function App() {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('projection_customVerseRef');
   });
+  const [videoPinBehavior, setVideoPinBehavior] = useState<'loop' | 'unpin'>(() => {
+    if (typeof window === 'undefined') return 'loop';
+    return (localStorage.getItem('projection_videoPinBehavior') as 'loop' | 'unpin') || 'loop';
+  });
   const [dismissedJustStarted, setDismissedJustStarted] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('projection_dismissedJustStarted') === 'true';
+  });
+
+  const [slidesOrder, setSlidesOrder] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const val = localStorage.getItem('projection_slidesOrder');
+    if (val) {
+      try {
+        return JSON.parse(val);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
 
   // Custom Media States
@@ -110,15 +617,32 @@ export default function App() {
             }
           });
           
-          return items.map((item) => ({
+          // Sort items by order first, then fallback to timestamp/id
+          const sortedItems = [...items].sort((a, b) => {
+            if (a.order !== undefined && b.order !== undefined) {
+              return a.order - b.order;
+            }
+            if (a.order !== undefined) return -1;
+            if (b.order !== undefined) return 1;
+            
+            // Fallback: extract timestamp from ID if present
+            const aMatch = a.id.match(/\d+$/);
+            const bMatch = b.id.match(/\d+$/);
+            if (aMatch && bMatch) {
+              return parseInt(aMatch[0], 10) - parseInt(bMatch[0], 10);
+            }
+            return a.id.localeCompare(b.id);
+          });
+
+          return sortedItems.map((item) => ({
             id: item.id,
             type: item.type,
             name: item.name,
             duration: item.duration,
             enabledInLoop: item.enabledInLoop,
             url: URL.createObjectURL(item.blob),
-            videoMuted: item.videoMuted,
-            unpinOnEnd: item.unpinOnEnd
+            muted: item.muted !== undefined ? item.muted : true,
+            order: item.order
           }));
         });
       } catch (err) {
@@ -170,6 +694,10 @@ export default function App() {
         });
       }
 
+      const currentItems = await getAllMediaItems();
+      const maxOrder = currentItems.reduce((max, item) => Math.max(max, item.order ?? 0), -1);
+      const order = maxOrder + 1;
+
       const id = `custom_${isVideo ? 'vid' : 'img'}_${Date.now()}`;
       await saveMediaItem({
         id,
@@ -178,8 +706,8 @@ export default function App() {
         duration,
         enabledInLoop: true,
         blob: file,
-        videoMuted: false,
-        unpinOnEnd: true
+        muted: isVideo ? true : undefined,
+        order
       });
 
       // Broadcast update
@@ -192,6 +720,97 @@ export default function App() {
       // Reset input value to allow uploading same file again
       e.target.value = '';
     }
+  };
+
+  const handleMoveMedia = async (mediaId: string, direction: 'up' | 'down') => {
+    try {
+      const items = await getAllMediaItems();
+      
+      // Sort items by order first, then fallback to timestamp/id
+      const sortedItems = [...items].sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
+        if (a.order !== undefined) return -1;
+        if (b.order !== undefined) return 1;
+        
+        // Fallback: extract timestamp from ID if present
+        const aMatch = a.id.match(/\d+$/);
+        const bMatch = b.id.match(/\d+$/);
+        if (aMatch && bMatch) {
+          return parseInt(aMatch[0], 10) - parseInt(bMatch[0], 10);
+        }
+        return a.id.localeCompare(b.id);
+      });
+
+      const idx = sortedItems.findIndex(item => item.id === mediaId);
+      if (idx === -1) return;
+
+      if (direction === 'up' && idx > 0) {
+        // Swap with previous
+        const temp = sortedItems[idx];
+        sortedItems[idx] = sortedItems[idx - 1];
+        sortedItems[idx - 1] = temp;
+      } else if (direction === 'down' && idx < sortedItems.length - 1) {
+        // Swap with next
+        const temp = sortedItems[idx];
+        sortedItems[idx] = sortedItems[idx + 1];
+        sortedItems[idx + 1] = temp;
+      } else {
+        // No move possible
+        return;
+      }
+
+      // Reassign sequential order numbers
+      for (let i = 0; i < sortedItems.length; i++) {
+        sortedItems[i].order = i;
+        await saveMediaItem(sortedItems[i]);
+      }
+
+      // Broadcast update
+      updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+    } catch (err) {
+      console.error("Failed to move media item:", err);
+    }
+  };
+
+  const handleMoveSlide = (slideId: string, direction: 'up' | 'down') => {
+    const baseActiveSlides: SlideType[] = [...DEFAULT_SLIDES];
+    customMediaList.forEach((media) => {
+      if (media.enabledInLoop) {
+        baseActiveSlides.push(media.id);
+      }
+    });
+    const nextMeetingDateObj = getNextMeeting(new Date()).nextMeetingDate;
+    const adjustedNextMeetingDate = new Date(nextMeetingDateObj.getTime() + countdownOffset);
+    const diffSecondsLocal = Math.max(0, Math.floor((adjustedNextMeetingDate.getTime() - new Date().getTime()) / 1000));
+    if (diffSecondsLocal <= 15 * 60) {
+      baseActiveSlides.push('soon');
+    }
+
+    let currentOrder = slidesOrder.filter((id) => baseActiveSlides.includes(id));
+    baseActiveSlides.forEach((id) => {
+      if (!currentOrder.includes(id)) {
+        currentOrder.push(id);
+      }
+    });
+
+    const idx = currentOrder.indexOf(slideId);
+    if (idx === -1) return;
+
+    if (direction === 'up' && idx > 0) {
+      const temp = currentOrder[idx];
+      currentOrder[idx] = currentOrder[idx - 1];
+      currentOrder[idx - 1] = temp;
+    } else if (direction === 'down' && idx < currentOrder.length - 1) {
+      const temp = currentOrder[idx];
+      currentOrder[idx] = currentOrder[idx + 1];
+      currentOrder[idx + 1] = temp;
+    } else {
+      return;
+    }
+
+    updateStateAndBroadcast('slidesOrder', JSON.stringify(currentOrder));
   };
 
   const updateStateAndBroadcast = (key: string, value: any) => {
@@ -213,6 +832,14 @@ export default function App() {
     else if (key === 'customVerseRef') setCustomVerseRef(value);
     else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
     else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
+    else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+    else if (key === 'slidesOrder') {
+      try {
+        setSlidesOrder(value ? JSON.parse(value) : []);
+      } catch (e) {
+        setSlidesOrder([]);
+      }
+    }
 
     try {
       const bc = new BroadcastChannel('holyrics_projection_sync');
@@ -242,6 +869,14 @@ export default function App() {
           else if (key === 'customVerseRef') setCustomVerseRef(value);
           else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
           else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
+          else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+          else if (key === 'slidesOrder') {
+            try {
+              setSlidesOrder(value ? JSON.parse(value) : []);
+            } catch (e) {
+              setSlidesOrder([]);
+            }
+          }
         }
       };
     } catch (e) {
@@ -264,6 +899,14 @@ export default function App() {
         else if (key === 'customVerseRef') setCustomVerseRef(val);
         else if (key === 'dismissedJustStarted') setDismissedJustStarted(val === 'true');
         else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(val || '0');
+        else if (key === 'videoPinBehavior') setVideoPinBehavior(val as 'loop' | 'unpin' || 'loop');
+        else if (key === 'slidesOrder') {
+          try {
+            setSlidesOrder(val ? JSON.parse(val) : []);
+          } catch (e) {
+            setSlidesOrder([]);
+          }
+        }
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -317,8 +960,23 @@ export default function App() {
   const [apiSearchError, setApiSearchError] = useState<string | null>(null);
 
   const parseAndMapReference = (rawRef: string) => {
-    const normalized = rawRef.trim().toLowerCase();
-    const regex = /^(\d+)?\s*([a-záéíóúçâêôûãõ\s]+)\s+(\d+)(?:[:\.](\d+))?(-(\d+))?$/i;
+    let normalized = rawRef.trim().toLowerCase();
+    
+    // Replace roman numeral prefixes or other ordinal suffixes
+    normalized = normalized
+      .replace(/^(i{1,3})\b/i, (match) => {
+        if (match === 'i') return '1';
+        if (match === 'ii') return '2';
+        if (match === 'iii') return '3';
+        return match;
+      })
+      .replace(/^1º\s*|^1o\s*|^1ª\s*|^1a\s*|^primeiro\s*|^primeira\s*/i, '1 ')
+      .replace(/^2º\s*|^2o\s*|^2ª\s*|^2a\s*|^segundo\s*|^segunda\s*/i, '2 ')
+      .replace(/^3º\s*|^3o\s*|^3ª\s*|^3a\s*|^terceiro\s*|^terceira\s*/i, '3 ')
+      // If there's a digit stuck to a book name, e.g., "1joao" -> "1 joao"
+      .replace(/^([123])([a-z])/i, '$1 $2');
+
+    const regex = /^([123])?\s*([a-záéíóúçâêôûãõ\s\-\'\/]+)\s+(\d+)(?:[:\.](\d+))?(-(\d+))?$/i;
     const match = normalized.match(regex);
     if (!match) return rawRef;
 
@@ -341,7 +999,7 @@ export default function App() {
       "reis": "kings", "re": "kings",
       "crônicas": "chronicles", "cronicas": "chronicles", "cr": "chronicles",
       "esdras": "ezra", "es": "ezra",
-      "neemias": "neemiah", "ne": "neemiah",
+      "neemias": "nehemiah", "ne": "nehemiah",
       "ester": "esther", "et": "esther",
       "jó": "job",
       "salmos": "psalms", "salmo": "psalms", "sl": "psalms",
@@ -380,7 +1038,7 @@ export default function App() {
       "timóteo": "timothy", "timoteo": "timothy", "tm": "timothy",
       "tito": "titus", "tt": "titus",
       "filemom": "philemon", "fl": "philemon",
-      "hebreus": "hebrew", "hb": "hebrew",
+      "hebreus": "hebrews", "hb": "hebrews",
       "tiago": "james", "tg": "james",
       "pedro": "peter", "pe": "peter",
       "judas": "judas", "jd": "judas",
@@ -533,37 +1191,25 @@ export default function App() {
   }, [diffSeconds, dismissedJustStarted]);
 
   // Render Slide Machine
-  const activeSlides: SlideType[] = [
-    'agenda_day_0',
-    'seat',
-    'verse_1',
-    'campaigns',
-    'agenda_day_1',
-    'bathroom',
-    'agenda_day_2',
-    'verse_2',
-    'donations',
-    'agenda_day_3',
-    'phone',
-    'agenda_day_4',
-    'social',
-    'verse_3',
-    'agenda_day_5',
-    'no_chat',
-    'agenda_day_6',
-    'world_god'
-  ];
-
-  // Append enabled custom media to the active slides loop
+  const baseActiveSlides: SlideType[] = [...DEFAULT_SLIDES];
   customMediaList.forEach((media) => {
     if (media.enabledInLoop) {
-      activeSlides.push(media.id);
+      baseActiveSlides.push(media.id);
     }
   });
-
   if (diffSeconds <= 15 * 60) {
-    activeSlides.push('soon');
+    baseActiveSlides.push('soon');
   }
+
+  // Build activeSlides using the user's custom slidesOrder
+  // 1. Start with the saved slidesOrder, but only keep slides that are in baseActiveSlides
+  let activeSlides = slidesOrder.filter((id) => baseActiveSlides.includes(id));
+  // 2. Add any slides from baseActiveSlides that are NOT in slidesOrder to the end
+  baseActiveSlides.forEach((id) => {
+    if (!activeSlides.includes(id)) {
+      activeSlides.push(id);
+    }
+  });
 
   const totalDuration = activeSlides.reduce((sum, id) => sum + getSlideDuration(id, customMediaList), 0);
   const timeInLoop = currentTime.getTime() % totalDuration;
@@ -604,15 +1250,6 @@ export default function App() {
   const minutesStr = countMinutes.toString().padStart(2, '0');
 
   // Animation Variants based on slide type
-  const handleVideoEnd = () => {
-    if (manualSlideOverride && manualSlideOverride.startsWith('custom_vid_')) {
-      const media = customMediaList.find(m => m.id === manualSlideOverride);
-      if (media && media.unpinOnEnd) {
-        updateStateAndBroadcast('manualSlideOverride', null);
-      }
-    }
-  };
-
   const getTransitionVariants = (slideId: SlideType) => {
     return {
       initial: { opacity: 0 },
@@ -640,7 +1277,16 @@ export default function App() {
         );
       } else if (media.type === 'video') {
         return (
-          <VideoSlide media={media} currentSlideId={currentSlideId} onVideoEnd={handleVideoEnd} />
+          <VideoSlide 
+            media={media} 
+            currentSlideId={currentSlideId} 
+            videoPinBehavior={videoPinBehavior}
+            onVideoEnded={() => {
+              if (manualSlideOverride === media.id && videoPinBehavior === 'unpin') {
+                updateStateAndBroadcast('manualSlideOverride', null);
+              }
+            }}
+          />
         );
       }
     }
@@ -825,7 +1471,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 lg:gap-3 pb-8">
-              {activeSlides.map((slideId) => {
+              {activeSlides.map((slideId, idx) => {
                 const isActive = currentSlideId === slideId;
                 const isOverridden = manualSlideOverride === slideId;
                 
@@ -859,7 +1505,7 @@ export default function App() {
                 }
 
                 return (
-                  <button
+                  <div
                     key={slideId}
                     onClick={() => updateStateAndBroadcast('manualSlideOverride', slideId)}
                     className={`text-left p-3.5 rounded-xl border transition-all relative overflow-hidden group cursor-pointer ${
@@ -877,17 +1523,54 @@ export default function App() {
                       {name}
                     </h3>
                     <p className="text-xs text-stone-500 mt-1">{desc}</p>
+                    
                     <div className="flex items-center justify-between mt-3 text-[10px] text-stone-400">
-                      <span className="font-mono bg-stone-800 px-1.5 py-0.5 rounded text-stone-400">
-                        {getSlideDuration(slideId, customMediaList) / 1000}s
-                      </span>
-                      {isOverridden && (
-                        <span className="text-yellow-500 font-bold uppercase tracking-wider text-[9px]">
-                          Fixo
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono bg-stone-800 px-2 py-1 rounded text-stone-400 text-[10px]">
+                          {getSlideDuration(slideId, customMediaList) / 1000}s
                         </span>
-                      )}
+                        {isOverridden && (
+                          <span className="text-yellow-500 font-bold uppercase tracking-wider text-[9px] bg-yellow-500/10 border border-yellow-500/20 px-1.5 py-0.5 rounded">
+                            Fixo
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Tactile slide reorder controls */}
+                      <div className="flex items-center gap-1.5 z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveSlide(slideId, 'up');
+                          }}
+                          disabled={idx === 0}
+                          title="Mover para Cima"
+                          className={`w-9 h-9 sm:w-8 sm:h-8 rounded-lg border text-stone-300 transition-all flex items-center justify-center cursor-pointer ${
+                            idx === 0
+                              ? "opacity-25 cursor-not-allowed border-stone-850 bg-stone-900/20 text-stone-600"
+                              : "bg-stone-800 border-stone-700 hover:bg-stone-700 hover:border-stone-600 active:scale-90 shadow-md"
+                          }`}
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveSlide(slideId, 'down');
+                          }}
+                          disabled={idx === activeSlides.length - 1}
+                          title="Mover para Baixo"
+                          className={`w-9 h-9 sm:w-8 sm:h-8 rounded-lg border text-stone-300 transition-all flex items-center justify-center cursor-pointer ${
+                            idx === activeSlides.length - 1
+                              ? "opacity-25 cursor-not-allowed border-stone-850 bg-stone-900/20 text-stone-600"
+                              : "bg-stone-800 border-stone-700 hover:bg-stone-700 hover:border-stone-600 active:scale-90 shadow-md"
+                          }`}
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -935,156 +1618,213 @@ export default function App() {
                 </div>
               )}
 
+              {/* COMPORTAMENTO DE VÍDEO FIXO */}
+              <div className="flex flex-col gap-1.5 bg-stone-950/40 p-3 rounded-xl border border-stone-850">
+                <span className="text-stone-500 text-[10px] font-bold uppercase tracking-wider block text-left">Quando um vídeo estiver Fixo:</span>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <button
+                    onClick={() => updateStateAndBroadcast('videoPinBehavior', 'loop')}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      videoPinBehavior === 'loop'
+                        ? "bg-yellow-500 text-black shadow-[0_2px_8px_rgba(234,179,8,0.15)]"
+                        : "bg-stone-900 border border-stone-850 hover:border-stone-700 text-stone-300"
+                    }`}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Repetir em Loop
+                  </button>
+                  <button
+                    onClick={() => updateStateAndBroadcast('videoPinBehavior', 'unpin')}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      videoPinBehavior === 'unpin'
+                        ? "bg-yellow-500 text-black shadow-[0_2px_8px_rgba(234,179,8,0.15)]"
+                        : "bg-stone-900 border border-stone-850 hover:border-stone-700 text-stone-300"
+                    }`}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Desafixar ao Finalizar
+                  </button>
+                </div>
+              </div>
+
               {/* MEDIA LIST */}
               {customMediaList.length === 0 ? (
                 <p className="text-xs text-stone-500 text-center py-4 italic">Nenhuma imagem ou vídeo adicionado ainda.</p>
               ) : (
                 <div className="flex flex-col gap-2.5 max-h-[250px] overflow-y-auto pr-1">
-                  {customMediaList.map((media) => {
+                  {customMediaList.map((media, index) => {
                     const isSlideActive = currentSlideId === media.id;
                     const isSlideOverridden = manualSlideOverride === media.id;
 
                     return (
                       <div
                         key={media.id}
-                        className={`p-3 rounded-xl border flex items-center justify-between gap-3 bg-stone-900/60 ${
+                        className={`p-3.5 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-stone-900/60 ${
                           isSlideActive
                             ? "border-yellow-500/50 shadow-[0_2px_10px_rgba(234,179,8,0.05)]"
                             : "border-stone-850"
                         }`}
                       >
-                        {/* Preview / Icon */}
-                        <div className="w-12 h-12 rounded-lg bg-stone-950/80 flex items-center justify-center overflow-hidden flex-shrink-0 relative border border-stone-800">
-                          {media.type === 'image' ? (
-                            <img src={media.url} className="w-full h-full object-cover" alt="" />
-                          ) : (
-                            <Film className="w-5 h-5 text-yellow-500" />
-                          )}
-                          <div className="absolute bottom-0 right-0 bg-stone-950/80 px-1 py-0.5 text-[8px] font-bold text-stone-400 uppercase rounded-tl border-t border-l border-stone-800">
-                            {media.type === 'image' ? 'Img' : 'Vid'}
-                          </div>
-                        </div>
-
-                        {/* Info & Controls */}
-                        <div className="flex-1 min-w-0 text-left">
-                          <h4 className="text-xs font-bold text-white truncate" title={media.name}>
-                            {media.name}
-                          </h4>
-                          
-                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                            {/* Duration control for images, read-only for videos */}
+                        <div className="flex items-center gap-3 w-full md:w-auto min-w-0">
+                          {/* Preview / Icon */}
+                          <div className="w-12 h-12 rounded-lg bg-stone-950/80 flex items-center justify-center overflow-hidden flex-shrink-0 relative border border-stone-800">
+                            <div className="absolute top-0 left-0 bg-yellow-500 text-black font-extrabold text-[9px] px-1 rounded-br z-10">
+                              #{index + 1}
+                            </div>
                             {media.type === 'image' ? (
-                              <div className="flex items-center gap-1 bg-stone-950 px-1.5 py-0.5 rounded border border-stone-850">
-                                <span className="text-[10px] text-stone-500 font-medium">Tempo:</span>
-                                <span className="text-[10px] text-yellow-500 font-bold font-mono">{media.duration / 1000}s</span>
-                                <div className="flex flex-col ml-1">
+                              <img src={media.url} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                            ) : (
+                              <Film className="w-5 h-5 text-yellow-500" />
+                            )}
+                            <div className="absolute bottom-0 right-0 bg-stone-950/80 px-1 py-0.5 text-[8px] font-bold text-stone-400 uppercase rounded-tl border-t border-l border-stone-800">
+                              {media.type === 'image' ? 'Img' : 'Vid'}
+                            </div>
+                          </div>
+
+                          {/* Info & Controls */}
+                          <div className="flex-1 min-w-0 text-left">
+                            <h4 className="text-xs font-bold text-white truncate" title={media.name}>
+                              {media.name}
+                            </h4>
+                            
+                            <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                              {/* Duration control for images, read-only for videos */}
+                              {media.type === 'image' ? (
+                                <div className="flex items-center gap-1 bg-stone-950 px-1.5 py-0.5 rounded border border-stone-850">
+                                  <span className="text-[10px] text-stone-500 font-medium">Tempo:</span>
+                                  <span className="text-[10px] text-yellow-500 font-bold font-mono">{media.duration / 1000}s</span>
+                                  <div className="flex flex-col ml-1">
+                                    <button
+                                      onClick={async () => {
+                                        const newDur = Math.max(2000, media.duration + 1000);
+                                        const dbItems = await getAllMediaItems();
+                                        const target = dbItems.find(item => item.id === media.id);
+                                        if (target) {
+                                          target.duration = newDur;
+                                          await saveMediaItem(target);
+                                          updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                        }
+                                      }}
+                                      className="text-stone-500 hover:text-stone-300 hover:scale-110 active:scale-95 cursor-pointer leading-none"
+                                    >
+                                      ▲
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        const newDur = Math.max(2000, media.duration - 1000);
+                                        const dbItems = await getAllMediaItems();
+                                        const target = dbItems.find(item => item.id === media.id);
+                                        if (target) {
+                                          target.duration = newDur;
+                                          await saveMediaItem(target);
+                                          updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                        }
+                                      }}
+                                      className="text-stone-500 hover:text-stone-300 hover:scale-110 active:scale-95 cursor-pointer leading-none"
+                                    >
+                                      ▼
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <div className="bg-stone-950 px-2 py-0.5 rounded border border-stone-850 text-[10px] text-stone-400 font-medium font-mono">
+                                    🎬 {(media.duration / 1000).toFixed(1)}s
+                                  </div>
                                   <button
                                     onClick={async () => {
-                                      const newDur = Math.max(2000, media.duration + 1000);
                                       const dbItems = await getAllMediaItems();
                                       const target = dbItems.find(item => item.id === media.id);
                                       if (target) {
-                                        target.duration = newDur;
+                                        target.muted = target.muted === undefined ? false : !target.muted;
                                         await saveMediaItem(target);
                                         updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                       }
                                     }}
-                                    className="text-stone-500 hover:text-stone-300 hover:scale-110 active:scale-95 cursor-pointer leading-none"
+                                    title={media.muted ? "Ativar som para este vídeo" : "Mudar para mudo"}
+                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-bold transition-all cursor-pointer ${
+                                      media.muted
+                                        ? "bg-stone-950 border-stone-850 text-stone-500 hover:text-stone-350"
+                                        : "bg-yellow-500/10 border-yellow-500/20 text-yellow-500 hover:bg-yellow-500/25"
+                                    }`}
                                   >
-                                    ▲
-                                  </button>
-                                  <button
-                                    onClick={async () => {
-                                      const newDur = Math.max(2000, media.duration - 1000);
-                                      const dbItems = await getAllMediaItems();
-                                      const target = dbItems.find(item => item.id === media.id);
-                                      if (target) {
-                                        target.duration = newDur;
-                                        await saveMediaItem(target);
-                                        updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
-                                      }
-                                    }}
-                                    className="text-stone-500 hover:text-stone-300 hover:scale-110 active:scale-95 cursor-pointer leading-none"
-                                  >
-                                    ▼
+                                    {media.muted ? (
+                                      <>
+                                        <VolumeX className="w-2.5 h-2.5" />
+                                        <span>Mudo</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Volume2 className="w-2.5 h-2.5" />
+                                        <span>Com Som</span>
+                                      </>
+                                    )}
                                   </button>
                                 </div>
-                              </div>
-                            ) : (
-                              <div className="bg-stone-950 px-2 py-0.5 rounded border border-stone-850 text-[10px] text-stone-400 font-medium font-mono">
-                                🎬 {(media.duration / 1000).toFixed(1)}s (Completo)
-                              </div>
-                            )}
-                            {/* Toggles */}
-                            <div className="flex items-center bg-stone-950 rounded border border-stone-850 overflow-hidden">
-                              {media.type === 'video' && (
-                                <>
-                                  <button 
-                                    onClick={async () => {
-                                      const dbItems = await getAllMediaItems();
-                                      const target = dbItems.find(item => item.id === media.id);
-                                      if (target) {
-                                        target.videoMuted = !target.videoMuted;
-                                        await saveMediaItem(target);
-                                        updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
-                                      }
-                                    }}
-                                    className={`px-2 py-1 border-r border-stone-850 hover:bg-stone-800 transition-colors cursor-pointer ${media.videoMuted ? 'text-yellow-500 bg-stone-900' : 'text-stone-500'}`}
-                                    title={media.videoMuted ? 'Desativar Mudo' : 'Silenciar Vídeo'}
-                                  >
-                                    {media.videoMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                                  </button>
-                                  <button 
-                                    onClick={async () => {
-                                      const dbItems = await getAllMediaItems();
-                                      const target = dbItems.find(item => item.id === media.id);
-                                      if (target) {
-                                        target.unpinOnEnd = !target.unpinOnEnd;
-                                        await saveMediaItem(target);
-                                        updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
-                                      }
-                                    }}
-                                    className={`px-2 py-1 border-r border-stone-850 hover:bg-stone-800 transition-colors cursor-pointer ${media.unpinOnEnd ? 'text-yellow-500 bg-stone-900' : 'text-stone-500'}`}
-                                    title={media.unpinOnEnd ? 'Manter fixo ao fim' : 'Desafixar ao fim'}
-                                  >
-                                    {media.unpinOnEnd ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
-                                  </button>
-                                </>
                               )}
-                              <button 
-                                onClick={async () => {
-                                  const dbItems = await getAllMediaItems();
-                                  const target = dbItems.find(item => item.id === media.id);
-                                  if (target) {
-                                    target.enabledInLoop = !target.enabledInLoop;
-                                    await saveMediaItem(target);
-                                    updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
-                                  }
-                                }}
-                                className={`px-2 py-1 flex items-center gap-1 hover:bg-stone-800 transition-colors cursor-pointer ${media.enabledInLoop ? 'text-yellow-500 bg-stone-900' : 'text-stone-500'}`}
-                                title={media.enabledInLoop ? 'Remover da Fila Automática' : 'Adicionar à Fila Automática'}
-                              >
-                                <Repeat className="w-3 h-3" />
-                                <span className="text-[10px] font-medium hidden sm:inline">Auto</span>
-                              </button>
+
+                              {/* Enabled in loop checkbox */}
+                              <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-stone-400 select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={media.enabledInLoop}
+                                  onChange={async (e) => {
+                                    const dbItems = await getAllMediaItems();
+                                    const target = dbItems.find(item => item.id === media.id);
+                                    if (target) {
+                                      target.enabledInLoop = e.target.checked;
+                                      await saveMediaItem(target);
+                                      updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                    }
+                                  }}
+                                  className="rounded border-stone-800 bg-stone-950 text-yellow-500 focus:ring-0 focus:ring-offset-0 w-3 h-3"
+                                />
+                                <span>Fila Automática</span>
+                              </label>
                             </div>
                           </div>
                         </div>
 
-                        {/* Action buttons */}
-                        <div className="flex gap-1 flex-shrink-0 flex-col sm:flex-row">
+                        {/* Action buttons - Spacious touch-targets for mobile, neat on desktop */}
+                        <div className="flex gap-2 w-full md:w-auto justify-end border-t border-stone-850/60 md:border-t-0 pt-3 md:pt-0">
+                          <button
+                            onClick={() => handleMoveMedia(media.id, 'up')}
+                            disabled={index === 0}
+                            title="Mover para Cima"
+                            className={`w-9 h-9 md:w-7.5 md:h-7.5 rounded-lg border transition-all flex items-center justify-center cursor-pointer ${
+                              index === 0
+                                ? "bg-stone-900/40 text-stone-700 border-stone-850 cursor-not-allowed opacity-30"
+                                : "bg-stone-800 border-stone-700 hover:bg-stone-750 text-stone-300 hover:text-white"
+                            }`}
+                          >
+                            <ArrowUp className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleMoveMedia(media.id, 'down')}
+                            disabled={index === customMediaList.length - 1}
+                            title="Mover para Baixo"
+                            className={`w-9 h-9 md:w-7.5 md:h-7.5 rounded-lg border transition-all flex items-center justify-center cursor-pointer ${
+                              index === customMediaList.length - 1
+                                ? "bg-stone-900/40 text-stone-700 border-stone-850 cursor-not-allowed opacity-30"
+                                : "bg-stone-800 border-stone-700 hover:bg-stone-750 text-stone-300 hover:text-white"
+                            }`}
+                          >
+                            <ArrowDown className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                          </button>
+
                           <button
                             onClick={() => {
                               updateStateAndBroadcast('manualSlideOverride', isSlideOverridden ? null : media.id);
                             }}
                             title={isSlideOverridden ? "Voltar ao Automático" : "Projetar esta mídia agora"}
-                            className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
+                            className={`w-9 h-9 md:w-7.5 md:h-7.5 rounded-lg border transition-all flex items-center justify-center cursor-pointer ${
                               isSlideOverridden
-                                ? "bg-yellow-500 text-black hover:bg-yellow-600"
-                                : "bg-stone-800 hover:bg-stone-750 text-yellow-500"
+                                ? "bg-yellow-500 border-yellow-500 text-black hover:bg-yellow-600"
+                                : "bg-stone-800 border-stone-700 hover:bg-stone-750 text-yellow-500 hover:text-yellow-400"
                             }`}
                           >
-                            <Send className="w-3.5 h-3.5" />
+                            <Send className="w-4 h-4 md:w-3.5 md:h-3.5" />
                           </button>
                           
                           <button
@@ -1098,9 +1838,9 @@ export default function App() {
                               }
                             }}
                             title="Excluir Mídia"
-                            className="p-1.5 bg-stone-800 hover:bg-red-950/40 text-stone-400 hover:text-red-500 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                            className="w-9 h-9 md:w-7.5 md:h-7.5 bg-stone-800 border border-stone-700 hover:bg-red-950/40 text-stone-400 hover:text-red-500 rounded-lg transition-all flex items-center justify-center cursor-pointer"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
                           </button>
                         </div>
                       </div>
@@ -1667,8 +2407,16 @@ export default function App() {
                           </div>
                         </header>
 
-                        <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px]">
-                          {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                        <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px] overflow-hidden">
+                          <AnimatePresence>
+                            <motion.div
+                              key={currentSlideId}
+                              {...getTransitionVariants(currentSlideId)}
+                              className="absolute inset-0 flex items-center justify-center pt-[145px]"
+                            >
+                              {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                            </motion.div>
+                          </AnimatePresence>
                         </main>
                       </motion.div>
                     )}
@@ -1706,11 +2454,11 @@ export default function App() {
                         </div>
                         <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
                           <div className="w-[1920px] h-[1080px] absolute transform scale-[0.65] origin-center flex flex-col items-center justify-center">
-                            <AnimatePresence mode="wait">
+                            <AnimatePresence>
                               <motion.div
                                 key={currentSlideId}
                                 {...getTransitionVariants(currentSlideId)}
-                                className="w-full h-full flex items-center justify-center"
+                                className="absolute inset-0 flex items-center justify-center"
                               >
                                 {clearContentEnabled ? null : renderSlide(currentSlideId)}
                               </motion.div>
@@ -1894,12 +2642,12 @@ export default function App() {
                 </div>
               </header>
 
-              <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px]">
-                <AnimatePresence mode="wait">
+              <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px] overflow-hidden">
+                <AnimatePresence>
                   <motion.div
                     key={currentSlideId}
                     {...getTransitionVariants(currentSlideId)}
-                    className="w-full h-full flex items-center justify-center"
+                    className="absolute inset-0 flex items-center justify-center pt-[145px]"
                   >
                     {clearContentEnabled ? null : renderSlide(currentSlideId)}
                   </motion.div>
@@ -1941,11 +2689,11 @@ export default function App() {
               </div>
               <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
                 <div className="w-[1920px] h-[1080px] absolute transform scale-[0.65] origin-center flex flex-col items-center justify-center">
-                  <AnimatePresence mode="wait">
+                  <AnimatePresence>
                     <motion.div
                       key={currentSlideId}
                       {...getTransitionVariants(currentSlideId)}
-                      className="w-full h-full flex items-center justify-center"
+                      className="absolute inset-0 flex items-center justify-center"
                     >
                       {clearContentEnabled ? null : renderSlide(currentSlideId)}
                     </motion.div>
@@ -2010,6 +2758,31 @@ export default function App() {
           )}
         </AnimatePresence>
 
+      </div>
+
+      {/* HIDDEN PRELOAD CONTAINER FOR IMAGES AND VIDEOS */}
+      <div className="hidden absolute w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        {customMediaList.map((media) => {
+          if (media.type === 'image') {
+            return (
+              <img 
+                key={`preload-${media.id}`} 
+                src={media.url} 
+                alt="" 
+                referrerPolicy="no-referrer" 
+              />
+            );
+          } else {
+            return (
+              <video 
+                key={`preload-${media.id}`} 
+                src={media.url} 
+                preload="auto" 
+                muted 
+              />
+            );
+          }
+        })}
       </div>
 
       {shouldRotate && (

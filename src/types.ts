@@ -1,22 +1,14 @@
-export type SlideType = string;
-
-export interface CustomMedia {
-  id: string;
-  type: 'image' | 'video';
-  name: string;
-  duration: number; // in milliseconds
-  enabledInLoop: boolean;
-  url: string;
-  videoMuted?: boolean;
-  unpinOnEnd?: boolean;
-}
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 export interface Meeting {
   id: string;
-  day: number;
+  day: number; // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
   dayName: string;
   theme: string;
-  time: string;
+  time: string; // e.g. "08:00", "19:30"
   hours: number;
   minutes: number;
 }
