@@ -1,9 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 
-export const ParticlesBackground = () => {
+export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    if (disabled) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -14,7 +15,7 @@ export const ParticlesBackground = () => {
 
     const particles: any[] = [];
     const colors = ['#dc2626', '#b91c1c', '#f59e0b', '#fbbf24']; // reds and yellows
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 15; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
@@ -62,6 +63,8 @@ export const ParticlesBackground = () => {
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
+
+  if (disabled) return null;
 
   return (
     <canvas 
