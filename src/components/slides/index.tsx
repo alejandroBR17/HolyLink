@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Globe, Flame, HeartHandshake, CalendarDays, WifiOff } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { CHURCH_INFO, DONATION, CAMPAIGNS, WEEK_SCHEDULES } from '../../data';
+import { Meeting } from '../../types';
 
 // ==========================================
 // REUSABLE ICON SLIDE
@@ -148,10 +149,54 @@ export const WorldGodSlide = () => {
   );
 };
 
-export const AgendaDaySlide = ({ dayIndex, currentTime }: { dayIndex: number; currentTime: Date }) => {
-  const schedule = WEEK_SCHEDULES.find(s => s.dayIndex === dayIndex) || WEEK_SCHEDULES[0];
+export const AgendaDaySlide = ({ 
+  dayIndex, 
+  currentTime, 
+  meetings = [] 
+}: { 
+  dayIndex: number; 
+  currentTime: Date; 
+  meetings?: Meeting[];
+}) => {
   const isToday = currentTime.getDay() === dayIndex;
   
+  // Calcula a data exata do dayIndex para a semana atual
+  const startOfWeek = new Date(currentTime);
+  startOfWeek.setDate(currentTime.getDate() - currentTime.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  
+  const targetDayDate = new Date(startOfWeek);
+  targetDayDate.setDate(startOfWeek.getDate() + dayIndex);
+  
+  const targetYear = targetDayDate.getFullYear();
+  const targetMonth = String(targetDayDate.getMonth() + 1).padStart(2, '0');
+  const targetDay = String(targetDayDate.getDate()).padStart(2, '0');
+  const targetDayStr = `${targetYear}-${targetMonth}-${targetDay}`;
+
+  // Filtra as reuniões que ocorrem neste dia específico (recorrentes ou pontuais do dia correspondente da semana atual)
+  const dayMeetings = (meetings.length > 0 ? meetings : []).filter(m => {
+    if (m.date) {
+      return m.date === targetDayStr;
+    }
+    return m.day === dayIndex;
+  });
+
+  const defaultSchedule = WEEK_SCHEDULES.find(s => s.dayIndex === dayIndex) || WEEK_SCHEDULES[0];
+  const theme = defaultSchedule?.theme || "Reunião de Fé";
+
+  const formattedTimes = dayMeetings
+    .sort((a, b) => (a.hours * 60 + a.minutes) - (b.hours * 60 + b.minutes))
+    .map(m => {
+      // Formata o tema ou indica se for pontual especial
+      const isSpecialEvent = !!m.date;
+      const timeStr = m.minutes === 0 ? `${m.hours}h` : `${m.hours}h${String(m.minutes).padStart(2, '0')}`;
+      return {
+        time: timeStr,
+        theme: m.theme,
+        isSpecial: isSpecialEvent
+      };
+    });
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -164,12 +209,12 @@ export const AgendaDaySlide = ({ dayIndex, currentTime }: { dayIndex: number; cu
     hidden: { opacity: 0, x: -40 },
     show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 60 } }
   };
-
+ 
   const itemRight = {
     hidden: { opacity: 0, scale: 0.9 },
     show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 60 } }
   };
-
+ 
   return (
     <motion.div 
       variants={container} 
@@ -182,29 +227,43 @@ export const AgendaDaySlide = ({ dayIndex, currentTime }: { dayIndex: number; cu
           {isToday ? 'Reuniões de Hoje' : 'Agenda Semanal'}
         </motion.span>
         <motion.h3 variants={item} className="text-stone-200 font-bold uppercase tracking-[0.3em] mb-6 text-[2.5rem]">
-          {schedule.dayName}
+          {defaultSchedule.dayName}
         </motion.h3>
-        <motion.h2 variants={item} className="text-[7.5rem] text-white font-black uppercase tracking-tight leading-none mt-4">
-          {schedule.theme}
+        <motion.h2 variants={item} className="text-[7.5rem] text-white font-black uppercase tracking-tight leading-none mt-4 whitespace-pre-line">
+          {theme}
         </motion.h2>
       </div>
       <div className="flex-1 pl-16">
         <motion.div variants={itemRight} className="grid grid-cols-2 gap-6">
-          {schedule.times.map((t, i) => (
-            <motion.div 
-              key={t} 
-              className="bg-white/[0.03] border border-white/[0.08] px-12 py-10 rounded-3xl shadow-xl flex items-center justify-center relative overflow-hidden group"
-            >
-               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-               <span className="font-mono text-[4.5rem] font-black tracking-wider relative z-10 text-white">{t}</span>
-            </motion.div>
-          ))}
+          {formattedTimes.length > 0 ? (
+            formattedTimes.map((t, i) => (
+              <motion.div 
+                key={i} 
+                className={`border px-10 py-8 rounded-3xl shadow-xl flex flex-col items-center justify-center relative overflow-hidden group transition-all ${
+                  t.isSpecial 
+                    ? "bg-yellow-500/10 border-yellow-500/30 shadow-yellow-500/5" 
+                    : "bg-white/[0.03] border-white/[0.08]"
+                }`}
+              >
+                <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                <span className={`font-mono text-[4rem] font-black tracking-wider relative z-10 ${t.isSpecial ? "text-yellow-400" : "text-white"}`}>{t.time}</span>
+                <span className="text-stone-400 text-lg uppercase tracking-wider font-semibold mt-1 text-center truncate w-full max-w-full relative z-10">{t.theme}</span>
+                {t.isSpecial && (
+                  <span className="absolute top-2 right-3 text-[9px] bg-yellow-500 text-black px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-90">Especial</span>
+                )}
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-2 text-center py-10 bg-white/[0.02] border border-white/[0.05] rounded-3xl">
+              <span className="text-stone-400 text-2xl">Sem reuniões programadas para este dia.</span>
+            </div>
+          )}
         </motion.div>
       </div>
     </motion.div>
   );
 };
-
+ 
 export const DonationSlide = () => {
   return (
     <motion.div
@@ -234,8 +293,16 @@ export const DonationSlide = () => {
     </motion.div>
   );
 };
+ 
+export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  
+  // Filtra campanhas que não expiraram (endDate é nula ou maior/igual a hoje)
+  const activeCampaigns = (campaigns.length > 0 ? campaigns : []).filter(c => {
+    if (!c.endDate) return true;
+    return c.endDate >= todayStr;
+  });
 
-export const CampaignSlide = () => {
   return (
     <motion.div
        initial={{ opacity: 0 }}
@@ -246,18 +313,26 @@ export const CampaignSlide = () => {
       <h1 className="font-sans font-semibold text-4xl tracking-wide text-stone-400 uppercase mb-16">
         Propósitos Atuais
       </h1>
-      <div className="grid grid-cols-2 gap-10 w-full">
-        {CAMPAIGNS.map((campaign, index) => {
-          const Icon = campaign.type === 'jejum_daniel' ? WifiOff : Flame;
-          return (
-            <div key={index} className="bg-white/[0.03] border border-white/[0.08] p-16 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl relative overflow-hidden group">
-               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-               <Icon className="w-48 h-48 text-yellow-500 mb-12" strokeWidth={1} />
-               <h3 className="text-white font-black text-[6rem] mb-8 tracking-tight leading-none drop-shadow-[0_0_30px_rgba(234,179,8,0.3)] whitespace-pre-line">{campaign.title}</h3>
-               <p className="text-yellow-500 text-4xl uppercase tracking-[0.2em] font-bold mt-6">{campaign.duration}</p>
-            </div>
-          );
-        })}
+      <div className={`grid ${activeCampaigns.length === 1 ? 'grid-cols-1 max-w-2xl' : 'grid-cols-2'} gap-10 w-full justify-center`}>
+        {activeCampaigns.length > 0 ? (
+          activeCampaigns.map((campaign, index) => {
+            const Icon = campaign.type === 'jejum_daniel' ? WifiOff : Flame;
+            return (
+              <div key={index} className="bg-white/[0.03] border border-white/[0.08] p-16 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl relative overflow-hidden group transition-all">
+                 <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                 <Icon className="w-48 h-48 text-yellow-500 mb-12" strokeWidth={1} />
+                 <h3 className="text-white font-black text-[5.5rem] mb-8 tracking-tight leading-none drop-shadow-[0_0_30px_rgba(234,179,8,0.3)] whitespace-pre-line">{campaign.title}</h3>
+                 <p className="text-yellow-500 text-4xl uppercase tracking-[0.2em] font-bold mt-6">{campaign.duration}</p>
+              </div>
+            );
+          })
+        ) : (
+          <div className="col-span-2 bg-white/[0.03] border border-white/[0.08] p-20 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl">
+            <Flame className="w-36 h-36 text-yellow-500/35 mb-8" strokeWidth={1} />
+            <h3 className="text-stone-300 font-bold text-[3rem] mb-4">Mantenha a sua Fé Ativa</h3>
+            <p className="text-stone-400 text-2xl leading-relaxed max-w-lg">Participe diariamente das nossas reuniões de fé e fortaleça a sua comunhão com Deus.</p>
+          </div>
+        )}
       </div>
     </motion.div>
   );

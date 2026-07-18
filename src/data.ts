@@ -7,8 +7,7 @@ import { Meeting, DaySchedule } from './types';
 
 export const MEETINGS: Meeting[] = [
   // Domingo
-  { id: 'dom-07', day: 0, dayName: 'Domingo', theme: 'Encontro com Deus', time: '07:00', hours: 7, minutes: 0 },
-  { id: 'dom-0930', day: 0, dayName: 'Domingo', theme: 'Encontro com Deus', time: '09:30', hours: 9, minutes: 30 },
+  { id: 'dom-08', day: 0, dayName: 'Domingo', theme: 'Encontro com Deus', time: '08:00', hours: 8, minutes: 0 },
   { id: 'dom-18', day: 0, dayName: 'Domingo', theme: 'Encontro com Deus', time: '18:00', hours: 18, minutes: 0 },
 
   // Segunda
@@ -37,6 +36,7 @@ export const MEETINGS: Meeting[] = [
 
   // Sábado
   { id: 'sab-07', day: 6, dayName: 'Sábado', theme: 'Jejum das Causas Impossíveis', time: '07:00', hours: 7, minutes: 0 },
+  { id: 'sab-15', day: 6, dayName: 'Sábado', theme: 'Encontro Jovem', time: '15:00', hours: 15, minutes: 0 },
 ];
 
 export const WEEK_SCHEDULES: DaySchedule[] = [
@@ -44,7 +44,7 @@ export const WEEK_SCHEDULES: DaySchedule[] = [
     dayName: 'Domingo',
     dayIndex: 0,
     theme: 'Encontro com Deus',
-    times: ['07h', '09h30', '18h'],
+    times: ['08h', '18h'],
   },
   {
     dayName: 'Segunda-feira',
@@ -79,8 +79,8 @@ export const WEEK_SCHEDULES: DaySchedule[] = [
   {
     dayName: 'Sábado',
     dayIndex: 6,
-    theme: 'Jejum das Causas Impossíveis',
-    times: ['07h'],
+    theme: 'Causas Impossíveis / FJU',
+    times: ['07h', '15h'],
   }
 ];
 
@@ -129,12 +129,14 @@ export const CAMPAIGNS = [
   {
     title: "Fogueira Santa\ndo Monte Sião",
     duration: "Até o final de Julho",
-    type: "fogueira_santa"
+    type: "fogueira_santa",
+    endDate: "2026-07-31"
   },
   {
     title: "Jejum de\nDaniel",
     duration: "Até 2 de Agosto",
-    type: "jejum_daniel"
+    type: "jejum_daniel",
+    endDate: "2026-08-02"
   }
 ];
 

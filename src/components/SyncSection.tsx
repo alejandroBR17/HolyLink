@@ -352,8 +352,9 @@ export function SyncSection() {
         connectAndSendData(codeFromUrl);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (savedRole === 'pc') {
-      // Se era PC, inicia receptor silenciosa e imediatamente
+    } else if (savedRole === 'pc' || !savedRole) {
+      // Se era PC, ou se é a primeira vez sem papel definido, inicia receptor silenciosa e imediatamente
+      localStorage.setItem('projection_deviceRole', 'pc');
       const timer = setTimeout(() => {
         startReceiver();
       }, 500);

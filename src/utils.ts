@@ -10,16 +10,29 @@ import { MEETINGS } from './data';
  * Calculates the next meeting and any currently ongoing meeting.
  * Meetings are assumed to last 90 minutes.
  */
-export function getNextMeeting(now: Date): {
+export function getNextMeeting(now: Date, meetingsList: Meeting[] = MEETINGS): {
   nextMeeting: Meeting;
   nextMeetingDate: Date;
   ongoingMeeting: Meeting | null;
 } {
   let ongoingMeeting: Meeting | null = null;
   
+  const formatDateStr = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = formatDateStr(now);
+
   // 1. Check if there is an ongoing meeting (started within last 90 minutes)
-  for (const m of MEETINGS) {
-    if (m.day === now.getDay()) {
+  for (const m of meetingsList) {
+    const isOngoingToday = m.date 
+      ? m.date === todayStr
+      : m.day === now.getDay();
+
+    if (isOngoingToday) {
       const mStart = new Date(now);
       mStart.setHours(m.hours, m.minutes, 0, 0);
       const mEnd = new Date(mStart.getTime() + 90 * 60 * 1000); // 90 minutes later
@@ -35,9 +48,15 @@ export function getNextMeeting(now: Date): {
   for (let d = 0; d <= 7; d++) {
     const candidateDate = new Date(now.getTime() + d * 24 * 60 * 60 * 1000);
     const dayOfWeek = candidateDate.getDay();
+    const candidateStr = formatDateStr(candidateDate);
     
-    // Filter meetings on this day of week
-    const dayMeetings = MEETINGS.filter(m => m.day === dayOfWeek);
+    // Filter meetings on this candidate day
+    const dayMeetings = meetingsList.filter(m => {
+      if (m.date) {
+        return m.date === candidateStr;
+      }
+      return m.day === dayOfWeek;
+    });
     
     // Sort meetings by time of day
     const sorted = [...dayMeetings].sort((a, b) => {
@@ -59,8 +78,8 @@ export function getNextMeeting(now: Date): {
     }
   }
 
-  // Fallback (should never be reached as the schedule is weekly and repeating)
-  const defaultMeeting = MEETINGS[0];
+  // Fallback
+  const defaultMeeting = meetingsList[0] || MEETINGS[0];
   const fallbackDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   fallbackDate.setHours(defaultMeeting.hours, defaultMeeting.minutes, 0, 0);
   return {

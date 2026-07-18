@@ -7,6 +7,7 @@ import { ParticlesBackground } from './ParticlesBackground';
 import { VerseSlide } from './VerseSlide';
 import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide } from './slides';
 import { SOCIAL } from '../data';
+import { Meeting } from '../types';
 
 interface CustomMedia {
   id: string;
@@ -44,6 +45,8 @@ interface ProjectionContentProps {
   onClearAlert: () => void;
   onVideoEnded?: () => void;
   isMiniature?: boolean;
+  customMeetings?: Meeting[];
+  customCampaigns?: any[];
 }
 
 export const ProjectionContent: React.FC<ProjectionContentProps> = ({
@@ -71,7 +74,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   loopIteration = 0,
   onClearAlert,
   onVideoEnded,
-  isMiniature = false
+  isMiniature = false,
+  customMeetings = [],
+  customCampaigns = []
 }) => {
   const getTransitionVariants = (slideId: string) => {
     if (slideId.startsWith('verse_') || slideId === 'world_god') {
@@ -118,7 +123,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
     }
     if (slideId.startsWith("agenda_day_")) {
       const dayIndex = parseInt(slideId.replace("agenda_day_", ""), 10);
-      return <AgendaDaySlide dayIndex={dayIndex} currentTime={currentTime} />;
+      return <AgendaDaySlide dayIndex={dayIndex} currentTime={currentTime} meetings={customMeetings} />;
     }
     if (slideId.startsWith("verse_")) {
       const verseIndexOffset = parseInt(slideId.replace("verse_", ""), 10) || 0;
@@ -150,7 +155,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       case 'donations':
         return <DonationSlide />;
       case 'campaigns':
-        return <CampaignSlide />;
+        return <CampaignSlide campaigns={customCampaigns} />;
       case 'world_god':
         return <WorldGodSlide />;
       default:

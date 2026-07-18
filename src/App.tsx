@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, ArrowUp, ArrowDown, Download, Upload } from 'lucide-react';
 import QRCode from "react-qr-code";
-import { CHURCH_INFO, ALERTS, VERSES, SLIDE_TIMING, DONATION, CAMPAIGNS, WEEK_SCHEDULES } from './data';
+import { CHURCH_INFO, ALERTS, VERSES, SLIDE_TIMING, DONATION, CAMPAIGNS, WEEK_SCHEDULES, MEETINGS } from './data';
 import { getNextMeeting, saveMediaItem, getAllMediaItems, deleteMediaItem, getSlideDuration } from './utils';
+import { Meeting } from './types';
 import { ParticlesBackground } from './components/ParticlesBackground';
 import { VerseSlide } from './components/VerseSlide';
 import { ProjectionContent } from './components/ProjectionContent';
@@ -156,6 +157,51 @@ export default function App() {
     }
     return [];
   });
+
+  const [customMeetings, setCustomMeetings] = useState<Meeting[]>(() => {
+    if (typeof window === 'undefined') return MEETINGS;
+    const val = localStorage.getItem('projection_customMeetings');
+    if (val) {
+      try {
+        return JSON.parse(val);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return MEETINGS;
+  });
+
+  const [customCampaigns, setCustomCampaigns] = useState<any[]>(() => {
+    if (typeof window === 'undefined') return CAMPAIGNS;
+    const val = localStorage.getItem('projection_customCampaigns');
+    if (val) {
+      try {
+        return JSON.parse(val);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return CAMPAIGNS;
+  });
+
+  // UI States for Dynamic Management Panels
+  const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(false);
+  const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(false);
+  const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
+  const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
+
+  // Form Fields - Meetings
+  const [newMeetTheme, setNewMeetTheme] = useState('');
+  const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
+  const [newMeetWeeklyDay, setNewMeetWeeklyDay] = useState(0); // 0 = Domingo
+  const [newMeetDate, setNewMeetDate] = useState('');
+  const [newMeetTime, setNewMeetTime] = useState('19:30');
+
+  // Form Fields - Campaigns
+  const [newCampTitle, setNewCampTitle] = useState('');
+  const [newCampDuration, setNewCampDuration] = useState('');
+  const [newCampType, setNewCampType] = useState('fogueira_santa');
+  const [newCampEndDate, setNewCampEndDate] = useState('');
 
   // Custom Media States
   const [mediaUpdateTrigger, setMediaUpdateTrigger] = useState<string>(() => {
@@ -348,7 +394,7 @@ export default function App() {
         baseActiveSlides.push(media.id);
       }
     });
-    const nextMeetingDateObj = getNextMeeting(new Date()).nextMeetingDate;
+    const nextMeetingDateObj = getNextMeeting(new Date(), customMeetings).nextMeetingDate;
     const adjustedNextMeetingDate = new Date(nextMeetingDateObj.getTime() + countdownOffset);
     const diffSecondsLocal = Math.max(0, Math.floor((adjustedNextMeetingDate.getTime() - new Date().getTime()) / 1000));
     if (diffSecondsLocal <= 15 * 60) {
@@ -384,7 +430,8 @@ export default function App() {
     if (value === null || value === undefined) {
       localStorage.removeItem(`projection_${key}`);
     } else {
-      localStorage.setItem(`projection_${key}`, value.toString());
+      const stringValue = (typeof value === 'object') ? JSON.stringify(value) : value.toString();
+      localStorage.setItem(`projection_${key}`, stringValue);
     }
 
     if (key === 'manualSlideOverride') setManualSlideOverride(value);
@@ -400,6 +447,20 @@ export default function App() {
     else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
     else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
     else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+    else if (key === 'customMeetings') {
+      try {
+        setCustomMeetings(typeof value === 'string' ? JSON.parse(value) : value);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    else if (key === 'customCampaigns') {
+      try {
+        setCustomCampaigns(typeof value === 'string' ? JSON.parse(value) : value);
+      } catch (e) {
+        console.error(e);
+      }
+    }
     else if (key === 'slidesOrder') {
       try {
         setSlidesOrder(value ? JSON.parse(value) : []);
@@ -451,6 +512,20 @@ export default function App() {
       else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
       else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
       else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+      else if (key === 'customMeetings') {
+        try {
+          setCustomMeetings(value ? (typeof value === 'string' ? JSON.parse(value) : value) : MEETINGS);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      else if (key === 'customCampaigns') {
+        try {
+          setCustomCampaigns(value ? (typeof value === 'string' ? JSON.parse(value) : value) : CAMPAIGNS);
+        } catch (e) {
+          console.error(e);
+        }
+      }
       else if (key === 'slidesOrder') {
         try {
           setSlidesOrder(value ? JSON.parse(value) : []);
@@ -487,6 +562,18 @@ export default function App() {
         setSlidesOrder(order ? JSON.parse(order) : []);
       } catch (e) {
         setSlidesOrder([]);
+      }
+      try {
+        const meets = localStorage.getItem('projection_customMeetings');
+        setCustomMeetings(meets ? JSON.parse(meets) : MEETINGS);
+      } catch (e) {
+        setCustomMeetings(MEETINGS);
+      }
+      try {
+        const camps = localStorage.getItem('projection_customCampaigns');
+        setCustomCampaigns(camps ? JSON.parse(camps) : CAMPAIGNS);
+      } catch (e) {
+        setCustomCampaigns(CAMPAIGNS);
       }
       // Also fetch media
       getAllMediaItems().then(items => setCustomMediaList(items));
@@ -603,7 +690,7 @@ export default function App() {
   }, []);
 
   // Compute Meeting State
-  const { nextMeeting, nextMeetingDate, ongoingMeeting } = getNextMeeting(currentTime);
+  const { nextMeeting, nextMeetingDate, ongoingMeeting } = getNextMeeting(currentTime, customMeetings);
   
   let isJustStartedRaw = false;
   if (ongoingMeeting) {
@@ -1669,6 +1756,445 @@ export default function App() {
               )}
             </div>
 
+            {/* GERENCIAR AGENDA E EVENTOS */}
+            <div className="bg-[#121212] border border-stone-800 rounded-2xl overflow-hidden transition-all duration-300">
+              <button
+                onClick={() => setIsMeetingPanelOpen(!isMeetingPanelOpen)}
+                className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#1a1a1a]/30 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500">
+                    <CalendarDays className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-stone-200 font-bold text-xs uppercase tracking-wider">Gerenciar Agenda & Eventos</h2>
+                    <p className="text-[10px] text-stone-500 font-normal mt-0.5">{customMeetings.length} reuniões/eventos no total</p>
+                  </div>
+                </div>
+                <motion.div
+                  animate={{ rotate: isMeetingPanelOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ArrowDown className="w-4 h-4 text-stone-400" />
+                </motion.div>
+              </button>
+
+              {isMeetingPanelOpen && (
+                <div className="p-5 border-t border-stone-850 bg-[#0f0f0f] flex flex-col gap-4 animate-in fade-in duration-200">
+                  
+                  {/* BOTÃO ADICIONAR */}
+                  {!showAddMeetingForm ? (
+                    <button
+                      onClick={() => {
+                        setShowAddMeetingForm(true);
+                        setNewMeetTheme('');
+                        setNewMeetType('weekly');
+                        setNewMeetWeeklyDay(new Date().getDay());
+                        setNewMeetDate(new Date().toISOString().split('T')[0]);
+                        setNewMeetTime('19:30');
+                      }}
+                      className="w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" /> Adicionar Reunião ou Evento
+                    </button>
+                  ) : (
+                    <div className="bg-[#161616] border border-stone-800 p-4 rounded-xl flex flex-col gap-3.5 animate-in slide-in-from-top-2 duration-200">
+                      <div className="flex items-center justify-between border-b border-stone-800 pb-2">
+                        <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Novo Evento / Reunião</span>
+                        <button 
+                          onClick={() => setShowAddMeetingForm(false)}
+                          className="text-stone-500 hover:text-stone-300 transition-colors p-1 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* TÍTULO */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase">Tema ou Título</label>
+                        <input
+                          type="text"
+                          value={newMeetTheme}
+                          onChange={(e) => setNewMeetTheme(e.target.value)}
+                          placeholder="Ex: Conexão Teen para o FTU, Encontro com Deus..."
+                          className="bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-600 font-sans"
+                        />
+                      </div>
+
+                      {/* TIPO */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase">Tipo de Frequência</label>
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setNewMeetType('weekly')}
+                            className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                              newMeetType === 'weekly'
+                                ? "bg-yellow-500 border-yellow-500 text-black shadow-lg shadow-yellow-500/5"
+                                : "bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-750"
+                            }`}
+                          >
+                            Semanal Recorrente
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNewMeetType('one_time')}
+                            className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                              newMeetType === 'one_time'
+                                ? "bg-yellow-500 border-yellow-500 text-black shadow-lg shadow-yellow-500/5"
+                                : "bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-750"
+                            }`}
+                          >
+                            Evento Único (Pontual)
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* DIA DA SEMANA OU DATA */}
+                      {newMeetType === 'weekly' ? (
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-stone-500 uppercase">Dia da Semana</label>
+                          <select
+                            value={newMeetWeeklyDay}
+                            onChange={(e) => setNewMeetWeeklyDay(parseInt(e.target.value, 10))}
+                            className="bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-600 font-sans cursor-pointer"
+                          >
+                            <option value={0}>Domingo</option>
+                            <option value={1}>Segunda-feira</option>
+                            <option value={2}>Terça-feira</option>
+                            <option value={3}>Quarta-feira</option>
+                            <option value={4}>Quinta-feira</option>
+                            <option value={5}>Sexta-feira</option>
+                            <option value={6}>Sábado</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-stone-500 uppercase">Data do Evento</label>
+                          <input
+                            type="date"
+                            value={newMeetDate}
+                            onChange={(e) => setNewMeetDate(e.target.value)}
+                            className="bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-600 font-sans cursor-pointer"
+                          />
+                        </div>
+                      )}
+
+                      {/* HORÁRIO */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase">Horário de Início</label>
+                        <input
+                          type="time"
+                          value={newMeetTime}
+                          onChange={(e) => setNewMeetTime(e.target.value)}
+                          className="bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-600 font-sans cursor-pointer"
+                        />
+                      </div>
+
+                      {/* BOTÕES DE SALVAMENTO */}
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newMeetTheme.trim()) return;
+                            
+                            const [hours, minutes] = newMeetTime.split(':').map(Number);
+                            const daysMap = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+                            let finalDayName = '';
+                            let finalDay: number | undefined = undefined;
+                            let finalDate: string | undefined = undefined;
+
+                            if (newMeetType === 'weekly') {
+                              finalDayName = daysMap[newMeetWeeklyDay];
+                              finalDay = newMeetWeeklyDay;
+                            } else {
+                              if (!newMeetDate) return;
+                              const dateParts = newMeetDate.split('-');
+                              const dateObj = new Date(newMeetDate + 'T12:00:00');
+                              finalDay = dateObj.getDay();
+                              finalDayName = `${daysMap[finalDay]} (${dateParts[2]}/${dateParts[1]})`;
+                              finalDate = newMeetDate;
+                            }
+
+                            const newMeeting: Meeting = {
+                              id: `meet_${Date.now()}`,
+                              day: finalDay,
+                              dayName: finalDayName,
+                              theme: newMeetTheme.trim(),
+                              time: newMeetTime,
+                              hours: hours,
+                              minutes: minutes,
+                              date: finalDate
+                            };
+
+                            const updated = [...customMeetings, newMeeting];
+                            updateStateAndBroadcast('customMeetings', updated);
+                            setShowAddMeetingForm(false);
+                            setNewMeetTheme('');
+                          }}
+                          className="flex-1 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                        >
+                          Confirmar Cadastro
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddMeetingForm(false)}
+                          className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LISTA DE REUNIÕES CADASTRADAS */}
+                  <div className="flex flex-col gap-2 max-h-[240px] overflow-y-auto pr-1">
+                    {customMeetings.length > 0 ? (
+                      // Ordena as reuniões por dia e depois por horário
+                      [...customMeetings]
+                        .sort((a, b) => {
+                          const dayA = a.day ?? 0;
+                          const dayB = b.day ?? 0;
+                          if (dayA !== dayB) return dayA - dayB;
+                          return (a.hours * 60 + a.minutes) - (b.hours * 60 + b.minutes);
+                        })
+                        .map((meet) => (
+                          <div 
+                            key={meet.id}
+                            className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
+                              meet.date 
+                                ? "bg-yellow-500/5 border-yellow-500/20" 
+                                : "bg-stone-900 border-stone-850"
+                            }`}
+                          >
+                            <div className="flex flex-col gap-1 max-w-[80%]">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
+                                  meet.date
+                                    ? "bg-yellow-500 text-black"
+                                    : "bg-stone-850 text-stone-400 border border-stone-800"
+                                }`}>
+                                  {meet.date ? "Único" : "Recorrente"}
+                                </span>
+                                <span className="text-stone-300 font-bold">{meet.dayName}</span>
+                                <span className="text-yellow-500 font-mono font-bold">às {meet.time}</span>
+                              </div>
+                              <span className="text-stone-400 truncate font-medium">{meet.theme}</span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const updated = customMeetings.filter(m => m.id !== meet.id);
+                                updateStateAndBroadcast('customMeetings', updated);
+                              }}
+                              className="p-1.5 text-stone-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
+                              title="Remover reunião"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))
+                    ) : (
+                      <span className="text-center text-xs text-stone-500 py-4">Nenhum evento ou reunião configurado.</span>
+                    )}
+                  </div>
+
+                </div>
+              )}
+            </div>
+
+            {/* GERENCIAR CAMPANHAS / PROPÓSITOS DE FÉ */}
+            <div className="bg-[#121212] border border-stone-800 rounded-2xl overflow-hidden transition-all duration-300">
+              <button
+                onClick={() => setIsCampaignPanelOpen(!isCampaignPanelOpen)}
+                className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#1a1a1a]/30 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500">
+                    <Flame className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-stone-200 font-bold text-xs uppercase tracking-wider">Propósitos de Fé (Campanhas)</h2>
+                    <p className="text-[10px] text-stone-500 font-normal mt-0.5">{customCampaigns.length} propósitos configurados</p>
+                  </div>
+                </div>
+                <motion.div
+                  animate={{ rotate: isCampaignPanelOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ArrowDown className="w-4 h-4 text-stone-400" />
+                </motion.div>
+              </button>
+
+              {isCampaignPanelOpen && (
+                <div className="p-5 border-t border-stone-850 bg-[#0f0f0f] flex flex-col gap-4 animate-in fade-in duration-200">
+                  
+                  {/* BOTÃO ADICIONAR */}
+                  {!showAddCampaignForm ? (
+                    <button
+                      onClick={() => {
+                        setShowAddCampaignForm(true);
+                        setNewCampTitle('');
+                        setNewCampDuration('');
+                        setNewCampType('fogueira_santa');
+                        setNewCampEndDate('');
+                      }}
+                      className="w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" /> Adicionar Novo Propósito
+                    </button>
+                  ) : (
+                    <div className="bg-[#161616] border border-stone-800 p-4 rounded-xl flex flex-col gap-3.5 animate-in slide-in-from-top-2 duration-200">
+                      <div className="flex items-center justify-between border-b border-stone-800 pb-2">
+                        <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider">Novo Propósito de Fé</span>
+                        <button 
+                          onClick={() => setShowAddCampaignForm(false)}
+                          className="text-stone-500 hover:text-stone-300 transition-colors p-1 cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* TÍTULO */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase">Título do Propósito</label>
+                        <input
+                          type="text"
+                          value={newCampTitle}
+                          onChange={(e) => setNewCampTitle(e.target.value)}
+                          placeholder="Ex: Fogueira Santa no Monte Sião..."
+                          className="bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-600 font-sans"
+                        />
+                      </div>
+
+                      {/* DURAÇÃO */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase">Período / Duração</label>
+                        <input
+                          type="text"
+                          value={newCampDuration}
+                          onChange={(e) => setNewCampDuration(e.target.value)}
+                          placeholder="Ex: Até o final de Julho, Até dia 2 de Agosto..."
+                          className="bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-600 font-sans"
+                        />
+                      </div>
+
+                      {/* TIPO DE ÍCONE */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase">Tipo (Visual)</label>
+                        <select
+                          value={newCampType}
+                          onChange={(e) => setNewCampType(e.target.value)}
+                          className="bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-600 font-sans cursor-pointer"
+                        >
+                          <option value="fogueira_santa">Fogueira Santa (Ícone de Fogo)</option>
+                          <option value="jejum_daniel">Jejum de Daniel (Ícone de Sem Wifi)</option>
+                          <option value="custom">Geral / Customizado (Ícone de Fogo)</option>
+                        </select>
+                      </div>
+
+                      {/* DATA LIMITE (OCULTAR AUTOMATICAMENTE) */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase">Data Limite de Exibição (Opcional)</label>
+                        <input
+                          type="date"
+                          value={newCampEndDate}
+                          onChange={(e) => setNewCampEndDate(e.target.value)}
+                          className="bg-stone-900 border border-stone-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-600 font-sans cursor-pointer"
+                        />
+                        <p className="text-[9px] text-stone-500 mt-0.5">O propósito sumirá automaticamente das telas no dia seguinte a esta data.</p>
+                      </div>
+
+                      {/* BOTÕES DE SALVAMENTO */}
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newCampTitle.trim() || !newCampDuration.trim()) return;
+
+                            const newCamp = {
+                              title: newCampTitle.trim(),
+                              duration: newCampDuration.trim(),
+                              type: newCampType,
+                              endDate: newCampEndDate || undefined
+                            };
+
+                            const updated = [...customCampaigns, newCamp];
+                            updateStateAndBroadcast('customCampaigns', updated);
+                            setShowAddCampaignForm(false);
+                            setNewCampTitle('');
+                            setNewCampDuration('');
+                          }}
+                          className="flex-1 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                        >
+                          Salvar Propósito
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddCampaignForm(false)}
+                          className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LISTA DE CAMPANHAS */}
+                  <div className="flex flex-col gap-2 max-h-[240px] overflow-y-auto pr-1">
+                    {customCampaigns.length > 0 ? (
+                      customCampaigns.map((camp, idx) => {
+                        const todayStr = new Date().toISOString().split('T')[0];
+                        const isExpired = camp.endDate && camp.endDate < todayStr;
+
+                        return (
+                          <div 
+                            key={idx}
+                            className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
+                              isExpired 
+                                ? "bg-stone-950 border-stone-900 opacity-50" 
+                                : "bg-stone-900 border-stone-850"
+                            }`}
+                          >
+                            <div className="flex flex-col gap-1 max-w-[80%]">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
+                                  isExpired
+                                    ? "bg-red-500/20 text-red-400 border border-red-500/20"
+                                    : "bg-green-500/10 text-green-400 border border-green-500/20"
+                                }`}>
+                                  {isExpired ? "Oculto (Expirado)" : "Ativo"}
+                                </span>
+                                <span className="text-stone-300 font-bold truncate">{camp.title.replace('\n', ' ')}</span>
+                              </div>
+                              <div className="flex flex-col gap-0.5 text-[10px] text-stone-500">
+                                <span><strong>Duração:</strong> {camp.duration}</span>
+                                {camp.endDate && (
+                                  <span><strong>Até:</strong> {camp.endDate.split('-').reverse().join('/')} (Some auto)</span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const updated = customCampaigns.filter((_, cIdx) => cIdx !== idx);
+                                updateStateAndBroadcast('customCampaigns', updated);
+                              }}
+                              className="p-1.5 text-stone-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
+                              title="Remover propósito"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <span className="text-center text-xs text-stone-500 py-4">Nenhum propósito cadastrado.</span>
+                    )}
+                  </div>
+
+                </div>
+              )}
+            </div>
+
             {/* SEÇÃO DE BACKUP & SINCRONIZAÇÃO */}
             <SyncSection />
 
@@ -1718,6 +2244,8 @@ export default function App() {
                   loopIteration={loopIteration}
                   onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
                   isMiniature={true}
+                  customMeetings={customMeetings}
+                  customCampaigns={customCampaigns}
                 />
               </div>
             </div>
@@ -1811,6 +2339,8 @@ export default function App() {
           videoPinBehavior={videoPinBehavior}
           loopIteration={loopIteration}
           onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
+          customMeetings={customMeetings}
+          customCampaigns={customCampaigns}
           onVideoEnded={() => {
             if (manualSlideOverride && videoPinBehavior === 'unpin') {
               updateStateAndBroadcast('manualSlideOverride', null);
