@@ -550,6 +550,16 @@ export default function App() {
     }
 
     const updateStateLocalOnly = (key: string, value: any) => {
+      // Safely persist the incoming update to localStorage if it's different from current storage value
+      const stringValue = (value === null || value === undefined) ? null : (typeof value === 'object' ? JSON.stringify(value) : value.toString());
+      if (localStorage.getItem(`projection_${key}`) !== stringValue) {
+        if (stringValue === null) {
+          localStorage.removeItem(`projection_${key}`);
+        } else {
+          localStorage.setItem(`projection_${key}`, stringValue);
+        }
+      }
+
       if (key === 'manualSlideOverride') setManualSlideOverride(value);
       else if (key === 'countdownOffset') setCountdownOffset(value !== null ? parseInt(value.toString(), 10) : 0);
       else if (key === 'countdownPaused') setCountdownPaused(value === 'true' || value === true);
@@ -665,7 +675,7 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Responsive Operator's Panel states
-  const [activeMobileTab, setActiveMobileTab] = useState<'slides' | 'controls' | 'monitor'>('slides');
+  const [activeMobileTab, setActiveMobileTab] = useState<'slides' | 'agenda' | 'campaigns' | 'controls' | 'monitor'>('slides');
   const monitorContainerRef = useRef<HTMLDivElement>(null);
   const [monitorScale, setMonitorScale] = useState(0.13);
 
@@ -965,21 +975,49 @@ export default function App() {
         )}
 
         {/* MOBILE TABS BAR (Only visible on screens smaller than lg) */}
-        <div className="lg:hidden flex bg-[#121212] border-b border-stone-850 sticky top-0 z-20 shrink-0">
+        <div className="lg:hidden grid grid-cols-5 bg-[#121212] border-b border-stone-850 sticky top-0 z-20 shrink-0">
           <button
             onClick={() => setActiveMobileTab('slides')}
-            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1.5 transition-all ${
+            className={`py-3.5 text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1.5 transition-all ${
               activeMobileTab === 'slides'
                 ? "text-yellow-500 border-b-2 border-yellow-500 bg-stone-900/40"
                 : "text-stone-500 hover:text-stone-300"
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>Slides ({activeSlides.length})</span>
+            <span>Slides</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveMobileTab('agenda');
+              setIsMeetingPanelOpen(true);
+            }}
+            className={`py-3.5 text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1.5 transition-all ${
+              activeMobileTab === 'agenda'
+                ? "text-yellow-500 border-b-2 border-yellow-500 bg-stone-900/40"
+                : "text-stone-500 hover:text-stone-300"
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+            <span>Agenda</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveMobileTab('campaigns');
+              setIsCampaignPanelOpen(true);
+            }}
+            className={`py-3.5 text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1.5 transition-all ${
+              activeMobileTab === 'campaigns'
+                ? "text-yellow-500 border-b-2 border-yellow-500 bg-stone-900/40"
+                : "text-stone-500 hover:text-stone-300"
+            }`}
+          >
+            <Flame className="w-4 h-4" />
+            <span>Campanhas</span>
           </button>
           <button
             onClick={() => setActiveMobileTab('controls')}
-            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1.5 transition-all ${
+            className={`py-3.5 text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1.5 transition-all ${
               activeMobileTab === 'controls'
                 ? "text-yellow-500 border-b-2 border-yellow-500 bg-stone-900/40"
                 : "text-stone-500 hover:text-stone-300"
@@ -990,7 +1028,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveMobileTab('monitor')}
-            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex flex-col items-center gap-1.5 transition-all ${
+            className={`py-3.5 text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1.5 transition-all ${
               activeMobileTab === 'monitor'
                 ? "text-yellow-500 border-b-2 border-yellow-500 bg-stone-900/40"
                 : "text-stone-500 hover:text-stone-300"
@@ -1607,10 +1645,10 @@ export default function App() {
           </div>
 
           {/* MIDDLE: TIMERS & ALERTS */}
-          <div className={`flex-1 bg-[#090909] p-4 lg:p-6 overflow-y-auto flex flex-col gap-6 ${activeMobileTab === 'controls' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className={`flex-1 bg-[#090909] p-4 lg:p-6 overflow-y-auto flex flex-col gap-6 ${activeMobileTab === 'controls' || activeMobileTab === 'agenda' || activeMobileTab === 'campaigns' ? 'flex' : 'hidden lg:flex'}`}>
             
             {/* CONTROLE DE PROJEÇÃO */}
-            <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 flex flex-col gap-4">
+            <div className={`bg-[#121212] border border-stone-800 rounded-2xl p-5 flex flex-col gap-4 ${activeMobileTab === 'controls' ? 'flex' : 'hidden lg:flex'}`}>
               <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
                 <Tv className="w-4.5 h-4.5 text-yellow-500" />
                 Ações Rápidas de Projeção (2ª Tela)
@@ -1682,7 +1720,7 @@ export default function App() {
             </div>
             
             {/* TIMERS SECTION */}
-            <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5">
+            <div className={`bg-[#121212] border border-stone-800 rounded-2xl p-5 ${activeMobileTab === 'controls' ? 'block' : 'hidden lg:block'}`}>
               <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider mb-3">Cronômetro de Reunião</h2>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 sm:items-center justify-between">
                 <div>
@@ -1768,7 +1806,7 @@ export default function App() {
             </div>
 
             {/* ALERTS SECTION */}
-            <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 flex flex-col gap-4">
+            <div className={`bg-[#121212] border border-stone-800 rounded-2xl p-5 flex flex-col gap-4 ${activeMobileTab === 'controls' ? 'flex' : 'hidden lg:flex'}`}>
               <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider">Disparador de Alertas Visuais</h2>
               
               <div className="grid grid-cols-2 gap-3">
@@ -1845,7 +1883,7 @@ export default function App() {
             </div>
 
             {/* GERENCIAR AGENDA E EVENTOS */}
-            <div className="bg-[#121212] border border-stone-800 rounded-2xl overflow-hidden transition-all duration-300">
+            <div className={`bg-[#121212] border border-stone-800 rounded-2xl overflow-hidden transition-all duration-300 ${activeMobileTab === 'agenda' ? 'block' : 'hidden lg:block'}`}>
               <button
                 onClick={() => setIsMeetingPanelOpen(!isMeetingPanelOpen)}
                 className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#1a1a1a]/30 transition-colors"
@@ -2091,7 +2129,7 @@ export default function App() {
             </div>
 
             {/* GERENCIAR CAMPANHAS / PROPÓSITOS DE FÉ */}
-            <div className="bg-[#121212] border border-stone-800 rounded-2xl overflow-hidden transition-all duration-300">
+            <div className={`bg-[#121212] border border-stone-800 rounded-2xl overflow-hidden transition-all duration-300 ${activeMobileTab === 'campaigns' ? 'block' : 'hidden lg:block'}`}>
               <button
                 onClick={() => setIsCampaignPanelOpen(!isCampaignPanelOpen)}
                 className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#1a1a1a]/30 transition-colors"
@@ -2284,7 +2322,9 @@ export default function App() {
             </div>
 
             {/* SEÇÃO DE BACKUP & SINCRONIZAÇÃO */}
-            <SyncSection />
+            <div className={activeMobileTab === 'controls' ? 'block' : 'hidden lg:block'}>
+              <SyncSection />
+            </div>
 
           </div>
 
