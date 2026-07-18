@@ -103,13 +103,15 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       if (media.type === 'image') {
         const isCover = media.fit === 'cover';
         return (
-          <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
-            <img 
-              src={media.url} 
-              alt={media.name} 
-              className={isCover ? "w-full h-full object-cover" : "max-w-[95%] max-h-[95%] object-contain rounded-2xl shadow-2xl"}
-              referrerPolicy="no-referrer"
-            />
+          <div className="w-full h-full p-12 flex items-center justify-center">
+            <div className="w-full h-full relative rounded-[3rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.9)] border border-white/10 bg-black/20">
+              <img 
+                src={media.url} 
+                alt={media.name} 
+                className={`w-full h-full ${isCover ? 'object-cover' : 'object-contain'}`}
+                referrerPolicy="no-referrer"
+              />
+            </div>
           </div>
         );
       } else if (media.type === 'video') {
@@ -271,12 +273,12 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               </div>
             </header>
 
-            <main className="flex-1 relative w-full overflow-hidden bg-black/20">
-              <AnimatePresence mode="wait">
+            <main className="flex-1 relative w-full overflow-hidden">
+              <AnimatePresence>
                 <motion.div
                   key={currentSlideId}
                   {...getTransitionVariants(currentSlideId)}
-                  className="absolute inset-0 flex items-center justify-center p-8"
+                  className="absolute inset-0 flex items-center justify-center"
                 >
                   {clearContentEnabled ? null : renderSlide(currentSlideId)}
                 </motion.div>
