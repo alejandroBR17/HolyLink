@@ -255,7 +255,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 <motion.div
                   key={currentSlideId}
                   {...getTransitionVariants(currentSlideId)}
-                  className="absolute inset-0 flex items-center justify-center"
+                  className="absolute inset-0 flex items-center justify-center pt-[145px]"
                 >
                   {clearContentEnabled ? null : renderSlide(currentSlideId)}
                 </motion.div>
