@@ -103,11 +103,11 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       if (media.type === 'image') {
         const isCover = media.fit === 'cover';
         return (
-          <div className={`w-full h-full flex items-center justify-center relative ${isCover ? 'p-0' : 'p-6'}`}>
+          <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
             <img 
               src={media.url} 
               alt={media.name} 
-              className={isCover ? "w-full h-full object-cover" : "max-w-full max-h-full object-contain rounded-2xl shadow-2xl"}
+              className={isCover ? "w-full h-full object-cover" : "max-w-[95%] max-h-[95%] object-contain rounded-2xl shadow-2xl"}
               referrerPolicy="no-referrer"
             />
           </div>
@@ -231,7 +231,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex flex-col"
           >
-            <header className="h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-stone-950/40 relative z-40">
+            <header className="h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.05] bg-black/90 relative z-40">
               <div>
                 <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
                   {churchInfo.name}
@@ -258,11 +258,11 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 {!isMiniature && (
                   <>
                     <div className="h-12 w-[1px] bg-white/[0.1]" />
-                    <div className="bg-white/[0.02] border border-white/[0.05] px-6 py-3 rounded-xl flex flex-col items-center justify-center">
-                      <span className="font-mono text-3xl font-bold tracking-wider text-stone-200">
+                    <div className="bg-white/[0.05] border border-white/[0.1] px-6 py-3 rounded-xl flex flex-col items-center justify-center">
+                      <span className="font-mono text-3xl font-bold tracking-wider text-stone-100">
                         {format(currentTime, 'HH:mm:ss')}
                       </span>
-                      <span className="font-sans text-xs tracking-[0.2em] text-stone-500 uppercase mt-1">
+                      <span className="font-sans text-xs tracking-[0.2em] text-stone-400 uppercase mt-1">
                         {format(currentTime, "EEEE, dd 'de' MMMM", { locale: ptBR })}
                       </span>
                     </div>
@@ -271,12 +271,12 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               </div>
             </header>
 
-            <main className="flex-1 relative w-full overflow-hidden">
-              <AnimatePresence>
+            <main className="flex-1 relative w-full overflow-hidden bg-black/20">
+              <AnimatePresence mode="wait">
                 <motion.div
                   key={currentSlideId}
                   {...getTransitionVariants(currentSlideId)}
-                  className="absolute inset-0 flex items-center justify-center"
+                  className="absolute inset-0 flex items-center justify-center p-8"
                 >
                   {clearContentEnabled ? null : renderSlide(currentSlideId)}
                 </motion.div>
