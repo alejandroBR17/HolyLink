@@ -18,6 +18,7 @@ export function SyncSection() {
   const [syncMessage, setSyncMessage] = useState<string>('');
   const peerRef = useRef<any>(null);
   const connRef = useRef<any>(null);
+  const reconnectTimeoutRef = useRef<any>(null);
 
   // Helper to generate a clean random ID
   const generateRandomCode = () => {
@@ -29,19 +30,38 @@ export function SyncSection() {
     return result;
   };
 
-  // Cleanup peer ref on unmount
+  // Cleanup peer and timeouts on unmount
   useEffect(() => {
     return () => {
       if (peerRef.current) {
         peerRef.current.destroy();
       }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
     };
   }, []);
+
+  const triggerAutoReconnect = (targetCode: string) => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+    const savedRole = localStorage.getItem('projection_deviceRole');
+    if (savedRole === 'phone') {
+      reconnectTimeoutRef.current = setTimeout(() => {
+        console.log("Tentando reconectar automaticamente ao PC...");
+        connectAndSendData(targetCode);
+      }, 4000); // Tenta reconectar a cada 4 segundos se perder conexão
+    }
+  };
 
   // Initialize as Receiver (usually on PC)
   const startReceiver = () => {
     if (peerRef.current) {
       peerRef.current.destroy();
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
     }
     
     setDirectSyncStatus('initializing');
@@ -53,6 +73,9 @@ export function SyncSection() {
       localStorage.setItem('projection_myReceiverCode', code);
     }
     setSyncCode(code);
+    
+    // Salva o papel do dispositivo como PC para reconexão automática ao recarregar
+    localStorage.setItem('projection_deviceRole', 'pc');
     
     const peerId = `holyrics_${code}`;
     const peer = new Peer(peerId);
@@ -67,6 +90,9 @@ export function SyncSection() {
       connRef.current = conn;
       setDirectSyncStatus('receiving');
       setSyncMessage('Celular conectado! Recebendo configurações e mídias...');
+
+      // Guarda conexão para qualquer comunicação de volta
+      (window as any).holyrics_peer_conn = conn;
 
       conn.on('data', async (data: any) => {
         try {
@@ -94,9 +120,9 @@ export function SyncSection() {
             });
           }
 
-          // Save paired code for auto reconnection in the future
-          if (syncCode) {
-            localStorage.setItem('projection_lastPairedPeerCode', syncCode);
+          // Salva código pareado para consistência de reconexão
+          if (code) {
+            localStorage.setItem('projection_lastPairedPeerCode', code);
           }
 
           // 2. Restore IndexedDB media files
@@ -136,17 +162,39 @@ export function SyncSection() {
         }
       });
 
+      conn.on('close', () => {
+        console.log("Conexão com o celular fechada.");
+        const role = localStorage.getItem('projection_deviceRole');
+        if (role === 'pc') {
+          setDirectSyncStatus('listening');
+          setSyncMessage('Celular desconectado. Aguardando nova conexão...');
+        }
+      });
+
       conn.on('error', (err) => {
-        console.error('Erro na conexão:', err);
-        setDirectSyncStatus('error');
-        setSyncMessage('Erro na transmissão. Tente novamente.');
+        console.error('Erro na conexão com celular:', err);
+        const role = localStorage.getItem('projection_deviceRole');
+        if (role === 'pc') {
+          setDirectSyncStatus('listening');
+          setSyncMessage('Conexão perdida com celular. Aguardando reconexão...');
+        }
       });
     });
 
     peer.on('error', (err) => {
-      console.error('Erro no PeerJS:', err);
-      setDirectSyncStatus('error');
-      setSyncMessage('Não foi possível iniciar a sincronização sem fios. Verifique se está conectado à internet.');
+      console.error('Erro no receptor PeerJS:', err);
+      const role = localStorage.getItem('projection_deviceRole');
+      if (role === 'pc') {
+        setDirectSyncStatus('initializing');
+        setSyncMessage('Conexão de rede falhou no PC. Reiniciando receptor em 5s...');
+        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          startReceiver();
+        }, 5000);
+      } else {
+        setDirectSyncStatus('error');
+        setSyncMessage('Não foi possível iniciar a sincronização sem fios. Verifique se está conectado à internet.');
+      }
     });
   };
 
@@ -156,6 +204,9 @@ export function SyncSection() {
     
     if (peerRef.current) {
       peerRef.current.destroy();
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
     }
 
     setDirectSyncStatus('connecting');
@@ -185,8 +236,9 @@ export function SyncSection() {
             }
           }
 
-          // Save this targetCode as last paired peer code so we can remember it
+          // Salva este targetCode como pareado e define papel como Celular
           localStorage.setItem('projection_lastPairedPeerCode', targetCode.toUpperCase().trim());
+          localStorage.setItem('projection_deviceRole', 'phone');
 
           // 2. Gather media items from IndexedDB
           const mediaItems = await getAllMediaItems();
@@ -237,39 +289,84 @@ export function SyncSection() {
 
         } catch (err) {
           console.error('Erro ao preparar dados:', err);
-          setDirectSyncStatus('error');
-          setSyncMessage('Erro ao preparar mídias para envio. Tente novamente.');
+          const role = localStorage.getItem('projection_deviceRole');
+          if (role === 'phone') {
+            setDirectSyncStatus('connecting');
+            setSyncMessage('Erro ao ler mídias. Tentando reconectar...');
+            triggerAutoReconnect(targetCode);
+          } else {
+            setDirectSyncStatus('error');
+            setSyncMessage('Erro ao preparar mídias para envio. Tente novamente.');
+          }
+        }
+      });
+
+      conn.on('close', () => {
+        console.log("Conexão com o PC fechada.");
+        const role = localStorage.getItem('projection_deviceRole');
+        if (role === 'phone') {
+          setDirectSyncStatus('connecting');
+          setSyncMessage('Conexão perdida. Reconectando ao PC automaticamente...');
+          triggerAutoReconnect(targetCode);
         }
       });
 
       conn.on('error', (err) => {
         console.error('Erro na conexão com o destino:', err);
-        setDirectSyncStatus('error');
-        setSyncMessage('Não foi possível conectar ao PC. Verifique se o código está correto e ativo.');
+        const role = localStorage.getItem('projection_deviceRole');
+        if (role === 'phone') {
+          setDirectSyncStatus('connecting');
+          setSyncMessage('PC offline ou reiniciando. Tentando reconectar...');
+          triggerAutoReconnect(targetCode);
+        } else {
+          setDirectSyncStatus('error');
+          setSyncMessage('Não foi possível conectar ao PC. Verifique se o código está correto e ativo.');
+        }
       });
     });
 
     peer.on('error', (err) => {
       console.error('Erro no remetente PeerJS:', err);
-      setDirectSyncStatus('error');
-      setSyncMessage('Erro de conexão. Verifique se ambos os aparelhos têm acesso à internet.');
+      const role = localStorage.getItem('projection_deviceRole');
+      if (role === 'phone') {
+        setDirectSyncStatus('connecting');
+        setSyncMessage('Erro de rede. Tentando reconectar ao PC...');
+        triggerAutoReconnect(targetCode);
+      } else {
+        setDirectSyncStatus('error');
+        setSyncMessage('Erro de conexão. Verifique se ambos os aparelhos têm acesso à internet.');
+      }
     });
   };
 
-  // Auto-connect on load if syncCode is present in URL
+  // Auto-connect / Auto-start on load if previously selected a device role
   useEffect(() => {
+    const savedRole = localStorage.getItem('projection_deviceRole');
     const params = new URLSearchParams(window.location.search);
     const codeFromUrl = params.get('syncCode');
+
     if (codeFromUrl) {
+      // Se possui código na URL, assumimos o papel de Celular automaticamente e conectamos
+      localStorage.setItem('projection_deviceRole', 'phone');
       const timer = setTimeout(() => {
         connectAndSendData(codeFromUrl);
       }, 1000);
       return () => clearTimeout(timer);
-    } else {
-      // Look up last paired peer code and prefill the input
+    } else if (savedRole === 'pc') {
+      // Se era PC, inicia receptor silenciosa e imediatamente
+      const timer = setTimeout(() => {
+        startReceiver();
+      }, 500);
+      return () => clearTimeout(timer);
+    } else if (savedRole === 'phone') {
+      // Se era Celular, tenta reconectar ao último PC pareado se houver
       const lastPaired = localStorage.getItem('projection_lastPairedPeerCode');
       if (lastPaired) {
         setSyncInputCode(lastPaired);
+        const timer = setTimeout(() => {
+          connectAndSendData(lastPaired);
+        }, 1000);
+        return () => clearTimeout(timer);
       }
     }
   }, []);
@@ -506,10 +603,14 @@ export function SyncSection() {
             )}
 
             <button
-              onClick={() => setDirectSyncStatus('idle')}
+              onClick={() => {
+                localStorage.removeItem('projection_deviceRole');
+                if (peerRef.current) peerRef.current.destroy();
+                setDirectSyncStatus('idle');
+              }}
               className="text-stone-500 hover:text-stone-300 text-[10px] underline cursor-pointer mt-1"
             >
-              Cancelar
+              Alterar papel (PC/Celular) ou Cancelar
             </button>
           </div>
         )}
@@ -549,10 +650,14 @@ export function SyncSection() {
             )}
 
             <button
-              onClick={() => setDirectSyncStatus('idle')}
+              onClick={() => {
+                localStorage.removeItem('projection_deviceRole');
+                if (peerRef.current) peerRef.current.destroy();
+                setDirectSyncStatus('idle');
+              }}
               className="text-stone-500 hover:text-stone-300 text-[10px] underline cursor-pointer mt-1 self-center"
             >
-              Voltar
+              Alterar papel ou Voltar
             </button>
           </div>
         )}
@@ -567,12 +672,24 @@ export function SyncSection() {
             <p className="text-[11px] text-stone-400 leading-snug">
               {syncMessage}
             </p>
-            <button
-              onClick={() => setDirectSyncStatus('idle')}
-              className="text-stone-500 hover:text-stone-300 text-[10px] underline cursor-pointer mt-1"
-            >
-              Fechar
-            </button>
+            <div className="flex gap-3 justify-center mt-1">
+              <button
+                onClick={() => setDirectSyncStatus('idle')}
+                className="text-stone-300 hover:text-white text-[10px] bg-stone-900 border border-stone-800 px-3 py-1 rounded cursor-pointer transition-all"
+              >
+                Painel
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('projection_deviceRole');
+                  if (peerRef.current) peerRef.current.destroy();
+                  setDirectSyncStatus('idle');
+                }}
+                className="text-stone-500 hover:text-stone-300 text-[10px] underline cursor-pointer"
+              >
+                Alterar papel
+              </button>
+            </div>
           </div>
         )}
 
@@ -586,12 +703,31 @@ export function SyncSection() {
             <p className="text-[11px] text-stone-400 leading-snug">
               {syncMessage}
             </p>
-            <button
-              onClick={() => setDirectSyncStatus('idle')}
-              className="bg-stone-900 border border-stone-800 text-stone-300 text-[10px] py-1.5 px-3 rounded-md cursor-pointer transition-all mt-1"
-            >
-              Tentar Novamente
-            </button>
+            <div className="flex flex-col gap-1 items-center mt-1 w-full">
+              <button
+                onClick={() => {
+                  const lastPaired = localStorage.getItem('projection_lastPairedPeerCode');
+                  if (lastPaired) {
+                    connectAndSendData(lastPaired);
+                  } else {
+                    setDirectSyncStatus('connecting');
+                  }
+                }}
+                className="w-full bg-stone-900 border border-stone-800 text-stone-300 text-[10px] py-1.5 px-3 rounded-md cursor-pointer transition-all"
+              >
+                Tentar Reconectar
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('projection_deviceRole');
+                  if (peerRef.current) peerRef.current.destroy();
+                  setDirectSyncStatus('idle');
+                }}
+                className="text-stone-500 hover:text-stone-300 text-[10px] underline cursor-pointer mt-1"
+              >
+                Alterar papel ou Voltar
+              </button>
+            </div>
           </div>
         )}
       </div>
