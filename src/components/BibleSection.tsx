@@ -129,7 +129,7 @@ export function BibleSection({ onShowVerse }: BibleSectionProps) {
   return (
     <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 flex flex-col gap-4">
       <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-        <BookOpen className="w-4.5 h-4.5 text-blue-500" />
+        <BookOpen className="w-4.5 h-4.5 text-amber-500" />
         Bíblia Online (Almeida)
       </h2>
       
@@ -165,7 +165,7 @@ export function BibleSection({ onShowVerse }: BibleSectionProps) {
             </div>
             <button
               onClick={() => onShowVerse(result.text, result.ref)}
-              className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-lg"
+              className="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-lg"
             >
               <Sparkles className="w-3 h-3" />
               Projetar

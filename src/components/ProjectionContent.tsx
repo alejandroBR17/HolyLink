@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, X, Armchair, DoorOpen, Smartphone, MessageSquareOff, Clock, Instagram, Globe, Flame } from 'lucide-react';
+import { Bell, X, Armchair, DoorOpen, Smartphone, MessageSquareOff, Clock, Instagram, Globe, Flame, Users2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ParticlesBackground } from './ParticlesBackground';
@@ -48,6 +48,8 @@ interface ProjectionContentProps {
   isMiniature?: boolean;
   customMeetings?: Meeting[];
   customCampaigns?: any[];
+  nextMeeting?: Meeting;
+  ongoingMeeting?: Meeting | null;
 }
 
 export const ProjectionContent: React.FC<ProjectionContentProps> = ({
@@ -77,8 +79,20 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   onVideoEnded,
   isMiniature = false,
   customMeetings = [],
-  customCampaigns = []
+  customCampaigns = [],
+  nextMeeting,
+  ongoingMeeting
 }) => {
+  const isFJU = [nextMeeting?.theme, ongoingMeeting?.theme].some(t => 
+    t?.toLowerCase().includes('força jovem') || 
+    t?.toLowerCase().includes('fju') ||
+    t?.toLowerCase().includes('encontro jovem')
+  );
+
+  const themeColor = isFJU ? 'text-amber-500' : 'text-yellow-500';
+  const borderColor = isFJU ? 'border-amber-500/40' : 'border-white/10';
+  const shadowColor = isFJU ? 'shadow-[0_40px_120px_rgba(180,83,9,0.5)]' : 'shadow-[0_40px_120px_rgba(0,0,0,0.9)]';
+
   const getTransitionVariants = (slideId: string) => {
     if (slideId.startsWith('verse_') || slideId === 'world_god') {
       return {
@@ -102,26 +116,92 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       if (!media) return <div className="text-stone-500 text-3xl font-bold flex items-center justify-center h-full w-full bg-black">Mídia não encontrada</div>;
       if (media.type === 'image') {
         const isCover = media.fit === 'cover';
-        return (
-          <div className="w-full h-full p-12 flex items-center justify-center">
-            <div className="w-full h-full relative rounded-[3rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.9)] border border-white/10 bg-black/20">
+        const isFullScreen = media.fit === 'fill';
+        const isMinimal = media.fit === 'minimal';
+        
+        if (isMinimal) {
+          return (
+            <div className="w-full h-full flex items-center justify-center bg-black">
               <img 
                 src={media.url} 
                 alt={media.name} 
-                className={`w-full h-full ${isCover ? 'object-cover' : 'object-contain'}`}
+                className="max-w-full max-h-full object-contain"
                 referrerPolicy="no-referrer"
               />
+            </div>
+          );
+        }
+
+        return (
+          <div className={`w-full h-full ${isFullScreen ? 'p-0' : 'p-12 md:p-20'} flex items-center justify-center bg-black/20`}>
+            <div className={`w-full h-full relative ${isFullScreen ? 'rounded-none' : 'rounded-[3.5rem]'} overflow-hidden ${!isFullScreen ? shadowColor : ''} border ${!isFullScreen ? borderColor : 'border-none'} ${isFullScreen ? 'bg-black' : 'bg-black/40'}`}>
+              {/* Background blur for non-matching aspect ratios */}
+              {!isCover && !isFullScreen && (
+                <div 
+                  className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110 pointer-events-none"
+                  style={{ backgroundImage: `url(${media.url})` }}
+                />
+              )}
+              <img 
+                src={media.url} 
+                alt={media.name} 
+                className={`w-full h-full relative z-10 ${isCover || isFullScreen ? 'object-cover' : 'object-contain'}`}
+                referrerPolicy="no-referrer"
+              />
+              {!isFullScreen && (
+                <div className={`absolute inset-0 z-20 ring-1 ring-inset ${isFJU ? 'ring-amber-500/20' : 'ring-white/20'} shadow-[inset_0_0_150px_rgba(0,0,0,0.6)] pointer-events-none`} />
+              )}
             </div>
           </div>
         );
       } else if (media.type === 'video') {
+        const isCover = media.fit === 'cover';
+        const isFullScreen = media.fit === 'fill';
+        const isMinimal = media.fit === 'minimal';
+
+        if (isMinimal) {
+          return (
+            <div className="w-full h-full flex items-center justify-center bg-black">
+              <VideoSlide 
+                media={media} 
+                currentSlideId={currentSlideId} 
+                videoPinBehavior={videoPinBehavior}
+                onVideoEnded={onVideoEnded}
+              />
+            </div>
+          );
+        }
+
         return (
-          <VideoSlide 
-            media={media} 
-            currentSlideId={currentSlideId} 
-            videoPinBehavior={videoPinBehavior}
-            onVideoEnded={onVideoEnded}
-          />
+          <div className={`w-full h-full ${isFullScreen ? 'p-0' : 'p-12 md:p-20'} flex items-center justify-center bg-black/20`}>
+            <div className={`w-full h-full relative ${isFullScreen ? 'rounded-none' : 'rounded-[3.5rem]'} overflow-hidden ${!isFullScreen ? shadowColor : ''} border ${!isFullScreen ? borderColor : 'border-none'} ${isFullScreen ? 'bg-black' : 'bg-black/40'}`}>
+              {/* Background blur for videos in contain mode */}
+              {!isCover && !isFullScreen && (
+                <div className="absolute inset-0 blur-3xl opacity-30 scale-110 pointer-events-none overflow-hidden">
+                  <div className="w-full h-full scale-[2]">
+                    <VideoSlide 
+                      media={media} 
+                      currentSlideId={currentSlideId} 
+                      videoPinBehavior={videoPinBehavior}
+                      onVideoEnded={onVideoEnded}
+                      isBackgroundBlur
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="w-full h-full relative z-10">
+                <VideoSlide 
+                  media={media} 
+                  currentSlideId={currentSlideId} 
+                  videoPinBehavior={videoPinBehavior}
+                  onVideoEnded={onVideoEnded}
+                />
+              </div>
+              {!isFullScreen && (
+                <div className={`absolute inset-0 z-20 ring-1 ring-inset ${isFJU ? 'ring-amber-500/20' : 'ring-white/20'} shadow-[inset_0_0_150px_rgba(0,0,0,0.6)] pointer-events-none`} />
+              )}
+            </div>
+          </div>
         );
       }
     }
@@ -129,7 +209,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       const meetId = slideId.replace("meeting_event_", "");
       const meeting = (customMeetings || []).find(m => m.id === meetId);
       if (meeting) {
-        return <MeetingEventSlide meeting={meeting} />;
+        return <MeetingEventSlide meeting={meeting} variant={isFJU ? 'fju' : undefined} />;
       }
     }
     if (slideId.startsWith("agenda_day_")) {
@@ -141,7 +221,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       } else if (cleanId.includes("fju")) {
         subType = 'fju';
       }
-      return <AgendaDaySlide dayIndex={dayIndex} subType={subType} currentTime={currentTime} meetings={customMeetings} />;
+      return <AgendaDaySlide dayIndex={dayIndex} subType={subType} currentTime={currentTime} meetings={customMeetings} variant={isFJU ? 'fju' : undefined} />;
     }
     if (slideId.startsWith("verse_")) {
       const verseIndexOffset = parseInt(slideId.replace("verse_", ""), 10) || 0;
@@ -159,23 +239,50 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
     switch (slideId) {
       case 'seat':
+        if (isFJU) {
+          return <IconSlide icon={Armchair} title="Cola aí!" subtitle="Encontre seu lugar e chega mais, o Encontro Jovem vai começar!" layout="split-left" variant="fju" />;
+        }
         return <IconSlide icon={Armchair} title="Fique à vontade" subtitle="Procure um assento e acomode-se para o início da reunião." layout="split-left" />;
       case 'bathroom':
+        if (isFJU) {
+          return <IconSlide icon={DoorOpen} title="Pit Stop" subtitle="Aproveite agora para ir ao banheiro. Depois que começar, ninguém quer sair!" layout="split-right" variant="fju" />;
+        }
         return <IconSlide icon={DoorOpen} title="Vá ao banheiro" subtitle="Aproveite para ir antes da reunião começar." layout="split-right" />;
       case 'phone':
+        if (isFJU) {
+          return <IconSlide icon={Smartphone} title="Foco Total" subtitle="Desliga as notificações aí! Vamos focar 100% no que vai rolar no Encontro Jovem." layout="center" variant="fju" />;
+        }
         return <IconSlide icon={Smartphone} title="Celular no Silencioso" subtitle="Mantenha o celular no silencioso para evitar interrupções." layout="center" />;
       case 'no_chat':
+        if (isFJU) {
+          return <IconSlide icon={MessageSquareOff} title="Preste Atenção" subtitle="O Encontro Jovem está só começando. Fica ligado e não perde nada!" layout="split-left" variant="fju" />;
+        }
         return <IconSlide icon={MessageSquareOff} title="Silêncio" subtitle="Desligue-se das conversas e concentre-se na reunião." layout="split-left" />;
       case 'soon':
+        if (isFJU) {
+          return (
+            <IconSlide 
+              icon={Flame} 
+              title="Vem pra FJU" 
+              subtitle="O encontro que vai mudar a sua história. Começamos em instantes!" 
+              pulse 
+              layout="center"
+              variant="fju"
+            />
+          );
+        }
         return <IconSlide icon={Clock} title="A reunião começa" subtitle="em instantes..." pulse layout="center" />;
       case 'social':
+        if (isFJU) {
+          return <IconSlide icon={Instagram} title="FJU no Story" subtitle={`Siga a gente e marque o ${SOCIAL.instagram}`} layout="split-left" variant="fju" />;
+        }
         return <IconSlide icon={Instagram} title="Siga nosso Instagram" subtitle={SOCIAL.instagram} layout="split-left" />;
       case 'donations':
-        return <DonationSlide />;
+        return <DonationSlide variant={isFJU ? 'fju' : undefined} />;
       case 'campaigns':
         return <CampaignSlide campaigns={customCampaigns} />;
       case 'world_god':
-        return <WorldGodSlide />;
+        return <WorldGodSlide variant={isFJU ? 'fju' : undefined} />;
       default:
         return null;
     }
@@ -233,47 +340,57 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex flex-col"
           >
-            <header className="h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.05] bg-black/90 relative z-40">
-              <div>
-                <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
-                  {churchInfo.name}
-                </h1>
-                <p className="text-xl font-bold tracking-[0.62em] text-yellow-500 uppercase mt-2">
-                  {churchInfo.location}
-                </p>
+            <header className={`h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.05] bg-[#050505] relative z-50`}>
+              <div className="flex flex-col gap-3">
+                <div className={`px-4 py-1 rounded-full border self-start flex items-center gap-2.5 ${isFJU ? 'bg-amber-600/10 border-amber-500/40' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isFJU ? 'bg-amber-500' : 'bg-yellow-500'}`} />
+                  <span className={`font-sans font-bold text-sm tracking-[0.15em] uppercase ${isFJU ? 'text-white' : 'text-yellow-500'}`}>
+                    {isFJU ? 'Encontro Jovem FJU' : 'Ligue-se com Deus'}
+                  </span>
+                </div>
+                <div>
+                  <h1 className="font-sans font-black text-[3.2rem] tracking-[0.16em] text-white leading-none uppercase">
+                    {churchInfo.name}
+                  </h1>
+                  <p className={`text-xl font-bold tracking-[0.62em] uppercase mt-1 ${isFJU ? 'text-amber-500' : 'text-yellow-500'}`}>
+                    {churchInfo.location}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex items-center gap-10">
-                <div className="text-right">
-                  <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
-                    A Reunião Começa em:
-                  </span>
-                  <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
-                    <span>{hoursStr}</span>
-                    <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
-                    <span className={!isMiniature ? "text-yellow-500 animate-pulse" : ""}>:</span>
-                    <span>{minutesStr}</span>
-                    <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
-                  </div>
-                </div>
-                
-                {!isMiniature && (
-                  <>
-                    <div className="h-12 w-[1px] bg-white/[0.1]" />
-                    <div className="bg-white/[0.05] border border-white/[0.1] px-6 py-3 rounded-xl flex flex-col items-center justify-center">
-                      <span className="font-mono text-3xl font-bold tracking-wider text-stone-100">
-                        {format(currentTime, 'HH:mm:ss')}
-                      </span>
-                      <span className="font-sans text-xs tracking-[0.2em] text-stone-400 uppercase mt-1">
-                        {format(currentTime, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                      </span>
+              <div className="flex items-center gap-12">
+                <div className="flex items-center gap-10">
+                  <div className="text-right">
+                    <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
+                      {isFJU ? 'O Encontro Começa em:' : 'A Reunião Começa em:'}
+                    </span>
+                    <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
+                      <span>{hoursStr}</span>
+                      <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
+                      <span className={!isMiniature ? `${isFJU ? 'text-amber-500' : 'text-yellow-500'} animate-pulse` : ""}>:</span>
+                      <span>{minutesStr}</span>
+                      <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
                     </div>
-                  </>
-                )}
+                  </div>
+
+                  {!isMiniature && (
+                    <>
+                      <div className="h-12 w-[1px] bg-white/[0.1]" />
+                      <div className={`border px-6 py-3 rounded-xl flex flex-col items-center justify-center ${isFJU ? 'bg-amber-600/10 border-amber-500/30' : 'bg-white/[0.05] border-white/[0.1]'}`}>
+                        <span className={`font-mono text-3xl font-bold tracking-wider ${isFJU ? 'text-amber-100' : 'text-stone-100'}`}>
+                          {format(currentTime, 'HH:mm:ss')}
+                        </span>
+                        <span className={`font-sans text-xs tracking-[0.2em] uppercase mt-1 ${isFJU ? 'text-amber-400' : 'text-stone-400'}`}>
+                          {format(currentTime, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </header>
 
-            <main className="flex-1 relative w-full overflow-hidden">
+            <main className="flex-1 relative w-full overflow-hidden bg-black">
               <AnimatePresence>
                 <motion.div
                   key={currentSlideId}
@@ -296,8 +413,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex w-full h-full bg-black relative"
           >
-            <div className="w-[35%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
-              <span className="text-yellow-500 text-[2rem] font-bold uppercase tracking-[0.4em] mb-4">
+            <div className={`w-[35%] h-full flex flex-col items-center justify-center border-r ${isFJU ? 'border-amber-500/20 bg-[#080400]' : 'border-white/5 bg-[#030000]'} z-20`}>
+              <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[2rem] font-bold uppercase tracking-[0.4em] mb-4`}>
                 Faltam
               </span>
               <div className="relative h-[12rem] w-full flex items-center justify-center overflow-hidden">
@@ -308,7 +425,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -25 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]"
+                    className={`absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums ${isFJU ? 'drop-shadow-[0_0_50px_rgba(245,158,11,0.15)]' : 'drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]'}`}
                   >
                     {formatMinutesPart}:{formatSecondsPart}
                   </motion.div>
@@ -349,10 +466,10 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative overflow-hidden"
           >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-yellow-600/10 blur-[200px] rounded-full pointer-events-none" />
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] ${isFJU ? 'bg-amber-600/10' : 'bg-yellow-600/10'} blur-[200px] rounded-full pointer-events-none`} />
             
-            <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-8 animate-pulse z-10">
-              A Reunião Começa Em
+            <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-3xl font-bold uppercase tracking-[0.5em] mb-8 animate-pulse z-10`}>
+              {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
             </span>
             
             <div className="relative h-[24rem] w-full flex items-center justify-center overflow-hidden z-10">

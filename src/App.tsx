@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, ArrowUp, ArrowDown, Download, Upload } from 'lucide-react';
+import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, ArrowUp, ArrowDown, Download, Upload, Zap, Box } from 'lucide-react';
 import QRCode from "react-qr-code";
 import { CHURCH_INFO, ALERTS, VERSES, SLIDE_TIMING, DONATION, CAMPAIGNS, WEEK_SCHEDULES, MEETINGS } from './data';
 import { getNextMeeting, saveMediaItem, getAllMediaItems, deleteMediaItem, getSlideDuration } from './utils';
@@ -11,6 +11,7 @@ import { ProjectionContent } from './components/ProjectionContent';
 import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide } from './components/slides';
 import { SyncSection } from './components/SyncSection';
 import { BibleSection } from './components/BibleSection';
+import { CustomModal, CustomToast } from './components/Modal';
 import { ptBR } from 'date-fns/locale';
 
 // ==========================================
@@ -50,7 +51,7 @@ interface CustomMedia {
   url: string;
   muted?: boolean;
   order?: number;
-  fit?: 'contain' | 'cover';
+  fit?: 'contain' | 'cover' | 'fill' | 'minimal';
 }
 
 // ==========================================
@@ -167,6 +168,29 @@ export default function App() {
     }
     return [];
   });
+
+  // Custom UI Notifications
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'info';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  const [toastConfig, setToastConfig] = useState<{
+    isVisible: boolean;
+    message: string;
+    type?: 'error' | 'success' | 'info';
+  }>({ isVisible: false, message: '' });
+
+  const showConfirm = (title: string, message: string, onConfirm: () => void, variant: 'danger' | 'info' = 'info') => {
+    setModalConfig({ isOpen: true, title, message, onConfirm, variant });
+  };
+
+  const showAlert = (message: string, type: 'error' | 'success' | 'info' = 'info') => {
+    setToastConfig({ isVisible: true, message, type });
+  };
 
   const [customMeetings, setCustomMeetings] = useState<Meeting[]>(() => {
     if (typeof window === 'undefined') return MEETINGS;
@@ -1390,28 +1414,55 @@ export default function App() {
                                   const dbItems = await getAllMediaItems();
                                   const target = dbItems.find(item => item.id === media.id);
                                   if (target) {
-                                    target.fit = target.fit === 'cover' ? 'contain' : 'cover';
+                                    // Cycle: contain -> cover -> fill -> minimal -> contain
+                                    const currentFit = target.fit || 'contain';
+                                    let nextFit: 'contain' | 'cover' | 'fill' | 'minimal' = 'contain';
+                                    if (currentFit === 'contain') nextFit = 'cover';
+                                    else if (currentFit === 'cover') nextFit = 'fill';
+                                    else if (currentFit === 'fill') nextFit = 'minimal';
+                                    else nextFit = 'contain';
+                                    
+                                    target.fit = nextFit;
                                     await saveMediaItem(target);
                                     broadcastMediaSave(target);
                                     updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                   }
                                 }}
-                                title={media.fit === 'cover' ? "Preencher Tela (Muda para ajuste esticado/cortado)" : "Ajustar à Tela (Preserva proporção original)"}
+                                title={
+                                  media.fit === 'cover' ? "Preencher Quadro (Com Bordas)" : 
+                                  media.fit === 'fill' ? "Tela Cheia (Sem Bordas)" : 
+                                  media.fit === 'minimal' ? "Modo Minimalista (Fundo Preto)" :
+                                  "Ajustar ao Quadro (Com Blur)"
+                                }
                                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold transition-all cursor-pointer ${
                                   media.fit === 'cover'
-                                    ? "bg-yellow-500/15 border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/25"
+                                    ? "bg-amber-500/15 border-amber-500/30 text-amber-500 hover:bg-amber-500/25"
+                                    : media.fit === 'fill'
+                                    ? "bg-stone-100/10 border-stone-100/20 text-white hover:bg-stone-100/20"
+                                    : media.fit === 'minimal'
+                                    ? "bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700"
                                     : "bg-stone-950 border-stone-850 text-stone-400 hover:text-stone-200"
                                 }`}
                               >
                                 {media.fit === 'cover' ? (
                                   <>
-                                    <Maximize className="w-2.5 h-2.5 text-yellow-500" />
-                                    <span>Preencher</span>
+                                    <Maximize className="w-2.5 h-2.5 text-amber-500" />
+                                    <span>Preencher Quadro</span>
+                                  </>
+                                ) : media.fit === 'fill' ? (
+                                  <>
+                                    <Zap className="w-2.5 h-2.5 text-white" />
+                                    <span>Tela Cheia</span>
+                                  </>
+                                ) : media.fit === 'minimal' ? (
+                                  <>
+                                    <Box className="w-2.5 h-2.5 text-stone-300" />
+                                    <span>Minimalista</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Minimize className="w-2.5 h-2.5 text-stone-500" />
-                                    <span>Ajustar</span>
+                                    <Minimize className="w-2.5 h-2.5 text-stone-400" />
+                                    <span>Ajustar Quadro</span>
                                   </>
                                 )}
                               </button>
@@ -1483,14 +1534,21 @@ export default function App() {
                           
                           <button
                             onClick={async () => {
-                              if (confirm(`Tem certeza que deseja excluir "${media.name}"?`)) {
-                                if (currentSlideId === media.id || manualSlideOverride === media.id) {
-                                  updateStateAndBroadcast('manualSlideOverride', null);
-                                }
-                                await deleteMediaItem(media.id);
-                                broadcastMediaDelete(media.id);
-                                updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
-                              }
+                              showConfirm(
+                                'Excluir Mídia',
+                                `Tem certeza que deseja excluir "${media.name}"? Esta ação não pode ser desfeita.`,
+                                async () => {
+                                  if (currentSlideId === media.id || manualSlideOverride === media.id) {
+                                    updateStateAndBroadcast('manualSlideOverride', null);
+                                  }
+                                  await deleteMediaItem(media.id);
+                                  broadcastMediaDelete(media.id);
+                                  updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                  setModalConfig(prev => ({ ...prev, isOpen: false }));
+                                  showAlert('Mídia excluída com sucesso', 'success');
+                                },
+                                'danger'
+                              );
                             }}
                             title="Excluir Mídia"
                             className="w-9 h-9 md:w-7.5 md:h-7.5 bg-stone-800 border border-stone-700 hover:bg-red-950/40 text-stone-400 hover:text-red-500 rounded-lg transition-all flex items-center justify-center cursor-pointer"
@@ -1693,7 +1751,7 @@ export default function App() {
                         newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
                         setProjectionWin(newWin);
                       }}
-                      className="w-full p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl border border-blue-400/30 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg"
+                      className="w-full p-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl border border-amber-400/30 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg"
                     >
                       <ExternalLink className="w-4 h-4" />
                       Abrir Monitor (Para enviar à 2ª Tela)
@@ -2353,7 +2411,7 @@ export default function App() {
 
             {/* SEÇÃO DE BACKUP & SINCRONIZAÇÃO */}
             <div className={activeMobileTab === 'controls' ? 'block' : 'hidden lg:block'}>
-              <SyncSection />
+              <SyncSection showAlert={showAlert} showConfirm={showConfirm} />
             </div>
 
           </div>
@@ -2404,6 +2462,8 @@ export default function App() {
                   isMiniature={true}
                   customMeetings={customMeetings}
                   customCampaigns={customCampaigns}
+                  nextMeeting={nextMeeting}
+                  ongoingMeeting={ongoingMeeting}
                 />
               </div>
             </div>
@@ -2499,6 +2559,8 @@ export default function App() {
           onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
           customMeetings={customMeetings}
           customCampaigns={customCampaigns}
+          nextMeeting={nextMeeting}
+          ongoingMeeting={ongoingMeeting}
           onVideoEnded={() => {
             if (manualSlideOverride && videoPinBehavior === 'unpin') {
               updateStateAndBroadcast('manualSlideOverride', null);
@@ -2554,6 +2616,22 @@ export default function App() {
           {isFullscreen ? "Sair da Tela Cheia" : "Tela Cheia"}
         </span>
       </button>
+
+      <CustomModal 
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+        variant={modalConfig.variant}
+      />
+
+      <CustomToast 
+        isVisible={toastConfig.isVisible}
+        message={toastConfig.message}
+        type={toastConfig.type}
+        onClose={() => setToastConfig(prev => ({ ...prev, isVisible: false }))}
+      />
 
     </div>
   );

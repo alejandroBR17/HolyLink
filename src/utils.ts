@@ -105,7 +105,7 @@ export interface DBMediaItem {
   blob: Blob;
   muted?: boolean;
   order?: number;
-  fit?: 'contain' | 'cover';
+  fit?: 'contain' | 'cover' | 'fill' | 'minimal';
 }
 
 export function openDB(): Promise<IDBDatabase> {

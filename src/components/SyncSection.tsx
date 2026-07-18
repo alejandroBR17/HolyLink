@@ -5,7 +5,13 @@ import { Download, Upload, Laptop, Smartphone, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { getAllMediaItems, saveMediaItem, deleteMediaItem } from '../utils';
 
-export function SyncSection() {
+export function SyncSection({ 
+  showAlert, 
+  showConfirm 
+}: { 
+  showAlert: (message: string, type?: 'error' | 'success' | 'info') => void;
+  showConfirm: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
+}) {
   // States for local backup and restore (import/export)
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -261,20 +267,36 @@ export function SyncSection() {
       });
     });
 
-    peer.on('error', (err) => {
-      console.error('Erro no receptor PeerJS:', err);
+    peer.on('error', (err: any) => {
+      // Evita logs excessivos para erros comuns de conexão
+      if (err.type === 'peer-unavailable' || err.type === 'disconnected' || err.type === 'network') {
+        console.warn('PeerJS (Aviso): Conexão temporariamente indisponível.', err.type);
+      } else if (err.type === 'unavailable-id') {
+        console.error('Erro: ID já está em uso. Tentando gerar novo código...');
+        localStorage.removeItem('projection_myReceiverCode');
+        const role = localStorage.getItem('projection_deviceRole');
+        if (role === 'pc') {
+          setTimeout(() => startReceiver(), 1000);
+        }
+      } else {
+        console.error('Erro no receptor PeerJS:', err);
+      }
+
       const role = localStorage.getItem('projection_deviceRole');
       if (role === 'pc') {
         setDirectSyncStatus('initializing');
-        setSyncMessage('Conexão de rede falhou no PC. Reiniciando receptor em 5s...');
+        setSyncMessage('Rede instável. Tentando restabelecer conexão...');
+        
         if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
           startReceiver();
         }, 5000);
-      } else {
-        setDirectSyncStatus('error');
-        setSyncMessage('Não foi possível iniciar a sincronização sem fios. Verifique se está conectado à internet.');
       }
+    });
+
+    peer.on('disconnected', () => {
+      console.log("PeerJS: Desconectado do servidor. Tentando reconectar...");
+      peer.reconnect();
     });
   };
 
@@ -504,24 +526,31 @@ export function SyncSection() {
       });
     });
 
-    peer.on('error', (err) => {
-      console.error('Erro no remetente PeerJS:', err);
+    peer.on('error', (err: any) => {
+      if (err.type !== 'peer-unavailable' && err.type !== 'disconnected') {
+        console.error('Erro no remetente PeerJS:', err);
+      }
+      
       const role = localStorage.getItem('projection_deviceRole');
       if (role === 'phone') {
         setDirectSyncStatus('connecting');
-        setSyncMessage('Erro de rede. Tentando reconectar ao PC...');
+        setSyncMessage('Rede instável no celular. Reconectando...');
         triggerAutoReconnect(targetCode);
       } else {
         setDirectSyncStatus('error');
-        setSyncMessage('Erro de conexão. Verifique se ambos os aparelhos têm acesso à internet.');
+        setSyncMessage('Erro de conexão. Verifique a internet.');
       }
+    });
+
+    peer.on('disconnected', () => {
+      peer.reconnect();
     });
   };
 
   const forcePushToPC = async () => {
     const conn = connRef.current;
     if (!conn) {
-      alert("Conexão inativa. Reconecte primeiro.");
+      showAlert("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
     setIsPushing(true);
@@ -584,7 +613,7 @@ export function SyncSection() {
   const forcePullFromPC = () => {
     const conn = connRef.current;
     if (!conn) {
-      alert("Conexão inativa. Reconecte primeiro.");
+      showAlert("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
     setIsPulling(true);

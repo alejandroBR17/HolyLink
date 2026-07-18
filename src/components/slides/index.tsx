@@ -1,6 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Globe, Flame, HeartHandshake, CalendarDays, WifiOff, MessageSquareOff, AlertTriangle } from 'lucide-react';
+import { 
+  Globe, 
+  Flame, 
+  HeartHandshake, 
+  CalendarDays, 
+  WifiOff, 
+  MessageSquareOff, 
+  AlertTriangle,
+  Radio,
+  Gamepad2,
+  Users2,
+  Smartphone,
+  Zap,
+  Clock,
+  Instagram,
+  Mic2,
+  BookOpen,
+  DoorOpen,
+  Armchair
+} from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { CHURCH_INFO, DONATION, CAMPAIGNS, WEEK_SCHEDULES } from '../../data';
 import { Meeting } from '../../types';
@@ -8,7 +27,9 @@ import { Meeting } from '../../types';
 // ==========================================
 // REUSABLE ICON SLIDE
 // ==========================================
-export const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout = 'center' }: any) => {
+export const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout = 'center', variant }: any) => {
+  const isFJU = variant === 'fju';
+  
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -31,7 +52,7 @@ export const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout =
         className="flex items-center justify-between w-full max-w-[95%] px-12"
       >
         <div className="flex-1 text-left pr-20">
-          <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+          <motion.h1 variants={item} className={`font-sans font-black text-[7.5rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_10px_30px_rgba(245,158,11,0.3)]' : 'text-white'} leading-none mb-8`}>
             {title}
           </motion.h1>
           <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%]">
@@ -42,7 +63,7 @@ export const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout =
           variants={item} 
           className="flex-shrink-0"
         >
-          <Icon className={`w-[450px] h-[450px] text-yellow-500 opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
+          <Icon className={`w-[450px] h-[450px] ${isFJU ? 'text-amber-500 drop-shadow-[0_0_80px_rgba(245,158,11,0.2)]' : 'text-yellow-500'} opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
         </motion.div>
       </motion.div>
     );
@@ -60,10 +81,10 @@ export const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout =
           variants={item} 
           className="flex-shrink-0"
         >
-          <Icon className={`w-[450px] h-[450px] text-yellow-500 opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
+          <Icon className={`w-[450px] h-[450px] ${isFJU ? 'text-amber-500 drop-shadow-[0_0_80px_rgba(245,158,11,0.3)]' : 'text-yellow-500'} opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
         </motion.div>
         <div className="flex-1 text-right pl-20">
-          <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+          <motion.h1 variants={item} className={`font-sans font-black text-[8.5rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_10px_30px_rgba(245,158,11,0.3)]' : 'text-white'} leading-none mb-8`}>
             {title}
           </motion.h1>
           <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%] ml-auto">
@@ -84,14 +105,29 @@ export const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout =
       <motion.div 
         variants={item}
       >
-        <Icon className={`w-56 h-56 text-yellow-500 mb-12 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
+        <Icon className={`w-64 h-64 ${isFJU ? 'text-amber-500 drop-shadow-[0_0_50px_rgba(245,158,11,0.5)]' : 'text-yellow-500'} mb-12 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
       </motion.div>
-      <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+      <motion.h1 variants={item} className={`font-sans font-black text-[8.5rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_10px_40px_rgba(245,158,11,0.3)]' : 'text-white'} leading-none mb-8 uppercase`}>
         {title}
       </motion.h1>
-      <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%]">
+      <motion.p variants={item} className={`text-[4rem] ${isFJU ? 'text-stone-100' : 'text-stone-200'} font-medium mt-4 leading-snug max-w-[95%]`}>
         {subtitle}
       </motion.p>
+      {isFJU && (
+        <motion.div 
+          variants={item}
+          className="mt-16 flex gap-8 items-center"
+        >
+          <div className="flex gap-4">
+            <div className="w-4 h-4 rounded-full bg-amber-600 animate-ping delay-0" />
+            <div className="w-4 h-4 rounded-full bg-amber-400 animate-ping delay-300" />
+            <div className="w-4 h-4 rounded-full bg-white animate-ping delay-600" />
+          </div>
+          <div className="px-6 py-2 border border-white/20 rounded-full bg-white/5 backdrop-blur-sm">
+            <span className="text-white font-black tracking-[0.3em] text-2xl uppercase italic">FJU</span>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
@@ -100,8 +136,9 @@ export const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout =
 // SPECIAL SLIDES
 // ==========================================
 
-export const WorldGodSlide = () => {
+export const WorldGodSlide = ({ variant }: { variant?: string }) => {
   const [phase, setPhase] = useState<'world' | 'god'>('world');
+  const isFJU = variant === 'fju';
   
   useEffect(() => {
     const t = setTimeout(() => {
@@ -122,9 +159,9 @@ export const WorldGodSlide = () => {
             transition={{ duration: 0.8 }}
             className="flex flex-col items-center"
           >
-            <Globe className="w-64 h-64 text-stone-500 mb-14 animate-[spin_20s_linear_infinite]" strokeWidth={1} />
+            <Globe className={`w-64 h-64 ${isFJU ? 'text-amber-500/50' : 'text-stone-500'} mb-14 animate-[spin_20s_linear_infinite]`} strokeWidth={1} />
             <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none uppercase">
-              Desligue-se do mundo
+              {isFJU ? 'Cola com a gente' : 'Desligue-se do mundo'}
             </h1>
           </motion.div>
         ) : (
@@ -137,10 +174,10 @@ export const WorldGodSlide = () => {
             className="flex flex-col items-center"
           >
             <motion.div>
-              <Flame className="w-64 h-64 text-yellow-500 mb-14" strokeWidth={1.5} />
+              <Flame className={`w-64 h-64 ${isFJU ? 'text-amber-500' : 'text-yellow-500'} mb-14`} strokeWidth={1.5} />
             </motion.div>
-            <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-yellow-500 leading-none uppercase drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]">
-              Ligue-se com Deus
+            <h1 className={`font-sans font-black text-[7.5rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_0_40px_rgba(245,158,11,0.3)]' : 'text-yellow-500 drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]'} leading-none uppercase`}>
+              {isFJU ? 'Vem pra FJU' : 'Ligue-se com Deus'}
             </h1>
           </motion.div>
         )}
@@ -153,14 +190,17 @@ export const AgendaDaySlide = ({
   dayIndex, 
   subType = 'all',
   currentTime, 
-  meetings = [] 
+  meetings = [],
+  variant
 }: { 
   dayIndex: number; 
   subType?: 'causas' | 'fju' | 'all';
   currentTime: Date; 
   meetings?: Meeting[];
+  variant?: string;
 }) => {
   const isToday = currentTime.getDay() === dayIndex;
+  const isFJU = variant === 'fju';
   
   // Calcula a data exata do dayIndex para a semana atual
   const startOfWeek = new Date(currentTime);
@@ -247,14 +287,14 @@ export const AgendaDaySlide = ({
       animate="show" 
       className="flex items-center justify-between max-w-[95%] w-full px-10"
     >
-      <div className="flex-1 text-left pr-16 border-r border-white/[0.1]">
-        <motion.span variants={item} className="text-yellow-500 font-bold uppercase tracking-[0.4em] mb-6 text-3xl block">
+      <div className={`flex-1 text-left pr-16 border-r ${isFJU ? 'border-amber-500/30' : 'border-white/10'}`}>
+        <motion.span variants={item} className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} font-bold uppercase tracking-[0.4em] mb-6 text-3xl block`}>
           {isToday ? 'Reuniões de Hoje' : 'Agenda Semanal'}
         </motion.span>
         <motion.h3 variants={item} className="text-stone-200 font-bold uppercase tracking-[0.3em] mb-6 text-[2.5rem]">
           {defaultSchedule.dayName}
         </motion.h3>
-        <motion.h2 variants={item} className="text-[7.5rem] text-white font-black uppercase tracking-tight leading-none mt-4 whitespace-pre-line">
+        <motion.h2 variants={item} className={`text-[7.5rem] ${isFJU ? 'text-white drop-shadow-[0_10px_30px_rgba(245,158,11,0.3)]' : 'text-white'} font-black uppercase tracking-tight leading-none mt-4 whitespace-pre-line`}>
           {theme}
         </motion.h2>
       </div>
@@ -266,14 +306,14 @@ export const AgendaDaySlide = ({
                 key={i} 
                 className={`border px-10 py-8 rounded-3xl shadow-xl flex flex-col items-center justify-center relative overflow-hidden group transition-all ${
                   t.isSpecial 
-                    ? "bg-yellow-500/10 border-yellow-500/30 shadow-yellow-500/5" 
+                    ? (isFJU ? "bg-amber-600/10 border-amber-500/30 shadow-amber-500/5" : "bg-yellow-500/10 border-yellow-500/30 shadow-yellow-500/5")
                     : "bg-white/[0.03] border-white/[0.08]"
                 }`}
               >
-                <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                <span className={`font-mono text-[4rem] font-black tracking-wider relative z-10 ${t.isSpecial ? "text-yellow-400" : "text-white"}`}>{t.time}</span>
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 ${isFJU ? 'bg-amber-500/5' : 'bg-yellow-500/5'}`} />
+                <span className={`font-mono text-[4rem] font-black tracking-wider relative z-10 ${t.isSpecial ? (isFJU ? "text-amber-400" : "text-yellow-400") : "text-white"}`}>{t.time}</span>
                 {t.isSpecial && (
-                  <span className="absolute top-2 right-3 text-[9px] bg-yellow-500 text-black px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-90">Especial</span>
+                  <span className={`absolute top-2 right-3 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-90 ${isFJU ? 'bg-amber-500 text-white' : 'bg-yellow-500 text-black'}`}>Especial</span>
                 )}
               </motion.div>
             ))
@@ -288,7 +328,9 @@ export const AgendaDaySlide = ({
   );
 };
  
-export const DonationSlide = () => {
+export const DonationSlide = ({ variant }: { variant?: string }) => {
+  const isFJU = variant === 'fju';
+  
   return (
     <motion.div
        initial={{ opacity: 0 }}
@@ -297,21 +339,23 @@ export const DonationSlide = () => {
     >
       <div className="flex-1 text-left pr-20">
         <motion.div className="flex items-center gap-4 mb-6">
-          <HeartHandshake className="w-24 h-24 text-yellow-500" strokeWidth={1.5} />
-          <span className="text-yellow-500 font-bold uppercase tracking-[0.4em] text-3xl">Dízimos e Ofertas</span>
+          <HeartHandshake className={`w-24 h-24 ${isFJU ? 'text-amber-500' : 'text-yellow-500'}`} strokeWidth={1.5} />
+          <span className={`${isFJU ? 'text-amber-400' : 'text-yellow-500'} font-bold uppercase tracking-[0.4em] text-3xl`}>
+            Dízimos e Ofertas
+          </span>
         </motion.div>
-        <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+        <h1 className={`font-sans font-black text-[7.5rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_10px_30px_rgba(245,158,11,0.2)]' : 'text-white'} leading-none mb-8`}>
           Faça sua <br />Doação
         </h1>
         <p className="text-[3.5rem] text-stone-200 font-normal mt-6 leading-snug max-w-[90%] mb-12">
-          Acesse <span className="text-yellow-500 font-bold">{DONATION.url.replace(/^https?:\/\//, '')}</span> ou escaneie o QR Code ao lado.
+          Acesse <span className={`${isFJU ? 'text-amber-400' : 'text-yellow-500'} font-bold`}>{DONATION.url.replace(/^https?:\/\//, '')}</span> ou escaneie o QR Code ao lado.
         </p>
         <div className="bg-white/[0.03] border border-white/[0.08] p-6 rounded-2xl inline-block">
            <p className="text-stone-300 text-3xl font-medium">Lembre-se de enviar o comprovante</p>
            <p className="text-stone-400 text-2xl mt-2">O WhatsApp está disponível no site.</p>
         </div>
       </div>
-      <motion.div className="flex-shrink-0 bg-white p-6 rounded-3xl">
+      <motion.div className={`flex-shrink-0 bg-white p-6 rounded-3xl ${isFJU ? 'ring-8 ring-amber-500/30' : ''}`}>
         <QRCode value={DONATION.url} size={480} />
       </motion.div>
     </motion.div>
@@ -371,7 +415,7 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
   );
 };
 
-export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnded }: any) => {
+export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnded, isBackgroundBlur }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -422,7 +466,8 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
   );
 };
 
-export const MeetingEventSlide = ({ meeting }: { meeting: Meeting }) => {
+export const MeetingEventSlide = ({ meeting, variant, pulse = true }: { meeting: Meeting, variant?: string, pulse?: boolean }) => {
+  const isFJU = variant === 'fju';
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -466,12 +511,12 @@ export const MeetingEventSlide = ({ meeting }: { meeting: Meeting }) => {
       <motion.div 
         variants={item}
       >
-        <Icon className="w-56 h-56 text-yellow-500 mb-12 animate-pulse" strokeWidth={1.5} />
+        <Icon className={`w-56 h-56 ${isFJU ? 'text-amber-500' : 'text-yellow-500'} mb-12 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
       </motion.div>
-      <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+      <motion.h1 variants={item} className={`font-sans font-black text-[7.5rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_10px_30px_rgba(245,158,11,0.3)]' : 'text-white'} leading-none mb-8`}>
         {meeting.theme}
       </motion.h1>
-      <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug">
+      <motion.p variants={item} className={`text-[3.5rem] ${isFJU ? 'text-stone-100' : 'text-stone-200'} font-normal mt-4 leading-snug`}>
         {formattedDate} — Às {meeting.time}
       </motion.p>
     </motion.div>
