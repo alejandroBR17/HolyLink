@@ -170,6 +170,7 @@ export const getSlideDuration = (slideId: string, customMedia: any[] = []): numb
     return item ? item.duration : 10000;
   }
   if (slideId.startsWith('agenda_day_')) return 12000;
+  if (slideId.startsWith('meeting_event_')) return 12000;
   if (slideId.startsWith('verse_')) return 15000;
   if (slideId === 'world_god') return 15000;
   if (slideId === 'soon') return 7000;

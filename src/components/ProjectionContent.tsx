@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ParticlesBackground } from './ParticlesBackground';
 import { VerseSlide } from './VerseSlide';
-import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide } from './slides';
+import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide, MeetingEventSlide } from './slides';
 import { SOCIAL } from '../data';
 import { Meeting } from '../types';
 
@@ -121,6 +121,13 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             onVideoEnded={onVideoEnded}
           />
         );
+      }
+    }
+    if (slideId.startsWith("meeting_event_")) {
+      const meetId = slideId.replace("meeting_event_", "");
+      const meeting = (customMeetings || []).find(m => m.id === meetId);
+      if (meeting) {
+        return <MeetingEventSlide meeting={meeting} />;
       }
     }
     if (slideId.startsWith("agenda_day_")) {

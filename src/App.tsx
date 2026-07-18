@@ -818,6 +818,11 @@ export default function App() {
       baseActiveSlides.push(media.id);
     }
   });
+  customMeetings.forEach((meet) => {
+    if (meet.date) {
+      baseActiveSlides.push(`meeting_event_${meet.id}`);
+    }
+  });
   if (diffSeconds <= 15 * 60) {
     baseActiveSlides.push('soon');
   }
@@ -1082,14 +1087,19 @@ export default function App() {
                     name = "Agenda: Sábado (Causas Impossíveis)";
                     desc = "Jejum das Causas Impossíveis";
                   } else if (slideId === "agenda_day_6_fju") {
-                    name = "Agenda: Sábado (FJU & Teens)";
-                    desc = "Força Jovem & Conexão Teen";
+                    name = "Agenda: Sábado (FJU)";
+                    desc = "Força Jovem Universal";
                   } else {
                     const dayIdx = parseInt(slideId.replace("agenda_day_", ""), 10);
                     const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
                     name = `Agenda: ${days[dayIdx]}`;
                     desc = "Programação semanal";
                   }
+                } else if (slideId.startsWith("meeting_event_")) {
+                  const meetId = slideId.replace("meeting_event_", "");
+                  const meeting = customMeetings.find(m => m.id === meetId);
+                  name = meeting ? meeting.theme : "Evento Único";
+                  desc = meeting ? `Evento: ${meeting.dayName} às ${meeting.time}` : "Programação especial";
                 } else if (slideId.startsWith("verse_")) {
                   const offset = parseInt(slideId.replace("verse_", ""), 10) || 0;
                   name = `Versículo ${offset}`;

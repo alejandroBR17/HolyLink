@@ -205,7 +205,7 @@ export const AgendaDaySlide = ({
     if (subType === 'causas') {
       theme = "Jejum das\nCausas Impossíveis";
     } else if (subType === 'fju') {
-      theme = "Força Jovem Universal\n(FJU / Teens)";
+      theme = "Força Jovem Universal";
     }
   }
 
@@ -419,5 +419,61 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
         }}
       />
     </div>
+  );
+};
+
+export const MeetingEventSlide = ({ meeting }: { meeting: Meeting }) => {
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.2, delayChildren: 0.3 }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
+  };
+
+  let formattedDate = meeting.dayName || "";
+  if (meeting.date) {
+    try {
+      const parts = meeting.date.split('-');
+      const dateObj = new Date(meeting.date + 'T12:00:00');
+      const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+      const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      
+      const dayOfWeekStr = days[dateObj.getDay()];
+      const dayVal = parseInt(parts[2], 10);
+      const monthStr = months[dateObj.getMonth()];
+      
+      formattedDate = `${dayOfWeekStr}, ${dayVal} de ${monthStr}`;
+    } catch (e) {
+      formattedDate = meeting.dayName || meeting.date;
+    }
+  }
+
+  const Icon = CalendarDays;
+
+  return (
+    <motion.div 
+      variants={container} 
+      initial="hidden" 
+      animate="show" 
+      className="flex flex-col items-center justify-center text-center max-w-[85%]"
+    >
+      <motion.div 
+        variants={item}
+      >
+        <Icon className="w-56 h-56 text-yellow-500 mb-12 animate-pulse" strokeWidth={1.5} />
+      </motion.div>
+      <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
+        {meeting.theme}
+      </motion.h1>
+      <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug">
+        {formattedDate} — Às {meeting.time}
+      </motion.p>
+    </motion.div>
   );
 };
