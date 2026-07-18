@@ -415,6 +415,12 @@ export default function App() {
     } catch (e) {
       // Fallback to storage event when BroadcastChannel fails
     }
+
+    // Forward to remote peer if connected (sender side)
+    const peerConn = (window as any).holyrics_peer_conn;
+    if (peerConn && peerConn.open) {
+      peerConn.send({ type: 'UPDATE_STATE', key, value, version: 1 });
+    }
   };
 
   useEffect(() => {
@@ -424,56 +430,76 @@ export default function App() {
       bc.onmessage = (event) => {
         if (event.data && event.data.type === 'UPDATE_STATE') {
           const { key, value } = event.data;
-          if (key === 'manualSlideOverride') setManualSlideOverride(value);
-          else if (key === 'countdownOffset') setCountdownOffset(value);
-          else if (key === 'countdownPaused') setCountdownPaused(value);
-          else if (key === 'pausedSeconds') setPausedSeconds(value);
-          else if (key === 'activeAlert') setActiveAlert(value);
-          else if (key === 'blackoutEnabled') setBlackoutEnabled(value === 'true' || value === true);
-          else if (key === 'clearContentEnabled') setClearContentEnabled(value === 'true' || value === true);
-          else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value, 10) : null);
-          else if (key === 'customVerseText') setCustomVerseText(value);
-          else if (key === 'customVerseRef') setCustomVerseRef(value);
-          else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
-          else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
-          else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
-          else if (key === 'slidesOrder') {
-            try {
-              setSlidesOrder(value ? JSON.parse(value) : []);
-            } catch (e) {
-              setSlidesOrder([]);
-            }
-          }
+          updateStateLocalOnly(key, value);
         }
       };
     } catch (e) {
       console.warn("BroadcastChannel not supported in this frame environment. Using localStorage fallback.");
     }
 
+    const updateStateLocalOnly = (key: string, value: any) => {
+      if (key === 'manualSlideOverride') setManualSlideOverride(value);
+      else if (key === 'countdownOffset') setCountdownOffset(value !== null ? parseInt(value.toString(), 10) : 0);
+      else if (key === 'countdownPaused') setCountdownPaused(value === 'true' || value === true);
+      else if (key === 'pausedSeconds') setPausedSeconds(value !== null ? parseInt(value.toString(), 10) : null);
+      else if (key === 'activeAlert') setActiveAlert(value);
+      else if (key === 'blackoutEnabled') setBlackoutEnabled(value === 'true' || value === true);
+      else if (key === 'clearContentEnabled') setClearContentEnabled(value === 'true' || value === true);
+      else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value.toString(), 10) : null);
+      else if (key === 'customVerseText') setCustomVerseText(value);
+      else if (key === 'customVerseRef') setCustomVerseRef(value);
+      else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
+      else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
+      else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+      else if (key === 'slidesOrder') {
+        try {
+          setSlidesOrder(value ? JSON.parse(value) : []);
+        } catch (e) {
+          setSlidesOrder([]);
+        }
+      }
+    };
+
+    const handlePeerUpdate = (e: CustomEvent) => {
+      if (e.detail) {
+        updateStateLocalOnly(e.detail.key, e.detail.value);
+      }
+    };
+    
+    const handleFullSync = () => {
+      // Reload all state from localStorage
+      setManualSlideOverride(localStorage.getItem('projection_manualSlideOverride'));
+      setCountdownOffset(parseInt(localStorage.getItem('projection_countdownOffset') || '0', 10));
+      setCountdownPaused(localStorage.getItem('projection_countdownPaused') === 'true');
+      setPausedSeconds(localStorage.getItem('projection_pausedSeconds') ? parseInt(localStorage.getItem('projection_pausedSeconds')!, 10) : null);
+      setActiveAlert(localStorage.getItem('projection_activeAlert'));
+      setBlackoutEnabled(localStorage.getItem('projection_blackoutEnabled') === 'true');
+      setClearContentEnabled(localStorage.getItem('projection_clearContentEnabled') === 'true');
+      const idx = localStorage.getItem('projection_activeVerseIndex');
+      setActiveVerseIndex(idx ? parseInt(idx, 10) : null);
+      setCustomVerseText(localStorage.getItem('projection_customVerseText') || '');
+      setCustomVerseRef(localStorage.getItem('projection_customVerseRef') || '');
+      setDismissedJustStarted(localStorage.getItem('projection_dismissedJustStarted') === 'true');
+      setMediaUpdateTrigger(localStorage.getItem('projection_mediaUpdateTrigger') || '0');
+      setVideoPinBehavior((localStorage.getItem('projection_videoPinBehavior') as 'unpin' | 'loop') || 'unpin');
+      try {
+        const order = localStorage.getItem('projection_slidesOrder');
+        setSlidesOrder(order ? JSON.parse(order) : []);
+      } catch (e) {
+        setSlidesOrder([]);
+      }
+      // Also fetch media
+      getAllMediaItems().then(items => setCustomMediaList(items));
+    };
+
+    window.addEventListener('projection_sync_update', handlePeerUpdate as EventListener);
+    window.addEventListener('projection_full_sync_received', handleFullSync);
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key?.startsWith('projection_')) {
         const key = e.key.replace('projection_', '');
         const val = e.newValue;
-        if (key === 'manualSlideOverride') setManualSlideOverride(val);
-        else if (key === 'countdownOffset') setCountdownOffset(val ? parseInt(val, 10) : 0);
-        else if (key === 'countdownPaused') setCountdownPaused(val === 'true');
-        else if (key === 'pausedSeconds') setPausedSeconds(val ? parseInt(val, 10) : null);
-        else if (key === 'activeAlert') setActiveAlert(val);
-        else if (key === 'blackoutEnabled') setBlackoutEnabled(val === 'true');
-        else if (key === 'clearContentEnabled') setClearContentEnabled(val === 'true');
-        else if (key === 'activeVerseIndex') setActiveVerseIndex(val ? parseInt(val, 10) : null);
-        else if (key === 'customVerseText') setCustomVerseText(val);
-        else if (key === 'customVerseRef') setCustomVerseRef(val);
-        else if (key === 'dismissedJustStarted') setDismissedJustStarted(val === 'true');
-        else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(val || '0');
-        else if (key === 'videoPinBehavior') setVideoPinBehavior(val as 'loop' | 'unpin' || 'loop');
-        else if (key === 'slidesOrder') {
-          try {
-            setSlidesOrder(val ? JSON.parse(val) : []);
-          } catch (e) {
-            setSlidesOrder([]);
-          }
-        }
+        updateStateLocalOnly(key, val);
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -481,6 +507,8 @@ export default function App() {
     return () => {
       if (bc) bc.close();
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('projection_sync_update', handlePeerUpdate as EventListener);
+      window.removeEventListener('projection_full_sync_received', handleFullSync);
     };
   }, []);
   

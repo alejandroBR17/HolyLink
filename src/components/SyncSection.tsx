@@ -70,6 +70,17 @@ export function SyncSection() {
 
       conn.on('data', async (data: any) => {
         try {
+          if (data && data.type === 'UPDATE_STATE') {
+            // Forward real-time state update to BroadcastChannel
+            const bc = new BroadcastChannel('holyrics_projection_sync');
+            bc.postMessage({ type: 'UPDATE_STATE', key: data.key, value: data.value });
+            bc.close();
+            
+            // Dispatch custom event for App.tsx to catch if needed
+            window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: data.key, value: data.value } }));
+            return;
+          }
+
           if (!data || data.version !== 1) {
             throw new Error('Formato de dados inválido.');
           }
@@ -113,11 +124,10 @@ export function SyncSection() {
           }
 
           setDirectSyncStatus('success');
-          setSyncMessage('Sincronização concluída com sucesso! Atualizando aplicativo...');
+          setSyncMessage('Dados recebidos! Aplicativo sincronizado e controle remoto ativo.');
           
-          setTimeout(() => {
-            window.location.href = window.location.origin + window.location.pathname; // Reload clear query params
-          }, 2000);
+          // Notify App.tsx to reload states from localStorage without refreshing the page
+          window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
 
         } catch (err) {
           console.error('Erro na recepção dos dados:', err);
@@ -214,8 +224,11 @@ export function SyncSection() {
 
           conn.send(payload);
 
+          // Save globally for real-time control
+          (window as any).holyrics_peer_conn = conn;
+
           setDirectSyncStatus('success');
-          setSyncMessage('Configuração e mídias enviadas com sucesso para o computador!');
+          setSyncMessage('Sincronizado e pronto para controle em tempo real!');
 
           // Cleanup URL query params if any
           if (window.location.search.includes('syncCode=')) {

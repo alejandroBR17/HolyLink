@@ -295,8 +295,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 Minutos e Segundos
               </span>
             </div>
-            <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
-              <div className={`w-[1920px] h-[1080px] absolute transform ${isMiniature ? 'scale-[0.65]' : 'scale-1'} origin-center flex flex-col items-center justify-center`}>
+            <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
+              <div className="w-[1920px] h-[1080px] absolute transform scale-[0.65] origin-center flex flex-col items-center justify-center">
                 <AnimatePresence>
                   <motion.div
                     key={currentSlideId}

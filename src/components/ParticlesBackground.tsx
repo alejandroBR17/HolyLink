@@ -14,7 +14,7 @@ export const ParticlesBackground = () => {
 
     const particles: any[] = [];
     const colors = ['#dc2626', '#b91c1c', '#f59e0b', '#fbbf24']; // reds and yellows
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < 40; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
@@ -49,11 +49,8 @@ export const ParticlesBackground = () => {
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = p.color;
         ctx.fill();
         ctx.globalAlpha = 1.0;
-        ctx.shadowBlur = 0;
       });
 
       animationFrameId = requestAnimationFrame(render);
@@ -69,7 +66,7 @@ export const ParticlesBackground = () => {
   return (
     <canvas 
       ref={canvasRef} 
-      className="absolute inset-0 z-0 pointer-events-none opacity-60 mix-blend-screen"
+      className="absolute inset-0 z-0 pointer-events-none opacity-40"
     />
   );
 };
