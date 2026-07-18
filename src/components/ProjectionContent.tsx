@@ -44,7 +44,6 @@ interface ProjectionContentProps {
   onClearAlert: () => void;
   onVideoEnded?: () => void;
   isMiniature?: boolean;
-  isTvMode?: boolean;
 }
 
 export const ProjectionContent: React.FC<ProjectionContentProps> = ({
@@ -72,8 +71,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   loopIteration = 0,
   onClearAlert,
   onVideoEnded,
-  isMiniature = false,
-  isTvMode = false
+  isMiniature = false
 }) => {
   const getTransitionVariants = (slideId: string) => {
     if (slideId.startsWith('verse_') || slideId === 'world_god') {
@@ -163,30 +161,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
     <div className="w-full h-full relative select-none font-sans overflow-hidden bg-[#050000] text-white flex flex-col justify-between">
       <ParticlesBackground />
       
-      {/* TV MODE OVERLAYS */}
-      {isTvMode && !blackoutEnabled && (
-        <>
-          {/* LIVE BADGE */}
-          <div className={`absolute ${isMiniature ? 'top-6 right-6' : 'top-10 right-10'} z-[110] flex items-center gap-3 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-full shadow-2xl`}>
-            <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse shadow-[0_0_12px_rgba(220,38,38,0.8)]" />
-            <span className={`font-black tracking-[0.2em] uppercase ${isMiniature ? 'text-sm' : 'text-base'} text-white`}>
-              No Ar
-            </span>
-          </div>
-
-          {/* WATERMARK */}
-          <div className={`absolute ${isMiniature ? 'bottom-6 left-6' : 'bottom-10 left-10'} z-[110] opacity-30 flex items-center gap-3`}>
-            <div className="p-2 bg-white/10 rounded-lg">
-              <Flame className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black tracking-widest uppercase text-xs leading-none">HolyLink</span>
-              <span className="font-bold tracking-tighter text-[10px] uppercase text-stone-400 mt-1">Broadcast System</span>
-            </div>
-          </div>
-        </>
-      )}
-
       {/* BLACKOUT OVERLAY */}
       {blackoutEnabled && (
         <div className="absolute inset-0 bg-black z-[100] flex flex-col items-center justify-center">

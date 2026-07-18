@@ -143,10 +143,6 @@ export default function App() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('projection_dismissedJustStarted') === 'true';
   });
-  const [isTvMode, setIsTvMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('projection_isTvMode') === 'true';
-  });
 
   const [slidesOrder, setSlidesOrder] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -402,7 +398,6 @@ export default function App() {
     else if (key === 'customVerseText') setCustomVerseText(value);
     else if (key === 'customVerseRef') setCustomVerseRef(value);
     else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
-    else if (key === 'isTvMode') setIsTvMode(value === 'true' || value === true);
     else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
     else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
     else if (key === 'slidesOrder') {
@@ -578,24 +573,6 @@ export default function App() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  // TV Mode Automation: Auto-trigger countdowns
-  useEffect(() => {
-    if (!isTvMode || isProjectionView) return;
-
-    const { nextMeetingDate } = getNextMeeting(currentTime);
-    const adjustedNext = new Date(nextMeetingDate.getTime() + countdownOffset);
-    const diffSec = Math.floor((adjustedNext.getTime() - currentTime.getTime()) / 1000);
-
-    // Auto-trigger "soon" (countdown) when 5 minutes left
-    if (diffSec > 0 && diffSec <= 300 && manualSlideOverride !== 'soon') {
-      updateStateAndBroadcast('manualSlideOverride', 'soon');
-    }
-    // Auto-clear override when meeting starts (to show welcome verse)
-    if (diffSec <= 0 && manualSlideOverride === 'soon') {
-      updateStateAndBroadcast('manualSlideOverride', null);
-    }
-  }, [currentTime, isTvMode, isProjectionView, manualSlideOverride, countdownOffset]);
 
   // Compute Meeting State
   const { nextMeeting, nextMeetingDate, ongoingMeeting } = getNextMeeting(currentTime);
@@ -1490,18 +1467,6 @@ export default function App() {
                 </div>
 
                 <button
-                  onClick={() => updateStateAndBroadcast('isTvMode', !isTvMode)}
-                  className={`p-4 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
-                    isTvMode
-                      ? 'bg-red-600/20 border-red-500/50 text-red-400 shadow-[0_0_20px_rgba(220,38,38,0.2)]'
-                      : 'bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-700'
-                  }`}
-                >
-                  <Tv className={`w-6 h-6 ${isTvMode ? 'animate-pulse' : ''}`} />
-                  Modo TV (Ao Vivo)
-                </button>
-
-                <button
                   onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}
                   className={`p-4 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
                     blackoutEnabled
@@ -1823,7 +1788,6 @@ export default function App() {
           customMediaList={customMediaList}
           videoPinBehavior={videoPinBehavior}
           loopIteration={loopIteration}
-          isTvMode={isTvMode}
           onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
           onVideoEnded={() => {
             if (manualSlideOverride && videoPinBehavior === 'unpin') {
