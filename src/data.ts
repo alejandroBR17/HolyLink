@@ -153,3 +153,11 @@ export const CHURCH_INFO = {
   name: "Igreja Universal",
   location: "Jardim Osasco"
 };
+
+export const SLIDE_TIMING: Record<string, number> = {
+  welcome: 8000,
+  verses: 15000,
+  donations: 20000,
+  social: 12000,
+  campaigns: 12000,
+};

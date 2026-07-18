@@ -144,3 +144,18 @@ export async function deleteMediaItem(id: string): Promise<void> {
   });
 }
 
+export const getSlideDuration = (slideId: string, customMedia: any[] = []): number => {
+  if (slideId.startsWith('custom_')) {
+    const item = customMedia.find(m => m.id === slideId);
+    return item ? item.duration : 10000;
+  }
+  if (slideId.startsWith('agenda_day_')) return 12000;
+  if (slideId.startsWith('verse_')) return 15000;
+  if (slideId === 'world_god') return 15000;
+  if (slideId === 'soon') return 7000;
+  if (['seat', 'bathroom', 'phone', 'no_chat'].includes(slideId)) return 8000;
+  if (['social', 'campaigns'].includes(slideId)) return 12000;
+  if (slideId === 'donations') return 20000;
+  return 10000;
+};
+

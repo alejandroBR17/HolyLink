@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, ArrowUp, ArrowDown } from 'lucide-react';
+import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, ArrowUp, ArrowDown, Download, Upload } from 'lucide-react';
 import QRCode from "react-qr-code";
-import { WEEK_SCHEDULES, VERSES, SOCIAL, DONATION, CAMPAIGNS, CHURCH_INFO, ALERTS } from './data';
-import { getNextMeeting, getAllMediaItems, saveMediaItem, deleteMediaItem } from './utils';
-import { format } from 'date-fns';
+import { CHURCH_INFO, ALERTS, VERSES, SLIDE_TIMING, DONATION, CAMPAIGNS, WEEK_SCHEDULES } from './data';
+import { getNextMeeting, saveMediaItem, getAllMediaItems, deleteMediaItem, getSlideDuration } from './utils';
+import { ParticlesBackground } from './components/ParticlesBackground';
+import { VerseSlide } from './components/VerseSlide';
+import { ProjectionContent } from './components/ProjectionContent';
+import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide } from './components/slides';
+import { SyncSection } from './components/SyncSection';
+import { BibleSection } from './components/BibleSection';
 import { ptBR } from 'date-fns/locale';
 
 // ==========================================
@@ -45,484 +50,44 @@ interface CustomMedia {
   order?: number;
 }
 
-const getSlideDuration = (slideId: string, customMedia: CustomMedia[] = []): number => {
-  if (slideId.startsWith('custom_')) {
-    const item = customMedia.find(m => m.id === slideId);
-    return item ? item.duration : 10000;
-  }
-  if (slideId.startsWith('agenda_day_')) return 12000;
-  if (slideId.startsWith('verse_')) return 15000;
-  if (slideId === 'world_god') return 15000;
-  if (slideId === 'soon') return 7000;
-  if (['seat', 'bathroom', 'phone', 'no_chat'].includes(slideId)) return 8000;
-  if (['social', 'campaigns'].includes(slideId)) return 12000;
-  if (slideId === 'donations') return 20000;
-  return 10000;
-};
-
 // ==========================================
-// PARTICLES BACKGROUND
-// ==========================================
-const ParticlesBackground = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let width = canvas.width = 1920;
-    let height = canvas.height = 1080;
-
-    const particles: any[] = [];
-    const colors = ['#dc2626', '#b91c1c', '#f59e0b', '#fbbf24']; // reds and yellows
-    for (let i = 0; i < 70; i++) {
-      particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5 - 0.1, // slight upward drift
-        size: Math.random() * 2.5 + 0.5,
-        alpha: Math.random() * 0.5 + 0.1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        pulseSpeed: Math.random() * 0.02 + 0.005,
-        angle: Math.random() * Math.PI * 2
-      });
-    }
-
-    let animationFrameId: number;
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-      
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.angle += p.pulseSpeed;
-
-        if (p.x < 0) p.x = width;
-        if (p.x > width) p.x = 0;
-        if (p.y < 0) p.y = height + 10;
-        if (p.y > height + 10) p.y = -10;
-
-        const currentAlpha = p.alpha + Math.sin(p.angle) * 0.2;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = p.color;
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        ctx.shadowBlur = 0;
-      });
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-
-  return (
-    <canvas 
-      ref={canvasRef} 
-      className="absolute inset-0 z-0 pointer-events-none opacity-60 mix-blend-screen"
-    />
-  );
-};
-
-// ==========================================
-// 2. SLIDE COMPONENTS
+// 1. STATE TYPES
 // ==========================================
 
-const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout = 'center' }: any) => {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.2, delayChildren: 0.3 }
-    }
-  };
-  
-  const item = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
-  };
 
-  if (layout === 'split-left') {
-    return (
-      <motion.div 
-        variants={container} 
-        initial="hidden" 
-        animate="show" 
-        className="flex items-center justify-between w-full max-w-[95%] px-12"
-      >
-        <div className="flex-1 text-left pr-20">
-          <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
-            {title}
-          </motion.h1>
-          <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%]">
-            {subtitle}
-          </motion.p>
-        </div>
-        <motion.div 
-          variants={item} 
-          className="flex-shrink-0"
-        >
-          <Icon className={`w-[450px] h-[450px] text-yellow-500 opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
-        </motion.div>
-      </motion.div>
-    );
-  }
 
-  if (layout === 'split-right') {
-    return (
-      <motion.div 
-        variants={container} 
-        initial="hidden" 
-        animate="show" 
-        className="flex items-center justify-between w-full max-w-[95%] px-12"
-      >
-        <motion.div 
-          variants={item} 
-          className="flex-shrink-0"
-        >
-          <Icon className={`w-[450px] h-[450px] text-yellow-500 opacity-80 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1} />
-        </motion.div>
-        <div className="flex-1 text-right pl-20">
-          <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
-            {title}
-          </motion.h1>
-          <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%] ml-auto">
-            {subtitle}
-          </motion.p>
-        </div>
-      </motion.div>
-    );
-  }
-
-  return (
-    <motion.div 
-      variants={container} 
-      initial="hidden" 
-      animate="show" 
-      className="flex flex-col items-center justify-center text-center max-w-[85%]"
-    >
-      <motion.div 
-        variants={item}
-      >
-        <Icon className={`w-56 h-56 text-yellow-500 mb-12 ${pulse ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
-      </motion.div>
-      <motion.h1 variants={item} className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
-        {title}
-      </motion.h1>
-      <motion.p variants={item} className="text-[3.5rem] text-stone-200 font-normal mt-4 leading-snug max-w-[90%]">
-        {subtitle}
-      </motion.p>
-    </motion.div>
-  );
-};
-
-const WorldGodSlide = () => {
-  const [phase, setPhase] = useState<'world' | 'god'>('world');
-  
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setPhase('god');
-    }, 7500);
-    return () => clearTimeout(t);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center justify-center text-center max-w-5xl h-full w-full">
-      <AnimatePresence mode="wait">
-        {phase === 'world' ? (
-          <motion.div 
-            key="world"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col items-center"
-          >
-            <Globe className="w-64 h-64 text-stone-500 mb-14 animate-[spin_20s_linear_infinite]" strokeWidth={1} />
-            <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none uppercase">
-              Desligue-se do mundo
-            </h1>
-          </motion.div>
-        ) : (
-          <motion.div 
-            key="god"
-            initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-            className="flex flex-col items-center"
-          >
-            <motion.div>
-              <Flame className="w-64 h-64 text-yellow-500 mb-14" strokeWidth={1.5} />
-            </motion.div>
-            <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-yellow-500 leading-none uppercase drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]">
-              Ligue-se com Deus
-            </h1>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const AgendaDaySlide = ({ dayIndex, currentTime }: { dayIndex: number; currentTime: Date }) => {
-  const schedule = WEEK_SCHEDULES.find(s => s.dayIndex === dayIndex) || WEEK_SCHEDULES[0];
-  const isToday = currentTime.getDay() === dayIndex;
-  
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.2 }
-    }
-  };
-  
-  const item = {
-    hidden: { opacity: 0, x: -40 },
-    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 60 } }
-  };
-
-  const itemRight = {
-    hidden: { opacity: 0, scale: 0.9 },
-    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 60 } }
-  };
-
-  return (
-    <motion.div 
-      variants={container} 
-      initial="hidden" 
-      animate="show" 
-      className="flex items-center justify-between max-w-[95%] w-full px-10"
-    >
-      <div className="flex-1 text-left pr-16 border-r border-white/[0.1]">
-        <motion.span variants={item} className="text-yellow-500 font-bold uppercase tracking-[0.4em] mb-6 text-3xl block">
-          {isToday ? 'Reuniões de Hoje' : 'Agenda Semanal'}
-        </motion.span>
-        <motion.h3 variants={item} className="text-stone-200 font-bold uppercase tracking-[0.3em] mb-6 text-[2.5rem]">
-          {schedule.dayName}
-        </motion.h3>
-        <motion.h2 variants={item} className="text-[7.5rem] text-white font-black uppercase tracking-tight leading-none mt-4">
-          {schedule.theme}
-        </motion.h2>
-      </div>
-      <div className="flex-1 pl-16">
-        <motion.div variants={itemRight} className="grid grid-cols-2 gap-6">
-          {schedule.times.map((t, i) => (
-            <motion.div 
-              key={t} 
-              className="bg-white/[0.03] border border-white/[0.08] px-12 py-10 rounded-3xl shadow-xl flex items-center justify-center relative overflow-hidden group"
-            >
-               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-               <span className="font-mono text-[4.5rem] font-black tracking-wider relative z-10 text-white">{t}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
-
-const VerseSlide = ({ 
-  currentTime, 
-  verseIndexOffset = 0, 
-  loopIteration,
-  customVerseText,
-  customVerseRef,
-  activeVerseIndex,
-}: { 
-  currentTime: Date; 
-  verseIndexOffset?: number; 
-  loopIteration?: number; 
-  customVerseText?: string | null;
-  customVerseRef?: string | null;
-  activeVerseIndex?: number | null;
-}) => {
-  let verse = { text: "", ref: "" };
-  let keyId = "verse";
-
-  if (customVerseText) {
-    verse = { text: customVerseText, ref: customVerseRef || "Mensagem" };
-    keyId = "custom";
-  } else if (activeVerseIndex !== null && activeVerseIndex !== undefined) {
-    const safeIdx = Math.max(0, Math.min(activeVerseIndex, VERSES.length - 1));
-    verse = VERSES[safeIdx];
-    keyId = `idx_${safeIdx}`;
-  } else {
-    let verseIdx = 0;
-    if (loopIteration !== undefined) {
-      verseIdx = (loopIteration + verseIndexOffset) % VERSES.length;
-    } else {
-      const baseVerseIdx = Math.floor(currentTime.getTime() / 15000);
-      verseIdx = (baseVerseIdx + verseIndexOffset) % VERSES.length;
-    }
-    verse = VERSES[verseIdx];
-    keyId = `auto_${verseIdx}`;
-  }
-
-  const getFontSizeClass = (text: string) => {
-    const len = text.length;
-    if (len < 60) return 'text-[5.5rem]';
-    if (len < 90) return 'text-[4.5rem]';
-    if (len < 130) return 'text-[3.8rem]';
-    return 'text-[3.2rem]';
-  };
-
-  const getMarginClass = (text: string) => {
-    const len = text.length;
-    if (len < 90) return 'mt-12';
-    return 'mt-8';
-  };
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full w-full px-24 text-center z-50 relative">
-       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-yellow-600/5 blur-[150px] rounded-full pointer-events-none" />
-       <AnimatePresence mode="wait">
-         <motion.div
-           key={keyId}
-           initial={{ opacity: 0, scale: 0.98 }}
-           animate={{ opacity: 1, scale: 1 }}
-           exit={{ opacity: 0, scale: 1.02 }}
-           transition={{ duration: 1.5, ease: "easeInOut" }}
-           className="relative z-10 w-full"
-         >
-           <h2 className={`${getFontSizeClass(verse.text)} text-stone-100 leading-snug font-semibold tracking-tight max-w-[95%] mx-auto`}>
-             "{verse.text}"
-           </h2>
-           <p className={`text-yellow-500 text-[2.5rem] font-bold ${getMarginClass(verse.text)} tracking-[0.2em] uppercase`}>
-             {verse.ref}
-           </p>
-         </motion.div>
-       </AnimatePresence>
-    </div>
-  );
-};
-
-// ==========================================
-// 3. MAIN APP
-const DonationSlide = () => {
-  return (
-    <motion.div
-       initial={{ opacity: 0 }}
-       animate={{ opacity: 1 }}
-       className="flex items-center justify-between w-full max-w-[95%] px-20"
-    >
-      <div className="flex-1 text-left pr-20">
-        <motion.div className="flex items-center gap-4 mb-6">
-          <HeartHandshake className="w-24 h-24 text-yellow-500" strokeWidth={1.5} />
-          <span className="text-yellow-500 font-bold uppercase tracking-[0.4em] text-3xl">Dízimos e Ofertas</span>
-        </motion.div>
-        <h1 className="font-sans font-black text-[7.5rem] tracking-tight text-white leading-none mb-8">
-          Faça sua <br />Doação
-        </h1>
-        <p className="text-[3.5rem] text-stone-200 font-normal mt-6 leading-snug max-w-[90%] mb-12">
-          Acesse <span className="text-yellow-500 font-bold">{DONATION.url.replace(/^https?:\/\//, '')}</span> ou escaneie o QR Code ao lado.
-        </p>
-        <div className="bg-white/[0.03] border border-white/[0.08] p-6 rounded-2xl inline-block">
-           <p className="text-stone-300 text-3xl font-medium">Lembre-se de enviar o comprovante</p>
-           <p className="text-stone-400 text-2xl mt-2">O WhatsApp está disponível no site.</p>
-        </div>
-      </div>
-      <motion.div className="flex-shrink-0 bg-white p-6 rounded-3xl">
-        <QRCode value={DONATION.url} size={480} />
-      </motion.div>
-    </motion.div>
-  );
-};
-
-const CampaignSlide = () => {
-  return (
-    <motion.div
-       initial={{ opacity: 0 }}
-       animate={{ opacity: 1 }}
-       className="flex flex-col items-center justify-center text-center max-w-[95%] w-full"
-    >
-      <CalendarDays className="w-16 h-16 text-stone-500 mb-4" strokeWidth={1.5} />
-      <h1 className="font-sans font-semibold text-4xl tracking-wide text-stone-400 uppercase mb-16">
-        Propósitos Atuais
-      </h1>
-      <div className="grid grid-cols-2 gap-10 w-full">
-        {CAMPAIGNS.map((campaign, index) => {
-          const Icon = campaign.type === 'jejum_daniel' ? WifiOff : Flame;
-          return (
-            <div key={index} className="bg-white/[0.03] border border-white/[0.08] p-16 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl relative overflow-hidden group">
-               <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-               <Icon className="w-48 h-48 text-yellow-500 mb-12" strokeWidth={1} />
-               <h3 className="text-white font-black text-[6rem] mb-8 tracking-tight leading-none drop-shadow-[0_0_30px_rgba(234,179,8,0.3)] whitespace-pre-line">{campaign.title}</h3>
-               <p className="text-yellow-500 text-4xl uppercase tracking-[0.2em] font-bold mt-6">{campaign.duration}</p>
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-};
-// ==========================================
-
-const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnded }: { media: CustomMedia; currentSlideId: string; videoPinBehavior?: string; onVideoEnded?: () => void }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (currentSlideId === media.id) {
-      if (video.src !== media.url) {
-        video.src = media.url;
-        video.currentTime = 0;
-      }
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((e) => {
-          console.log("Autoplay unmuted blocked, playing muted", e);
-          video.muted = true;
-          video.play().catch((err) => console.error("Could not play video even muted", err));
-        });
-      }
-    } else {
-      video.pause();
-    }
-  }, [currentSlideId, media.id, media.url]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = media.muted !== undefined ? media.muted : true;
-  }, [media.muted]);
-
-  return (
-    <div className="w-full h-full flex items-center justify-center relative">
-      <video
-        ref={videoRef}
-        className="max-w-full max-h-full object-contain"
-        playsInline
-        controls={false}
-        loop={videoPinBehavior !== 'unpin'}
-        onEnded={() => {
-          if (onVideoEnded) {
-            onVideoEnded();
-          }
-        }}
-      />
-    </div>
-  );
-};
 
 export default function App() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [manualRotateMode, setManualRotateMode] = useState<'auto' | 'force-landscape'>('auto');
+
+  // Electron Detection & Window Toggle States
+  const [isProjectionWindowShowing, setIsProjectionWindowShowing] = useState(true);
+  const ipcRendererRef = useRef<any>(null);
+  const [projectionWin, setProjectionWin] = useState<Window | null>(null);
+  const isElectron = typeof window !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
+
+  // Monitor if window is closed
+  useEffect(() => {
+    if (!projectionWin) return;
+    const timer = setInterval(() => {
+      if (projectionWin.closed) {
+        setProjectionWin(null);
+        clearInterval(timer);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [projectionWin]);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && (window as any).require) {
+        ipcRendererRef.current = (window as any).require('electron').ipcRenderer;
+      }
+    } catch (e) {
+      // Safe fallback when not in desktop/Electron environment
+    }
+  }, []);
 
   // Synchronized Presentation States
   const [isLocalProjection, setIsLocalProjection] = useState(false);
@@ -578,6 +143,10 @@ export default function App() {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('projection_dismissedJustStarted') === 'true';
   });
+  const [isTvMode, setIsTvMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('projection_isTvMode') === 'true';
+  });
 
   const [slidesOrder, setSlidesOrder] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -600,6 +169,8 @@ export default function App() {
   const [customMediaList, setCustomMediaList] = useState<CustomMedia[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+
 
   // Load custom media files from DB on trigger or mount
   useEffect(() => {
@@ -831,6 +402,7 @@ export default function App() {
     else if (key === 'customVerseText') setCustomVerseText(value);
     else if (key === 'customVerseRef') setCustomVerseRef(value);
     else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
+    else if (key === 'isTvMode') setIsTvMode(value === 'true' || value === true);
     else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
     else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
     else if (key === 'slidesOrder') {
@@ -953,137 +525,6 @@ export default function App() {
   }, [activeMobileTab]);
 
   // Local Bible API states
-  const [bibleTab, setBibleTab] = useState<'favorites' | 'api'>('favorites');
-  const [apiSearchQuery, setApiSearchQuery] = useState('');
-  const [apiSearchResult, setApiSearchResult] = useState<{ text: string; ref: string } | null>(null);
-  const [apiSearchLoading, setApiSearchLoading] = useState(false);
-  const [apiSearchError, setApiSearchError] = useState<string | null>(null);
-
-  const parseAndMapReference = (rawRef: string) => {
-    let normalized = rawRef.trim().toLowerCase();
-    
-    // Replace roman numeral prefixes or other ordinal suffixes
-    normalized = normalized
-      .replace(/^(i{1,3})\b/i, (match) => {
-        if (match === 'i') return '1';
-        if (match === 'ii') return '2';
-        if (match === 'iii') return '3';
-        return match;
-      })
-      .replace(/^1º\s*|^1o\s*|^1ª\s*|^1a\s*|^primeiro\s*|^primeira\s*/i, '1 ')
-      .replace(/^2º\s*|^2o\s*|^2ª\s*|^2a\s*|^segundo\s*|^segunda\s*/i, '2 ')
-      .replace(/^3º\s*|^3o\s*|^3ª\s*|^3a\s*|^terceiro\s*|^terceira\s*/i, '3 ')
-      // If there's a digit stuck to a book name, e.g., "1joao" -> "1 joao"
-      .replace(/^([123])([a-z])/i, '$1 $2');
-
-    const regex = /^([123])?\s*([a-záéíóúçâêôûãõ\s\-\'\/]+)\s+(\d+)(?:[:\.](\d+))?(-(\d+))?$/i;
-    const match = normalized.match(regex);
-    if (!match) return rawRef;
-
-    const bookNumber = match[1] ? match[1].trim() + " " : "";
-    const rawBookName = match[2].trim();
-    const chapter = match[3];
-    const startVerse = match[4] || "";
-    const endVerse = match[6] ? "-" + match[6] : "";
-
-    const bookMap: Record<string, string> = {
-      "gênesis": "genesis", "genesis": "genesis", "gn": "genesis",
-      "êxodo": "exodus", "exodo": "exodus", "ex": "exodus",
-      "levítico": "leviticus", "levitico": "leviticus", "lv": "leviticus",
-      "números": "numbers", "numeros": "numbers", "nm": "numbers",
-      "deuteronômio": "deuteronomy", "deuteronomio": "deuteronomy", "dt": "deuteronomy",
-      "josué": "joshua", "josue": "joshua", "js": "joshua",
-      "juízes": "judges", "juizes": "judges", "jz": "judges",
-      "rute": "ruth", "rt": "ruth",
-      "samuel": "samuel", "sm": "samuel",
-      "reis": "kings", "re": "kings",
-      "crônicas": "chronicles", "cronicas": "chronicles", "cr": "chronicles",
-      "esdras": "ezra", "es": "ezra",
-      "neemias": "nehemiah", "ne": "nehemiah",
-      "ester": "esther", "et": "esther",
-      "jó": "job",
-      "salmos": "psalms", "salmo": "psalms", "sl": "psalms",
-      "provérbios": "proverbs", "proverbios": "proverbs", "pv": "proverbs",
-      "eclesiastes": "ecclesiastes", "ec": "ecclesiastes",
-      "cantares": "song of solomon", "cântico dos cânticos": "song of solomon", "cantico dos canticos": "song of solomon", "ct": "song of solomon",
-      "isaías": "isaiah", "isaias": "isaiah", "is": "isaiah",
-      "jeremias": "jeremiah", "jr": "jeremiah",
-      "lamentações": "lamentations", "lamentacoes": "lamentations", "lm": "lamentations",
-      "ezequiel": "ezekiel", "ez": "ezekiel",
-      "daniel": "daniel", "dn": "daniel",
-      "oséias": "hosea", "oseias": "hosea", "os": "hosea",
-      "joel": "joel", "jl": "joel",
-      "amós": "amos", "amos": "amos", "am": "amos",
-      "obadias": "obadiah", "ob": "obadiah",
-      "jonas": "jonah", "jn": "jonah",
-      "miquéias": "micah", "miqueias": "micah", "mq": "micah",
-      "naum": "nahum", "na": "nahum",
-      "habacuque": "habakkuk", "hc": "habakkuk",
-      "sofonias": "zephaniah", "sf": "zephaniah",
-      "ageu": "haggai", "ag": "haggai",
-      "zacarias": "zechariah", "zc": "zechariah",
-      "malaquias": "malachi", "ml": "malachi",
-      "mateus": "matthew", "mt": "matthew",
-      "marcos": "mark", "mc": "mark",
-      "lucas": "luke", "lc": "luke",
-      "joão": "john", "joao": "john", "jo": "john",
-      "atos": "acts", "at": "acts",
-      "romanos": "romans", "rm": "romans",
-      "coríntios": "corinthians", "corintios": "corinthians", "co": "corinthians",
-      "gálatas": "galatians", "galatas": "galatians", "gl": "galatians",
-      "efésios": "ephesians", "efesios": "ephesians", "ef": "ephesians",
-      "filipenses": "philippians", "fp": "philippians",
-      "colossenses": "colossians", "cl": "colossians",
-      "tessalonicenses": "thessalonians", "ts": "thessalonians",
-      "timóteo": "timothy", "timoteo": "timothy", "tm": "timothy",
-      "tito": "titus", "tt": "titus",
-      "filemom": "philemon", "fl": "philemon",
-      "hebreus": "hebrews", "hb": "hebrews",
-      "tiago": "james", "tg": "james",
-      "pedro": "peter", "pe": "peter",
-      "judas": "judas", "jd": "judas",
-      "apocalipse": "revelation", "ap": "revelation"
-    };
-
-    const englishBook = bookMap[rawBookName] || rawBookName;
-    let finalRef = `${bookNumber}${englishBook} ${chapter}`;
-    if (startVerse) {
-      finalRef += `:${startVerse}${endVerse}`;
-    }
-    return finalRef;
-  };
-
-  const handleBibleSearch = async (queryStr: string) => {
-    if (!queryStr.trim()) return;
-    setApiSearchLoading(true);
-    setApiSearchError(null);
-    setApiSearchResult(null);
-
-    try {
-      const parsedRef = parseAndMapReference(queryStr);
-      const response = await fetch(`https://bible-api.com/${encodeURIComponent(parsedRef)}?translation=almeida`);
-      if (!response.ok) {
-        throw new Error('Versículo não encontrado. Verifique a grafia e tente novamente (ex: João 3:16 ou Sl 23:1).');
-      }
-      
-      const data = await response.json();
-      if (!data.text || data.text.trim() === '') {
-        throw new Error('Não foi possível obter o texto do versículo.');
-      }
-
-      const formattedQuery = queryStr.trim().replace(/^\w/, (c) => c.toUpperCase());
-      
-      setApiSearchResult({
-        text: data.text.trim(),
-        ref: formattedQuery
-      });
-    } catch (err: any) {
-      console.error('Error fetching verse:', err);
-      setApiSearchError(err.message || 'Erro ao buscar o versículo na Bíblia Online.');
-    } finally {
-      setApiSearchLoading(false);
-    }
-  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -1137,6 +578,24 @@ export default function App() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // TV Mode Automation: Auto-trigger countdowns
+  useEffect(() => {
+    if (!isTvMode || isProjectionView) return;
+
+    const { nextMeetingDate } = getNextMeeting(currentTime);
+    const adjustedNext = new Date(nextMeetingDate.getTime() + countdownOffset);
+    const diffSec = Math.floor((adjustedNext.getTime() - currentTime.getTime()) / 1000);
+
+    // Auto-trigger "soon" (countdown) when 5 minutes left
+    if (diffSec > 0 && diffSec <= 300 && manualSlideOverride !== 'soon') {
+      updateStateAndBroadcast('manualSlideOverride', 'soon');
+    }
+    // Auto-clear override when meeting starts (to show welcome verse)
+    if (diffSec <= 0 && manualSlideOverride === 'soon') {
+      updateStateAndBroadcast('manualSlideOverride', null);
+    }
+  }, [currentTime, isTvMode, isProjectionView, manualSlideOverride, countdownOffset]);
 
   // Compute Meeting State
   const { nextMeeting, nextMeetingDate, ongoingMeeting } = getNextMeeting(currentTime);
@@ -1249,86 +708,15 @@ export default function App() {
   const hoursStr = countHours.toString().padStart(2, '0');
   const minutesStr = countMinutes.toString().padStart(2, '0');
 
-  // Animation Variants based on slide type
-  const getTransitionVariants = (slideId: SlideType) => {
-    return {
-      initial: { opacity: 0 },
-      animate: { opacity: 1 },
-      exit: { opacity: 0 },
-      transition: { duration: 0.8, ease: "easeInOut" }
+  const [isCurrentlyFullscreen, setIsCurrentlyFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsCurrentlyFullscreen(!!document.fullscreenElement);
     };
-  };
-
-  // Renders the specific slide component
-  const renderSlide = (slideId: SlideType) => {
-    if (slideId.startsWith("custom_")) {
-      const media = customMediaList.find(m => m.id === slideId);
-      if (!media) return <div className="text-stone-500 text-3xl font-bold flex items-center justify-center h-full w-full bg-black">Mídia não encontrada</div>;
-      if (media.type === 'image') {
-        return (
-          <div className="w-full h-full flex items-center justify-center relative p-6">
-            <img 
-              src={media.url} 
-              alt={media.name} 
-              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        );
-      } else if (media.type === 'video') {
-        return (
-          <VideoSlide 
-            media={media} 
-            currentSlideId={currentSlideId} 
-            videoPinBehavior={videoPinBehavior}
-            onVideoEnded={() => {
-              if (manualSlideOverride === media.id && videoPinBehavior === 'unpin') {
-                updateStateAndBroadcast('manualSlideOverride', null);
-              }
-            }}
-          />
-        );
-      }
-    }
-    if (slideId.startsWith("agenda_day_")) {
-      const dayIndex = parseInt(slideId.replace("agenda_day_", ""), 10);
-      return <AgendaDaySlide dayIndex={dayIndex} currentTime={currentTime} />;
-    }
-    if (slideId.startsWith("verse_")) {
-      const verseIndexOffset = parseInt(slideId.replace("verse_", ""), 10) || 0;
-      return (
-        <VerseSlide 
-          currentTime={currentTime} 
-          verseIndexOffset={verseIndexOffset} 
-          loopIteration={loopIteration} 
-          customVerseText={customVerseText}
-          customVerseRef={customVerseRef}
-          activeVerseIndex={activeVerseIndex}
-        />
-      );
-    }
-
-    switch (slideId) {
-      case 'seat':
-        return <IconSlide icon={Armchair} title="Fique à vontade" subtitle="Procure um assento e acomode-se para o início da reunião." layout="split-left" />;
-      case 'bathroom':
-        return <IconSlide icon={DoorOpen} title="Vá ao banheiro" subtitle="Aproveite para ir antes da reunião começar." layout="split-right" />;
-      case 'phone':
-        return <IconSlide icon={Smartphone} title="Celular no Silencioso" subtitle="Mantenha o celular no silencioso para evitar interrupções." layout="center" />;
-      case 'no_chat':
-        return <IconSlide icon={MessageSquareOff} title="Silêncio" subtitle="Desligue-se das conversas e concentre-se na reunião." layout="split-left" />;
-      case 'soon':
-        return <IconSlide icon={Clock} title="A reunião começa" subtitle="em instantes..." pulse layout="center" />;
-      case 'social':
-        return <IconSlide icon={Instagram} title="Siga nosso Instagram" subtitle={SOCIAL.instagram} layout="split-left" />;
-      case 'donations':
-        return <DonationSlide />;
-      case 'campaigns':
-        return <CampaignSlide />;
-      case 'world_god':
-        return <WorldGodSlide />;
-    }
-  };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
 
   if (!isProjectionView) {
     return (
@@ -1350,6 +738,28 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-2 w-full lg:w-auto">
+            {isElectron && (
+              <button
+                onClick={() => {
+                  if (isProjectionWindowShowing) {
+                    ipcRendererRef.current?.send('hide-projection');
+                    setIsProjectionWindowShowing(false);
+                  } else {
+                    ipcRendererRef.current?.send('show-projection');
+                    setIsProjectionWindowShowing(true);
+                  }
+                }}
+                className={`flex-1 lg:flex-none border text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  isProjectionWindowShowing
+                    ? 'bg-red-500/10 border-red-500/25 hover:bg-red-500/20 text-red-400'
+                    : 'bg-emerald-500/10 border-emerald-500/25 hover:bg-emerald-500/20 text-emerald-400 font-bold'
+                }`}
+              >
+                <Tv className="w-3.5 h-3.5" />
+                <span>{isProjectionWindowShowing ? 'Apagar Projetor' : 'Ligar Projetor'}</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 setIsLocalProjection(true);
@@ -1925,34 +1335,10 @@ export default function App() {
                 </button>
               </div>
 
-              {/* TABS SELECTOR */}
-              <div className="flex border-b border-stone-850/40 pb-1 mt-1">
-                <button
-                  onClick={() => setBibleTab('favorites')}
-                  className={`flex-1 pb-1.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-                    bibleTab === 'favorites'
-                      ? "border-yellow-500 text-yellow-500"
-                      : "border-transparent text-stone-500 hover:text-stone-300"
-                  }`}
-                >
-                  Favoritos ({VERSES.length})
-                </button>
-                <button
-                  onClick={() => setBibleTab('api')}
-                  className={`flex-1 pb-1.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-                    bibleTab === 'api'
-                      ? "border-yellow-500 text-yellow-500"
-                      : "border-transparent text-stone-500 hover:text-stone-300"
-                  }`}
-                >
-                  Bíblia Online (API)
-                </button>
-              </div>
-
-              {bibleTab === 'favorites' ? (
-                /* LIST OF AVAILABLE BIBLE VERSES */
+              {/* BÍBLIA SECTION */}
+              <div className="flex flex-col gap-4">
                 <div>
-                  <label className="text-stone-500 text-[10px] font-bold uppercase tracking-wider mb-2 block">Selecionar Versículo da Bíblia (ACF/ARA)</label>
+                  <label className="text-stone-500 text-[10px] font-bold uppercase tracking-wider mb-2 block">Versículos Favoritos (Selecionar)</label>
                   <div className="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto pr-1 border border-stone-850/60 bg-stone-950/40 p-2 rounded-xl">
                     {VERSES.map((verse, idx) => {
                       const isSelected = activeVerseIndex === idx && !customVerseText;
@@ -1977,93 +1363,15 @@ export default function App() {
                     })}
                   </div>
                 </div>
-              ) : (
-                /* BIBLE ONLINE API SEARCH */
-                <div className="flex flex-col gap-3">
-                  <div>
-                    <label className="text-stone-500 text-[10px] font-bold uppercase tracking-wider mb-1.5 block">
-                      Pesquisar Referência na Bíblia
-                    </label>
-                    <div className="flex gap-1.5">
-                      <input
-                        type="text"
-                        placeholder="Ex: João 3:16 ou Sl 23:1"
-                        value={apiSearchQuery}
-                        onChange={(e) => setApiSearchQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleBibleSearch(apiSearchQuery);
-                          }
-                        }}
-                        className="flex-1 bg-stone-900 border border-stone-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-stone-700 font-sans"
-                      />
-                      <button
-                        onClick={() => handleBibleSearch(apiSearchQuery)}
-                        disabled={apiSearchLoading || !apiSearchQuery.trim()}
-                        className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-stone-850 disabled:text-stone-600 text-black px-3.5 rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer transition-all shrink-0"
-                      >
-                        {apiSearchLoading ? (
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Search className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
 
-                  {/* QUICK SUGGESTIONS */}
-                  <div className="flex flex-wrap gap-1 items-center">
-                    <span className="text-stone-500 text-[9px] uppercase tracking-wider mr-1">Sugestões:</span>
-                    {["João 3:16", "Salmos 23:1", "Isaías 41:10", "Filipenses 4:13"].map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        onClick={() => {
-                          setApiSearchQuery(suggestion);
-                          handleBibleSearch(suggestion);
-                        }}
-                        className="text-[9px] bg-stone-900/60 border border-stone-850 hover:border-stone-700 text-stone-400 hover:text-stone-200 px-2 py-0.5 rounded-md font-medium transition-all cursor-pointer"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* ERROR MESSAGE */}
-                  {apiSearchError && (
-                    <div className="text-red-500 text-[11px] leading-tight bg-red-950/20 border border-red-900/30 p-2.5 rounded-xl text-left">
-                      {apiSearchError}
-                    </div>
-                  )}
-
-                  {/* SEARCH RESULT PREVIEW */}
-                  {apiSearchResult && (
-                    <div className="bg-stone-950/60 border border-stone-850/60 rounded-xl p-3 flex flex-col gap-2 text-left">
-                      <div className="flex items-center justify-between border-b border-stone-900 pb-1.5">
-                        <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">
-                          Prévia Encontrada:
-                        </span>
-                        <span className="text-stone-300 font-bold text-xs font-mono">
-                          {apiSearchResult.ref}
-                        </span>
-                      </div>
-                      <p className="text-xs text-stone-400 italic leading-relaxed">
-                        "{apiSearchResult.text}"
-                      </p>
-                      <button
-                        onClick={() => {
-                          updateStateAndBroadcast('activeVerseIndex', null);
-                          updateStateAndBroadcast('customVerseText', apiSearchResult.text);
-                          updateStateAndBroadcast('customVerseRef', apiSearchResult.ref);
-                        }}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-black text-[11px] font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 mt-1 transition-all cursor-pointer shadow-md"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        Projetar na Tela Grande
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                <BibleSection 
+                  onShowVerse={(text, ref) => {
+                    updateStateAndBroadcast('activeVerseIndex', null);
+                    updateStateAndBroadcast('customVerseText', text);
+                    updateStateAndBroadcast('customVerseRef', ref);
+                  }} 
+                />
+              </div>
 
               {/* CUSTOM TEXT TRANSMITTER FORM */}
               <div className="border-t border-stone-850 pt-4 flex flex-col gap-3">
@@ -2128,6 +1436,71 @@ export default function App() {
                 Ações Rápidas de Projeção (2ª Tela)
               </h2>
               <div className="grid grid-cols-2 gap-3.5">
+                <div className="flex flex-col gap-2 col-span-2">
+                  {!projectionWin || projectionWin.closed ? (
+                    <button
+                      onClick={async () => {
+                        const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
+                        
+                        let newWin: Window | null = null;
+
+                        // Tenta usar a Window Management API para detectar telas secundárias
+                        try {
+                          if ('getScreenDetails' in window) {
+                            const screenDetails = await (window as any).getScreenDetails();
+                            const secondaryScreen = screenDetails.screens.find((s: any) => s.isExtended || !s.isPrimary);
+                            
+                            if (secondaryScreen) {
+                              newWin = window.open(
+                                projectionUrl,
+                                'holyrics_projection',
+                                `left=${secondaryScreen.availLeft},top=${secondaryScreen.availTop},width=${secondaryScreen.availWidth},height=${secondaryScreen.availHeight},menubar=no,status=no,titlebar=no`
+                              );
+                              setProjectionWin(newWin);
+                              return;
+                            }
+                          }
+                        } catch (e) {
+                          console.warn("Window Management API não permitida ou não suportada", e);
+                        }
+                        
+                        // Fallback para abertura padrão
+                        newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no');
+                        setProjectionWin(newWin);
+                      }}
+                      className="w-full p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl border border-blue-400/30 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Abrir Monitor na 2ª Tela (HDMI)
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (projectionWin) {
+                          projectionWin.close();
+                          setProjectionWin(null);
+                        }
+                      }}
+                      className="w-full p-3 bg-red-600 hover:bg-red-500 text-white rounded-xl border border-red-400/30 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg"
+                    >
+                      <X className="w-4 h-4" />
+                      Fechar Monitor Externo
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => updateStateAndBroadcast('isTvMode', !isTvMode)}
+                  className={`p-4 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                    isTvMode
+                      ? 'bg-red-600/20 border-red-500/50 text-red-400 shadow-[0_0_20px_rgba(220,38,38,0.2)]'
+                      : 'bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-700'
+                  }`}
+                >
+                  <Tv className={`w-6 h-6 ${isTvMode ? 'animate-pulse' : ''}`} />
+                  Modo TV (Ao Vivo)
+                </button>
+
                 <button
                   onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}
                   className={`p-4 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
@@ -2323,6 +1696,9 @@ export default function App() {
               )}
             </div>
 
+            {/* SEÇÃO DE BACKUP & SINCRONIZAÇÃO */}
+            <SyncSection />
+
           </div>
 
           {/* RIGHT: MINIATURE SCREEN PREVIEW */}
@@ -2344,201 +1720,46 @@ export default function App() {
                   transform: `scale(${monitorScale})`
                 }}
               >
-                <div className="w-full h-full relative select-none font-sans overflow-hidden bg-[#050000] text-white flex flex-col justify-between">
-                  <ParticlesBackground />
-                  
-                  {/* Blackout overlay on miniature */}
-                  {blackoutEnabled && (
-                    <div className="absolute inset-0 bg-black z-[100] flex flex-col items-center justify-center">
-                      <span className="text-stone-700 font-bold uppercase tracking-[0.25em] text-4xl">
-                        Blackout Ativo
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Alert on miniature */}
-                  <AnimatePresence>
-                    {activeAlert && (
-                      <div className="absolute top-10 left-1/2 -translate-x-1/2 z-[90] bg-yellow-500 text-black px-10 py-6 rounded-[2rem] flex items-center gap-6 border-2 border-yellow-400 max-w-[90%]">
-                        <Bell className="w-12 h-12 text-black" strokeWidth={2.5} />
-                        <div className="text-left">
-                          <h2 className="font-black text-2xl uppercase tracking-widest text-black">Aviso Urgente</h2>
-                          <p className="font-bold text-3xl mt-1 text-black">
-                            {activeAlert === 'baby' ? ALERTS.baby.message : activeAlert === 'car' ? ALERTS.car.message : activeAlert}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </AnimatePresence>
-
-                  <AnimatePresence mode="wait">
-                    {isLooping && (
-                      <motion.div
-                        key="looping"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="absolute inset-0 flex flex-col justify-between"
-                      >
-                        <header className="h-[145px] px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-transparent z-40 absolute top-0 left-0 right-0">
-                          <div>
-                            <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
-                              {CHURCH_INFO.name}
-                            </h1>
-                            <p className="text-xl font-bold tracking-[0.62em] text-yellow-500 uppercase mt-2">
-                              {CHURCH_INFO.location}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-10">
-                            <div className="text-right">
-                              <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
-                                A Reunião Começa em:
-                              </span>
-                              <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
-                                <span>{hoursStr}</span>
-                                <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
-                                <span>:</span>
-                                <span>{minutesStr}</span>
-                                <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
-                              </div>
-                            </div>
-                          </div>
-                        </header>
-
-                        <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px] overflow-hidden">
-                          <AnimatePresence>
-                            <motion.div
-                              key={currentSlideId}
-                              {...getTransitionVariants(currentSlideId)}
-                              className="absolute inset-0 flex items-center justify-center pt-[145px]"
-                            >
-                              {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                            </motion.div>
-                          </AnimatePresence>
-                        </main>
-                      </motion.div>
-                    )}
-
-                    {isFinalFiveMinutes && (
-                      <motion.div
-                        key="final-five"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="absolute inset-0 flex w-full h-full bg-black relative"
-                      >
-                        <div className="w-[35%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
-                          <span className="text-yellow-500 text-[2rem] font-bold uppercase tracking-[0.4em] mb-4">
-                            Faltam
-                          </span>
-                          <div className="relative h-[12rem] w-full flex items-center justify-center overflow-hidden">
-                            <AnimatePresence mode="popLayout">
-                              <motion.div
-                                key={diffSeconds}
-                                initial={{ opacity: 0, y: 25 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -25 }}
-                                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                                className="absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]"
-                              >
-                                {formatMinutesPart}:{formatSecondsPart}
-                              </motion.div>
-                            </AnimatePresence>
-                          </div>
-                          <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
-                            Minutos e Segundos
-                          </span>
-                        </div>
-                        <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
-                          <div className="w-[1920px] h-[1080px] absolute transform scale-[0.65] origin-center flex flex-col items-center justify-center">
-                            <AnimatePresence>
-                              <motion.div
-                                key={currentSlideId}
-                                {...getTransitionVariants(currentSlideId)}
-                                className="absolute inset-0 flex items-center justify-center"
-                              >
-                                {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                              </motion.div>
-                            </AnimatePresence>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {isFinalMinute && (
-                      <motion.div
-                        key="final-minute"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative overflow-hidden"
-                      >
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-yellow-600/10 blur-[200px] rounded-full pointer-events-none" />
-                        
-                        <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-8 animate-pulse z-10">
-                          A Reunião Começa Em
-                        </span>
-                        
-                        <div className="relative h-[24rem] w-full flex items-center justify-center overflow-hidden z-10">
-                          <AnimatePresence mode="popLayout">
-                            <motion.div
-                              key={diffSeconds}
-                              initial={{ opacity: 0, y: 60 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -60 }}
-                              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                              className="absolute font-sans text-[24rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums"
-                            >
-                              {diffSeconds}
-                            </motion.div>
-                          </AnimatePresence>
-                        </div>
-                        
-                        <span className="text-stone-300 text-5xl font-medium tracking-[0.3em] mt-12 uppercase z-10">
-                          {diffSeconds === 1 ? "Segundo" : "Segundos"}
-                        </span>
-                      </motion.div>
-                    )}
-
-                    {isJustStarted && (
-                      <motion.div
-                        key="just-started"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="absolute inset-0 w-full h-full"
-                      >
-                        <VerseSlide 
-                          currentTime={currentTime} 
-                          customVerseText={customVerseText} 
-                          customVerseRef={customVerseRef} 
-                          activeVerseIndex={activeVerseIndex} 
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                <ProjectionContent
+                  currentTime={currentTime}
+                  isLooping={isLooping}
+                  isFinalFiveMinutes={isFinalFiveMinutes}
+                  isFinalMinute={isFinalMinute}
+                  isJustStarted={isJustStartedRaw}
+                  activeAlert={activeAlert}
+                  blackoutEnabled={blackoutEnabled}
+                  clearContentEnabled={clearContentEnabled}
+                  currentSlideId={currentSlideId}
+                  hoursStr={hoursStr}
+                  minutesStr={minutesStr}
+                  diffSeconds={diffSeconds}
+                  formatMinutesPart={formatMinutesPart}
+                  formatSecondsPart={formatSecondsPart}
+                  customVerseText={customVerseText}
+                  customVerseRef={customVerseRef}
+                  activeVerseIndex={activeVerseIndex}
+                  churchInfo={CHURCH_INFO}
+                  alerts={ALERTS}
+                  customMediaList={customMediaList}
+                  videoPinBehavior={videoPinBehavior}
+                  loopIteration={loopIteration}
+                  onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
+                  isMiniature={true}
+                />
               </div>
             </div>
 
-            <p className="text-xs text-stone-500 leading-relaxed mt-2 border-t border-stone-850 pt-4">
-              <strong>Guia de Transmissão:</strong>
-              <br />
-              1. Conecte o projetor ou TV na saída HDMI da sua máquina.
-              <br />
-              2. Clique no botão amarelo <strong>"Abrir Projeção (2ª Tela)"</strong>.
-              <br />
-              3. Arraste a nova aba aberta para a TV ou Projetor.
-              <br />
-              4. Na janela da TV, clique e aperte a tecla <strong>F</strong> para ativar a tela cheia e ocultar os controles.
-              <br />
-              5. Use este painel para monitorar, trocar slides e disparar alertas instantâneos!
-            </p>
+              <p className="text-xs text-stone-500 leading-relaxed mt-2 border-t border-stone-850 pt-4">
+                <strong>Guia de Transmissão:</strong>
+                <br />
+                1. Conecte o projetor ou TV na saída HDMI da sua máquina.
+                <br />
+                2. Use o botão <strong>"Abrir Monitor na 2ª Tela"</strong> acima. O sistema tentará detectar seu monitor HDMI automaticamente.
+                <br />
+                3. Na janela que abrir na TV, clique em qualquer lugar para ativar a <strong>Tela Cheia</strong> automática.
+                <br />
+                4. Use este painel para monitorar, trocar slides e disparar alertas instantâneos!
+              </p>
           </div>
 
         </div>
@@ -2547,7 +1768,24 @@ export default function App() {
   }
 
   return (
-    <div className={`w-screen h-screen bg-black overflow-hidden relative select-none font-sans flex items-center justify-center cursor-none`}>
+    <div 
+      onClick={() => {
+        if (!isCurrentlyFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      }}
+      className={`w-screen h-screen bg-black overflow-hidden relative select-none font-sans flex items-center justify-center ${isCurrentlyFullscreen ? 'cursor-none' : 'cursor-pointer'}`}
+    >
+      
+      {!isCurrentlyFullscreen && (
+        <div className="absolute inset-0 z-[200] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white p-10 text-center animate-in fade-in duration-500">
+          <div className="bg-yellow-500 text-black p-6 rounded-full mb-6 shadow-[0_0_50px_rgba(234,179,8,0.4)] animate-bounce">
+            <Maximize className="w-12 h-12" />
+          </div>
+          <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Clique para Ativar Tela Cheia</h2>
+          <p className="text-stone-300 text-xl font-medium">O monitor de projeção precisa ser ativado para ocultar o navegador.</p>
+        </div>
+      )}
       
       {/* MAIN 16:9 SCREEN FRAME */}
       <div
@@ -2562,202 +1800,37 @@ export default function App() {
         }}
         className="bg-[#050000] text-white shadow-[0_0_250px_rgba(0,0,0,0.99)] overflow-hidden flex flex-col z-10"
       >
-        <ParticlesBackground />
-
-        {/* BLACKOUT OVERLAY FOR PROJECTION */}
-        {blackoutEnabled && (
-          <div className="absolute inset-0 bg-black z-[100]" />
-        )}
-
-        {/* VISUAL ALERT OVERLAY */}
-        <AnimatePresence>
-          {activeAlert && (
-            <motion.div
-              initial={{ opacity: 0, y: -100 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -100 }}
-              className="absolute top-12 left-1/2 -translate-x-1/2 z-[90] bg-yellow-500 text-black px-12 py-7 rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.6)] flex items-center gap-8 border-2 border-yellow-400 min-w-[700px] max-w-[90%]"
-            >
-              <Bell className="w-14 h-14 animate-[bounce_2s_infinite] text-black" strokeWidth={2.5} />
-              <div className="text-left flex-1">
-                <h2 className="font-black text-2xl uppercase tracking-widest leading-none text-black">Aviso Importante</h2>
-                <p className="font-bold text-3xl mt-2 text-black leading-snug">
-                  {activeAlert === 'baby' ? ALERTS.baby.message : activeAlert === 'car' ? ALERTS.car.message : activeAlert}
-                </p>
-              </div>
-              <button 
-                onClick={() => updateStateAndBroadcast('activeAlert', null)}
-                className="bg-black/10 hover:bg-black/25 p-3 rounded-full transition-colors cursor-pointer pointer-events-auto shrink-0 flex items-center justify-center"
-              >
-                <X className="w-7 h-7 text-black" strokeWidth={2.5} />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        <AnimatePresence mode="wait">
-                  {isLooping && (
-            <motion.div
-              key="looping"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 flex flex-col justify-between"
-            >
-              <header className="h-[145px] px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-transparent z-40 absolute top-0 left-0 right-0">
-                <div>
-                  <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
-                    {CHURCH_INFO.name}
-                  </h1>
-                  <p className="text-xl font-bold tracking-[0.62em] text-yellow-500 uppercase mt-2">
-                    {CHURCH_INFO.location}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-10">
-                  <div className="text-right">
-                    <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
-                      A Reunião Começa em:
-                    </span>
-                    <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
-                      <span>{hoursStr}</span>
-                      <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
-                      <span className="text-yellow-500 animate-pulse">:</span>
-                      <span>{minutesStr}</span>
-                      <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
-                    </div>
-                  </div>
-                  
-                  <div className="h-12 w-[1px] bg-white/[0.1]" />
-                  
-                  <div className="bg-white/[0.02] border border-white/[0.05] px-6 py-3 rounded-xl flex flex-col items-center justify-center">
-                    <span className="font-mono text-3xl font-bold tracking-wider text-stone-200">
-                      {format(currentTime, 'HH:mm:ss')}
-                    </span>
-                    <span className="font-sans text-xs tracking-[0.2em] text-stone-500 uppercase mt-1">
-                      {format(currentTime, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                    </span>
-                  </div>
-                </div>
-              </header>
-
-              <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px] overflow-hidden">
-                <AnimatePresence>
-                  <motion.div
-                    key={currentSlideId}
-                    {...getTransitionVariants(currentSlideId)}
-                    className="absolute inset-0 flex items-center justify-center pt-[145px]"
-                  >
-                    {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                  </motion.div>
-                </AnimatePresence>
-              </main>
-            </motion.div>
-          )}
-
-          {isFinalFiveMinutes && (
-            <motion.div
-              key="final-five"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 flex w-full h-full bg-black relative"
-            >
-              <div className="w-[35%] h-full flex flex-col items-center justify-center border-r border-white/[0.05] bg-[#030000] z-20">
-                <span className="text-yellow-500 text-[2rem] font-bold uppercase tracking-[0.4em] mb-4">
-                  Faltam
-                </span>
-                <div className="relative h-[12rem] w-full flex items-center justify-center overflow-hidden">
-                  <AnimatePresence mode="popLayout">
-                    <motion.div
-                      key={diffSeconds}
-                      initial={{ opacity: 0, y: 25 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -25 }}
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]"
-                    >
-                      {formatMinutesPart}:{formatSecondsPart}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-                <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
-                  Minutos e Segundos
-                </span>
-              </div>
-              <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-black bg-gradient-to-b from-black/20 to-black/80">
-                <div className="w-[1920px] h-[1080px] absolute transform scale-[0.65] origin-center flex flex-col items-center justify-center">
-                  <AnimatePresence>
-                    <motion.div
-                      key={currentSlideId}
-                      {...getTransitionVariants(currentSlideId)}
-                      className="absolute inset-0 flex items-center justify-center"
-                    >
-                      {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {isFinalMinute && (
-            <motion.div
-              key="final-minute"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative overflow-hidden"
-            >
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-yellow-600/10 blur-[200px] rounded-full pointer-events-none" />
-              
-              <span className="text-yellow-500 text-3xl font-bold uppercase tracking-[0.5em] mb-8 animate-pulse z-10">
-                A Reunião Começa Em
-              </span>
-              
-              <div className="relative h-[24rem] w-full flex items-center justify-center overflow-hidden z-10">
-                <AnimatePresence mode="popLayout">
-                  <motion.div
-                    key={diffSeconds}
-                    initial={{ opacity: 0, y: 60 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -60 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute font-sans text-[24rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums"
-                  >
-                    {diffSeconds}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-              
-              <span className="text-stone-300 text-5xl font-medium tracking-[0.3em] mt-12 uppercase z-10">
-                {diffSeconds === 1 ? "Segundo" : "Segundos"}
-              </span>
-            </motion.div>
-          )}
-
-          {isJustStarted && (
-            <motion.div
-              key="just-started"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 w-full h-full"
-            >
-              <VerseSlide 
-                currentTime={currentTime} 
-                customVerseText={customVerseText} 
-                customVerseRef={customVerseRef} 
-                activeVerseIndex={activeVerseIndex} 
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+        <ProjectionContent
+          currentTime={currentTime}
+          isLooping={isLooping}
+          isFinalFiveMinutes={isFinalFiveMinutes}
+          isFinalMinute={isFinalMinute}
+          isJustStarted={isJustStartedRaw}
+          activeAlert={activeAlert}
+          blackoutEnabled={blackoutEnabled}
+          clearContentEnabled={clearContentEnabled}
+          currentSlideId={currentSlideId}
+          hoursStr={hoursStr}
+          minutesStr={minutesStr}
+          diffSeconds={diffSeconds}
+          formatMinutesPart={formatMinutesPart}
+          formatSecondsPart={formatSecondsPart}
+          customVerseText={customVerseText}
+          customVerseRef={customVerseRef}
+          activeVerseIndex={activeVerseIndex}
+          churchInfo={CHURCH_INFO}
+          alerts={ALERTS}
+          customMediaList={customMediaList}
+          videoPinBehavior={videoPinBehavior}
+          loopIteration={loopIteration}
+          isTvMode={isTvMode}
+          onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
+          onVideoEnded={() => {
+            if (manualSlideOverride && videoPinBehavior === 'unpin') {
+              updateStateAndBroadcast('manualSlideOverride', null);
+            }
+          }}
+        />
       </div>
 
       {/* HIDDEN PRELOAD CONTAINER FOR IMAGES AND VIDEOS */}
