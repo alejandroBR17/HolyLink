@@ -124,8 +124,15 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       }
     }
     if (slideId.startsWith("agenda_day_")) {
-      const dayIndex = parseInt(slideId.replace("agenda_day_", ""), 10);
-      return <AgendaDaySlide dayIndex={dayIndex} currentTime={currentTime} meetings={customMeetings} />;
+      const cleanId = slideId.replace("agenda_day_", "");
+      const dayIndex = parseInt(cleanId, 10);
+      let subType: 'causas' | 'fju' | 'all' = 'all';
+      if (cleanId.includes("causas")) {
+        subType = 'causas';
+      } else if (cleanId.includes("fju")) {
+        subType = 'fju';
+      }
+      return <AgendaDaySlide dayIndex={dayIndex} subType={subType} currentTime={currentTime} meetings={customMeetings} />;
     }
     if (slideId.startsWith("verse_")) {
       const verseIndexOffset = parseInt(slideId.replace("verse_", ""), 10) || 0;

@@ -36,7 +36,8 @@ const DEFAULT_SLIDES: SlideType[] = [
   'verse_3',
   'agenda_day_5',
   'no_chat',
-  'agenda_day_6',
+  'agenda_day_6_causas',
+  'agenda_day_6_fju',
   'world_god'
 ];
 
@@ -151,7 +152,15 @@ export default function App() {
     const val = localStorage.getItem('projection_slidesOrder');
     if (val) {
       try {
-        return JSON.parse(val);
+        let order = JSON.parse(val) as string[];
+        if (order.includes('agenda_day_6') && !order.includes('agenda_day_6_causas') && !order.includes('agenda_day_6_fju')) {
+          const idx = order.indexOf('agenda_day_6');
+          const newOrder = [...order];
+          newOrder.splice(idx, 1, 'agenda_day_6_causas', 'agenda_day_6_fju');
+          order = newOrder;
+          localStorage.setItem('projection_slidesOrder', JSON.stringify(order));
+        }
+        return order;
       } catch (e) {
         return [];
       }
@@ -1069,10 +1078,18 @@ export default function App() {
                 let name = slideId;
                 let desc = "";
                 if (slideId.startsWith("agenda_day_")) {
-                  const dayIdx = parseInt(slideId.replace("agenda_day_", ""), 10);
-                  const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-                  name = `Agenda: ${days[dayIdx]}`;
-                  desc = "Programação semanal";
+                  if (slideId === "agenda_day_6_causas") {
+                    name = "Agenda: Sábado (Causas Impossíveis)";
+                    desc = "Jejum das Causas Impossíveis";
+                  } else if (slideId === "agenda_day_6_fju") {
+                    name = "Agenda: Sábado (FJU & Teens)";
+                    desc = "Força Jovem & Conexão Teen";
+                  } else {
+                    const dayIdx = parseInt(slideId.replace("agenda_day_", ""), 10);
+                    const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+                    name = `Agenda: ${days[dayIdx]}`;
+                    desc = "Programação semanal";
+                  }
                 } else if (slideId.startsWith("verse_")) {
                   const offset = parseInt(slideId.replace("verse_", ""), 10) || 0;
                   name = `Versículo ${offset}`;
@@ -1905,7 +1922,7 @@ export default function App() {
                 </motion.div>
               </button>
 
-              {isMeetingPanelOpen && (
+              {(isMeetingPanelOpen || activeMobileTab === 'agenda') && (
                 <div className="p-5 border-t border-stone-850 bg-[#0f0f0f] flex flex-col gap-4 animate-in fade-in duration-200">
                   
                   {/* BOTÃO ADICIONAR */}
@@ -2151,7 +2168,7 @@ export default function App() {
                 </motion.div>
               </button>
 
-              {isCampaignPanelOpen && (
+              {(isCampaignPanelOpen || activeMobileTab === 'campaigns') && (
                 <div className="p-5 border-t border-stone-850 bg-[#0f0f0f] flex flex-col gap-4 animate-in fade-in duration-200">
                   
                   {/* BOTÃO ADICIONAR */}
@@ -2214,6 +2231,9 @@ export default function App() {
                         >
                           <option value="fogueira_santa">Fogueira Santa (Ícone de Fogo)</option>
                           <option value="jejum_daniel">Jejum de Daniel (Ícone de Sem Wifi)</option>
+                          <option value="jejum_zacarias">Jejum de Zacarias (Sem Murmuração)</option>
+                          <option value="ano_ide">Ano do Ide (Ícone de Globo)</option>
+                          <option value="combate_gafanhoto">Mês de Combate ao Gafanhoto Destruidor</option>
                           <option value="custom">Geral / Customizado (Ícone de Fogo)</option>
                         </select>
                       </div>

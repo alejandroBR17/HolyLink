@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Globe, Flame, HeartHandshake, CalendarDays, WifiOff } from 'lucide-react';
+import { Globe, Flame, HeartHandshake, CalendarDays, WifiOff, MessageSquareOff, AlertTriangle } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { CHURCH_INFO, DONATION, CAMPAIGNS, WEEK_SCHEDULES } from '../../data';
 import { Meeting } from '../../types';
@@ -151,10 +151,12 @@ export const WorldGodSlide = () => {
 
 export const AgendaDaySlide = ({ 
   dayIndex, 
+  subType = 'all',
   currentTime, 
   meetings = [] 
 }: { 
   dayIndex: number; 
+  subType?: 'causas' | 'fju' | 'all';
   currentTime: Date; 
   meetings?: Meeting[];
 }) => {
@@ -174,15 +176,38 @@ export const AgendaDaySlide = ({
   const targetDayStr = `${targetYear}-${targetMonth}-${targetDay}`;
 
   // Filtra as reuniões que ocorrem neste dia específico (recorrentes ou pontuais do dia correspondente da semana atual)
-  const dayMeetings = (meetings.length > 0 ? meetings : []).filter(m => {
+  let dayMeetings = (meetings.length > 0 ? meetings : []).filter(m => {
     if (m.date) {
       return m.date === targetDayStr;
     }
     return m.day === dayIndex;
   });
 
+  // Se for Sábado, separa entre Causas Impossíveis e FJU/Teens se solicitado
+  if (dayIndex === 6) {
+    if (subType === 'causas') {
+      dayMeetings = dayMeetings.filter(m => {
+        const tLower = m.theme.toLowerCase();
+        return m.hours < 12 || tLower.includes('causa') || tLower.includes('jejum');
+      });
+    } else if (subType === 'fju') {
+      dayMeetings = dayMeetings.filter(m => {
+        const tLower = m.theme.toLowerCase();
+        return m.hours >= 12 || tLower.includes('jovem') || tLower.includes('fju') || tLower.includes('teen') || tLower.includes('conex');
+      });
+    }
+  }
+
   const defaultSchedule = WEEK_SCHEDULES.find(s => s.dayIndex === dayIndex) || WEEK_SCHEDULES[0];
-  const theme = defaultSchedule?.theme || "Reunião de Fé";
+  
+  let theme = defaultSchedule?.theme || "Reunião de Fé";
+  if (dayIndex === 6) {
+    if (subType === 'causas') {
+      theme = "Jejum das\nCausas Impossíveis";
+    } else if (subType === 'fju') {
+      theme = "Força Jovem Universal\n(FJU / Teens)";
+    }
+  }
 
   const formattedTimes = dayMeetings
     .sort((a, b) => (a.hours * 60 + a.minutes) - (b.hours * 60 + b.minutes))
@@ -209,12 +234,12 @@ export const AgendaDaySlide = ({
     hidden: { opacity: 0, x: -40 },
     show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 60 } }
   };
- 
+  
   const itemRight = {
     hidden: { opacity: 0, scale: 0.9 },
     show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 60 } }
   };
- 
+  
   return (
     <motion.div 
       variants={container} 
@@ -247,7 +272,6 @@ export const AgendaDaySlide = ({
               >
                 <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                 <span className={`font-mono text-[4rem] font-black tracking-wider relative z-10 ${t.isSpecial ? "text-yellow-400" : "text-white"}`}>{t.time}</span>
-                <span className="text-stone-400 text-lg uppercase tracking-wider font-semibold mt-1 text-center truncate w-full max-w-full relative z-10">{t.theme}</span>
                 {t.isSpecial && (
                   <span className="absolute top-2 right-3 text-[9px] bg-yellow-500 text-black px-2 py-0.5 rounded-full font-bold uppercase tracking-wider scale-90">Especial</span>
                 )}
@@ -316,7 +340,16 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
       <div className={`grid ${activeCampaigns.length === 1 ? 'grid-cols-1 max-w-2xl' : 'grid-cols-2'} gap-10 w-full justify-center`}>
         {activeCampaigns.length > 0 ? (
           activeCampaigns.map((campaign, index) => {
-            const Icon = campaign.type === 'jejum_daniel' ? WifiOff : Flame;
+            let Icon = Flame;
+            if (campaign.type === 'jejum_daniel') {
+              Icon = WifiOff;
+            } else if (campaign.type === 'jejum_zacarias') {
+              Icon = MessageSquareOff;
+            } else if (campaign.type === 'ano_ide') {
+              Icon = Globe;
+            } else if (campaign.type === 'combate_gafanhoto') {
+              Icon = AlertTriangle;
+            }
             return (
               <div key={index} className="bg-white/[0.03] border border-white/[0.08] p-16 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl relative overflow-hidden group transition-all">
                  <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
