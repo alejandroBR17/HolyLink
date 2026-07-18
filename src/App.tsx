@@ -1420,35 +1420,15 @@ export default function App() {
                         const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
                         
                         let newWin: Window | null = null;
-
-                        // Tenta usar a Window Management API para detectar telas secundárias
-                        try {
-                          if ('getScreenDetails' in window) {
-                            const screenDetails = await (window as any).getScreenDetails();
-                            const secondaryScreen = screenDetails.screens.find((s: any) => s.isExtended || !s.isPrimary);
-                            
-                            if (secondaryScreen) {
-                              newWin = window.open(
-                                projectionUrl,
-                                'holyrics_projection',
-                                `left=${secondaryScreen.availLeft},top=${secondaryScreen.availTop},width=${secondaryScreen.availWidth},height=${secondaryScreen.availHeight},menubar=no,status=no,titlebar=no`
-                              );
-                              setProjectionWin(newWin);
-                              return;
-                            }
-                          }
-                        } catch (e) {
-                          console.warn("Window Management API não permitida ou não suportada", e);
-                        }
                         
-                        // Fallback para abertura padrão
-                        newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no');
+                        // Abre a janela na tela atual
+                        newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
                         setProjectionWin(newWin);
                       }}
                       className="w-full p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl border border-blue-400/30 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Abrir Monitor na 2ª Tela (HDMI)
+                      Abrir Monitor (Para enviar à 2ª Tela)
                     </button>
                   ) : (
                     <button
@@ -1734,8 +1714,22 @@ export default function App() {
 
   return (
     <div 
-      onClick={() => {
+      onClick={async () => {
         if (!isCurrentlyFullscreen) {
+          try {
+            if ('getScreenDetails' in window) {
+              const screenDetails = await (window as any).getScreenDetails();
+              const secondaryScreen = screenDetails.screens.find((s: any) => s.isExtended || !s.isPrimary);
+              
+              if (secondaryScreen) {
+                await (document.documentElement as any).requestFullscreen({ screen: secondaryScreen });
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn("Window Management API failed:", e);
+          }
+          // Fallback
           document.documentElement.requestFullscreen().catch(() => {});
         }
       }}
@@ -1747,8 +1741,8 @@ export default function App() {
           <div className="bg-yellow-500 text-black p-6 rounded-full mb-6 shadow-[0_0_50px_rgba(234,179,8,0.4)] animate-bounce">
             <Maximize className="w-12 h-12" />
           </div>
-          <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Clique para Ativar Tela Cheia</h2>
-          <p className="text-stone-300 text-xl font-medium">O monitor de projeção precisa ser ativado para ocultar o navegador.</p>
+          <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Clique para Enviar à 2ª Tela</h2>
+          <p className="text-stone-300 text-xl font-medium">Ele detectará o projetor/TV automaticamente e ficará em tela cheia.</p>
         </div>
       )}
       
