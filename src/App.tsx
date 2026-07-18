@@ -637,7 +637,7 @@ export default function App() {
 
   let isFinalMinute = !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
   let isFinalFiveMinutes = !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
-  let isLooping = !isJustStarted && diffSeconds > 300;
+  let isLooping = !isJustStarted && !isFinalFiveMinutes && !isFinalMinute;
 
   if (manualSlideOverride) {
     if (isFinalMinute || isJustStarted) {
@@ -1698,7 +1698,7 @@ export default function App() {
                   isLooping={isLooping}
                   isFinalFiveMinutes={isFinalFiveMinutes}
                   isFinalMinute={isFinalMinute}
-                  isJustStarted={isJustStartedRaw}
+                  isJustStarted={isJustStarted}
                   activeAlert={activeAlert}
                   blackoutEnabled={blackoutEnabled}
                   clearContentEnabled={clearContentEnabled}
@@ -1792,7 +1792,7 @@ export default function App() {
           isLooping={isLooping}
           isFinalFiveMinutes={isFinalFiveMinutes}
           isFinalMinute={isFinalMinute}
-          isJustStarted={isJustStartedRaw}
+          isJustStarted={isJustStarted}
           activeAlert={activeAlert}
           blackoutEnabled={blackoutEnabled}
           clearContentEnabled={clearContentEnabled}
