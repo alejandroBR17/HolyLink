@@ -256,7 +256,8 @@ export default function App() {
             enabledInLoop: item.enabledInLoop,
             url: URL.createObjectURL(item.blob),
             muted: item.muted !== undefined ? item.muted : true,
-            order: item.order
+            order: item.order,
+            fit: item.fit
           }));
         });
       } catch (err) {
@@ -313,16 +314,18 @@ export default function App() {
       const order = maxOrder + 1;
 
       const id = `custom_${isVideo ? 'vid' : 'img'}_${Date.now()}`;
-      await saveMediaItem({
+      const mediaItemPayload = {
         id,
-        type: isVideo ? 'video' : 'image',
+        type: (isVideo ? 'video' : 'image') as 'video' | 'image',
         name: file.name,
         duration,
         enabledInLoop: true,
         blob: file,
         muted: isVideo ? true : undefined,
         order
-      });
+      };
+      await saveMediaItem(mediaItemPayload);
+      broadcastMediaSave(mediaItemPayload);
 
       // Broadcast update
       updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
@@ -379,6 +382,7 @@ export default function App() {
       for (let i = 0; i < sortedItems.length; i++) {
         sortedItems[i].order = i;
         await saveMediaItem(sortedItems[i]);
+        broadcastMediaSave(sortedItems[i]);
       }
 
       // Broadcast update
@@ -482,6 +486,52 @@ export default function App() {
     const peerConn = (window as any).holyrics_peer_conn;
     if (peerConn && peerConn.open) {
       peerConn.send({ type: 'UPDATE_STATE', key, value, version: 1 });
+    }
+  };
+
+  const broadcastMediaSave = async (item: any) => {
+    const peerConn = (window as any).holyrics_peer_conn;
+    if (peerConn && peerConn.open) {
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const res = reader.result as string;
+            resolve(res.split(',')[1] || '');
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(item.blob);
+        });
+        peerConn.send({
+          type: 'MEDIA_SAVE',
+          mediaItem: {
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            duration: item.duration,
+            enabledInLoop: item.enabledInLoop,
+            muted: item.muted,
+            order: item.order,
+            fit: item.fit,
+            mimeType: item.blob.type,
+            base64
+          },
+          version: 1
+        });
+      } catch (e) {
+        console.error("Erro ao transmitir salvamento de mídia:", e);
+      }
+    }
+  };
+
+  const broadcastMediaDelete = (id: string) => {
+    const peerConn = (window as any).holyrics_peer_conn;
+    if (peerConn && peerConn.open) {
+      peerConn.send({
+        type: 'MEDIA_DELETE',
+        id,
+        version: 1
+      });
     }
   };
 
@@ -1205,6 +1255,7 @@ export default function App() {
                                         if (target) {
                                           target.duration = newDur;
                                           await saveMediaItem(target);
+                                          broadcastMediaSave(target);
                                           updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                         }
                                       }}
@@ -1220,6 +1271,7 @@ export default function App() {
                                         if (target) {
                                           target.duration = newDur;
                                           await saveMediaItem(target);
+                                          broadcastMediaSave(target);
                                           updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                         }
                                       }}
@@ -1241,6 +1293,7 @@ export default function App() {
                                       if (target) {
                                         target.muted = target.muted === undefined ? false : !target.muted;
                                         await saveMediaItem(target);
+                                        broadcastMediaSave(target);
                                         updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                       }
                                     }}
@@ -1274,6 +1327,7 @@ export default function App() {
                                   if (target) {
                                     target.fit = target.fit === 'cover' ? 'contain' : 'cover';
                                     await saveMediaItem(target);
+                                    broadcastMediaSave(target);
                                     updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                   }
                                 }}
@@ -1308,6 +1362,7 @@ export default function App() {
                                     if (target) {
                                       target.enabledInLoop = e.target.checked;
                                       await saveMediaItem(target);
+                                      broadcastMediaSave(target);
                                       updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                                     }
                                   }}
@@ -1368,6 +1423,7 @@ export default function App() {
                                   updateStateAndBroadcast('manualSlideOverride', null);
                                 }
                                 await deleteMediaItem(media.id);
+                                broadcastMediaDelete(media.id);
                                 updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
                               }
                             }}

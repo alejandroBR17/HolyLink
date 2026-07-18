@@ -3,7 +3,7 @@ import { Peer } from 'peerjs';
 import QRCode from "react-qr-code";
 import { Download, Upload, Laptop, Smartphone, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
-import { getAllMediaItems, saveMediaItem } from '../utils';
+import { getAllMediaItems, saveMediaItem, deleteMediaItem } from '../utils';
 
 export function SyncSection() {
   // States for local backup and restore (import/export)
@@ -16,6 +16,8 @@ export function SyncSection() {
   const [syncCode, setSyncCode] = useState(''); // Generated on receiver, typed on sender
   const [syncInputCode, setSyncInputCode] = useState(''); // Input value for manually typing the code
   const [syncMessage, setSyncMessage] = useState<string>('');
+  const [isPushing, setIsPushing] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
   const peerRef = useRef<any>(null);
   const connRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<any>(null);
@@ -104,6 +106,36 @@ export function SyncSection() {
             
             // Dispatch custom event for App.tsx to catch if needed
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: data.key, value: data.value } }));
+            return;
+          }
+
+          if (data && data.type === 'MEDIA_SAVE') {
+            const item = data.mediaItem;
+            const byteCharacters = atob(item.base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: item.mimeType });
+            await saveMediaItem({
+              id: item.id,
+              type: item.type,
+              name: item.name,
+              duration: item.duration,
+              enabledInLoop: item.enabledInLoop,
+              muted: item.muted,
+              order: item.order,
+              fit: item.fit,
+              blob: blob
+            });
+            window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
+            return;
+          }
+
+          if (data && data.type === 'MEDIA_DELETE') {
+            await deleteMediaItem(data.id);
+            window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
             return;
           }
 
@@ -278,6 +310,36 @@ export function SyncSection() {
             return;
           }
 
+          if (incomingData && incomingData.type === 'MEDIA_SAVE') {
+            const item = incomingData.mediaItem;
+            const byteCharacters = atob(item.base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: item.mimeType });
+            await saveMediaItem({
+              id: item.id,
+              type: item.type,
+              name: item.name,
+              duration: item.duration,
+              enabledInLoop: item.enabledInLoop,
+              muted: item.muted,
+              order: item.order,
+              fit: item.fit,
+              blob: blob
+            });
+            window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
+            return;
+          }
+
+          if (incomingData && incomingData.type === 'MEDIA_DELETE') {
+            await deleteMediaItem(incomingData.id);
+            window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
+            return;
+          }
+
           if (incomingData && incomingData.type === 'FULL_SYNC') {
             setSyncMessage('Dados recebidos do PC! Sincronizando celular...');
             if (incomingData.localStorage) {
@@ -310,6 +372,7 @@ export function SyncSection() {
             }
             setDirectSyncStatus('success');
             setSyncMessage('Sincronizado! Dados importados do PC com sucesso.');
+            setIsPulling(false);
             window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
           }
         } catch (e) {
@@ -453,6 +516,80 @@ export function SyncSection() {
         setSyncMessage('Erro de conexão. Verifique se ambos os aparelhos têm acesso à internet.');
       }
     });
+  };
+
+  const forcePushToPC = async () => {
+    const conn = connRef.current;
+    if (!conn) {
+      alert("Conexão inativa. Reconecte primeiro.");
+      return;
+    }
+    setIsPushing(true);
+    setSyncMessage("Transmitindo todos os dados para o PC...");
+    try {
+      const storageData: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('projection_')) {
+          const val = localStorage.getItem(key);
+          if (val !== null) {
+            storageData[key] = val;
+          }
+        }
+      }
+
+      const mediaItems = await getAllMediaItems();
+      const serializedMedia = await Promise.all(
+        mediaItems.map(async (item) => {
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const res = reader.result as string;
+              resolve(res.split(',')[1] || '');
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(item.blob);
+          });
+
+          return {
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            duration: item.duration,
+            enabledInLoop: item.enabledInLoop,
+            muted: item.muted,
+            order: item.order,
+            fit: item.fit,
+            mimeType: item.blob.type,
+            base64: base64
+          };
+        })
+      );
+
+      conn.send({
+        version: 1,
+        localStorage: storageData,
+        mediaItems: serializedMedia
+      });
+
+      setSyncMessage("Dados enviados e aplicados no PC com sucesso!");
+    } catch (err) {
+      console.error(err);
+      setSyncMessage("Erro ao transmitir os dados.");
+    } finally {
+      setIsPushing(false);
+    }
+  };
+
+  const forcePullFromPC = () => {
+    const conn = connRef.current;
+    if (!conn) {
+      alert("Conexão inativa. Reconecte primeiro.");
+      return;
+    }
+    setIsPulling(true);
+    setSyncMessage("Solicitando dados completos do PC...");
+    conn.send({ type: 'REQUEST_FULL_SYNC', version: 1 });
   };
 
   // Auto-connect / Auto-start on load if previously selected a device role
@@ -781,20 +918,53 @@ export function SyncSection() {
 
         {/* SUCCESS STATE */}
         {directSyncStatus === 'success' && (
-          <div className="flex flex-col items-center gap-2 py-3 bg-emerald-950/20 border border-emerald-800 rounded-lg p-3 text-center">
+          <div className="flex flex-col items-center gap-3.5 py-3.5 bg-emerald-950/20 border border-emerald-800 rounded-xl p-4 text-center">
             <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500 text-emerald-400 font-bold text-lg animate-bounce">
               ✓
             </div>
-            <span className="text-xs font-bold text-emerald-400">Sucesso Absoluto!</span>
-            <p className="text-[11px] text-stone-400 leading-snug">
-              {syncMessage}
-            </p>
-            <div className="flex gap-3 justify-center mt-1">
+            <div className="text-center">
+              <span className="text-xs font-bold text-emerald-400 block">Conectado com o outro dispositivo!</span>
+              <p className="text-[10px] text-stone-400 mt-1 max-w-xs mx-auto leading-normal">
+                Você pode controlar tudo em tempo real. Toque nos slides, alertas ou mídias no celular e a TV atualizará instantaneamente!
+              </p>
+            </div>
+
+            {localStorage.getItem('projection_deviceRole') === 'phone' && (
+              <div className="w-full bg-stone-900/60 border border-stone-850 p-3 rounded-lg flex flex-col gap-2 mt-1">
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider text-left block">Sincronização Manual Forçada:</span>
+                
+                <button
+                  onClick={forcePushToPC}
+                  disabled={isPushing || isPulling}
+                  className="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all shadow-[0_2px_8px_rgba(234,179,8,0.15)]"
+                >
+                  <Upload className="w-3.5 h-3.5 text-black" />
+                  {isPushing ? "Transmitindo para o PC..." : "Enviar tudo do Celular para o PC"}
+                </button>
+
+                <button
+                  onClick={forcePullFromPC}
+                  disabled={isPushing || isPulling}
+                  className="w-full py-2 bg-stone-800 hover:bg-stone-750 text-stone-200 border border-stone-700 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+                >
+                  <Download className="w-3.5 h-3.5 text-stone-300" />
+                  {isPulling ? "Buscando dados do PC..." : "Puxar tudo do PC para o Celular"}
+                </button>
+                
+                {syncMessage && (
+                  <span className="text-[9.5px] text-stone-400 font-sans mt-0.5 block leading-normal italic text-center">
+                    Status: {syncMessage}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-4 justify-center items-center mt-1 border-t border-stone-800/60 pt-3 w-full">
               <button
                 onClick={() => setDirectSyncStatus('idle')}
-                className="text-stone-300 hover:text-white text-[10px] bg-stone-900 border border-stone-800 px-3 py-1 rounded cursor-pointer transition-all"
+                className="text-stone-300 hover:text-white text-[10px] bg-stone-800 border border-stone-700 px-3 py-1.5 rounded-lg cursor-pointer transition-all font-bold"
               >
-                Painel
+                Voltar
               </button>
               <button
                 onClick={() => {
@@ -804,7 +974,7 @@ export function SyncSection() {
                 }}
                 className="text-stone-500 hover:text-stone-300 text-[10px] underline cursor-pointer"
               >
-                Alterar papel
+                Desconectar / Trocar papel
               </button>
             </div>
           </div>
