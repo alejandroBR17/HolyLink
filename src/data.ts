@@ -79,8 +79,8 @@ export const WEEK_SCHEDULES: DaySchedule[] = [
   {
     dayName: 'Sábado',
     dayIndex: 6,
-    theme: 'Causas Impossíveis / FJU',
-    times: ['07h', '15h'],
+    theme: 'Causas Impossíveis',
+    times: ['07h'],
   }
 ];
 

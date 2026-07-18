@@ -229,9 +229,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex flex-col justify-between"
+            className="absolute inset-0 flex flex-col"
           >
-            <header className="h-[145px] px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-transparent z-40 absolute top-0 left-0 right-0">
+            <header className="h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.05] bg-gradient-to-b from-black to-stone-950/40 relative z-40">
               <div>
                 <h1 className="font-sans font-black text-[3rem] tracking-[0.16em] text-white leading-none uppercase">
                   {churchInfo.name}
@@ -271,12 +271,12 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               </div>
             </header>
 
-            <main className="flex-1 flex items-center justify-center relative w-full h-full pt-[145px] overflow-hidden">
+            <main className="flex-1 relative w-full overflow-hidden">
               <AnimatePresence>
                 <motion.div
                   key={currentSlideId}
                   {...getTransitionVariants(currentSlideId)}
-                  className="absolute inset-0 flex items-center justify-center pt-[145px]"
+                  className="absolute inset-0 flex items-center justify-center"
                 >
                   {clearContentEnabled ? null : renderSlide(currentSlideId)}
                 </motion.div>
