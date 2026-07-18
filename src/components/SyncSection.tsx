@@ -107,6 +107,53 @@ export function SyncSection() {
             return;
           }
 
+          if (data && data.type === 'REQUEST_FULL_SYNC') {
+            setSyncMessage('Dispositivo conectado! Compartilhando configurações locais com o celular...');
+            const storageData: Record<string, string> = {};
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('projection_')) {
+                const val = localStorage.getItem(key);
+                if (val !== null) storageData[key] = val;
+              }
+            }
+            const mediaItems = await getAllMediaItems();
+            const serializedMedia = await Promise.all(
+              mediaItems.map(async (item) => {
+                const base64 = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    const res = reader.result as string;
+                    resolve(res.split(',')[1] || '');
+                  };
+                  reader.onerror = reject;
+                  reader.readAsDataURL(item.blob);
+                });
+                return {
+                  id: item.id,
+                  type: item.type,
+                  name: item.name,
+                  duration: item.duration,
+                  enabledInLoop: item.enabledInLoop,
+                  muted: item.muted,
+                  order: item.order,
+                  fit: item.fit,
+                  mimeType: item.blob.type,
+                  base64: base64
+                };
+              })
+            );
+            conn.send({
+              type: 'FULL_SYNC',
+              version: 1,
+              localStorage: storageData,
+              mediaItems: serializedMedia
+            });
+            setDirectSyncStatus('success');
+            setSyncMessage('Conectado! Configurações locais transmitidas para o celular com sucesso.');
+            return;
+          }
+
           if (!data || data.version !== 1) {
             throw new Error('Formato de dados inválido.');
           }
@@ -144,6 +191,7 @@ export function SyncSection() {
                 enabledInLoop: item.enabledInLoop,
                 muted: item.muted,
                 order: item.order,
+                fit: item.fit,
                 blob: blob
               });
             }
@@ -219,12 +267,85 @@ export function SyncSection() {
       const conn = peer.connect(`holyrics_${targetCode.toUpperCase().trim()}`);
       connRef.current = conn;
 
+      // Listen to data from PC (for both full sync and real-time state updates)
+      conn.on('data', async (incomingData: any) => {
+        try {
+          if (incomingData && incomingData.type === 'UPDATE_STATE') {
+            const bc = new BroadcastChannel('holyrics_projection_sync');
+            bc.postMessage({ type: 'UPDATE_STATE', key: incomingData.key, value: incomingData.value });
+            bc.close();
+            window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: incomingData.key, value: incomingData.value } }));
+            return;
+          }
+
+          if (incomingData && incomingData.type === 'FULL_SYNC') {
+            setSyncMessage('Dados recebidos do PC! Sincronizando celular...');
+            if (incomingData.localStorage) {
+              Object.entries(incomingData.localStorage).forEach(([key, val]) => {
+                localStorage.setItem(key, val as string);
+              });
+            }
+            if (incomingData.mediaItems && Array.isArray(incomingData.mediaItems)) {
+              for (const item of incomingData.mediaItems) {
+                const byteCharacters = atob(item.base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: item.mimeType });
+
+                await saveMediaItem({
+                  id: item.id,
+                  type: item.type,
+                  name: item.name,
+                  duration: item.duration,
+                  enabledInLoop: item.enabledInLoop,
+                  muted: item.muted,
+                  order: item.order,
+                  fit: item.fit,
+                  blob: blob
+                });
+              }
+            }
+            setDirectSyncStatus('success');
+            setSyncMessage('Sincronizado! Dados importados do PC com sucesso.');
+            window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+          }
+        } catch (e) {
+          console.error("Erro ao processar dados recebidos do PC:", e);
+        }
+      });
+
       conn.on('open', async () => {
         setDirectSyncStatus('sending');
-        setSyncMessage('Conectado! Preparando e enviando arquivos e ordem dos slides...');
+        setSyncMessage('Conectado! Verificando configurações do celular...');
 
         try {
-          // 1. Gather localStorage keys
+          // Salva este targetCode como pareado e define papel como Celular
+          localStorage.setItem('projection_lastPairedPeerCode', targetCode.toUpperCase().trim());
+          localStorage.setItem('projection_deviceRole', 'phone');
+
+          // Check if this phone has custom data or is empty
+          const mediaItems = await getAllMediaItems();
+          const hasCustomMeetings = localStorage.getItem('projection_customMeetings') !== null;
+          const hasCustomCampaigns = localStorage.getItem('projection_customCampaigns') !== null;
+
+          if (mediaItems.length === 0 && !hasCustomMeetings && !hasCustomCampaigns) {
+            setSyncMessage('Celular limpo. Importando agenda, eventos e mídias do PC...');
+            conn.send({ type: 'REQUEST_FULL_SYNC', version: 1 });
+            
+            // Save globally for real-time control
+            (window as any).holyrics_peer_conn = conn;
+
+            // Cleanup URL query params if any
+            if (window.location.search.includes('syncCode=')) {
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            return;
+          }
+
+          // Gather localStorage keys
           const storageData: Record<string, string> = {};
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -236,12 +357,6 @@ export function SyncSection() {
             }
           }
 
-          // Salva este targetCode como pareado e define papel como Celular
-          localStorage.setItem('projection_lastPairedPeerCode', targetCode.toUpperCase().trim());
-          localStorage.setItem('projection_deviceRole', 'phone');
-
-          // 2. Gather media items from IndexedDB
-          const mediaItems = await getAllMediaItems();
           const serializedMedia = await Promise.all(
             mediaItems.map(async (item) => {
               const base64 = await new Promise<string>((resolve, reject) => {
@@ -262,6 +377,7 @@ export function SyncSection() {
                 enabledInLoop: item.enabledInLoop,
                 muted: item.muted,
                 order: item.order,
+                fit: item.fit,
                 mimeType: item.blob.type,
                 base64: base64
               };

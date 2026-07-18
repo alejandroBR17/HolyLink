@@ -369,11 +369,13 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     video.muted = media.muted !== undefined ? media.muted : true;
   }, [media.muted]);
 
+  const isCover = media.fit === 'cover';
+
   return (
     <div className="w-full h-full flex items-center justify-center relative">
       <video
         ref={videoRef}
-        className="max-w-full max-h-full object-contain"
+        className={isCover ? "w-full h-full object-cover" : "max-w-full max-h-full object-contain"}
         playsInline
         controls={false}
         loop={videoPinBehavior !== 'unpin'}

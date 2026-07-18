@@ -17,6 +17,7 @@ interface CustomMedia {
   enabledInLoop: boolean;
   url: string;
   muted?: boolean;
+  fit?: 'contain' | 'cover';
 }
 
 interface ProjectionContentProps {
@@ -100,12 +101,13 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       const media = customMediaList.find(m => m.id === slideId);
       if (!media) return <div className="text-stone-500 text-3xl font-bold flex items-center justify-center h-full w-full bg-black">Mídia não encontrada</div>;
       if (media.type === 'image') {
+        const isCover = media.fit === 'cover';
         return (
-          <div className="w-full h-full flex items-center justify-center relative p-6">
+          <div className={`w-full h-full flex items-center justify-center relative ${isCover ? 'p-0' : 'p-6'}`}>
             <img 
               src={media.url} 
               alt={media.name} 
-              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+              className={isCover ? "w-full h-full object-cover" : "max-w-full max-h-full object-contain rounded-2xl shadow-2xl"}
               referrerPolicy="no-referrer"
             />
           </div>

@@ -49,6 +49,7 @@ interface CustomMedia {
   url: string;
   muted?: boolean;
   order?: number;
+  fit?: 'contain' | 'cover';
 }
 
 // ==========================================
@@ -1264,6 +1265,37 @@ export default function App() {
                                   </button>
                                 </div>
                               )}
+
+                              {/* Fit Mode Button */}
+                              <button
+                                onClick={async () => {
+                                  const dbItems = await getAllMediaItems();
+                                  const target = dbItems.find(item => item.id === media.id);
+                                  if (target) {
+                                    target.fit = target.fit === 'cover' ? 'contain' : 'cover';
+                                    await saveMediaItem(target);
+                                    updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+                                  }
+                                }}
+                                title={media.fit === 'cover' ? "Preencher Tela (Muda para ajuste esticado/cortado)" : "Ajustar à Tela (Preserva proporção original)"}
+                                className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold transition-all cursor-pointer ${
+                                  media.fit === 'cover'
+                                    ? "bg-yellow-500/15 border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/25"
+                                    : "bg-stone-950 border-stone-850 text-stone-400 hover:text-stone-200"
+                                }`}
+                              >
+                                {media.fit === 'cover' ? (
+                                  <>
+                                    <Maximize className="w-2.5 h-2.5 text-yellow-500" />
+                                    <span>Preencher</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Minimize className="w-2.5 h-2.5 text-stone-500" />
+                                    <span>Ajustar</span>
+                                  </>
+                                )}
+                              </button>
 
                               {/* Enabled in loop checkbox */}
                               <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-stone-400 select-none">
