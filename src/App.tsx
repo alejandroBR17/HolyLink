@@ -867,7 +867,7 @@ export default function App() {
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
           
           {/* LEFT: SLIDES MATRIX */}
-          <div className={`w-full lg:w-[33%] border-b lg:border-b-0 lg:border-r border-stone-800 bg-[#0d0d0d] p-4 lg:p-5 overflow-y-auto flex flex-col ${activeMobileTab === 'slides' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className={`w-full lg:w-[45%] border-b lg:border-b-0 lg:border-r border-stone-800 bg-[#0d0d0d] p-4 lg:p-6 overflow-y-auto flex flex-col ${activeMobileTab === 'slides' ? 'flex' : 'hidden lg:flex'}`}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider">Playlists / Slides</h2>
               {manualSlideOverride ? (
@@ -1432,7 +1432,7 @@ export default function App() {
           </div>
 
           {/* MIDDLE: TIMERS & ALERTS */}
-          <div className={`flex-1 bg-[#090909] p-4 lg:p-5 overflow-y-auto flex flex-col gap-6 ${activeMobileTab === 'controls' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className={`flex-1 bg-[#090909] p-4 lg:p-6 overflow-y-auto flex flex-col gap-6 ${activeMobileTab === 'controls' ? 'flex' : 'hidden lg:flex'}`}>
             
             {/* CONTROLE DE PROJEÇÃO */}
             <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 flex flex-col gap-4">
@@ -1675,7 +1675,7 @@ export default function App() {
           </div>
 
           {/* RIGHT: MINIATURE SCREEN PREVIEW */}
-          <div className={`w-full lg:w-[35%] border-t lg:border-t-0 lg:border-l border-stone-800 bg-[#080808] p-4 lg:p-5 flex flex-col gap-4 overflow-y-auto ${activeMobileTab === 'monitor' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className={`w-full lg:w-[32%] border-t lg:border-t-0 lg:border-l border-stone-800 bg-[#080808] p-4 lg:p-6 flex flex-col gap-4 overflow-y-auto ${activeMobileTab === 'monitor' ? 'flex' : 'hidden lg:flex'}`}>
             <h2 className="text-stone-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
               <Monitor className="w-4 h-4 text-yellow-500" />
               Monitor de Transmissão

@@ -73,26 +73,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   onVideoEnded,
   isMiniature = false
 }) => {
-  const [scale, setScale] = React.useState(1);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    if (isMiniature) return; // Managed by App.tsx wrapper if miniature
-    
-    const updateScale = () => {
-      if (containerRef.current) {
-        const { clientWidth, clientHeight } = containerRef.current;
-        const scaleX = clientWidth / 1920;
-        const scaleY = clientHeight / 1080;
-        setScale(Math.min(scaleX, scaleY));
-      }
-    };
-    
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, [isMiniature, isFinalFiveMinutes]);
-
   const getTransitionVariants = (slideId: string) => {
     if (slideId.startsWith('verse_') || slideId === 'world_god') {
       return {
@@ -275,7 +255,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 <motion.div
                   key={currentSlideId}
                   {...getTransitionVariants(currentSlideId)}
-                  className="absolute inset-0 flex items-center justify-center pt-[145px]"
+                  className="absolute inset-0 flex items-center justify-center"
                 >
                   {clearContentEnabled ? null : renderSlide(currentSlideId)}
                 </motion.div>
@@ -315,13 +295,12 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 Minutos e Segundos
               </span>
             </div>
-            <div ref={containerRef} className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
+            <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
               <div 
-                className="absolute origin-center flex flex-col items-center justify-center"
+                className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.65]"
                 style={{
                   width: '1920px',
                   height: '1080px',
-                  transform: `scale(${scale})`
                 }}
               >
                 <AnimatePresence>
