@@ -22,6 +22,7 @@ export function SyncSection({
   const [syncCode, setSyncCode] = useState(''); // Generated on receiver, typed on sender
   const [syncInputCode, setSyncInputCode] = useState(''); // Input value for manually typing the code
   const [syncMessage, setSyncMessage] = useState<string>('');
+  const [syncProgress, setSyncProgress] = useState<number | undefined>(undefined);
   const [isPushing, setIsPushing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const peerRef = useRef<any>(null);
@@ -117,6 +118,8 @@ export function SyncSection({
 
           if (data && data.type === 'MEDIA_SAVE') {
             const item = data.mediaItem;
+            setSyncMessage(`Salvando mídia: ${item.name}`);
+            window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Recebendo mídia: ${item.name}` } }));
             const byteCharacters = atob(item.base64);
             const byteNumbers = new Array(byteCharacters.length);
             for (let i = 0; i < byteCharacters.length; i++) {
@@ -146,7 +149,7 @@ export function SyncSection({
           }
 
           if (data && data.type === 'REQUEST_FULL_SYNC') {
-            setSyncMessage('Dispositivo conectado! Compartilhando configurações locais com o celular...');
+            setSyncMessage('Central de Controle conectada! Enviando dados locais...');
             const storageData: Record<string, string> = {};
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
@@ -157,7 +160,9 @@ export function SyncSection({
             }
             const mediaItems = await getAllMediaItems();
             const serializedMedia = await Promise.all(
-              mediaItems.map(async (item) => {
+              mediaItems.map(async (item, index) => {
+                const progress = Math.round((index / mediaItems.length) * 100);
+                window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Preparando mídias: ${item.name}`, progress } }));
                 const base64 = await new Promise<string>((resolve, reject) => {
                   const reader = new FileReader();
                   reader.onloadend = () => {
@@ -188,7 +193,7 @@ export function SyncSection({
               mediaItems: serializedMedia
             });
             setDirectSyncStatus('success');
-            setSyncMessage('Conectado! Configurações locais transmitidas para o celular com sucesso.');
+            setSyncMessage('Conectado! Dados locais transmitidos com sucesso.');
             return;
           }
 
@@ -196,7 +201,8 @@ export function SyncSection({
             throw new Error('Formato de dados inválido.');
           }
 
-          setSyncMessage('Dados recebidos! Gravando no banco de dados e aplicando...');
+          setSyncMessage('Dados recebidos! Gravando e aplicando configurações...');
+          window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: 'Gravando configurações no PC...', progress: 10 } }));
 
           // 1. Restore localStorage
           if (data.localStorage) {
@@ -212,11 +218,16 @@ export function SyncSection({
 
           // 2. Restore IndexedDB media files
           if (data.mediaItems && Array.isArray(data.mediaItems)) {
-            for (const item of data.mediaItems) {
+            const total = data.mediaItems.length;
+            for (let i = 0; i < total; i++) {
+              const item = data.mediaItems[i];
+              const progress = Math.round(10 + (i / total) * 85);
+              window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Restaurando mídia (${i+1}/${total}): ${item.name}`, progress } }));
+              
               const byteCharacters = atob(item.base64);
               const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              for (let j = 0; j < byteCharacters.length; j++) {
+                byteNumbers[j] = byteCharacters.charCodeAt(j);
               }
               const byteArray = new Uint8Array(byteNumbers);
               const blob = new Blob([byteArray], { type: item.mimeType });
@@ -235,6 +246,7 @@ export function SyncSection({
             }
           }
 
+          window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: 'Sincronização concluída!', progress: 100 } }));
           setDirectSyncStatus('success');
           setSyncMessage('Dados recebidos! Aplicativo sincronizado e controle remoto ativo.');
           
@@ -547,67 +559,83 @@ export function SyncSection({
     });
   };
 
-  const forcePushToPC = async () => {
+  const forcePushToPC = () => {
     const conn = connRef.current;
     if (!conn) {
       showAlert("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
-    setIsPushing(true);
-    setSyncMessage("Transmitindo todos os dados para o PC...");
-    try {
-      const storageData: Record<string, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('projection_')) {
-          const val = localStorage.getItem(key);
-          if (val !== null) {
-            storageData[key] = val;
-          }
-        }
-      }
 
-      const mediaItems = await getAllMediaItems();
-      const serializedMedia = await Promise.all(
-        mediaItems.map(async (item) => {
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const res = reader.result as string;
-              resolve(res.split(',')[1] || '');
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(item.blob);
+    showConfirm(
+      "Sobrescrever Monitor?",
+      "Isso irá apagar todas as configurações e mídias do PC e substituir pelas do seu celular. Esta ação não pode ser desfeita. Deseja continuar?",
+      async () => {
+        setIsPushing(true);
+        setSyncMessage("Transmitindo todos os dados para o PC...");
+        setSyncProgress(0);
+        try {
+          const storageData: Record<string, string> = {};
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('projection_')) {
+              const val = localStorage.getItem(key);
+              if (val !== null) {
+                storageData[key] = val;
+              }
+            }
+          }
+
+          const mediaItems = await getAllMediaItems();
+          const total = mediaItems.length;
+          const serializedMedia = await Promise.all(
+            mediaItems.map(async (item, index) => {
+              const progress = Math.round((index / total) * 100);
+              setSyncProgress(progress);
+              setSyncMessage(`Preparando mídia (${index+1}/${total}): ${item.name}`);
+              
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  const res = reader.result as string;
+                  resolve(res.split(',')[1] || '');
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(item.blob);
+              });
+
+              return {
+                id: item.id,
+                type: item.type,
+                name: item.name,
+                duration: item.duration,
+                enabledInLoop: item.enabledInLoop,
+                muted: item.muted,
+                order: item.order,
+                fit: item.fit,
+                mimeType: item.blob.type,
+                base64: base64
+              };
+            })
+          );
+
+          conn.send({
+            version: 1,
+            localStorage: storageData,
+            mediaItems: serializedMedia
           });
 
-          return {
-            id: item.id,
-            type: item.type,
-            name: item.name,
-            duration: item.duration,
-            enabledInLoop: item.enabledInLoop,
-            muted: item.muted,
-            order: item.order,
-            fit: item.fit,
-            mimeType: item.blob.type,
-            base64: base64
-          };
-        })
-      );
-
-      conn.send({
-        version: 1,
-        localStorage: storageData,
-        mediaItems: serializedMedia
-      });
-
-      setSyncMessage("Dados enviados e aplicados no PC com sucesso!");
-    } catch (err) {
-      console.error(err);
-      setSyncMessage("Erro ao transmitir os dados.");
-    } finally {
-      setIsPushing(false);
-    }
+          setSyncProgress(100);
+          setSyncMessage("Dados enviados e aplicados no PC com sucesso!");
+        } catch (err) {
+          console.error(err);
+          setSyncMessage("Erro ao transmitir os dados.");
+        } finally {
+          setIsPushing(false);
+          setTimeout(() => setSyncProgress(undefined), 2000);
+        }
+      },
+      'danger'
+    );
   };
 
   const forcePullFromPC = () => {
@@ -813,22 +841,24 @@ export function SyncSection({
         {directSyncStatus === 'idle' && (
           <div className="flex flex-col gap-2">
             <p className="text-[11px] text-stone-500 leading-normal">
-              Escolha o papel deste aparelho para iniciar a conexão automática via rede/internet:
+              Escolha o papel deste aparelho para iniciar a conexão automática:
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={startReceiver}
-                className="bg-stone-900 border border-stone-800 hover:border-stone-700 text-stone-200 text-[11px] font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                className="bg-stone-900 border border-stone-800 hover:border-stone-700 text-stone-200 text-[11px] font-bold py-2 px-3 rounded-lg flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-20"
               >
-                <Laptop className="w-3.5 h-3.5 text-yellow-500" />
-                Este é o PC (Receber)
+                <Laptop className="w-5 h-5 text-yellow-500" />
+                <span>TERMINAL (PC)</span>
+                <span className="text-[8px] opacity-50 uppercase tracking-tighter">Recebe e Projeta</span>
               </button>
               <button
                 onClick={() => setDirectSyncStatus('connecting')}
-                className="bg-stone-900 border border-stone-800 hover:border-stone-700 text-stone-200 text-[11px] font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                className="bg-stone-900 border border-stone-800 hover:border-stone-700 text-stone-200 text-[11px] font-bold py-2 px-3 rounded-lg flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-20"
               >
-                <Smartphone className="w-3.5 h-3.5 text-yellow-500" />
-                Este é o Celular (Enviar)
+                <Smartphone className="w-5 h-5 text-yellow-500" />
+                <span>CONTROLE (Celular)</span>
+                <span className="text-[8px] opacity-50 uppercase tracking-tighter">Edita e Comanda</span>
               </button>
             </div>
 
@@ -960,29 +990,41 @@ export function SyncSection({
 
             {localStorage.getItem('projection_deviceRole') === 'phone' && (
               <div className="w-full bg-stone-900/60 border border-stone-850 p-3 rounded-lg flex flex-col gap-2 mt-1">
-                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider text-left block">Sincronização Manual Forçada:</span>
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider text-left block">Sincronização Master (Sobrescrever PC):</span>
                 
                 <button
                   onClick={forcePushToPC}
                   disabled={isPushing || isPulling}
-                  className="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all shadow-[0_2px_8px_rgba(234,179,8,0.15)]"
+                  className="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-black text-[11px] font-black rounded-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all shadow-[0_4px_12px_rgba(234,179,8,0.2)]"
                 >
-                  <Upload className="w-3.5 h-3.5 text-black" />
-                  {isPushing ? "Transmitindo para o PC..." : "Enviar tudo do Celular para o PC"}
+                  <Upload className="w-4 h-4 text-black" />
+                  {isPushing ? "Transmitindo tudo para o PC..." : "ENVIAR TUDO DO CELULAR PARA O PC"}
                 </button>
 
-                <button
-                  onClick={forcePullFromPC}
-                  disabled={isPushing || isPulling}
-                  className="w-full py-2 bg-stone-800 hover:bg-stone-750 text-stone-200 border border-stone-700 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
-                >
-                  <Download className="w-3.5 h-3.5 text-stone-300" />
-                  {isPulling ? "Buscando dados do PC..." : "Puxar tudo do PC para o Celular"}
-                </button>
+                {syncProgress !== undefined && (
+                  <div className="w-full bg-black/40 h-1.5 rounded-full overflow-hidden mt-1 border border-white/5">
+                    <div 
+                      className="h-full bg-yellow-500 transition-all duration-300" 
+                      style={{ width: `${syncProgress}%` }}
+                    />
+                  </div>
+                )}
+
+                <div className="mt-2 pt-2 border-t border-stone-800 flex flex-col gap-2">
+                  <span className="text-[9px] text-stone-500 uppercase font-bold">Opções secundárias:</span>
+                  <button
+                    onClick={forcePullFromPC}
+                    disabled={isPushing || isPulling}
+                    className="w-full py-2 bg-stone-800 hover:bg-stone-750 text-stone-300 border border-stone-700 text-[10px] font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+                  >
+                    <Download className="w-3 h-3 text-stone-400" />
+                    {isPulling ? "Buscando dados do PC..." : "Importar dados do PC para este Celular"}
+                  </button>
+                </div>
                 
                 {syncMessage && (
-                  <span className="text-[9.5px] text-stone-400 font-sans mt-0.5 block leading-normal italic text-center">
-                    Status: {syncMessage}
+                  <span className="text-[9.5px] text-yellow-500/80 font-sans mt-0.5 block leading-normal font-bold text-center">
+                    {syncMessage}
                   </span>
                 )}
               </div>

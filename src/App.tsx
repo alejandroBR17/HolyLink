@@ -218,6 +218,8 @@ export default function App() {
     return localStorage.getItem('projection_tickerText');
   });
 
+  const [syncStatus, setSyncStatus] = useState<{ active: boolean; message: string; progress?: number } | null>(null);
+
   const [customCampaigns, setCustomCampaigns] = useState<any[]>(() => {
     if (typeof window === 'undefined') return CAMPAIGNS;
     const val = localStorage.getItem('projection_customCampaigns');
@@ -653,6 +655,7 @@ export default function App() {
     };
     
     const handleFullSync = () => {
+      setSyncStatus({ active: true, message: 'Finalizando sincronização...' });
       // Reload all state from localStorage
       setManualSlideOverride(localStorage.getItem('projection_manualSlideOverride'));
       setCountdownOffset(parseInt(localStorage.getItem('projection_countdownOffset') || '0', 10));
@@ -690,11 +693,23 @@ export default function App() {
         setCustomCampaigns(CAMPAIGNS);
       }
       // Also fetch media
-      getAllMediaItems().then(items => setCustomMediaList(items));
+      getAllMediaItems().then(items => {
+        setCustomMediaList(items);
+        setTimeout(() => setSyncStatus(null), 1000);
+      });
+    };
+
+    const handleSyncProgress = (e: any) => {
+      setSyncStatus({ 
+        active: true, 
+        message: e.detail?.message || 'Sincronizando...',
+        progress: e.detail?.progress
+      });
     };
 
     window.addEventListener('projection_sync_update', handlePeerUpdate as EventListener);
     window.addEventListener('projection_full_sync_received', handleFullSync);
+    window.addEventListener('projection_sync_progress', handleSyncProgress as EventListener);
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key?.startsWith('projection_')) {
@@ -710,6 +725,7 @@ export default function App() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('projection_sync_update', handlePeerUpdate as EventListener);
       window.removeEventListener('projection_full_sync_received', handleFullSync);
+      window.removeEventListener('projection_sync_progress', handleSyncProgress as EventListener);
     };
   }, []);
   
@@ -932,6 +948,54 @@ export default function App() {
   if (!isProjectionView) {
     return (
       <div className="w-screen h-screen bg-[#0c0c0c] text-stone-200 flex flex-col font-sans select-none overflow-hidden">
+        
+        {/* GLOBAL SYNC OVERLAY */}
+        <AnimatePresence>
+          {syncStatus?.active && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
+            >
+              <div className="relative w-24 h-24 mb-8">
+                <div className="absolute inset-0 border-4 border-yellow-500/20 rounded-full" />
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 border-4 border-transparent border-t-yellow-500 rounded-full"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <RefreshCw className="w-8 h-8 text-yellow-500 animate-pulse" />
+                </div>
+              </div>
+              
+              <h2 className="text-2xl font-black text-white uppercase tracking-[0.2em] mb-2">Sincronizando Dados</h2>
+              <p className="text-stone-400 font-medium tracking-wide max-w-md mx-auto leading-relaxed">
+                {syncStatus.message}
+              </p>
+              
+              {syncStatus.progress !== undefined && (
+                <div className="w-full max-w-xs bg-stone-900 h-1.5 rounded-full mt-6 overflow-hidden border border-stone-800">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${syncStatus.progress}%` }}
+                    className="h-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]"
+                  />
+                </div>
+              )}
+              
+              <div className="mt-12 flex flex-col items-center gap-4">
+                <div className="flex items-center gap-3 bg-stone-900/50 border border-stone-800 px-4 py-2 rounded-full">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Conexão Segura Ativa</span>
+                </div>
+                <span className="text-[10px] text-stone-600 uppercase tracking-widest">Por favor, não feche o aplicativo</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* TOP BAR */}
         <header className="h-auto lg:h-16 px-4 lg:px-6 py-3.5 lg:py-0 bg-[#121212] border-b border-stone-850 flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-10 shrink-0">
           <div className="flex items-center justify-between w-full lg:w-auto gap-3">
@@ -942,9 +1006,23 @@ export default function App() {
               </h1>
             </div>
             
-            <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-stone-800 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-stone-400 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              Sincronizado
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5 bg-[#1a1a1a] border border-stone-800 px-2.5 py-1 rounded-lg text-[10px] font-bold text-stone-400 shrink-0 uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  {localStorage.getItem('projection_deviceRole') === 'phone' ? (
+                    <span className="flex items-center gap-1">
+                      <Smartphone className="w-3 h-3 text-yellow-500" />
+                      Central de Controle
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <Monitor className="w-3 h-3 text-yellow-500" />
+                      Terminal de Exibição
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           
@@ -2606,6 +2684,7 @@ export default function App() {
                   volume={volume}
                   lowerThirdEnabled={lowerThirdEnabled}
                   tickerText={tickerText}
+                  syncStatus={syncStatus}
                 />
               </div>
             </div>
@@ -2707,6 +2786,7 @@ export default function App() {
           volume={volume}
           lowerThirdEnabled={lowerThirdEnabled}
           tickerText={tickerText}
+          syncStatus={syncStatus}
           onVideoEnded={() => {
             if (manualSlideOverride && videoPinBehavior === 'unpin') {
               updateStateAndBroadcast('manualSlideOverride', null);

@@ -54,6 +54,7 @@ interface ProjectionContentProps {
   volume?: number;
   lowerThirdEnabled?: boolean;
   tickerText?: string | null;
+  syncStatus?: { active: boolean; message: string; progress?: number } | null;
 }
 
 export const ProjectionContent: React.FC<ProjectionContentProps> = ({
@@ -89,7 +90,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   ongoingMeeting,
   volume = 1,
   lowerThirdEnabled = false,
-  tickerText = null
+  tickerText = null,
+  syncStatus = null
 }) => {
   // Logic to detect FJU mode: 
   // 1. If ongoing meeting is FJU
@@ -532,6 +534,34 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                   {tickerText}
                 </span>
               ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* SYNC TOAST ON PROJECTION */}
+      <AnimatePresence>
+        {syncStatus?.active && (
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 50 }}
+            className="absolute top-10 right-10 z-[200] bg-black/80 backdrop-blur-md border border-yellow-500/30 px-6 py-4 rounded-2xl flex items-center gap-4"
+          >
+            <div className="relative w-10 h-10">
+              <div className="absolute inset-0 border-2 border-yellow-500/10 rounded-full" />
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 border-2 border-transparent border-t-yellow-500 rounded-full"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <RefreshCw className="w-4 h-4 text-yellow-500 animate-pulse" />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-yellow-500 font-black text-xs uppercase tracking-[0.2em]">Sincronizando</span>
+              <span className="text-white text-[1rem] font-medium tracking-tight opacity-80">{syncStatus.message}</span>
             </div>
           </motion.div>
         )}
