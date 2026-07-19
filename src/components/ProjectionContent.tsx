@@ -351,12 +351,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           >
             <header className={`h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.05] bg-[#050505] relative z-50`}>
               <div className="flex flex-col gap-3">
-                <div className={`px-4 py-1 rounded-full border self-start flex items-center gap-2.5 ${isFJU ? 'bg-amber-600/10 border-amber-500/40' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
-                  <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isFJU ? 'bg-amber-500' : 'bg-yellow-500'}`} />
-                  <span className={`font-sans font-bold text-sm tracking-[0.15em] uppercase ${isFJU ? 'text-white' : 'text-yellow-500'}`}>
-                    {isFJU ? 'Encontro Jovem FJU' : 'Ligue-se com Deus'}
-                  </span>
-                </div>
                 <div>
                   <h1 className="font-sans font-black text-[3.2rem] tracking-[0.16em] text-white leading-none uppercase">
                     {churchInfo.name}
