@@ -415,7 +415,7 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
   );
 };
 
-export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnded, isBackgroundBlur }: any) => {
+export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnded, isBackgroundBlur, volume = 0.5, fit }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -427,6 +427,10 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
         video.src = media.url;
         video.currentTime = 0;
       }
+      
+      // Aplicar volume (apenas se não for blur de fundo)
+      video.volume = isBackgroundBlur ? 0 : volume;
+      
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch((e) => {
@@ -438,21 +442,32 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     } else {
       video.pause();
     }
-  }, [currentSlideId, media.id, media.url]);
+  }, [currentSlideId, media.id, media.url, volume, isBackgroundBlur]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = media.muted !== undefined ? media.muted : true;
-  }, [media.muted]);
+    
+    // Se o volume mudar enquanto o vídeo está tocando
+    if (currentSlideId === media.id) {
+      video.volume = isBackgroundBlur ? 0 : volume;
+    }
+  }, [volume, currentSlideId, media.id, isBackgroundBlur]);
 
-  const isCover = media.fit === 'cover';
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = isBackgroundBlur ? true : (media.muted !== undefined ? media.muted : false);
+  }, [media.muted, isBackgroundBlur]);
+
+  const videoFit = fit || media.fit || 'contain';
+  const objectFitClass = videoFit === 'cover' ? "object-cover" : videoFit === 'fill' ? "object-fill" : "object-contain";
 
   return (
     <div className="w-full h-full flex items-center justify-center relative">
       <video
         ref={videoRef}
-        className={isCover ? "w-full h-full object-cover" : "max-w-full max-h-full object-contain"}
+        className={`w-full h-full ${objectFitClass}`}
         playsInline
         controls={false}
         loop={videoPinBehavior !== 'unpin'}

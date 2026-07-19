@@ -17,7 +17,7 @@ interface CustomMedia {
   enabledInLoop: boolean;
   url: string;
   muted?: boolean;
-  fit?: 'contain' | 'cover';
+  fit?: 'contain' | 'cover' | 'fill';
 }
 
 interface ProjectionContentProps {
@@ -49,7 +49,11 @@ interface ProjectionContentProps {
   customMeetings?: Meeting[];
   customCampaigns?: any[];
   nextMeeting?: Meeting;
+  nextMeetingDate?: Date;
   ongoingMeeting?: Meeting | null;
+  volume?: number;
+  lowerThirdEnabled?: boolean;
+  tickerText?: string | null;
 }
 
 export const ProjectionContent: React.FC<ProjectionContentProps> = ({
@@ -81,13 +85,28 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   customMeetings = [],
   customCampaigns = [],
   nextMeeting,
-  ongoingMeeting
+  nextMeetingDate,
+  ongoingMeeting,
+  volume = 1,
+  lowerThirdEnabled = false,
+  tickerText = null
 }) => {
-  const isFJU = [nextMeeting?.theme, ongoingMeeting?.theme].some(t => 
-    t?.toLowerCase().includes('força jovem') || 
-    t?.toLowerCase().includes('fju') ||
-    t?.toLowerCase().includes('encontro jovem')
-  );
+  // Logic to detect FJU mode: 
+  // 1. If ongoing meeting is FJU
+  // 2. If next meeting is FJU AND starts in less than 30 minutes
+  const isFJU = (() => {
+    if (ongoingMeeting?.theme?.toLowerCase().includes('encontro jovem') || 
+        ongoingMeeting?.theme?.toLowerCase().includes('fju')) return true;
+    
+    if (nextMeetingDate && (nextMeeting?.theme?.toLowerCase().includes('encontro jovem') || 
+        nextMeeting?.theme?.toLowerCase().includes('fju'))) {
+      const diffMs = nextMeetingDate.getTime() - currentTime.getTime();
+      const diffMins = diffMs / (1000 * 60);
+      return diffMins <= 30 && diffMins > 0;
+    }
+    
+    return false;
+  })();
 
   const themeColor = isFJU ? 'text-amber-500' : 'text-yellow-500';
   const borderColor = isFJU ? 'border-amber-500/40' : 'border-white/10';
@@ -117,35 +136,28 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       if (media.type === 'image') {
         const isCover = media.fit === 'cover';
         const isFullScreen = media.fit === 'fill';
-        const isMinimal = media.fit === 'minimal';
         
-        if (isMinimal) {
-          return (
-            <div className="w-full h-full flex items-center justify-center bg-black">
-              <img 
-                src={media.url} 
-                alt={media.name} 
-                className="max-w-full max-h-full object-contain"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-          );
-        }
+        // Base padding and rounded corners logic
+        const containerPadding = isFullScreen ? 'p-0' : 'p-12 md:p-20';
+        const innerRounded = isFullScreen ? 'rounded-none' : 'rounded-[3.5rem]';
+        const innerBg = isFullScreen ? 'bg-black' : 'bg-black/40';
+        const innerBorder = isFullScreen ? 'border-none' : borderColor;
+        const innerShadow = isFullScreen ? '' : shadowColor;
 
         return (
-          <div className={`w-full h-full ${isFullScreen ? 'p-0' : 'p-12 md:p-20'} flex items-center justify-center bg-black/20`}>
-            <div className={`w-full h-full relative ${isFullScreen ? 'rounded-none' : 'rounded-[3.5rem]'} overflow-hidden ${!isFullScreen ? shadowColor : ''} border ${!isFullScreen ? borderColor : 'border-none'} ${isFullScreen ? 'bg-black' : 'bg-black/40'}`}>
+          <div className={`w-full h-full ${containerPadding} flex items-center justify-center bg-black/20`}>
+            <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
               {/* Background blur for non-matching aspect ratios */}
-              {!isCover && !isFullScreen && (
+              {media.fit === 'contain' && (
                 <div 
-                  className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110 pointer-events-none"
+                  className={`absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110 pointer-events-none`}
                   style={{ backgroundImage: `url(${media.url})` }}
                 />
               )}
               <img 
                 src={media.url} 
                 alt={media.name} 
-                className={`w-full h-full relative z-10 ${isCover || isFullScreen ? 'object-cover' : 'object-contain'}`}
+                className={`w-full h-full relative z-10 ${isCover ? 'object-cover' : isFullScreen ? 'object-fill' : 'object-contain'}`}
                 referrerPolicy="no-referrer"
               />
               {!isFullScreen && (
@@ -157,27 +169,20 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       } else if (media.type === 'video') {
         const isCover = media.fit === 'cover';
         const isFullScreen = media.fit === 'fill';
-        const isMinimal = media.fit === 'minimal';
 
-        if (isMinimal) {
-          return (
-            <div className="w-full h-full flex items-center justify-center bg-black">
-              <VideoSlide 
-                media={media} 
-                currentSlideId={currentSlideId} 
-                videoPinBehavior={videoPinBehavior}
-                onVideoEnded={onVideoEnded}
-              />
-            </div>
-          );
-        }
+        // Base padding and rounded corners logic
+        const containerPadding = isFullScreen ? 'p-0' : 'p-12 md:p-20';
+        const innerRounded = isFullScreen ? 'rounded-none' : 'rounded-[3.5rem]';
+        const innerBg = isFullScreen ? 'bg-black' : 'bg-black/40';
+        const innerBorder = isFullScreen ? 'border-none' : borderColor;
+        const innerShadow = isFullScreen ? '' : shadowColor;
 
         return (
-          <div className={`w-full h-full ${isFullScreen ? 'p-0' : 'p-12 md:p-20'} flex items-center justify-center bg-black/20`}>
-            <div className={`w-full h-full relative ${isFullScreen ? 'rounded-none' : 'rounded-[3.5rem]'} overflow-hidden ${!isFullScreen ? shadowColor : ''} border ${!isFullScreen ? borderColor : 'border-none'} ${isFullScreen ? 'bg-black' : 'bg-black/40'}`}>
-              {/* Background blur for videos in contain mode */}
-              {!isCover && !isFullScreen && (
-                <div className="absolute inset-0 blur-3xl opacity-30 scale-110 pointer-events-none overflow-hidden">
+          <div className={`w-full h-full ${containerPadding} flex items-center justify-center bg-black/20`}>
+            <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
+              {/* Background blur for videos */}
+              {media.fit === 'contain' && (
+                <div className={`absolute inset-0 blur-3xl opacity-30 scale-110 pointer-events-none overflow-hidden`}>
                   <div className="w-full h-full scale-[2]">
                     <VideoSlide 
                       media={media} 
@@ -185,6 +190,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                       videoPinBehavior={videoPinBehavior}
                       onVideoEnded={onVideoEnded}
                       isBackgroundBlur
+                      volume={0}
                     />
                   </div>
                 </div>
@@ -195,6 +201,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                   currentSlideId={currentSlideId} 
                   videoPinBehavior={videoPinBehavior}
                   onVideoEnded={onVideoEnded}
+                  volume={volume}
+                  fit={isFullScreen ? 'fill' : isCover ? 'cover' : 'contain'}
                 />
               </div>
               {!isFullScreen && (
@@ -233,6 +241,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           customVerseText={customVerseText}
           customVerseRef={customVerseRef}
           activeVerseIndex={activeVerseIndex}
+          lowerThird={lowerThirdEnabled}
         />
       );
     }
@@ -507,7 +516,29 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               customVerseText={customVerseText} 
               customVerseRef={customVerseRef} 
               activeVerseIndex={activeVerseIndex} 
+              lowerThird={lowerThirdEnabled}
             />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* TICKER (LETREIRO DIGITAL) */}
+      <AnimatePresence>
+        {tickerText && !blackoutEnabled && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="absolute bottom-0 left-0 w-full h-20 bg-yellow-600/90 backdrop-blur-md z-[100] flex items-center overflow-hidden border-t border-yellow-400/50"
+          >
+            <div className="whitespace-nowrap flex items-center gap-12 animate-ticker-scroll">
+              {[...Array(5)].map((_, i) => (
+                <span key={i} className="text-[2.2rem] font-black text-black uppercase tracking-widest flex items-center gap-6">
+                  <Bell className="w-10 h-10" />
+                  {tickerText}
+                </span>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

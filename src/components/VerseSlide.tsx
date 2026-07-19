@@ -9,6 +9,7 @@ interface VerseSlideProps {
   customVerseText?: string | null;
   customVerseRef?: string | null;
   activeVerseIndex?: number | null;
+  lowerThird?: boolean;
 }
 
 export const VerseSlide: React.FC<VerseSlideProps> = ({ 
@@ -18,6 +19,7 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
   customVerseText,
   customVerseRef,
   activeVerseIndex,
+  lowerThird = false,
 }) => {
   let verse = { text: "", ref: "" };
   let keyId = "verse";
@@ -42,6 +44,7 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
   }
 
   const getFontSizeClass = (text: string) => {
+    if (lowerThird) return 'text-[2.8rem]';
     const len = text.length;
     if (len < 60) return 'text-[5.5rem]';
     if (len < 90) return 'text-[4.5rem]';
@@ -50,10 +53,35 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
   };
 
   const getMarginClass = (text: string) => {
+    if (lowerThird) return 'mt-2';
     const len = text.length;
     if (len < 90) return 'mt-12';
     return 'mt-8';
   };
+
+  if (lowerThird) {
+    return (
+      <div className="flex flex-col items-center justify-end h-full w-full px-12 pb-16 text-left z-50 relative">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={keyId}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="relative z-10 w-full bg-black/80 backdrop-blur-md border-l-8 border-yellow-500 p-8 rounded-r-2xl"
+          >
+            <h2 className={`${getFontSizeClass(verse.text)} text-stone-100 leading-tight font-semibold tracking-tight`}>
+              "{verse.text}"
+            </h2>
+            <p className={`text-yellow-500 text-[1.8rem] font-bold ${getMarginClass(verse.text)} tracking-[0.1em] uppercase`}>
+              {verse.ref}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full px-24 text-center z-50 relative">

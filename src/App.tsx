@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, ArrowUp, ArrowDown, Download, Upload, Zap, Box } from 'lucide-react';
+import { Armchair, MessageSquareOff, Globe, Flame, DoorOpen, Smartphone, Clock, Tv, Instagram, HeartHandshake, QrCode, Settings, Bell, X, CalendarDays, WifiOff, Maximize, Minimize, ExternalLink, Play, Pause, Plus, Minus, RefreshCw, AlertTriangle, Monitor, Laptop, Send, Trash2, Edit2, EyeOff, Sparkles, Shuffle, BookOpen, Undo2, Search, Image, Film, Volume2, VolumeX, ArrowUp, ArrowDown, Download, Upload, Zap, Box, Megaphone, Layout } from 'lucide-react';
 import QRCode from "react-qr-code";
 import { CHURCH_INFO, ALERTS, VERSES, SLIDE_TIMING, DONATION, CAMPAIGNS, WEEK_SCHEDULES, MEETINGS } from './data';
 import { getNextMeeting, saveMediaItem, getAllMediaItems, deleteMediaItem, getSlideDuration } from './utils';
@@ -51,7 +51,7 @@ interface CustomMedia {
   url: string;
   muted?: boolean;
   order?: number;
-  fit?: 'contain' | 'cover' | 'fill' | 'minimal';
+  fit?: 'contain' | 'cover' | 'fill';
 }
 
 // ==========================================
@@ -203,6 +203,19 @@ export default function App() {
       }
     }
     return MEETINGS;
+  });
+  const [editingMeetId, setEditingMeetId] = useState<string | null>(null);
+  const [volume, setVolume] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1;
+    return parseFloat(localStorage.getItem('projection_volume') || '1');
+  });
+  const [lowerThirdEnabled, setLowerThirdEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('projection_lowerThirdEnabled') === 'true';
+  });
+  const [tickerText, setTickerText] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('projection_tickerText');
   });
 
   const [customCampaigns, setCustomCampaigns] = useState<any[]>(() => {
@@ -479,6 +492,9 @@ export default function App() {
     else if (key === 'activeAlert') setActiveAlert(value);
     else if (key === 'blackoutEnabled') setBlackoutEnabled(value === 'true' || value === true);
     else if (key === 'clearContentEnabled') setClearContentEnabled(value === 'true' || value === true);
+    else if (key === 'volume') setVolume(parseFloat(value.toString()));
+    else if (key === 'lowerThirdEnabled') setLowerThirdEnabled(value === 'true' || value === true);
+    else if (key === 'tickerText') setTickerText(value);
     else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value, 10) : null);
     else if (key === 'customVerseText') setCustomVerseText(value);
     else if (key === 'customVerseRef') setCustomVerseRef(value);
@@ -600,6 +616,7 @@ export default function App() {
       else if (key === 'activeAlert') setActiveAlert(value);
       else if (key === 'blackoutEnabled') setBlackoutEnabled(value === 'true' || value === true);
       else if (key === 'clearContentEnabled') setClearContentEnabled(value === 'true' || value === true);
+      else if (key === 'volume') setVolume(parseFloat(value.toString()));
       else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value.toString(), 10) : null);
       else if (key === 'customVerseText') setCustomVerseText(value);
       else if (key === 'customVerseRef') setCustomVerseRef(value);
@@ -644,6 +661,9 @@ export default function App() {
       setActiveAlert(localStorage.getItem('projection_activeAlert'));
       setBlackoutEnabled(localStorage.getItem('projection_blackoutEnabled') === 'true');
       setClearContentEnabled(localStorage.getItem('projection_clearContentEnabled') === 'true');
+      setVolume(parseFloat(localStorage.getItem('projection_volume') || '1'));
+      setLowerThirdEnabled(localStorage.getItem('projection_lowerThirdEnabled') === 'true');
+      setTickerText(localStorage.getItem('projection_tickerText'));
       const idx = localStorage.getItem('projection_activeVerseIndex');
       setActiveVerseIndex(idx ? parseInt(idx, 10) : null);
       setCustomVerseText(localStorage.getItem('projection_customVerseText') || '');
@@ -1414,12 +1434,11 @@ export default function App() {
                                   const dbItems = await getAllMediaItems();
                                   const target = dbItems.find(item => item.id === media.id);
                                   if (target) {
-                                    // Cycle: contain -> cover -> fill -> minimal -> contain
+                                    // Cycle: contain -> cover -> fill -> contain
                                     const currentFit = target.fit || 'contain';
-                                    let nextFit: 'contain' | 'cover' | 'fill' | 'minimal' = 'contain';
+                                    let nextFit: 'contain' | 'cover' | 'fill' = 'contain';
                                     if (currentFit === 'contain') nextFit = 'cover';
                                     else if (currentFit === 'cover') nextFit = 'fill';
-                                    else if (currentFit === 'fill') nextFit = 'minimal';
                                     else nextFit = 'contain';
                                     
                                     target.fit = nextFit;
@@ -1431,7 +1450,6 @@ export default function App() {
                                 title={
                                   media.fit === 'cover' ? "Preencher Quadro (Com Bordas)" : 
                                   media.fit === 'fill' ? "Tela Cheia (Sem Bordas)" : 
-                                  media.fit === 'minimal' ? "Modo Minimalista (Fundo Preto)" :
                                   "Ajustar ao Quadro (Com Blur)"
                                 }
                                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold transition-all cursor-pointer ${
@@ -1439,8 +1457,6 @@ export default function App() {
                                     ? "bg-amber-500/15 border-amber-500/30 text-amber-500 hover:bg-amber-500/25"
                                     : media.fit === 'fill'
                                     ? "bg-stone-100/10 border-stone-100/20 text-white hover:bg-stone-100/20"
-                                    : media.fit === 'minimal'
-                                    ? "bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700"
                                     : "bg-stone-950 border-stone-850 text-stone-400 hover:text-stone-200"
                                 }`}
                               >
@@ -1453,11 +1469,6 @@ export default function App() {
                                   <>
                                     <Zap className="w-2.5 h-2.5 text-white" />
                                     <span>Tela Cheia</span>
-                                  </>
-                                ) : media.fit === 'minimal' ? (
-                                  <>
-                                    <Box className="w-2.5 h-2.5 text-stone-300" />
-                                    <span>Minimalista</span>
                                   </>
                                 ) : (
                                   <>
@@ -1563,6 +1574,93 @@ export default function App() {
               )}
             </div>
 
+            {/* ÁUDIO & VOLUME SECTION */}
+            <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 mb-4 flex flex-col gap-4 shrink-0">
+              <h3 className="text-stone-400 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+                <Volume2 className="w-4 h-4 text-yellow-500" />
+                Controle de Áudio
+              </h3>
+              
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-stone-500 uppercase tracking-wider">Volume Geral da Transmissão</span>
+                  <span className="text-xs font-mono font-bold text-yellow-500">{Math.round(volume * 100)}%</span>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => updateStateAndBroadcast('volume', volume === 0 ? 0.5 : 0)}
+                    className={`p-2 rounded-lg transition-all ${volume === 0 ? 'bg-red-500/20 text-red-500' : 'bg-stone-900 border border-stone-800 text-stone-500 hover:text-stone-300'}`}
+                    title={volume === 0 ? "Ativar Áudio" : "Mudo"}
+                  >
+                    {volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="1" 
+                    step="0.01" 
+                    value={volume}
+                    onChange={(e) => updateStateAndBroadcast('volume', parseFloat(e.target.value))}
+                    className="flex-1 h-1.5 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  <button onClick={() => updateStateAndBroadcast('volume', 0)} className="py-1.5 bg-stone-900 border border-stone-850 hover:border-stone-700 rounded-md text-[9px] font-bold text-stone-500 hover:text-stone-300 transition-colors uppercase">Mudo</button>
+                  <button onClick={() => updateStateAndBroadcast('volume', 0.5)} className="py-1.5 bg-stone-900 border border-stone-850 hover:border-stone-700 rounded-md text-[9px] font-bold text-stone-500 hover:text-stone-300 transition-colors uppercase">50%</button>
+                  <button onClick={() => updateStateAndBroadcast('volume', 1)} className="py-1.5 bg-stone-900 border border-stone-850 hover:border-stone-700 rounded-md text-[9px] font-bold text-stone-500 hover:text-stone-300 transition-colors uppercase">100%</button>
+                </div>
+              </div>
+            </div>
+
+            {/* LETREIRO DIGITAL (TICKER) SECTION */}
+            <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 mb-4 flex flex-col gap-4">
+              <h3 className="text-stone-400 font-bold text-xs uppercase tracking-wider flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="w-4 h-4 text-yellow-500" />
+                  Letreiro Digital (Ticker)
+                </div>
+                {tickerText && (
+                  <span className="text-[9px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full border border-green-500/30 animate-pulse">Ativo</span>
+                )}
+              </h3>
+              
+              <div className="flex flex-col gap-3">
+                <p className="text-[10px] text-stone-500">Exibe uma faixa amarela com texto correndo na base da tela.</p>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Ex: Reunião de obreiros hoje às 14h..."
+                    value={tickerText || ''}
+                    onChange={(e) => updateStateAndBroadcast('tickerText', e.target.value || null)}
+                    className="flex-1 bg-stone-950 border border-stone-800 rounded-lg px-4 py-2 text-xs text-stone-200 focus:outline-none focus:border-yellow-500/50"
+                  />
+                  {tickerText && (
+                    <button 
+                      onClick={() => updateStateAndBroadcast('tickerText', null)}
+                      className="p-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg hover:bg-red-500/20 transition-all cursor-pointer"
+                      title="Limpar Letreiro"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {["Bem-vindos à Casa de Deus!", "Participe da Corrente dos 70 às 15h.", "Dízimos e Ofertas: Chave PIX: igreja@universal.com"].map((sug) => (
+                    <button
+                      key={sug}
+                      onClick={() => updateStateAndBroadcast('tickerText', sug)}
+                      className="text-[9px] bg-stone-900 border border-stone-850 hover:border-stone-700 px-2 py-1 rounded text-stone-500 hover:text-stone-300 transition-colors"
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* GERENCIADOR DE VERSÍCULOS E MENSAGENS CUSTOMIZADAS */}
             <div className="bg-[#121212] border border-stone-800 rounded-2xl p-5 mt-1 flex flex-col gap-4">
               <div className="flex items-center justify-between">
@@ -1637,6 +1735,19 @@ export default function App() {
                   Voltar ao Automático
                 </button>
               </div>
+
+              {/* MODO LOWER THIRD TOGGLE */}
+              <button
+                onClick={() => updateStateAndBroadcast('lowerThirdEnabled', !lowerThirdEnabled)}
+                className={`w-full py-2.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  lowerThirdEnabled 
+                    ? "bg-amber-500/20 border-amber-500/50 text-amber-500" 
+                    : "bg-stone-900 border-stone-850 text-stone-500 hover:text-stone-300"
+                }`}
+              >
+                <Layout className="w-4 h-4" />
+                {lowerThirdEnabled ? "Modo Rodapé (Lower Third) Ativo" : "Ativar Modo Rodapé (Lower Third)"}
+              </button>
 
               {/* BÍBLIA SECTION */}
               <div className="flex flex-col gap-4">
@@ -2138,18 +2249,28 @@ export default function App() {
                               date: finalDate
                             };
 
-                            const updated = [...customMeetings, newMeeting];
-                            updateStateAndBroadcast('customMeetings', updated);
+                            if (editingMeetId) {
+                              const updated = customMeetings.map(m => m.id === editingMeetId ? newMeeting : m);
+                              updateStateAndBroadcast('customMeetings', updated);
+                              setEditingMeetId(null);
+                            } else {
+                              const updated = [...customMeetings, newMeeting];
+                              updateStateAndBroadcast('customMeetings', updated);
+                            }
+                            
                             setShowAddMeetingForm(false);
                             setNewMeetTheme('');
                           }}
                           className="flex-1 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg text-xs font-bold cursor-pointer transition-colors"
                         >
-                          Confirmar Cadastro
+                          {editingMeetId ? "Salvar Alterações" : "Confirmar Cadastro"}
                         </button>
                         <button
                           type="button"
-                          onClick={() => setShowAddMeetingForm(false)}
+                          onClick={() => {
+                            setShowAddMeetingForm(false);
+                            setEditingMeetId(null);
+                          }}
                           className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg text-xs font-bold cursor-pointer transition-colors"
                         >
                           Cancelar
@@ -2192,16 +2313,33 @@ export default function App() {
                               </div>
                               <span className="text-stone-400 truncate font-medium">{meet.theme}</span>
                             </div>
-                            <button
-                              onClick={() => {
-                                const updated = customMeetings.filter(m => m.id !== meet.id);
-                                updateStateAndBroadcast('customMeetings', updated);
-                              }}
-                              className="p-1.5 text-stone-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
-                              title="Remover reunião"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingMeetId(meet.id);
+                                  setNewMeetTheme(meet.theme);
+                                  setNewMeetTime(meet.time);
+                                  setNewMeetType(meet.date ? 'once' : 'weekly');
+                                  if (meet.date) setNewMeetDate(meet.date);
+                                  if (meet.day !== undefined) setNewMeetWeeklyDay(meet.day);
+                                  setShowAddMeetingForm(true);
+                                }}
+                                className="p-1.5 text-stone-500 hover:text-yellow-500 hover:bg-yellow-500/10 rounded-lg transition-all cursor-pointer"
+                                title="Editar reunião"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const updated = customMeetings.filter(m => m.id !== meet.id);
+                                  updateStateAndBroadcast('customMeetings', updated);
+                                }}
+                                className="p-1.5 text-stone-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
+                                title="Remover reunião"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         ))
                     ) : (
@@ -2463,12 +2601,16 @@ export default function App() {
                   customMeetings={customMeetings}
                   customCampaigns={customCampaigns}
                   nextMeeting={nextMeeting}
+                  nextMeetingDate={nextMeetingDate}
                   ongoingMeeting={ongoingMeeting}
+                  volume={volume}
+                  lowerThirdEnabled={lowerThirdEnabled}
+                  tickerText={tickerText}
                 />
               </div>
             </div>
 
-              <p className="text-xs text-stone-500 leading-relaxed mt-2 border-t border-stone-850 pt-4">
+              <div className="text-xs text-stone-500 leading-relaxed mt-4 border-t border-stone-850 pt-4">
                 <strong>Guia de Transmissão:</strong>
                 <br />
                 1. Conecte o projetor ou TV na saída HDMI da sua máquina.
@@ -2478,8 +2620,8 @@ export default function App() {
                 3. Na janela que abrir na TV, clique em qualquer lugar para ativar a <strong>Tela Cheia</strong> automática.
                 <br />
                 4. Use este painel para monitorar, trocar slides e disparar alertas instantâneos!
-              </p>
-          </div>
+              </div>
+            </div>
 
         </div>
       </div>
@@ -2560,7 +2702,11 @@ export default function App() {
           customMeetings={customMeetings}
           customCampaigns={customCampaigns}
           nextMeeting={nextMeeting}
+          nextMeetingDate={nextMeetingDate}
           ongoingMeeting={ongoingMeeting}
+          volume={volume}
+          lowerThirdEnabled={lowerThirdEnabled}
+          tickerText={tickerText}
           onVideoEnded={() => {
             if (manualSlideOverride && videoPinBehavior === 'unpin') {
               updateStateAndBroadcast('manualSlideOverride', null);
