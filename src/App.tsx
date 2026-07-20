@@ -1141,6 +1141,18 @@ export default function App() {
             </button>
 
             <button
+              onClick={() => setActiveMobileTab('sync')}
+              className={`flex-1 lg:flex-none border text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                activeMobileTab === 'sync'
+                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 font-extrabold'
+                  : 'bg-zinc-900 hover:bg-zinc-850 border-zinc-800 text-zinc-300'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5 text-amber-500" />
+              <span>Conectar Celular</span>
+            </button>
+
+            <button
               onClick={() => {
                 const url = window.location.origin + window.location.pathname + '?projection';
                 window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
@@ -1191,12 +1203,13 @@ export default function App() {
         )}
 
         {/* MOBILE NAVIGATION TABS (Visible on mobile/tablet) */}
-        <div className="lg:hidden grid grid-cols-5 bg-zinc-950 border-b border-zinc-900 sticky top-0 z-20 shrink-0">
+        <div className="lg:hidden grid grid-cols-6 bg-zinc-950 border-b border-zinc-900 sticky top-0 z-20 shrink-0">
           {[
             { id: 'slides', label: 'Mídias', icon: Layout },
             { id: 'texts', label: 'Bíblia', icon: BookOpen },
             { id: 'agenda', label: 'Agenda', icon: CalendarDays },
             { id: 'controls', label: 'Ações', icon: Settings },
+            { id: 'sync', label: 'Celular', icon: RefreshCw },
             { id: 'monitor', label: 'Monitor', icon: Monitor },
           ].map((tab) => {
             const Icon = tab.icon;
