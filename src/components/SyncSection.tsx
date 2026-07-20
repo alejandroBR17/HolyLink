@@ -585,87 +585,80 @@ export function SyncSection({
     });
   };
 
-  const forcePushToPC = () => {
+  const forcePushToPC = async () => {
     const conn = connRef.current;
     if (!conn) {
       showAlert("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
 
-    showConfirm(
-      "Sobrescrever Monitor?",
-      "Isso irá apagar todas as configurações e mídias do PC e substituir pelas do seu celular. Esta ação não pode ser desfeita. Deseja continuar?",
-      async () => {
-        setIsPushing(true);
-        setSyncMessage("Transmitindo todos os dados para o PC...");
-        setSyncProgress(0);
-        try {
-          const storageData: Record<string, string> = {};
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('projection_')) {
-              const val = localStorage.getItem(key);
-              if (val !== null) {
-                storageData[key] = val;
-              }
-            }
+    setIsPushing(true);
+    setSyncMessage("Transmitindo todos os dados para o PC...");
+    setSyncProgress(0);
+    try {
+      const storageData: Record<string, string> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('projection_')) {
+          const val = localStorage.getItem(key);
+          if (val !== null) {
+            storageData[key] = val;
           }
+        }
+      }
 
-          const mediaItems = await getAllMediaItems();
-          const total = mediaItems.length;
-          const serializedMedia = await Promise.all(
-            mediaItems.map(async (item, index) => {
-              const progress = Math.round((index / total) * 100);
-              setSyncProgress(progress);
-              setSyncMessage(`Preparando mídia (${index+1}/${total}): ${item.name}`);
-              
-              const base64 = await new Promise<string>((resolve, reject) => {
-                if (!(item.blob instanceof Blob)) {
-                  resolve('');
-                  return;
-                }
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  const res = reader.result as string;
-                  resolve(res.split(',')[1] || '');
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(item.blob);
-              });
-
-              return {
-                id: item.id,
-                type: item.type,
-                name: item.name,
-                duration: item.duration,
-                enabledInLoop: item.enabledInLoop,
-                muted: item.muted,
-                order: item.order,
-                fit: item.fit,
-                mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
-                base64: base64
-              };
-            })
-          );
-
-          conn.send({
-            version: 1,
-            localStorage: storageData,
-            mediaItems: serializedMedia
+      const mediaItems = await getAllMediaItems();
+      const total = mediaItems.length;
+      const serializedMedia = await Promise.all(
+        mediaItems.map(async (item, index) => {
+          const progress = Math.round((index / total) * 100);
+          setSyncProgress(progress);
+          setSyncMessage(`Preparando mídia (${index+1}/${total}): ${item.name}`);
+          
+          const base64 = await new Promise<string>((resolve, reject) => {
+            if (!(item.blob instanceof Blob)) {
+              resolve('');
+              return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const res = reader.result as string;
+              resolve(res.split(',')[1] || '');
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(item.blob);
           });
 
-          setSyncProgress(100);
-          setSyncMessage("Dados enviados e aplicados no PC com sucesso!");
-        } catch (err) {
-          console.error(err);
-          setSyncMessage("Erro ao transmitir os dados.");
-        } finally {
-          setIsPushing(false);
-          setTimeout(() => setSyncProgress(undefined), 2000);
-        }
-      },
-      'danger'
-    );
+          return {
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            duration: item.duration,
+            enabledInLoop: item.enabledInLoop,
+            muted: item.muted,
+            order: item.order,
+            fit: item.fit,
+            mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
+            base64: base64
+          };
+        })
+      );
+
+      conn.send({
+        version: 1,
+        localStorage: storageData,
+        mediaItems: serializedMedia
+      });
+
+      setSyncProgress(100);
+      setSyncMessage("Dados enviados e aplicados no PC com sucesso!");
+    } catch (err) {
+      console.error(err);
+      setSyncMessage("Erro ao transmitir os dados.");
+    } finally {
+      setIsPushing(false);
+      setTimeout(() => setSyncProgress(undefined), 2000);
+    }
   };
 
   const forcePullFromPC = () => {

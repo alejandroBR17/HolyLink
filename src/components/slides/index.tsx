@@ -420,7 +420,7 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !media?.url) return;
 
     if (currentSlideId === media.id) {
       if (video.src !== media.url) {
@@ -442,23 +442,34 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     } else {
       video.pause();
     }
-  }, [currentSlideId, media.id, media.url, volume, isBackgroundBlur]);
+  }, [currentSlideId, media?.id, media?.url, volume, isBackgroundBlur]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !media?.url) return;
     
     // Se o volume mudar enquanto o vídeo está tocando
     if (currentSlideId === media.id) {
       video.volume = isBackgroundBlur ? 0 : volume;
     }
-  }, [volume, currentSlideId, media.id, isBackgroundBlur]);
+  }, [volume, currentSlideId, media?.id, isBackgroundBlur, media?.url]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !media?.url) return;
     video.muted = isBackgroundBlur ? true : (media.muted !== undefined ? media.muted : false);
-  }, [media.muted, isBackgroundBlur]);
+  }, [media?.muted, isBackgroundBlur, media?.url]);
+
+  if (!media?.url) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-black/40">
+        <div className="animate-pulse flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-zinc-500 text-xs">Carregando mídia...</span>
+        </div>
+      </div>
+    );
+  }
 
   const videoFit = fit || media.fit || 'contain';
   const objectFitClass = videoFit === 'cover' ? "object-cover" : videoFit === 'fill' ? "object-fill" : "object-contain";

@@ -1383,11 +1383,9 @@ export default function App() {
               />
             )}
 
-            {activeMobileTab === 'sync' && (
-              <div className="w-full">
-                <SyncSection showAlert={showAlert} showConfirm={showConfirm} />
-              </div>
-            )}
+            <div className={activeMobileTab === 'sync' ? 'w-full' : 'hidden absolute w-0 h-0 overflow-hidden pointer-events-none'} aria-hidden={activeMobileTab !== 'sync'}>
+              <SyncSection showAlert={showAlert} showConfirm={showConfirm} />
+            </div>
 
             {activeMobileTab === 'monitor' && (
               <MonitorPanel
@@ -1590,6 +1588,7 @@ export default function App() {
       {/* PRELOAD SYSTEM */}
       <div className="hidden absolute w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true">
         {customMediaList.map((media) => {
+          if (!media.url) return null;
           if (media.type === 'image') {
             return (
               <img 
