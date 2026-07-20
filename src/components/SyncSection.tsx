@@ -120,14 +120,8 @@ export function SyncSection({
             const item = data.mediaItem;
             setSyncMessage(`Salvando mídia: ${item.name}`);
             window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Recebendo mídia: ${item.name}` } }));
-            const byteCharacters = atob(item.base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: item.mimeType });
-            await saveMediaItem({
+            
+            const savePayload: any = {
               id: item.id,
               type: item.type,
               name: item.name,
@@ -135,9 +129,24 @@ export function SyncSection({
               enabledInLoop: item.enabledInLoop,
               muted: item.muted,
               order: item.order,
-              fit: item.fit,
-              blob: blob
-            });
+              fit: item.fit
+            };
+
+            if (item.base64) {
+              try {
+                const byteCharacters = atob(item.base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                savePayload.blob = new Blob([byteArray], { type: item.mimeType });
+              } catch (err) {
+                console.error("Erro ao decodificar base64:", item.name, err);
+              }
+            }
+
+            await saveMediaItem(savePayload);
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
             return;
           }
@@ -164,6 +173,10 @@ export function SyncSection({
                 const progress = Math.round((index / mediaItems.length) * 100);
                 window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Preparando mídias: ${item.name}`, progress } }));
                 const base64 = await new Promise<string>((resolve, reject) => {
+                  if (!(item.blob instanceof Blob)) {
+                    resolve('');
+                    return;
+                  }
                   const reader = new FileReader();
                   reader.onloadend = () => {
                     const res = reader.result as string;
@@ -181,7 +194,7 @@ export function SyncSection({
                   muted: item.muted,
                   order: item.order,
                   fit: item.fit,
-                  mimeType: item.blob.type,
+                  mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
                   base64: base64
                 };
               })
@@ -346,14 +359,8 @@ export function SyncSection({
 
           if (incomingData && incomingData.type === 'MEDIA_SAVE') {
             const item = incomingData.mediaItem;
-            const byteCharacters = atob(item.base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: item.mimeType });
-            await saveMediaItem({
+            
+            const savePayload: any = {
               id: item.id,
               type: item.type,
               name: item.name,
@@ -361,9 +368,24 @@ export function SyncSection({
               enabledInLoop: item.enabledInLoop,
               muted: item.muted,
               order: item.order,
-              fit: item.fit,
-              blob: blob
-            });
+              fit: item.fit
+            };
+
+            if (item.base64) {
+              try {
+                const byteCharacters = atob(item.base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                savePayload.blob = new Blob([byteArray], { type: item.mimeType });
+              } catch (err) {
+                console.error("Erro ao decodificar base64 no sender:", item.name, err);
+              }
+            }
+
+            await saveMediaItem(savePayload);
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
             return;
           }
@@ -457,6 +479,10 @@ export function SyncSection({
           const serializedMedia = await Promise.all(
             mediaItems.map(async (item) => {
               const base64 = await new Promise<string>((resolve, reject) => {
+                if (!(item.blob instanceof Blob)) {
+                  resolve('');
+                  return;
+                }
                 const reader = new FileReader();
                 reader.onloadend = () => {
                   const res = reader.result as string;
@@ -475,7 +501,7 @@ export function SyncSection({
                 muted: item.muted,
                 order: item.order,
                 fit: item.fit,
-                mimeType: item.blob.type,
+                mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
                 base64: base64
               };
             })
@@ -594,6 +620,10 @@ export function SyncSection({
               setSyncMessage(`Preparando mídia (${index+1}/${total}): ${item.name}`);
               
               const base64 = await new Promise<string>((resolve, reject) => {
+                if (!(item.blob instanceof Blob)) {
+                  resolve('');
+                  return;
+                }
                 const reader = new FileReader();
                 reader.onloadend = () => {
                   const res = reader.result as string;
@@ -612,7 +642,7 @@ export function SyncSection({
                 muted: item.muted,
                 order: item.order,
                 fit: item.fit,
-                mimeType: item.blob.type,
+                mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
                 base64: base64
               };
             })
@@ -703,6 +733,10 @@ export function SyncSection({
       const serializedMedia = await Promise.all(
         mediaItems.map(async (item) => {
           const base64 = await new Promise<string>((resolve, reject) => {
+            if (!(item.blob instanceof Blob)) {
+              resolve('');
+              return;
+            }
             const reader = new FileReader();
             reader.onloadend = () => {
               const res = reader.result as string;
@@ -720,7 +754,7 @@ export function SyncSection({
             enabledInLoop: item.enabledInLoop,
             muted: item.muted,
             order: item.order,
-            mimeType: item.blob.type,
+            mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
             base64: base64
           };
         })

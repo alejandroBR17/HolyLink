@@ -188,7 +188,10 @@ export default function App() {
       isOpen: true,
       title,
       message,
-      onConfirm,
+      onConfirm: async () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        await onConfirm();
+      },
       variant
     });
   };
@@ -232,10 +235,6 @@ export default function App() {
     return parseFloat(localStorage.getItem('projection_volume') || '1');
   });
 
-  const [lowerThirdEnabled, setLowerThirdEnabled] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('projection_lowerThirdEnabled') === 'true';
-  });
 
   const [tickerText, setTickerText] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -315,17 +314,41 @@ export default function App() {
             return a.id.localeCompare(b.id);
           });
 
-          return sortedItems.map((item) => ({
-            id: item.id,
-            type: item.type,
-            name: item.name,
-            duration: item.duration,
-            enabledInLoop: item.enabledInLoop,
-            url: URL.createObjectURL(item.blob),
-            muted: item.muted !== undefined ? item.muted : true,
-            order: item.order,
-            fit: item.fit
-          }));
+          return sortedItems.map((item) => {
+            let itemUrl = '';
+            if (item.blob instanceof Blob) {
+              try {
+                itemUrl = URL.createObjectURL(item.blob);
+              } catch (e) {
+                console.error("Error creating Object URL for item:", item.id, e);
+              }
+            } else if (item.blob && typeof item.blob === 'object') {
+              try {
+                const anyBlob = item.blob as any;
+                if (anyBlob.buffer && (anyBlob.buffer instanceof ArrayBuffer || anyBlob.buffer instanceof Uint8Array)) {
+                  const b = new Blob([anyBlob.buffer], { type: anyBlob.type || 'application/octet-stream' });
+                  itemUrl = URL.createObjectURL(b);
+                } else if (anyBlob.bytes) {
+                  const b = new Blob([anyBlob.bytes], { type: anyBlob.type || 'application/octet-stream' });
+                  itemUrl = URL.createObjectURL(b);
+                }
+              } catch (e) {
+                console.error("Error reconstructing blob for item:", item.id, e);
+              }
+            }
+
+            return {
+              id: item.id,
+              type: item.type,
+              name: item.name,
+              duration: item.duration,
+              enabledInLoop: item.enabledInLoop,
+              url: itemUrl,
+              muted: item.muted !== undefined ? item.muted : true,
+              order: item.order,
+              fit: item.fit
+            };
+          });
         });
       } catch (err) {
         console.error("Failed to load custom media from DB", err);
@@ -504,7 +527,6 @@ export default function App() {
     else if (key === 'blackoutEnabled') setBlackoutEnabled(value === 'true' || value === true);
     else if (key === 'clearContentEnabled') setClearContentEnabled(value === 'true' || value === true);
     else if (key === 'volume') setVolume(parseFloat(value.toString()));
-    else if (key === 'lowerThirdEnabled') setLowerThirdEnabled(value === 'true' || value === true);
     else if (key === 'tickerText') setTickerText(value);
     else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value, 10) : null);
     else if (key === 'customVerseText') setCustomVerseText(value);
@@ -553,6 +575,10 @@ export default function App() {
     if (peerConn && peerConn.open) {
       try {
         const base64 = await new Promise<string>((resolve, reject) => {
+          if (!(item.blob instanceof Blob)) {
+            resolve('');
+            return;
+          }
           const reader = new FileReader();
           reader.onloadend = () => {
             const res = reader.result as string;
@@ -572,7 +598,7 @@ export default function App() {
             muted: item.muted,
             order: item.order,
             fit: item.fit,
-            mimeType: item.blob.type,
+            mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
             base64
           },
           version: 1
@@ -671,7 +697,6 @@ export default function App() {
       setBlackoutEnabled(localStorage.getItem('projection_blackoutEnabled') === 'true');
       setClearContentEnabled(localStorage.getItem('projection_clearContentEnabled') === 'true');
       setVolume(parseFloat(localStorage.getItem('projection_volume') || '1'));
-      setLowerThirdEnabled(localStorage.getItem('projection_lowerThirdEnabled') === 'true');
       setTickerText(localStorage.getItem('projection_tickerText'));
       const idx = localStorage.getItem('projection_activeVerseIndex');
       setActiveVerseIndex(idx ? parseInt(idx, 10) : null);
@@ -1204,7 +1229,7 @@ export default function App() {
                 activeVerseIndex={activeVerseIndex}
                 customVerseText={customVerseText}
                 customVerseRef={customVerseRef}
-                lowerThirdEnabled={lowerThirdEnabled}
+                
                 updateStateAndBroadcast={updateStateAndBroadcast}
               />
             )}
@@ -1304,7 +1329,7 @@ export default function App() {
                 nextMeetingDate={nextMeetingDate}
                 ongoingMeeting={ongoingMeeting}
                 volume={volume}
-                lowerThirdEnabled={lowerThirdEnabled}
+                
                 tickerText={tickerText}
                 syncStatus={syncStatus}
               />
@@ -1343,7 +1368,7 @@ export default function App() {
               nextMeetingDate={nextMeetingDate}
               ongoingMeeting={ongoingMeeting}
               volume={volume}
-              lowerThirdEnabled={lowerThirdEnabled}
+              
               tickerText={tickerText}
               syncStatus={syncStatus}
             />
@@ -1443,7 +1468,7 @@ export default function App() {
           nextMeetingDate={nextMeetingDate}
           ongoingMeeting={ongoingMeeting}
           volume={volume}
-          lowerThirdEnabled={lowerThirdEnabled}
+          
           tickerText={tickerText}
           syncStatus={syncStatus}
           onVideoEnded={() => {

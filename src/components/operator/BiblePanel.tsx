@@ -7,7 +7,6 @@ interface BiblePanelProps {
   activeVerseIndex: number | null;
   customVerseText: string | null;
   customVerseRef: string | null;
-  lowerThirdEnabled: boolean;
   updateStateAndBroadcast: (key: string, value: any) => void;
 }
 
@@ -15,7 +14,6 @@ export function BiblePanel({
   activeVerseIndex,
   customVerseText,
   customVerseRef,
-  lowerThirdEnabled,
   updateStateAndBroadcast
 }: BiblePanelProps) {
 
@@ -130,19 +128,6 @@ export function BiblePanel({
             Voltar ao Automático
           </button>
         </div>
-
-        {/* Lower Third Toggle */}
-        <button
-          onClick={() => updateStateAndBroadcast('lowerThirdEnabled', !lowerThirdEnabled)}
-          className={`w-full py-3 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            lowerThirdEnabled 
-              ? "bg-amber-500/10 border-amber-500/30 text-amber-500 shadow-md shadow-amber-500/5" 
-              : "bg-zinc-950 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
-          }`}
-        >
-          <Layout className="w-4 h-4" />
-          {lowerThirdEnabled ? "Modo Rodapé (Lower Third) Ativo" : "Ativar Modo Rodapé (Lower Third)"}
-        </button>
       </div>
 
       {/* FAVORITOS E BÍBLIA */}

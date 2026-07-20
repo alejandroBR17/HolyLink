@@ -353,7 +353,7 @@ export function PlaylistPanel({
                         #{index + 1}
                       </div>
                       {media.type === 'image' ? (
-                        <img src={media.url} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                        <img src={media.url || null} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                       ) : (
                         <Film className="w-5 h-5 text-amber-500" />
                       )}

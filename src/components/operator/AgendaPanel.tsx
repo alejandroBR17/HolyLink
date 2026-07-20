@@ -119,7 +119,7 @@ export function AgendaPanel({
     };
 
     if (editingMeetId) {
-      const updated = customMeetings.map(m => m.id === editingMeetId ? mObject : m);
+      const updated = (customMeetings || []).map(m => m.id === editingMeetId ? mObject : m);
       updateStateAndBroadcast('customMeetings', updated);
       setEditingMeetId(null);
     } else {
@@ -176,7 +176,7 @@ export function AgendaPanel({
             </div>
             <div>
               <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Gerenciar Agenda & Eventos</h3>
-              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">{customMeetings.length} reuniões registradas</p>
+              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">{(customMeetings || []).length} reuniões registradas</p>
             </div>
           </div>
           <motion.div animate={{ rotate: isMeetingPanelOpen ? 180 : 0 }} transition={{ duration: 0.15 }}>
@@ -314,7 +314,7 @@ export function AgendaPanel({
 
             {/* MEETS LIST */}
             <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
-              {customMeetings.length === 0 ? (
+              {(customMeetings || []).length === 0 ? (
                 <div className="text-zinc-500 text-center py-6 text-xs italic bg-zinc-950/20 border border-dashed border-zinc-850 rounded-xl">
                   Nenhuma reunião ou evento adicionado.
                 </div>
@@ -390,7 +390,7 @@ export function AgendaPanel({
             </div>
             <div>
               <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Propósitos de Fé & Campanhas</h3>
-              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">{customCampaigns.length} campanhas registradas</p>
+              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">{(customCampaigns || []).length} campanhas registradas</p>
             </div>
           </div>
           <motion.div animate={{ rotate: isCampaignPanelOpen ? 180 : 0 }} transition={{ duration: 0.15 }}>
@@ -522,12 +522,12 @@ export function AgendaPanel({
 
             {/* CAMPAIGNS LIST */}
             <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
-              {customCampaigns.length === 0 ? (
+              {(customCampaigns || []).length === 0 ? (
                 <div className="text-zinc-500 text-center py-6 text-xs italic bg-zinc-950/20 border border-dashed border-zinc-850 rounded-xl">
                   Nenhuma campanha cadastrada.
                 </div>
               ) : (
-                customCampaigns.map((camp) => {
+                (customCampaigns || []).map((camp) => {
                   // Check if expired
                   let isExpired = false;
                   if (camp.endDate) {

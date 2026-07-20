@@ -102,7 +102,7 @@ export interface DBMediaItem {
   name: string;
   duration: number; // in milliseconds
   enabledInLoop: boolean;
-  blob: Blob;
+  blob?: Blob;
   muted?: boolean;
   order?: number;
   fit?: 'contain' | 'cover' | 'fill';
@@ -131,9 +131,31 @@ export async function saveMediaItem(item: DBMediaItem): Promise<void> {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(item);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    
+    // Get existing item from store to preserve the blob if not provided in 'item'
+    const getRequest = store.get(item.id);
+    
+    getRequest.onsuccess = () => {
+      const existing = getRequest.result;
+      let finalItem = item;
+      if (existing) {
+        finalItem = {
+          ...existing,
+          ...item,
+          blob: (item.blob !== undefined && item.blob !== null) ? item.blob : existing.blob
+        };
+      }
+      
+      const putRequest = store.put(finalItem);
+      putRequest.onsuccess = () => resolve();
+      putRequest.onerror = () => reject(putRequest.error);
+    };
+    
+    getRequest.onerror = () => {
+      const putRequest = store.put(item);
+      putRequest.onsuccess = () => resolve();
+      putRequest.onerror = () => reject(putRequest.error);
+    };
   });
 }
 

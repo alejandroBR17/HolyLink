@@ -366,7 +366,7 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
   const todayStr = new Date().toISOString().split('T')[0];
   
   // Filtra campanhas que não expiraram (endDate é nula ou maior/igual a hoje)
-  const activeCampaigns = (campaigns.length > 0 ? campaigns : []).filter(c => {
+  const activeCampaigns = (Array.isArray(campaigns) ? campaigns : []).filter(c => {
     if (!c.endDate) return true;
     return c.endDate >= todayStr;
   });

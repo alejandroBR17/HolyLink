@@ -52,7 +52,6 @@ interface ProjectionContentProps {
   nextMeetingDate?: Date;
   ongoingMeeting?: Meeting | null;
   volume?: number;
-  lowerThirdEnabled?: boolean;
   tickerText?: string | null;
   syncStatus?: { active: boolean; message: string; progress?: number } | null;
 }
@@ -89,7 +88,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   nextMeetingDate,
   ongoingMeeting,
   volume = 1,
-  lowerThirdEnabled = false,
   tickerText = null,
   syncStatus = null
 }) => {
@@ -157,7 +155,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 />
               )}
               <img 
-                src={media.url} 
+                src={media.url || null} 
                 alt={media.name} 
                 className={`w-full h-full relative z-10 ${isCover ? 'object-cover' : isFullScreen ? 'object-fill' : 'object-contain'}`}
                 referrerPolicy="no-referrer"
@@ -243,7 +241,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           customVerseText={customVerseText}
           customVerseRef={customVerseRef}
           activeVerseIndex={activeVerseIndex}
-          lowerThird={lowerThirdEnabled}
+          
         />
       );
     }
@@ -512,7 +510,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               customVerseText={customVerseText} 
               customVerseRef={customVerseRef} 
               activeVerseIndex={activeVerseIndex} 
-              lowerThird={lowerThirdEnabled}
+              
             />
           </motion.div>
         )}

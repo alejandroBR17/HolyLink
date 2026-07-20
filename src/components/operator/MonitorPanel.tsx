@@ -34,7 +34,6 @@ interface MonitorPanelProps {
   nextMeetingDate: Date;
   ongoingMeeting: Meeting | null;
   volume: number;
-  lowerThirdEnabled: boolean;
   tickerText: string | null;
   syncStatus: any;
 }
@@ -69,7 +68,6 @@ export function MonitorPanel({
   nextMeetingDate,
   ongoingMeeting,
   volume,
-  lowerThirdEnabled,
   tickerText,
   syncStatus
 }: MonitorPanelProps) {
@@ -176,7 +174,6 @@ export function MonitorPanel({
               nextMeetingDate={nextMeetingDate}
               ongoingMeeting={ongoingMeeting}
               volume={volume}
-              lowerThirdEnabled={lowerThirdEnabled}
               tickerText={tickerText}
               syncStatus={syncStatus}
             />
