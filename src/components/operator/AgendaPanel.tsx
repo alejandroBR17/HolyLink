@@ -47,6 +47,7 @@ interface AgendaPanelProps {
   setIsMeetingPanelOpen: (v: boolean) => void;
   isCampaignPanelOpen: boolean;
   setIsCampaignPanelOpen: (v: boolean) => void;
+  showConfirm?: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
 }
 
 export function AgendaPanel({
@@ -82,7 +83,8 @@ export function AgendaPanel({
   isMeetingPanelOpen,
   setIsMeetingPanelOpen,
   isCampaignPanelOpen,
-  setIsCampaignPanelOpen
+  setIsCampaignPanelOpen,
+  showConfirm
 }: AgendaPanelProps) {
 
   const daysMap = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -132,8 +134,15 @@ export function AgendaPanel({
   };
 
   const handleDeleteMeeting = (id: string) => {
-    const updated = customMeetings.filter(m => m.id !== id);
-    updateStateAndBroadcast('customMeetings', updated);
+    if (showConfirm) {
+      showConfirm('Excluir Reunião?', 'Tem certeza que deseja remover esta reunião?', () => {
+        const updated = customMeetings.filter(m => m.id !== id);
+        updateStateAndBroadcast('customMeetings', updated);
+      }, 'danger');
+    } else {
+      const updated = customMeetings.filter(m => m.id !== id);
+      updateStateAndBroadcast('customMeetings', updated);
+    }
   };
 
   const handleSaveCampaign = () => {
@@ -157,17 +166,37 @@ export function AgendaPanel({
   };
 
   const handleDeleteCampaign = (id: string) => {
-    const updated = customCampaigns.filter(c => c.id !== id);
-    updateStateAndBroadcast('customCampaigns', updated);
+    if (showConfirm) {
+      showConfirm('Excluir Campanha?', 'Tem certeza que deseja remover este propósito/campanha?', () => {
+        const updated = customCampaigns.filter(c => c.id !== id);
+        updateStateAndBroadcast('customCampaigns', updated);
+      }, 'danger');
+    } else {
+      const updated = customCampaigns.filter(c => c.id !== id);
+      updateStateAndBroadcast('customCampaigns', updated);
+    }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 w-full animate-in fade-in duration-200">
+    <div className="flex flex-col lg:flex-row gap-6 w-full items-start animate-in fade-in duration-200">
       
       {/* MEETS COLUMN */}
-      <div className="flex-1 bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl flex flex-col h-fit">
+      <div className={`transition-all duration-300 bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl flex flex-col h-fit ${
+        isMeetingPanelOpen && !isCampaignPanelOpen 
+          ? "w-full lg:flex-[3]" 
+          : !isMeetingPanelOpen && isCampaignPanelOpen 
+            ? "w-full lg:w-[325px] shrink-0" 
+            : "flex-1 w-full"
+      }`}>
         <button
-          onClick={() => setIsMeetingPanelOpen(!isMeetingPanelOpen)}
+          onClick={() => {
+            if (!isMeetingPanelOpen) {
+              setIsMeetingPanelOpen(true);
+              setIsCampaignPanelOpen(false);
+            } else {
+              setIsMeetingPanelOpen(false);
+            }
+          }}
           className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-zinc-950/20 transition-colors"
         >
           <div className="flex items-center gap-3">
@@ -313,7 +342,7 @@ export function AgendaPanel({
             )}
 
             {/* MEETS LIST */}
-            <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
+            <div className="flex flex-col gap-2 max-h-[550px] overflow-y-auto pr-1">
               {(customMeetings || []).length === 0 ? (
                 <div className="text-zinc-500 text-center py-6 text-xs italic bg-zinc-950/20 border border-dashed border-zinc-850 rounded-xl">
                   Nenhuma reunião ou evento adicionado.
@@ -379,9 +408,22 @@ export function AgendaPanel({
       </div>
 
       {/* CAMPAIGNS COLUMN */}
-      <div className="flex-1 bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl flex flex-col h-fit">
+      <div className={`transition-all duration-300 bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl flex flex-col h-fit ${
+        isCampaignPanelOpen && !isMeetingPanelOpen 
+          ? "w-full lg:flex-[3]" 
+          : !isCampaignPanelOpen && isMeetingPanelOpen 
+            ? "w-full lg:w-[325px] shrink-0" 
+            : "flex-1 w-full"
+      }`}>
         <button
-          onClick={() => setIsCampaignPanelOpen(!isCampaignPanelOpen)}
+          onClick={() => {
+            if (!isCampaignPanelOpen) {
+              setIsCampaignPanelOpen(true);
+              setIsMeetingPanelOpen(false);
+            } else {
+              setIsCampaignPanelOpen(false);
+            }
+          }}
           className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-zinc-950/20 transition-colors"
         >
           <div className="flex items-center gap-3">
@@ -521,13 +563,13 @@ export function AgendaPanel({
             )}
 
             {/* CAMPAIGNS LIST */}
-            <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
+            <div className="flex flex-col gap-2 max-h-[550px] overflow-y-auto pr-1">
               {(customCampaigns || []).length === 0 ? (
                 <div className="text-zinc-500 text-center py-6 text-xs italic bg-zinc-950/20 border border-dashed border-zinc-850 rounded-xl">
                   Nenhuma campanha cadastrada.
                 </div>
               ) : (
-                (customCampaigns || []).map((camp) => {
+                (customCampaigns || []).map((camp, index) => {
                   // Check if expired
                   let isExpired = false;
                   if (camp.endDate) {
@@ -537,14 +579,14 @@ export function AgendaPanel({
 
                   return (
                     <div 
-                      key={camp.id}
+                      key={camp.id || `camp_${index}`}
                       className={`flex items-center justify-between p-3 rounded-xl border text-xs bg-zinc-950 border-zinc-850 transition-all ${
                         isExpired ? "opacity-45" : ""
                       }`}
                     >
                       <div className="flex items-center gap-3 max-w-[70%] text-left">
                         <div className="p-1.5 bg-zinc-900 border border-zinc-800 text-amber-500 rounded-lg shrink-0">
-                          {camp.iconType === 'flame' ? <Flame className="w-4 h-4" /> : camp.iconType === 'globe' ? <Globe className="w-4 h-4" /> : <CalendarDays className="w-4 h-4" />}
+                          {camp.iconType === 'flame' || (camp as any).type === 'fogueira_santa' || (camp as any).type === 'jejum_daniel' ? <Flame className="w-4 h-4" /> : camp.iconType === 'globe' ? <Globe className="w-4 h-4" /> : <CalendarDays className="w-4 h-4" />}
                         </div>
                         <div className="flex flex-col gap-0.5 min-w-0">
                           <span className="text-zinc-200 font-bold truncate leading-snug">{camp.title}</span>

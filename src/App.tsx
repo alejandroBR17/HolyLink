@@ -71,6 +71,7 @@ export default function App() {
     const timer = setInterval(() => {
       if (projectionWin.closed) {
         setProjectionWin(null);
+        updateStateAndBroadcast('isProjectionOpen', false);
         clearInterval(timer);
       }
     }, 1000);
@@ -261,6 +262,21 @@ export default function App() {
   const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(false);
   const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
   const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
+
+  const [isProjectionOpen, setIsProjectionOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('projection_isProjectionOpen') === 'true';
+  });
+
+  const [projectionCloseTrigger, setProjectionCloseTrigger] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('projection_projectionCloseTrigger');
+  });
+
+  const projectionWinRef = useRef<Window | null>(null);
+  useEffect(() => {
+    projectionWinRef.current = projectionWin;
+  }, [projectionWin]);
 
   // Form Fields - Meetings
   const [newMeetTheme, setNewMeetTheme] = useState('');
@@ -534,6 +550,27 @@ export default function App() {
     else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
     else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
     else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+    else if (key === 'isProjectionOpen') setIsProjectionOpen(value === 'true' || value === true);
+    else if (key === 'projectionCloseTrigger') {
+      setProjectionCloseTrigger(value);
+      if (value) {
+        if (projectionWinRef.current) {
+          try {
+            projectionWinRef.current.close();
+          } catch (e) {
+            console.warn("Failed to close projectionWin:", e);
+          }
+          setProjectionWin(null);
+        }
+        if (isProjectionView) {
+          try {
+            window.close();
+          } catch (e) {
+            console.warn("Failed to window.close():", e);
+          }
+        }
+      }
+    }
     else if (key === 'customMeetings') {
       try {
         setCustomMeetings(typeof value === 'string' ? JSON.parse(value) : value);
@@ -658,6 +695,27 @@ export default function App() {
       else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
       else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
       else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+      else if (key === 'isProjectionOpen') setIsProjectionOpen(value === 'true' || value === true);
+      else if (key === 'projectionCloseTrigger') {
+        setProjectionCloseTrigger(value);
+        if (value) {
+          if (projectionWinRef.current) {
+            try {
+              projectionWinRef.current.close();
+            } catch (e) {
+              console.warn("Failed to close projectionWin:", e);
+            }
+            setProjectionWin(null);
+          }
+          if (isProjectionView) {
+            try {
+              window.close();
+            } catch (e) {
+              console.warn("Failed to window.close():", e);
+            }
+          }
+        }
+      }
       else if (key === 'customMeetings') {
         try {
           setCustomMeetings(value ? (typeof value === 'string' ? JSON.parse(value) : value) : MEETINGS);
@@ -705,6 +763,8 @@ export default function App() {
       setDismissedJustStarted(localStorage.getItem('projection_dismissedJustStarted') === 'true');
       setMediaUpdateTrigger(localStorage.getItem('projection_mediaUpdateTrigger') || '0');
       setVideoPinBehavior((localStorage.getItem('projection_videoPinBehavior') as 'unpin' | 'loop') || 'unpin');
+      setIsProjectionOpen(localStorage.getItem('projection_isProjectionOpen') === 'true');
+      setProjectionCloseTrigger(localStorage.getItem('projection_projectionCloseTrigger'));
       try {
         const order = localStorage.getItem('projection_slidesOrder');
         setSlidesOrder(order ? JSON.parse(order) : []);
@@ -844,6 +904,23 @@ export default function App() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (isProjectionView) {
+      updateStateAndBroadcast('isProjectionOpen', true);
+      
+      const handleBeforeUnload = () => {
+        updateStateAndBroadcast('isProjectionOpen', false);
+      };
+      
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      
+      return () => {
+        updateStateAndBroadcast('isProjectionOpen', false);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
+  }, [isProjectionView]);
 
   const { nextMeeting, nextMeetingDate, ongoingMeeting } = getNextMeeting(currentTime, customMeetings);
   
@@ -1289,6 +1366,7 @@ export default function App() {
                 tickerText={tickerText}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 currentTime={currentTime}
+                isProjectionOpen={isProjectionOpen}
               />
             )}
 
@@ -1332,6 +1410,7 @@ export default function App() {
                 
                 tickerText={tickerText}
                 syncStatus={syncStatus}
+                isProjectionOpen={isProjectionOpen}
               />
             )}
           </main>
@@ -1371,6 +1450,7 @@ export default function App() {
               
               tickerText={tickerText}
               syncStatus={syncStatus}
+              isProjectionOpen={isProjectionOpen}
             />
             
             <div className="text-xs text-zinc-500 leading-relaxed mt-4 border-t border-zinc-900 pt-4">
@@ -1387,6 +1467,21 @@ export default function App() {
           </aside>
 
         </div>
+
+        <CustomModal 
+          isOpen={modalConfig.isOpen}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          onConfirm={modalConfig.onConfirm}
+          onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+          variant={modalConfig.variant}
+        />
+        <CustomToast 
+          isVisible={toastConfig.isVisible}
+          message={toastConfig.message}
+          type={toastConfig.type}
+          onClose={() => setToastConfig(prev => ({ ...prev, isVisible: false }))}
+        />
       </div>
     );
   }

@@ -24,6 +24,7 @@ interface ControlsPanelProps {
   tickerText: string | null;
   updateStateAndBroadcast: (key: string, value: any) => void;
   currentTime: Date;
+  isProjectionOpen?: boolean;
 }
 
 export function ControlsPanel({
@@ -43,13 +44,16 @@ export function ControlsPanel({
   volume,
   tickerText,
   updateStateAndBroadcast,
-  currentTime
+  currentTime,
+  isProjectionOpen = false
 }: ControlsPanelProps) {
 
   const handleOpenMonitor = () => {
     const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
     const newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
     setProjectionWin(newWin);
+    updateStateAndBroadcast('isProjectionOpen', true);
+    updateStateAndBroadcast('projectionCloseTrigger', null);
   };
 
   const handleCloseMonitor = () => {
@@ -57,6 +61,8 @@ export function ControlsPanel({
       projectionWin.close();
       setProjectionWin(null);
     }
+    updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
+    updateStateAndBroadcast('isProjectionOpen', false);
   };
 
   const handleToggleTimerPlayPause = () => {
@@ -141,10 +147,10 @@ export function ControlsPanel({
             </button>
           </div>
 
-          {!projectionWin || projectionWin.closed ? (
+          {!isProjectionOpen ? (
             <button
               onClick={handleOpenMonitor}
-              className="w-full p-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10"
+              className="w-full p-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 animate-in fade-in duration-200"
             >
               <ExternalLink className="w-4 h-4" />
               Abrir Monitor HDMI (2ª Tela)
@@ -152,7 +158,7 @@ export function ControlsPanel({
           ) : (
             <button
               onClick={handleCloseMonitor}
-              className="w-full p-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+              className="w-full p-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer animate-in fade-in duration-200"
             >
               <X className="w-4 h-4" />
               Fechar Monitor HDMI
@@ -187,31 +193,53 @@ export function ControlsPanel({
           </div>
 
           {/* TIMER ACTIONS */}
-          <div className="grid grid-cols-4 gap-2">
-            <button
-              onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset + 60 * 1000)}
-              className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-            >
-              <Plus className="w-3 h-3 text-amber-500" /> 1m
-            </button>
-            <button
-              onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset + 5 * 60 * 1000)}
-              className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-            >
-              <Plus className="w-3 h-3 text-amber-500" /> 5m
-            </button>
-            <button
-              onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset - 60 * 1000)}
-              className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-            >
-              <Minus className="w-3 h-3 text-zinc-500" /> 1m
-            </button>
-            <button
-              onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset - 5 * 60 * 1000)}
-              className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
-            >
-              <Minus className="w-3 h-3 text-zinc-500" /> 5m
-            </button>
+          <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset + 60 * 1000)}
+                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                title="Avançar 1 minuto"
+              >
+                <Plus className="w-3 h-3 text-emerald-500" /> 1m
+              </button>
+              <button
+                onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset + 5 * 60 * 1000)}
+                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                title="Avançar 5 minutos"
+              >
+                <Plus className="w-3 h-3 text-emerald-500" /> 5m
+              </button>
+              <button
+                onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset + 30 * 60 * 1000)}
+                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                title="Avançar 30 minutos"
+              >
+                <Plus className="w-3 h-3 text-emerald-400" /> 30m
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset - 60 * 1000)}
+                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                title="Voltar 1 minuto"
+              >
+                <Minus className="w-3 h-3 text-red-500" /> 1m
+              </button>
+              <button
+                onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset - 5 * 60 * 1000)}
+                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                title="Voltar 5 minutos"
+              >
+                <Minus className="w-3 h-3 text-red-500" /> 5m
+              </button>
+              <button
+                onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset - 30 * 60 * 1000)}
+                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                title="Voltar 30 minutos"
+              >
+                <Minus className="w-3 h-3 text-red-400" /> 30m
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5">

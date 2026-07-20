@@ -127,15 +127,17 @@ export const DONATION = {
 
 export const CAMPAIGNS = [
   {
+    id: "camp_default_1",
     title: "Fogueira Santa\ndo Monte Sião",
     duration: "Até o final de Julho",
-    type: "fogueira_santa",
+    iconType: "flame",
     endDate: "2026-07-31"
   },
   {
+    id: "camp_default_2",
     title: "Jejum de\nDaniel",
     duration: "Até 2 de Agosto",
-    type: "jejum_daniel",
+    iconType: "flame",
     endDate: "2026-08-02"
   }
 ];

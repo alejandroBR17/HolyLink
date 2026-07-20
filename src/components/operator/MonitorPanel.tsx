@@ -36,6 +36,7 @@ interface MonitorPanelProps {
   volume: number;
   tickerText: string | null;
   syncStatus: any;
+  isProjectionOpen?: boolean;
 }
 
 export function MonitorPanel({
@@ -69,7 +70,8 @@ export function MonitorPanel({
   ongoingMeeting,
   volume,
   tickerText,
-  syncStatus
+  syncStatus,
+  isProjectionOpen = false
 }: MonitorPanelProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -100,6 +102,8 @@ export function MonitorPanel({
     const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
     const newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
     setProjectionWin(newWin);
+    updateStateAndBroadcast('isProjectionOpen', true);
+    updateStateAndBroadcast('projectionCloseTrigger', null);
   };
 
   const handleCloseMonitor = () => {
@@ -107,6 +111,8 @@ export function MonitorPanel({
       projectionWin.close();
       setProjectionWin(null);
     }
+    updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
+    updateStateAndBroadcast('isProjectionOpen', false);
   };
 
   return (
@@ -182,7 +188,7 @@ export function MonitorPanel({
 
         {/* HDMI quick buttons */}
         <div className="flex gap-3 mt-1">
-          {!projectionWin || projectionWin.closed ? (
+          {!isProjectionOpen ? (
             <button
               onClick={handleOpenMonitor}
               className="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"

@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { 
   BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2, 
-  Maximize, Zap, Minimize, Send, Trash2 
+  Maximize, Zap, Minimize, Minus, Send, Trash2 
 } from 'lucide-react';
 
 interface CustomMedia {
@@ -174,7 +174,7 @@ export function PlaylistPanel({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[480px] overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-1">
           {activeSlides.map((slideId, idx) => {
             const isActive = currentSlideId === slideId;
             const isOverridden = manualSlideOverride === slideId;
@@ -184,7 +184,7 @@ export function PlaylistPanel({
               <div
                 key={slideId}
                 onClick={() => updateStateAndBroadcast('manualSlideOverride', slideId)}
-                className={`text-left p-4 rounded-xl border transition-all relative overflow-hidden group cursor-pointer flex flex-col justify-between min-h-[110px] ${
+                className={`text-left p-4 rounded-xl border transition-all relative overflow-hidden group cursor-pointer flex flex-col justify-between min-h-[125px] h-auto ${
                   isActive
                     ? "bg-zinc-800/40 border-amber-500/60 shadow-[0_4px_20px_rgba(245,158,11,0.1)]"
                     : "bg-zinc-950/40 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700"
@@ -203,20 +203,20 @@ export function PlaylistPanel({
                   <p className="text-xs text-zinc-500 mt-1 leading-normal font-sans">{desc}</p>
                 </div>
                 
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800/50">
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-zinc-800/50">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-400 text-[10px]">
+                    <span className="font-mono bg-zinc-950 px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-400 text-[10px] shrink-0">
                       {getSlideDuration(slideId, customMediaList) / 1000}s
                     </span>
                     {isOverridden && (
-                      <span className="text-amber-500 font-bold uppercase tracking-wider text-[9px] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                      <span className="text-amber-500 font-bold uppercase tracking-wider text-[9px] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md shrink-0">
                         Fixo
                       </span>
                     )}
                   </div>
 
                   {/* Reorder Buttons */}
-                  <div className="flex items-center gap-1.5 z-10" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1.5 z-10 shrink-0" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => handleMoveSlide(slideId, 'up')}
                       disabled={idx === 0}
@@ -332,7 +332,7 @@ export function PlaylistPanel({
             Nenhuma imagem ou vídeo adicionado à fila ainda.
           </div>
         ) : (
-          <div className="flex flex-col gap-3 max-h-[360px] overflow-y-auto pr-1">
+          <div className="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-1">
             {customMediaList.map((media, index) => {
               const isSlideActive = currentSlideId === media.id;
               const isSlideOverridden = manualSlideOverride === media.id;
@@ -370,21 +370,21 @@ export function PlaylistPanel({
                       
                       <div className="flex flex-wrap items-center gap-2.5 mt-1.5">
                         {media.type === 'image' ? (
-                          <div className="flex items-center gap-1 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800/60">
-                            <span className="text-[10px] text-zinc-500">Tempo:</span>
-                            <span className="text-[10px] text-amber-400 font-bold font-mono">{media.duration / 1000}s</span>
-                            <div className="flex flex-col ml-1.5 border-l border-zinc-800 pl-1.5">
-                              <button
-                                onClick={() => handleAdjustDuration(media, 1000)}
-                                className="text-zinc-500 hover:text-zinc-200 hover:scale-110 active:scale-95 cursor-pointer text-[8px] leading-tight"
-                              >
-                                ▲
-                              </button>
+                          <div className="flex items-center gap-1.5 bg-zinc-900 px-2 py-1 rounded border border-zinc-800/60">
+                            <span className="text-[10px] text-zinc-500 hidden sm:inline">Tempo:</span>
+                            <span className="text-[10px] text-amber-400 font-bold font-mono min-w-[3ch] text-center">{media.duration / 1000}s</span>
+                            <div className="flex items-center gap-0.5 border-l border-zinc-800 pl-1.5 ml-0.5">
                               <button
                                 onClick={() => handleAdjustDuration(media, -1000)}
-                                className="text-zinc-500 hover:text-zinc-200 hover:scale-110 active:scale-95 cursor-pointer text-[8px] leading-tight"
+                                className="w-5 h-5 bg-zinc-800 hover:bg-zinc-700 rounded flex items-center justify-center text-zinc-400 hover:text-white"
                               >
-                                ▼
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleAdjustDuration(media, 1000)}
+                                className="w-5 h-5 bg-zinc-800 hover:bg-zinc-700 rounded flex items-center justify-center text-zinc-400 hover:text-white"
+                              >
+                                <Plus className="w-3 h-3" />
                               </button>
                             </div>
                           </div>
