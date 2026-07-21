@@ -118,14 +118,14 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         initial: { opacity: 0 },
         animate: { opacity: 1 },
         exit: { opacity: 0 },
-        transition: { duration: 1.5, ease: "easeInOut" }
+        transition: { duration: 1.5, ease: "easeInOut" as const }
       };
     }
     return {
       initial: { opacity: 0, scale: 1.05 },
       animate: { opacity: 1, scale: 1 },
       exit: { opacity: 0, scale: 0.95 },
-      transition: { duration: 0.8, ease: "easeInOut" }
+      transition: { duration: 0.8, ease: "easeInOut" as const }
     };
   };
 

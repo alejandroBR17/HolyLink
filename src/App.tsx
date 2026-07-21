@@ -611,19 +611,47 @@ export default function App() {
     const peerConn = (window as any).holyrics_peer_conn;
     if (peerConn && peerConn.open) {
       try {
-        const base64 = await new Promise<string>((resolve, reject) => {
-          if (!(item.blob instanceof Blob)) {
-            resolve('');
-            return;
+        // If the item doesn't have a blob, load it from IndexedDB
+        let blobToUse = item.blob;
+        if (!blobToUse) {
+          const dbItems = await getAllMediaItems();
+          const found = dbItems.find(m => m.id === item.id);
+          if (found && found.blob) {
+            blobToUse = found.blob;
           }
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const res = reader.result as string;
-            resolve(res.split(',')[1] || '');
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(item.blob);
-        });
+        }
+
+        // Convert any representation to a real Blob object
+        let realBlob: Blob | null = null;
+        if (blobToUse instanceof Blob) {
+          realBlob = blobToUse;
+        } else if (blobToUse && typeof blobToUse === 'object') {
+          const anyBlob = blobToUse as any;
+          if (anyBlob.buffer && (anyBlob.buffer instanceof ArrayBuffer || anyBlob.buffer instanceof Uint8Array || Array.isArray(anyBlob.buffer))) {
+            realBlob = new Blob([anyBlob.buffer], { type: anyBlob.type || 'application/octet-stream' });
+          } else if (anyBlob.bytes && (anyBlob.bytes instanceof ArrayBuffer || anyBlob.bytes instanceof Uint8Array || Array.isArray(anyBlob.bytes))) {
+            realBlob = new Blob([anyBlob.bytes], { type: anyBlob.type || 'application/octet-stream' });
+          } else if (anyBlob.blob && anyBlob.blob instanceof Blob) {
+            realBlob = anyBlob.blob;
+          }
+        }
+
+        let base64: string | undefined = undefined;
+        let mimeType = 'application/octet-stream';
+
+        if (realBlob) {
+          mimeType = realBlob.type || 'application/octet-stream';
+          base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const res = reader.result as string;
+              resolve(res.split(',')[1] || '');
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(realBlob!);
+          });
+        }
+
         peerConn.send({
           type: 'MEDIA_SAVE',
           mediaItem: {
@@ -635,7 +663,7 @@ export default function App() {
             muted: item.muted,
             order: item.order,
             fit: item.fit,
-            mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
+            mimeType,
             base64
           },
           version: 1
@@ -670,6 +698,26 @@ export default function App() {
     } catch (e) {
       console.warn("BroadcastChannel not supported. Using localStorage fallback.");
     }
+
+    const handleError = (event: ErrorEvent) => {
+      // Do not flood user with PeerJS expected connection aborts
+      if (event.message && (event.message.includes('peer') || event.message.includes('WebRTC') || event.message.includes('socket'))) {
+        return;
+      }
+      console.error("Erro capturado globalmente:", event.error || event.message);
+      showAlert(`Aviso: ${event.message || 'Ocorreu um erro inesperado'}`, 'error');
+    };
+
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason && (event.reason.message?.includes('peer') || event.reason.message?.includes('WebRTC'))) {
+        return;
+      }
+      console.error("Promise rejeitada sem tratamento:", event.reason);
+      showAlert(`Falha de processamento: ${event.reason?.message || event.reason || 'Erro desconhecido'}`, 'error');
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
 
     const updateStateLocalOnly = (key: string, value: any) => {
       const stringValue = (value === null || value === undefined) ? null : (typeof value === 'object' ? JSON.stringify(value) : value.toString());
@@ -783,8 +831,8 @@ export default function App() {
       } catch (e) {
         setCustomCampaigns(CAMPAIGNS);
       }
-      getAllMediaItems().then(items => {
-        setCustomMediaList(items);
+      getAllMediaItems().then(() => {
+        setMediaUpdateTrigger(Date.now().toString());
         setTimeout(() => setSyncStatus(null), 1000);
       });
     };
@@ -812,6 +860,8 @@ export default function App() {
 
     return () => {
       if (bc) bc.close();
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('projection_sync_update', handlePeerUpdate as EventListener);
       window.removeEventListener('projection_full_sync_received', handleFullSync);
@@ -1347,8 +1397,8 @@ export default function App() {
                 setNewCampTitle={setNewCampTitle}
                 newCampDuration={newCampDuration}
                 setNewCampDuration={setNewCampDuration}
-                newCampType={newCampType}
-                setNewCampType={setNewCampType}
+                newCampType={newCampType as any}
+                setNewCampType={setNewCampType as any}
                 newCampEndDate={newCampEndDate}
                 setNewCampEndDate={setNewCampEndDate}
                 showAddCampaignForm={showAddCampaignForm}

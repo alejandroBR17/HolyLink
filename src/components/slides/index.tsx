@@ -40,7 +40,7 @@ export const IconSlide = ({ icon: Icon, title, subtitle, pulse = false, layout =
   
   const item = {
     hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 50 } }
   };
 
   if (layout === 'split-left') {
@@ -272,12 +272,12 @@ export const AgendaDaySlide = ({
   
   const item = {
     hidden: { opacity: 0, x: -40 },
-    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 60 } }
+    show: { opacity: 1, x: 0, transition: { type: "spring" as const, stiffness: 60 } }
   };
   
   const itemRight = {
     hidden: { opacity: 0, scale: 0.9 },
-    show: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 60 } }
+    show: { opacity: 1, scale: 1, transition: { type: "spring" as const, stiffness: 60 } }
   };
   
   return (
@@ -504,7 +504,7 @@ export const MeetingEventSlide = ({ meeting, variant, pulse = true }: { meeting:
   
   const item = {
     hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 50 } }
   };
 
   let formattedDate = meeting.dayName || "";

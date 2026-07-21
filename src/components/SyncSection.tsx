@@ -5,6 +5,48 @@ import { Download, Upload, Laptop, Smartphone, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { getAllMediaItems, saveMediaItem, deleteMediaItem } from '../utils';
 
+function getRealBlob(blobInput: any): Blob | null {
+  if (!blobInput) return null;
+  if (blobInput instanceof Blob) {
+    return blobInput;
+  }
+  if (typeof blobInput === 'object') {
+    const anyBlob = blobInput as any;
+    if (anyBlob.buffer && (anyBlob.buffer instanceof ArrayBuffer || anyBlob.buffer instanceof Uint8Array || Array.isArray(anyBlob.buffer))) {
+      return new Blob([anyBlob.buffer], { type: anyBlob.type || 'application/octet-stream' });
+    }
+    if (anyBlob.bytes && (anyBlob.bytes instanceof ArrayBuffer || anyBlob.bytes instanceof Uint8Array || Array.isArray(anyBlob.bytes))) {
+      return new Blob([anyBlob.bytes], { type: anyBlob.type || 'application/octet-stream' });
+    }
+    if (anyBlob.blob && anyBlob.blob instanceof Blob) {
+      return anyBlob.blob;
+    }
+  }
+  return null;
+}
+
+async function blobToBase64(blobField: any): Promise<{ base64: string; mimeType: string }> {
+  const realBlob = getRealBlob(blobField);
+  if (!realBlob) {
+    return { base64: '', mimeType: 'application/octet-stream' };
+  }
+  try {
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const res = reader.result as string;
+        resolve(res.split(',')[1] || '');
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(realBlob);
+    });
+    return { base64, mimeType: realBlob.type || 'application/octet-stream' };
+  } catch (err) {
+    console.error("Erro ao converter blob para base64:", err);
+    return { base64: '', mimeType: realBlob.type || 'application/octet-stream' };
+  }
+}
+
 export function SyncSection({ 
   showAlert, 
   showConfirm 
@@ -172,19 +214,7 @@ export function SyncSection({
               mediaItems.map(async (item, index) => {
                 const progress = Math.round((index / mediaItems.length) * 100);
                 window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Preparando mídias: ${item.name}`, progress } }));
-                const base64 = await new Promise<string>((resolve, reject) => {
-                  if (!(item.blob instanceof Blob)) {
-                    resolve('');
-                    return;
-                  }
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    const res = reader.result as string;
-                    resolve(res.split(',')[1] || '');
-                  };
-                  reader.onerror = reject;
-                  reader.readAsDataURL(item.blob);
-                });
+                const { base64, mimeType } = await blobToBase64(item.blob);
                 return {
                   id: item.id,
                   type: item.type,
@@ -194,7 +224,7 @@ export function SyncSection({
                   muted: item.muted,
                   order: item.order,
                   fit: item.fit,
-                  mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
+                  mimeType: mimeType,
                   base64: base64
                 };
               })
@@ -237,15 +267,22 @@ export function SyncSection({
               const progress = Math.round(10 + (i / total) * 85);
               window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Restaurando mídia (${i+1}/${total}): ${item.name}`, progress } }));
               
-              const byteCharacters = atob(item.base64);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let j = 0; j < byteCharacters.length; j++) {
-                byteNumbers[j] = byteCharacters.charCodeAt(j);
+              let blob: Blob | undefined = undefined;
+              if (item.base64 && item.base64.trim().length > 0) {
+                try {
+                  const byteCharacters = atob(item.base64);
+                  const byteNumbers = new Array(byteCharacters.length);
+                  for (let j = 0; j < byteCharacters.length; j++) {
+                    byteNumbers[j] = byteCharacters.charCodeAt(j);
+                  }
+                  const byteArray = new Uint8Array(byteNumbers);
+                  blob = new Blob([byteArray], { type: item.mimeType || 'application/octet-stream' });
+                } catch (e) {
+                  console.error("Erro ao decodificar base64:", item.name, e);
+                }
               }
-              const byteArray = new Uint8Array(byteNumbers);
-              const blob = new Blob([byteArray], { type: item.mimeType });
 
-              await saveMediaItem({
+              const savePayload: any = {
                 id: item.id,
                 type: item.type,
                 name: item.name,
@@ -253,9 +290,14 @@ export function SyncSection({
                 enabledInLoop: item.enabledInLoop,
                 muted: item.muted,
                 order: item.order,
-                fit: item.fit,
-                blob: blob
-              });
+                fit: item.fit
+              };
+
+              if (blob) {
+                savePayload.blob = blob;
+              }
+
+              await saveMediaItem(savePayload);
             }
           }
 
@@ -371,7 +413,7 @@ export function SyncSection({
               fit: item.fit
             };
 
-            if (item.base64) {
+            if (item.base64 && item.base64.trim().length > 0) {
               try {
                 const byteCharacters = atob(item.base64);
                 const byteNumbers = new Array(byteCharacters.length);
@@ -379,7 +421,7 @@ export function SyncSection({
                   byteNumbers[i] = byteCharacters.charCodeAt(i);
                 }
                 const byteArray = new Uint8Array(byteNumbers);
-                savePayload.blob = new Blob([byteArray], { type: item.mimeType });
+                savePayload.blob = new Blob([byteArray], { type: item.mimeType || 'application/octet-stream' });
               } catch (err) {
                 console.error("Erro ao decodificar base64 no sender:", item.name, err);
               }
@@ -405,15 +447,22 @@ export function SyncSection({
             }
             if (incomingData.mediaItems && Array.isArray(incomingData.mediaItems)) {
               for (const item of incomingData.mediaItems) {
-                const byteCharacters = atob(item.base64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                let blob: Blob | undefined = undefined;
+                if (item.base64 && item.base64.trim().length > 0) {
+                  try {
+                    const byteCharacters = atob(item.base64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                      byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    blob = new Blob([byteArray], { type: item.mimeType || 'application/octet-stream' });
+                  } catch (e) {
+                    console.error("Erro ao decodificar base64 do PC:", item.name, e);
+                  }
                 }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: item.mimeType });
 
-                await saveMediaItem({
+                const savePayload: any = {
                   id: item.id,
                   type: item.type,
                   name: item.name,
@@ -421,9 +470,14 @@ export function SyncSection({
                   enabledInLoop: item.enabledInLoop,
                   muted: item.muted,
                   order: item.order,
-                  fit: item.fit,
-                  blob: blob
-                });
+                  fit: item.fit
+                };
+
+                if (blob) {
+                  savePayload.blob = blob;
+                }
+
+                await saveMediaItem(savePayload);
               }
             }
             setDirectSyncStatus('success');
@@ -478,20 +532,7 @@ export function SyncSection({
 
           const serializedMedia = await Promise.all(
             mediaItems.map(async (item) => {
-              const base64 = await new Promise<string>((resolve, reject) => {
-                if (!(item.blob instanceof Blob)) {
-                  resolve('');
-                  return;
-                }
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  const res = reader.result as string;
-                  resolve(res.split(',')[1] || '');
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(item.blob);
-              });
-
+              const { base64, mimeType } = await blobToBase64(item.blob);
               return {
                 id: item.id,
                 type: item.type,
@@ -501,7 +542,7 @@ export function SyncSection({
                 muted: item.muted,
                 order: item.order,
                 fit: item.fit,
-                mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
+                mimeType: mimeType,
                 base64: base64
               };
             })
@@ -615,19 +656,7 @@ export function SyncSection({
           setSyncProgress(progress);
           setSyncMessage(`Preparando mídia (${index+1}/${total}): ${item.name}`);
           
-          const base64 = await new Promise<string>((resolve, reject) => {
-            if (!(item.blob instanceof Blob)) {
-              resolve('');
-              return;
-            }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const res = reader.result as string;
-              resolve(res.split(',')[1] || '');
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(item.blob);
-          });
+          const { base64, mimeType } = await blobToBase64(item.blob);
 
           return {
             id: item.id,
@@ -638,7 +667,7 @@ export function SyncSection({
             muted: item.muted,
             order: item.order,
             fit: item.fit,
-            mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
+            mimeType: mimeType,
             base64: base64
           };
         })
@@ -1009,51 +1038,20 @@ export function SyncSection({
               ✓
             </div>
             <div className="text-center">
-              <span className="text-xs font-bold text-emerald-400 block">Conectado com o outro dispositivo!</span>
-              <p className="text-[10px] text-stone-400 mt-1 max-w-xs mx-auto leading-normal">
-                Você pode controlar tudo em tempo real. Toque nos slides, alertas ou mídias no celular e a TV atualizará instantaneamente!
+              <span className="text-xs font-bold text-emerald-400 block">Sincronização Ativa & Conectado!</span>
+              <p className="text-[10px] text-stone-300 mt-2 max-w-xs mx-auto leading-relaxed">
+                Você já está sincronizado! Os dados locais e todas as mídias foram transmitidos para o PC automaticamente.
+              </p>
+              <p className="text-[10px] text-stone-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                Agora, qualquer comando, alteração de mídias, dízimos, hinos ou avisos que fizer no celular se refletirá na tela de projeção em tempo real de forma automática.
               </p>
             </div>
 
-            {localStorage.getItem('projection_deviceRole') === 'phone' && (
-              <div className="w-full bg-stone-900/60 border border-stone-850 p-3 rounded-lg flex flex-col gap-2 mt-1">
-                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider text-left block">Sincronização Master (Sobrescrever PC):</span>
-                
-                <button
-                  onClick={forcePushToPC}
-                  disabled={isPushing || isPulling}
-                  className="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-black text-[11px] font-black rounded-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all shadow-[0_4px_12px_rgba(234,179,8,0.2)]"
-                >
-                  <Upload className="w-4 h-4 text-black" />
-                  {isPushing ? "Transmitindo tudo para o PC..." : "ENVIAR TUDO DO CELULAR PARA O PC"}
-                </button>
-
-                {syncProgress !== undefined && (
-                  <div className="w-full bg-black/40 h-1.5 rounded-full overflow-hidden mt-1 border border-white/5">
-                    <div 
-                      className="h-full bg-yellow-500 transition-all duration-300" 
-                      style={{ width: `${syncProgress}%` }}
-                    />
-                  </div>
-                )}
-
-                <div className="mt-2 pt-2 border-t border-stone-800 flex flex-col gap-2">
-                  <span className="text-[9px] text-stone-500 uppercase font-bold">Opções secundárias:</span>
-                  <button
-                    onClick={forcePullFromPC}
-                    disabled={isPushing || isPulling}
-                    className="w-full py-2 bg-stone-800 hover:bg-stone-750 text-stone-300 border border-stone-700 text-[10px] font-bold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
-                  >
-                    <Download className="w-3 h-3 text-stone-400" />
-                    {isPulling ? "Buscando dados do PC..." : "Importar dados do PC para este Celular"}
-                  </button>
-                </div>
-                
-                {syncMessage && (
-                  <span className="text-[9.5px] text-yellow-500/80 font-sans mt-0.5 block leading-normal font-bold text-center">
-                    {syncMessage}
-                  </span>
-                )}
+            {localStorage.getItem('projection_deviceRole') === 'phone' && syncMessage && (
+              <div className="w-full bg-stone-900/40 border border-stone-850 p-2.5 rounded-lg text-center mt-1">
+                <span className="text-[9.5px] text-yellow-500/90 font-mono tracking-wide block leading-normal">
+                  Status: {syncMessage}
+                </span>
               </div>
             )}
 
