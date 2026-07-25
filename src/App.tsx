@@ -382,9 +382,12 @@ export default function App() {
     };
   }, [mediaUpdateTrigger]);
 
-  // Preload upcoming slides into memory for smooth transmission
+  // Preload upcoming slides into memory for smooth transmission & prune stale cache
   useEffect(() => {
     if (customMediaList.length > 0) {
+      const validUrls = new Set(customMediaList.map(m => m.url).filter(Boolean));
+      mediaPreloader.pruneUnused(validUrls);
+
       const activeSlideId = manualSlideOverride || slidesOrder[0] || 'agenda_day_0';
       mediaPreloader.preloadSlideSequence(activeSlideId, slidesOrder, customMediaList);
     }
@@ -1146,6 +1149,85 @@ export default function App() {
     }
   };
 
+  // Global Keyboard Shortcuts for Operator agility
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      // B: Toggle Blackout
+      if (key === 'b') {
+        e.preventDefault();
+        updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled);
+      }
+      // C: Toggle Clear Content / Hide Text
+      else if (key === 'c') {
+        e.preventDefault();
+        updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled);
+      }
+      // Space or ArrowRight or PageDown: Next slide
+      else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault();
+        if (activeSlides.length > 0) {
+          const currentIndex = activeSlides.indexOf(currentSlideId);
+          const nextIndex = (currentIndex + 1) % activeSlides.length;
+          updateStateAndBroadcast('manualSlideOverride', activeSlides[nextIndex]);
+        }
+      }
+      // ArrowLeft or PageUp: Previous slide
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        if (activeSlides.length > 0) {
+          const currentIndex = activeSlides.indexOf(currentSlideId);
+          const prevIndex = (currentIndex - 1 + activeSlides.length) % activeSlides.length;
+          updateStateAndBroadcast('manualSlideOverride', activeSlides[prevIndex]);
+        }
+      }
+      // Escape: Reset override / clear active verse / clear alert
+      else if (e.key === 'Escape') {
+        e.preventDefault();
+        if (manualSlideOverride) updateStateAndBroadcast('manualSlideOverride', null);
+        if (customVerseText) {
+          updateStateAndBroadcast('customVerseText', null);
+          updateStateAndBroadcast('customVerseRef', null);
+          updateStateAndBroadcast('activeVerseIndex', null);
+        }
+        if (activeAlert) updateStateAndBroadcast('activeAlert', null);
+      }
+      // M: Toggle Mute
+      else if (key === 'm') {
+        e.preventDefault();
+        updateStateAndBroadcast('volume', volume > 0 ? 0 : 0.5);
+      }
+      // 1-5: Switch tab
+      else if (['1', '2', '3', '4', '5'].includes(key)) {
+        const tabMap: Record<string, string> = {
+          '1': 'slides',
+          '2': 'texts',
+          '3': 'agenda',
+          '4': 'controls',
+          '5': 'sync'
+        };
+        if (tabMap[key]) {
+          setActiveMobileTab(tabMap[key] as any);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [blackoutEnabled, clearContentEnabled, activeSlides, currentSlideId, manualSlideOverride, customVerseText, activeAlert, volume]);
+
   const [isCurrentlyFullscreen, setIsCurrentlyFullscreen] = useState(false);
 
   useEffect(() => {
@@ -1529,6 +1611,7 @@ export default function App() {
                 tickerText={tickerText}
                 syncStatus={syncStatus}
                 isProjectionOpen={isProjectionOpen}
+                activeSlides={activeSlides}
               />
             )}
           </main>
@@ -1568,6 +1651,7 @@ export default function App() {
               tickerText={tickerText}
               syncStatus={syncStatus}
               isProjectionOpen={isProjectionOpen}
+              activeSlides={activeSlides}
             />
 
 

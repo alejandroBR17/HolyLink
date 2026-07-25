@@ -39,6 +39,20 @@ class MediaPreloaderService {
       return Promise.resolve();
     }
 
+    // Limit video cache memory size (max 6 preloaded videos)
+    if (this.videoCache.size >= 6) {
+      const oldestKey = this.videoCache.keys().next().value;
+      if (oldestKey) {
+        const oldVideo = this.videoCache.get(oldestKey);
+        if (oldVideo) {
+          oldVideo.pause();
+          oldVideo.removeAttribute('src');
+          oldVideo.load();
+        }
+        this.videoCache.delete(oldestKey);
+      }
+    }
+
     return new Promise((resolve) => {
       const video = document.createElement('video');
       video.preload = 'auto';
@@ -71,6 +85,28 @@ class MediaPreloaderService {
         cleanup();
         resolve();
       }, 3000);
+    });
+  }
+
+  /**
+   * Prune unused media objects from cache without deleting underlying files
+   */
+  public pruneUnused(validUrls: Set<string>) {
+    this.imageCache.forEach((img, url) => {
+      if (!validUrls.has(url)) {
+        this.imageCache.delete(url);
+        this.preloadedUrls.delete(url);
+      }
+    });
+
+    this.videoCache.forEach((video, url) => {
+      if (!validUrls.has(url)) {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        this.videoCache.delete(url);
+        this.preloadedUrls.delete(url);
+      }
     });
   }
 
