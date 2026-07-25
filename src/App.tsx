@@ -1119,23 +1119,7 @@ export default function App() {
 
   const handleVideoEnded = () => {
     if (videoPinBehavior === 'unpin') {
-      const activeSlideId = currentSlideId;
-      if (activeSlides.length > 0) {
-        const currentIndex = activeSlides.indexOf(activeSlideId);
-        if (currentIndex !== -1) {
-          const nextIndex = (currentIndex + 1) % activeSlides.length;
-          const nextSlideId = activeSlides[nextIndex];
-          if (nextSlideId !== activeSlideId) {
-            updateStateAndBroadcast('manualSlideOverride', nextSlideId);
-          } else {
-            updateStateAndBroadcast('manualSlideOverride', null);
-          }
-        } else {
-          updateStateAndBroadcast('manualSlideOverride', null);
-        }
-      } else {
-        updateStateAndBroadcast('manualSlideOverride', null);
-      }
+      updateStateAndBroadcast('manualSlideOverride', null);
     }
   };
 
