@@ -327,34 +327,34 @@ export function MonitorPanel({
         </div>
       </div>
 
-      {/* PRÓXIMA MÍDIA / A SEGUIR CARD - AMPLO E NÃO COMPRIMIDO */}
-      <div className="bg-zinc-900 border border-amber-500/40 rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 relative overflow-hidden">
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 gap-3">
+      {/* PRÓXIMA MÍDIA / A SEGUIR CARD - AMPLO E ADEQUADO PARA QUALQUER LARGURA */}
+      <div className="bg-zinc-900 border border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col gap-3.5 relative">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/80 pb-3 gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shrink-0 border border-amber-500/20">
               <SkipForward className="w-5 h-5" />
             </div>
-            <div className="min-w-0">
-              <h4 className="text-zinc-100 font-black text-sm uppercase tracking-wider truncate">Fila de Transmissão: A Seguir</h4>
-              <p className="text-[11px] text-zinc-400 font-medium truncate">
+            <div className="min-w-0 flex-1">
+              <h4 className="text-zinc-100 font-black text-xs sm:text-sm uppercase tracking-wider leading-snug">Fila de Transmissão: A Seguir</h4>
+              <p className="text-[11px] text-zinc-400 font-medium leading-tight mt-0.5">
                 {activeSlides.length > 0
                   ? `Item na Posição ${(activeSlides.indexOf(currentSlideId) + 2) > activeSlides.length ? 1 : activeSlides.indexOf(currentSlideId) + 2} de ${activeSlides.length} do Carrossel`
                   : 'Aguardando mídias cadastradas'}
               </p>
             </div>
           </div>
-          <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono px-3 py-1 rounded-full uppercase tracking-wider font-extrabold shrink-0">
+          <span className="self-start sm:self-center bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] sm:text-xs font-mono px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold shrink-0">
             {nextMedia.typeLabel}
           </span>
         </div>
 
-        <div className="bg-zinc-950 border border-zinc-800/90 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-inner">
-          <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
-            <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 shrink-0 text-amber-500 flex items-center justify-center shadow-md">
+        <div className="bg-zinc-950 border border-zinc-800/90 rounded-xl p-3.5 sm:p-4 flex flex-col gap-3.5 shadow-inner">
+          <div className="flex items-start gap-3 min-w-0 w-full">
+            <div className="p-2.5 bg-zinc-900 rounded-xl border border-zinc-800 shrink-0 text-amber-500 flex items-center justify-center shadow-md">
               {nextMedia.icon}
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block mb-0.5">Próximo Conteúdo na Fila</span>
+              <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-widest block mb-1">Próximo Conteúdo na Fila</span>
               <p className="text-sm sm:text-base font-black text-white leading-snug break-words">{nextMedia.title}</p>
               <p className="text-xs text-zinc-400 font-medium leading-relaxed mt-1 break-words">
                 {customVerseText ? 'Aguardando fechamento do versículo bíblico ativo' : 'Pronto para entrar na tela principal do projetor'}
@@ -365,7 +365,7 @@ export function MonitorPanel({
           {nextMedia.id && (
             <button
               onClick={() => updateStateAndBroadcast('manualSlideOverride', nextMedia.id)}
-              className="bg-amber-500 hover:bg-amber-400 text-black text-xs sm:text-sm font-extrabold px-5 py-3 rounded-xl shrink-0 transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-95 w-full md:w-auto min-h-[46px]"
+              className="bg-amber-500 hover:bg-amber-400 text-black text-xs sm:text-sm font-black px-4 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-95 w-full min-h-[44px]"
             >
               <SkipForward className="w-4 h-4" />
               <span>Avançar para este Slide Agora</span>
