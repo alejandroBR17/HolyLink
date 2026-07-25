@@ -1,10 +1,216 @@
-import React, { FormEvent } from 'react';
+import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { 
   Tv, ExternalLink, X, EyeOff, Sparkles, Plus, Minus, Play, Pause, RefreshCw, 
-  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone 
+  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2 
 } from 'lucide-react';
 import { ALERTS } from '../../data';
 import { Meeting } from '../../types';
+import { usePerformanceDiagnostics } from '../../utils/performance';
+
+function PerformanceControlModule() {
+  const { fps, hardwareConcurrency, mode, isLightModeActive, setPerformanceMode } = usePerformanceDiagnostics();
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
+      <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
+        <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
+          <Gauge className="w-4 h-4 text-amber-500" />
+          Desempenho & Anti-Travamento
+        </h3>
+        <span className={`text-[8px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
+          isLightModeActive 
+            ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' 
+            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+        }`}>
+          {isLightModeActive ? '⚡ Modo Leve' : '🟢 Modo Fluido'}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="bg-zinc-950 border border-zinc-800/80 p-2.5 rounded-xl flex items-center justify-between">
+          <span className="text-[10px] text-zinc-500 font-bold uppercase">Quadros (FPS)</span>
+          <span className={`font-mono font-bold ${fps < 38 ? 'text-amber-400' : 'text-emerald-400'}`}>{fps} FPS</span>
+        </div>
+        <div className="bg-zinc-950 border border-zinc-800/80 p-2.5 rounded-xl flex items-center justify-between">
+          <span className="text-[10px] text-zinc-500 font-bold uppercase">Núcleos CPU</span>
+          <span className="font-mono font-bold text-zinc-300">{hardwareConcurrency} Cores</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 bg-emerald-500/5 border border-emerald-500/20 p-2.5 rounded-xl text-emerald-400 text-[10px]">
+        <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+        <span>Pré-carregamento ativo: mídias e próximos slides pré-alocados na memória.</span>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Ajuste de Transmissão</span>
+        <div className="grid grid-cols-3 gap-1.5">
+          <button
+            onClick={() => setPerformanceMode('auto')}
+            className={`py-2 px-2 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+              mode === 'auto'
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500'
+            }`}
+          >
+            Auto Detectar
+          </button>
+          <button
+            onClick={() => setPerformanceMode('light')}
+            className={`py-2 px-2 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border flex items-center justify-center gap-1 ${
+              mode === 'light'
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500'
+            }`}
+          >
+            <Zap className="w-3 h-3 text-amber-500" />
+            Leve (Zero Lag)
+          </button>
+          <button
+            onClick={() => setPerformanceMode('high')}
+            className={`py-2 px-2 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+              mode === 'high'
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500'
+            }`}
+          >
+            Alta Qualidade
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AudioVolumeControl({ 
+  volume, 
+  updateStateAndBroadcast 
+}: { 
+  volume: number; 
+  updateStateAndBroadcast: (key: string, value: any) => void; 
+}) {
+  const [localVolume, setLocalVolume] = useState<number>(volume);
+  const isDraggingRef = useRef<boolean>(false);
+  const throttleTimerRef = useRef<any>(null);
+
+  // Keep local state in sync with external volume prop ONLY when not actively dragging
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setLocalVolume(volume);
+    }
+  }, [volume]);
+
+  // Handle slider drag
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVal = parseFloat(e.target.value);
+    setLocalVolume(newVal);
+
+    // Throttle broadcast during dragging to avoid state echo stutter across dual screens
+    if (!throttleTimerRef.current) {
+      throttleTimerRef.current = setTimeout(() => {
+        updateStateAndBroadcast('volume', newVal);
+        throttleTimerRef.current = null;
+      }, 30);
+    }
+  };
+
+  const handlePointerDown = () => {
+    isDraggingRef.current = true;
+  };
+
+  const handlePointerUp = () => {
+    isDraggingRef.current = false;
+    if (throttleTimerRef.current) {
+      clearTimeout(throttleTimerRef.current);
+      throttleTimerRef.current = null;
+    }
+    updateStateAndBroadcast('volume', localVolume);
+  };
+
+  const handlePresetClick = (val: number) => {
+    isDraggingRef.current = false;
+    setLocalVolume(val);
+    updateStateAndBroadcast('volume', val);
+  };
+
+  const displayVolume = isDraggingRef.current ? localVolume : volume;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Volume da Transmissão</span>
+        <span className="text-xs font-mono font-bold text-amber-500">{Math.round(displayVolume * 100)}%</span>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        <button 
+          onClick={() => handlePresetClick(displayVolume === 0 ? 0.5 : 0)}
+          className={`p-2.5 rounded-xl transition-all border cursor-pointer ${
+            displayVolume === 0 
+              ? 'bg-red-500/10 border-red-500/30 text-red-500' 
+              : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+          }`}
+          title={displayVolume === 0 ? "Ativar Áudio" : "Silenciar"}
+        >
+          {displayVolume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
+
+        <div className="flex-1 flex items-center relative">
+          <input 
+            type="range" 
+            min="0" 
+            max="1" 
+            step="0.01" 
+            value={displayVolume}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onTouchStart={handlePointerDown}
+            onTouchEnd={handlePointerUp}
+            onMouseDown={handlePointerDown}
+            onMouseUp={handlePointerUp}
+            onChange={handleSliderChange}
+            className="w-full h-2 bg-zinc-950 rounded-lg appearance-none cursor-pointer accent-amber-500 hover:accent-amber-400 focus:outline-none"
+          />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-4 gap-1.5">
+        <button 
+          onClick={() => handlePresetClick(0)} 
+          className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
+            displayVolume === 0 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          Mudo
+        </button>
+        <button 
+          onClick={() => handlePresetClick(0.25)} 
+          className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
+            Math.abs(displayVolume - 0.25) < 0.05 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          25%
+        </button>
+        <button 
+          onClick={() => handlePresetClick(0.5)} 
+          className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
+            Math.abs(displayVolume - 0.5) < 0.05 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          50%
+        </button>
+        <button 
+          onClick={() => handlePresetClick(1)} 
+          className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
+            displayVolume === 1 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          100%
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface ControlsPanelProps {
   projectionWin: Window | null;
@@ -333,46 +539,16 @@ export function ControlsPanel({
           )}
         </div>
 
+        {/* PERFORMANCE & ANTI-LAG MODULE */}
+        <PerformanceControlModule />
+
         {/* AUDIO MIXER MODULE */}
         <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
           <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider border-b border-zinc-800/50 pb-3">
             Controle de Áudio Geral
           </h3>
 
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Volume da Transmissão</span>
-              <span className="text-xs font-mono font-bold text-amber-500">{Math.round(volume * 100)}%</span>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => updateStateAndBroadcast('volume', volume === 0 ? 0.5 : 0)}
-                className={`p-2 rounded-lg transition-all border cursor-pointer ${
-                  volume === 0 
-                    ? 'bg-red-500/10 border-red-500/30 text-red-500' 
-                    : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                {volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              </button>
-              <input 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.01" 
-                value={volume}
-                onChange={(e) => updateStateAndBroadcast('volume', parseFloat(e.target.value))}
-                className="flex-1 h-1.5 bg-zinc-950 rounded-lg appearance-none cursor-pointer accent-amber-500"
-              />
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <button onClick={() => updateStateAndBroadcast('volume', 0)} className="py-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 rounded-lg text-[9px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors uppercase cursor-pointer">Mudo</button>
-              <button onClick={() => updateStateAndBroadcast('volume', 0.5)} className="py-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 rounded-lg text-[9px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors uppercase cursor-pointer">50%</button>
-              <button onClick={() => updateStateAndBroadcast('volume', 1)} className="py-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 rounded-lg text-[9px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors uppercase cursor-pointer">100%</button>
-            </div>
-          </div>
+          <AudioVolumeControl volume={volume} updateStateAndBroadcast={updateStateAndBroadcast} />
         </div>
 
         {/* TICKER MODULE */}

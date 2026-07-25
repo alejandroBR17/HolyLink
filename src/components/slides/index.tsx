@@ -428,8 +428,9 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
         video.currentTime = 0;
       }
       
-      // Aplicar volume (apenas se não for blur de fundo)
-      video.volume = isBackgroundBlur ? 0 : volume;
+      const safeVol = Math.max(0, Math.min(1, isNaN(volume) ? 0.5 : volume));
+      video.volume = isBackgroundBlur ? 0 : safeVol;
+      video.muted = isBackgroundBlur || safeVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
       
       const playPromise = video.play();
       if (playPromise !== undefined) {
@@ -450,15 +451,18 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     
     // Se o volume mudar enquanto o vídeo está tocando
     if (currentSlideId === media.id) {
-      video.volume = isBackgroundBlur ? 0 : volume;
+      const safeVol = Math.max(0, Math.min(1, isNaN(volume) ? 0.5 : volume));
+      video.volume = isBackgroundBlur ? 0 : safeVol;
+      video.muted = isBackgroundBlur || safeVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
     }
   }, [volume, currentSlideId, media?.id, isBackgroundBlur, media?.url]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !media?.url) return;
-    video.muted = isBackgroundBlur ? true : (media.muted !== undefined ? media.muted : false);
-  }, [media?.muted, isBackgroundBlur, media?.url]);
+    const safeVol = Math.max(0, Math.min(1, isNaN(volume) ? 0.5 : volume));
+    video.muted = isBackgroundBlur || safeVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
+  }, [media?.muted, isBackgroundBlur, volume, media?.url]);
 
   if (!media?.url) {
     return (

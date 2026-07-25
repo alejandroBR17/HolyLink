@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame 
@@ -17,36 +17,6 @@ interface AgendaPanelProps {
   customMeetings: Meeting[];
   customCampaigns: Campaign[];
   updateStateAndBroadcast: (key: string, value: any) => void;
-  newMeetTheme: string;
-  setNewMeetTheme: (v: string) => void;
-  newMeetType: 'weekly' | 'one_time';
-  setNewMeetType: (v: 'weekly' | 'one_time') => void;
-  newMeetWeeklyDay: number;
-  setNewMeetWeeklyDay: (v: number) => void;
-  newMeetDate: string;
-  setNewMeetDate: (v: string) => void;
-  newMeetTime: string;
-  setNewMeetTime: (v: string) => void;
-  showAddMeetingForm: boolean;
-  setShowAddMeetingForm: (v: boolean) => void;
-  editingMeetId: string | null;
-  setEditingMeetId: (v: string | null) => void;
-  
-  newCampTitle: string;
-  setNewCampTitle: (v: string) => void;
-  newCampDuration: string;
-  setNewCampDuration: (v: string) => void;
-  newCampType: 'flame' | 'globe' | 'faith';
-  setNewCampType: (v: 'flame' | 'globe' | 'faith') => void;
-  newCampEndDate: string;
-  setNewCampEndDate: (v: string) => void;
-  showAddCampaignForm: boolean;
-  setShowAddCampaignForm: (v: boolean) => void;
-  
-  isMeetingPanelOpen: boolean;
-  setIsMeetingPanelOpen: (v: boolean) => void;
-  isCampaignPanelOpen: boolean;
-  setIsCampaignPanelOpen: (v: boolean) => void;
   showConfirm?: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
 }
 
@@ -54,38 +24,24 @@ export function AgendaPanel({
   customMeetings,
   customCampaigns,
   updateStateAndBroadcast,
-  newMeetTheme,
-  setNewMeetTheme,
-  newMeetType,
-  setNewMeetType,
-  newMeetWeeklyDay,
-  setNewMeetWeeklyDay,
-  newMeetDate,
-  setNewMeetDate,
-  newMeetTime,
-  setNewMeetTime,
-  showAddMeetingForm,
-  setShowAddMeetingForm,
-  editingMeetId,
-  setEditingMeetId,
-  
-  newCampTitle,
-  setNewCampTitle,
-  newCampDuration,
-  setNewCampDuration,
-  newCampType,
-  setNewCampType,
-  newCampEndDate,
-  setNewCampEndDate,
-  showAddCampaignForm,
-  setShowAddCampaignForm,
-  
-  isMeetingPanelOpen,
-  setIsMeetingPanelOpen,
-  isCampaignPanelOpen,
-  setIsCampaignPanelOpen,
   showConfirm
 }: AgendaPanelProps) {
+  const [newMeetTheme, setNewMeetTheme] = useState('');
+  const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
+  const [newMeetWeeklyDay, setNewMeetWeeklyDay] = useState(0);
+  const [newMeetDate, setNewMeetDate] = useState('');
+  const [newMeetTime, setNewMeetTime] = useState('19:30');
+  const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
+  const [editingMeetId, setEditingMeetId] = useState<string | null>(null);
+
+  const [newCampTitle, setNewCampTitle] = useState('');
+  const [newCampDuration, setNewCampDuration] = useState('');
+  const [newCampType, setNewCampType] = useState<'flame' | 'globe' | 'faith'>('flame');
+  const [newCampEndDate, setNewCampEndDate] = useState('');
+  const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
+
+  const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(false);
+  const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(false);
 
   const daysMap = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 

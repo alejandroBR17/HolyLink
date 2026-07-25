@@ -1,0 +1,78 @@
+            {/* Render selected panels */}
+            {activeMobileTab === 'slides' && (
+              <PlaylistPanel
+                currentSlideId={currentSlideId}
+                manualSlideOverride={manualSlideOverride}
+                activeSlides={activeSlides}
+                customMediaList={customMediaList}
+                getSlideDuration={getSlideDuration}
+                updateStateAndBroadcast={updateStateAndBroadcast}
+                handleMoveSlide={handleMoveSlide}
+                handleFileUpload={handleFileUpload}
+                isUploading={isUploading}
+                uploadError={uploadError}
+                videoPinBehavior={videoPinBehavior}
+                handleMoveMedia={handleMoveMedia}
+                showConfirm={showConfirm}
+                showAlert={showAlert}
+                deleteMediaItem={deleteMediaItem}
+                broadcastMediaDelete={broadcastMediaDelete}
+                broadcastMediaSave={broadcastMediaSave}
+                saveMediaItem={saveMediaItem}
+                customMeetings={customMeetings}
+              />
+            )}
+
+            {activeMobileTab === 'texts' && (
+              <BiblePanel
+                activeVerseIndex={activeVerseIndex}
+                customVerseText={customVerseText}
+                customVerseRef={customVerseRef}
+                updateStateAndBroadcast={updateStateAndBroadcast}
+              />
+            )}
+
+            {activeMobileTab === 'agenda' && (
+              <AgendaPanel
+                customMeetings={customMeetings}
+                customCampaigns={customCampaigns}
+                updateStateAndBroadcast={updateStateAndBroadcast}
+                showConfirm={showConfirm}
+              />
+            )}
+
+            {activeMobileTab === 'controls' && (
+              <ControlsPanel
+                projectionWin={projectionWin}
+                setProjectionWin={setProjectionWin}
+                blackoutEnabled={blackoutEnabled}
+                clearContentEnabled={clearContentEnabled}
+                nextMeeting={nextMeeting}
+                nextMeetingDate={nextMeetingDate}
+                hoursStr={hoursStr}
+                minutesStr={minutesStr}
+                diffSeconds={diffSeconds}
+                countdownOffset={countdownOffset}
+                countdownPaused={countdownPaused}
+                pausedSeconds={pausedSeconds}
+                activeAlert={activeAlert}
+                volume={volume}
+                tickerText={tickerText}
+                updateStateAndBroadcast={updateStateAndBroadcast}
+                currentTime={currentTime}
+                isProjectionOpen={isProjectionOpen}
+              />
+            )}
+
+            {activeMobileTab === 'sync' && (
+              <div className="w-full">
+                <SyncSection showAlert={showAlert} showConfirm={showConfirm} />
+              </div>
+            )}
+            
+            <div className={activeMobileTab === 'sync' ? 'hidden absolute w-0 h-0 overflow-hidden pointer-events-none' : 'hidden absolute w-0 h-0 overflow-hidden pointer-events-none'} aria-hidden={activeMobileTab !== 'sync'}>
+              {/* Keep sync alive if necessary, wait, SyncSection uses effects that must stay mounted? */}
+            </div>
+
+            {activeMobileTab === 'monitor' && (
+              <MonitorPanel

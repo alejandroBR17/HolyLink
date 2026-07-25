@@ -199,21 +199,82 @@ export function SyncSection({
             return;
           }
 
-          if (data && data.type === 'REQUEST_FULL_SYNC') {
-            setSyncMessage('Central de Controle conectada! Enviando dados locais...');
-            const storageData: Record<string, string> = {};
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i);
-              if (key && key.startsWith('projection_')) {
-                const val = localStorage.getItem(key);
-                if (val !== null) storageData[key] = val;
+          if (data && data.type === 'SYNC_MANIFEST') {
+            setSyncMessage('Comparando alterações com dados locais...');
+            
+            // 1. Restore/Update localStorage keys
+            if (data.localStorage) {
+              Object.entries(data.localStorage).forEach(([key, val]) => {
+                localStorage.setItem(key, val as string);
+              });
+            }
+            if (code) {
+              localStorage.setItem('projection_lastPairedPeerCode', code);
+            }
+
+            // 2. Compare local media items vs manifest
+            const localMedia = await getAllMediaItems();
+            const manifestItems = data.mediaManifest || [];
+            const manifestIds = new Set(manifestItems.map((m: any) => m.id));
+
+            // Remove local items that were deleted on the remote side
+            for (const localItem of localMedia) {
+              if (!manifestIds.has(localItem.id)) {
+                await deleteMediaItem(localItem.id);
               }
             }
-            const mediaItems = await getAllMediaItems();
+
+            // Identify missing or changed items
+            const localMap = new Map(localMedia.map(item => [item.id, item]));
+            const missingIds: string[] = [];
+
+            for (const item of manifestItems) {
+              const local = localMap.get(item.id);
+              const localSize = local?.blob ? local.blob.size : 0;
+              if (!local || localSize !== item.size) {
+                missingIds.push(item.id);
+              } else {
+                // Local item exists with exact same blob size -> update metadata only
+                await saveMediaItem({
+                  id: item.id,
+                  type: item.type,
+                  name: item.name,
+                  duration: item.duration,
+                  enabledInLoop: item.enabledInLoop,
+                  muted: item.muted,
+                  order: item.order,
+                  fit: item.fit,
+                  blob: local.blob
+                });
+              }
+            }
+
+            if (missingIds.length === 0) {
+              // Zero missing items -> incremental sync complete!
+              window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+              setDirectSyncStatus('success');
+              setSyncMessage('Tudo sincronizado instantaneamente! (Sem re-download de mídias)');
+              conn.send({ type: 'SYNC_COMPLETE', message: 'Tudo atualizado sem re-download' });
+              return;
+            }
+
+            // Request ONLY missing media items
+            setSyncMessage(`Sincronizando ${missingIds.length} alteração(ões) de mídia...`);
+            conn.send({ type: 'REQUEST_DELTA_MEDIA', ids: missingIds });
+            return;
+          }
+
+          if (data && data.type === 'REQUEST_DELTA_MEDIA') {
+            const requestedIds = new Set(data.ids || []);
+            const allMedia = await getAllMediaItems();
+            const mediaToTransfer = allMedia.filter(item => requestedIds.has(item.id));
+            
             const serializedMedia = await Promise.all(
-              mediaItems.map(async (item, index) => {
-                const progress = Math.round((index / mediaItems.length) * 100);
-                window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Preparando mídias: ${item.name}`, progress } }));
+              mediaToTransfer.map(async (item, index) => {
+                const progress = Math.round(((index + 1) / mediaToTransfer.length) * 100);
+                window.dispatchEvent(new CustomEvent('projection_sync_progress', { 
+                  detail: { message: `Enviando alteração (${index + 1}/${mediaToTransfer.length}): ${item.name}`, progress } 
+                }));
                 const { base64, mimeType } = await blobToBase64(item.blob);
                 return {
                   id: item.id,
@@ -224,19 +285,98 @@ export function SyncSection({
                   muted: item.muted,
                   order: item.order,
                   fit: item.fit,
-                  mimeType: mimeType,
-                  base64: base64
+                  mimeType,
+                  base64
                 };
               })
             );
+
             conn.send({
-              type: 'FULL_SYNC',
-              version: 1,
-              localStorage: storageData,
+              type: 'DELTA_MEDIA_ITEMS',
               mediaItems: serializedMedia
             });
+            return;
+          }
+
+          if (data && data.type === 'DELTA_MEDIA_ITEMS') {
+            const items = data.mediaItems || [];
+            for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              const progress = Math.round(((i + 1) / items.length) * 100);
+              window.dispatchEvent(new CustomEvent('projection_sync_progress', { 
+                detail: { message: `Recebendo alteração (${i + 1}/${items.length}): ${item.name}`, progress } 
+              }));
+              
+              let blob: Blob | undefined = undefined;
+              if (item.base64 && item.base64.trim().length > 0) {
+                try {
+                  const byteCharacters = atob(item.base64);
+                  const byteNumbers = new Array(byteCharacters.length);
+                  for (let j = 0; j < byteCharacters.length; j++) {
+                    byteNumbers[j] = byteCharacters.charCodeAt(j);
+                  }
+                  const byteArray = new Uint8Array(byteNumbers);
+                  blob = new Blob([byteArray], { type: item.mimeType || 'application/octet-stream' });
+                } catch (e) {
+                  console.error("Erro ao decodificar base64:", item.name, e);
+                }
+              }
+
+              await saveMediaItem({
+                id: item.id,
+                type: item.type,
+                name: item.name,
+                duration: item.duration,
+                enabledInLoop: item.enabledInLoop,
+                muted: item.muted,
+                order: item.order,
+                fit: item.fit,
+                blob
+              });
+            }
+
+            window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
             setDirectSyncStatus('success');
-            setSyncMessage('Conectado! Dados locais transmitidos com sucesso.');
+            setSyncMessage('Sincronização incremental de mídias concluída!');
+            return;
+          }
+
+          if (data && data.type === 'SYNC_COMPLETE') {
+            window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+            setDirectSyncStatus('success');
+            setSyncMessage('Dados sincronizados e prontos para uso.');
+            return;
+          }
+
+          if (data && data.type === 'REQUEST_FULL_SYNC') {
+            setSyncMessage('Central de Controle conectada! Comparando lista de dados...');
+            const storageData: Record<string, string> = {};
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('projection_')) {
+                const val = localStorage.getItem(key);
+                if (val !== null) storageData[key] = val;
+              }
+            }
+            const mediaItems = await getAllMediaItems();
+            const mediaManifest = mediaItems.map(item => ({
+              id: item.id,
+              type: item.type,
+              name: item.name,
+              duration: item.duration,
+              enabledInLoop: item.enabledInLoop,
+              muted: item.muted,
+              order: item.order,
+              fit: item.fit,
+              size: item.blob ? item.blob.size : 0
+            }));
+
+            conn.send({
+              type: 'SYNC_MANIFEST',
+              version: 1,
+              localStorage: storageData,
+              mediaManifest
+            });
             return;
           }
 
@@ -530,28 +670,23 @@ export function SyncSection({
             }
           }
 
-          const serializedMedia = await Promise.all(
-            mediaItems.map(async (item) => {
-              const { base64, mimeType } = await blobToBase64(item.blob);
-              return {
-                id: item.id,
-                type: item.type,
-                name: item.name,
-                duration: item.duration,
-                enabledInLoop: item.enabledInLoop,
-                muted: item.muted,
-                order: item.order,
-                fit: item.fit,
-                mimeType: mimeType,
-                base64: base64
-              };
-            })
-          );
+          const mediaManifest = mediaItems.map(item => ({
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            duration: item.duration,
+            enabledInLoop: item.enabledInLoop,
+            muted: item.muted,
+            order: item.order,
+            fit: item.fit,
+            size: item.blob ? item.blob.size : 0
+          }));
 
           const payload = {
+            type: 'SYNC_MANIFEST',
             version: 1,
             localStorage: storageData,
-            mediaItems: serializedMedia
+            mediaManifest
           };
 
           conn.send(payload);
@@ -560,7 +695,7 @@ export function SyncSection({
           (window as any).holyrics_peer_conn = conn;
 
           setDirectSyncStatus('success');
-          setSyncMessage('Sincronizado e pronto para controle em tempo real!');
+          setSyncMessage('Conectado! Verificando alterações incrementais...');
 
           // Cleanup URL query params if any
           if (window.location.search.includes('syncCode=')) {
@@ -634,8 +769,7 @@ export function SyncSection({
     }
 
     setIsPushing(true);
-    setSyncMessage("Transmitindo todos os dados para o PC...");
-    setSyncProgress(0);
+    setSyncMessage("Verificando alterações para o PC...");
     try {
       const storageData: Record<string, string> = {};
       for (let i = 0; i < localStorage.length; i++) {
@@ -649,44 +783,31 @@ export function SyncSection({
       }
 
       const mediaItems = await getAllMediaItems();
-      const total = mediaItems.length;
-      const serializedMedia = await Promise.all(
-        mediaItems.map(async (item, index) => {
-          const progress = Math.round((index / total) * 100);
-          setSyncProgress(progress);
-          setSyncMessage(`Preparando mídia (${index+1}/${total}): ${item.name}`);
-          
-          const { base64, mimeType } = await blobToBase64(item.blob);
-
-          return {
-            id: item.id,
-            type: item.type,
-            name: item.name,
-            duration: item.duration,
-            enabledInLoop: item.enabledInLoop,
-            muted: item.muted,
-            order: item.order,
-            fit: item.fit,
-            mimeType: mimeType,
-            base64: base64
-          };
-        })
-      );
+      const mediaManifest = mediaItems.map(item => ({
+        id: item.id,
+        type: item.type,
+        name: item.name,
+        duration: item.duration,
+        enabledInLoop: item.enabledInLoop,
+        muted: item.muted,
+        order: item.order,
+        fit: item.fit,
+        size: item.blob ? item.blob.size : 0
+      }));
 
       conn.send({
+        type: 'SYNC_MANIFEST',
         version: 1,
         localStorage: storageData,
-        mediaItems: serializedMedia
+        mediaManifest
       });
 
-      setSyncProgress(100);
-      setSyncMessage("Dados enviados e aplicados no PC com sucesso!");
+      setSyncMessage("Manifesto transmitido ao PC. Atualizando deltas...");
     } catch (err) {
       console.error(err);
       setSyncMessage("Erro ao transmitir os dados.");
     } finally {
       setIsPushing(false);
-      setTimeout(() => setSyncProgress(undefined), 2000);
     }
   };
 

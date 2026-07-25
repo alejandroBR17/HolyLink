@@ -1,0 +1,22 @@
+--- src/components/operator/AgendaPanel.tsx
++++ src/components/operator/AgendaPanel.tsx
+@@ -19,30 +19,4 @@
+   setEditingMeetId: (v: string | null) => void;
+-  
+-  newCampTitle: string;
+-  setNewCampTitle: (v: string) => void;
+-  newCampDuration: string;
+-  setNewCampDuration: (v: string) => void;
+-  newCampType: 'flame' | 'globe' | 'faith';
+-  setNewCampType: (v: 'flame' | 'globe' | 'faith') => void;
+-  newCampEndDate: string;
+-  setNewCampEndDate: (v: string) => void;
+-  showAddCampaignForm: boolean;
+-  setShowAddCampaignForm: (v: boolean) => void;
+-  
+-  isMeetingPanelOpen: boolean;
+-  setIsMeetingPanelOpen: (v: boolean) => void;
+-  isCampaignPanelOpen: boolean;
+-  setIsCampaignPanelOpen: (v: boolean) => void;
+   showConfirm?: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
+ }

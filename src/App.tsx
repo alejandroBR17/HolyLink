@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { CHURCH_INFO, ALERTS, VERSES, CAMPAIGNS, MEETINGS } from './data';
 import { getNextMeeting, saveMediaItem, getAllMediaItems, deleteMediaItem, getSlideDuration } from './utils';
+import { mediaPreloader } from './utils/preloader';
+import { SmartSplashLoader } from './components/SmartSplashLoader';
 import { Meeting } from './types';
 import { ProjectionContent } from './components/ProjectionContent';
 import { SyncSection } from './components/SyncSection';
@@ -258,11 +260,6 @@ export default function App() {
   });
 
   // UI States for Dynamic Management Panels
-  const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(false);
-  const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(false);
-  const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
-  const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
-
   const [isProjectionOpen, setIsProjectionOpen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('projection_isProjectionOpen') === 'true';
@@ -278,27 +275,15 @@ export default function App() {
     projectionWinRef.current = projectionWin;
   }, [projectionWin]);
 
-  // Form Fields - Meetings
-  const [newMeetTheme, setNewMeetTheme] = useState('');
-  const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
-  const [newMeetWeeklyDay, setNewMeetWeeklyDay] = useState(0);
-  const [newMeetDate, setNewMeetDate] = useState('');
-  const [newMeetTime, setNewMeetTime] = useState('19:30');
-
-  // Form Fields - Campaigns
-  const [newCampTitle, setNewCampTitle] = useState('');
-  const [newCampDuration, setNewCampDuration] = useState('');
-  const [newCampType, setNewCampType] = useState('fogueira_santa');
-  const [newCampEndDate, setNewCampEndDate] = useState('');
-
-  // Custom Media States
   const [mediaUpdateTrigger, setMediaUpdateTrigger] = useState<string>(() => {
     if (typeof window === 'undefined') return '0';
     return localStorage.getItem('projection_mediaUpdateTrigger') || '0';
   });
+
   const [customMediaList, setCustomMediaList] = useState<CustomMedia[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isSmartBooting, setIsSmartBooting] = useState<boolean>(true);
 
   // Load custom media files from DB on trigger or mount
   useEffect(() => {
@@ -377,6 +362,14 @@ export default function App() {
       active = false;
     };
   }, [mediaUpdateTrigger]);
+
+  // Preload upcoming slides into memory for smooth transmission
+  useEffect(() => {
+    if (customMediaList.length > 0) {
+      const activeSlideId = manualSlideOverride || slidesOrder[0] || 'agenda_day_0';
+      mediaPreloader.preloadSlideSequence(activeSlideId, slidesOrder, customMediaList);
+    }
+  }, [manualSlideOverride, slidesOrder, customMediaList]);
 
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -542,7 +535,13 @@ export default function App() {
     else if (key === 'activeAlert') setActiveAlert(value);
     else if (key === 'blackoutEnabled') setBlackoutEnabled(value === 'true' || value === true);
     else if (key === 'clearContentEnabled') setClearContentEnabled(value === 'true' || value === true);
-    else if (key === 'volume') setVolume(parseFloat(value.toString()));
+    else if (key === 'volume') {
+      const parsed = parseFloat(value.toString());
+      if (!isNaN(parsed)) {
+        const clamped = Math.max(0, Math.min(1, parsed));
+        setVolume(prev => (Math.abs(prev - clamped) < 0.001 ? prev : clamped));
+      }
+    }
     else if (key === 'tickerText') setTickerText(value);
     else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value, 10) : null);
     else if (key === 'customVerseText') setCustomVerseText(value);
@@ -736,7 +735,13 @@ export default function App() {
       else if (key === 'activeAlert') setActiveAlert(value);
       else if (key === 'blackoutEnabled') setBlackoutEnabled(value === 'true' || value === true);
       else if (key === 'clearContentEnabled') setClearContentEnabled(value === 'true' || value === true);
-      else if (key === 'volume') setVolume(parseFloat(value.toString()));
+      else if (key === 'volume') {
+        const parsed = parseFloat(value.toString());
+        if (!isNaN(parsed)) {
+          const clamped = Math.max(0, Math.min(1, parsed));
+          setVolume(prev => (Math.abs(prev - clamped) < 0.001 ? prev : clamped));
+        }
+      }
       else if (key === 'activeVerseIndex') setActiveVerseIndex(value !== null ? parseInt(value.toString(), 10) : null);
       else if (key === 'customVerseText') setCustomVerseText(value);
       else if (key === 'customVerseRef') setCustomVerseRef(value);
@@ -1085,6 +1090,15 @@ export default function App() {
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
+  if (isSmartBooting) {
+    return (
+      <SmartSplashLoader 
+        customMediaList={customMediaList} 
+        onComplete={() => setIsSmartBooting(false)} 
+      />
+    );
+  }
+
   if (!isProjectionView) {
     return (
       <div className="w-screen h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
@@ -1369,7 +1383,6 @@ export default function App() {
                 activeVerseIndex={activeVerseIndex}
                 customVerseText={customVerseText}
                 customVerseRef={customVerseRef}
-                
                 updateStateAndBroadcast={updateStateAndBroadcast}
               />
             )}
@@ -1379,34 +1392,7 @@ export default function App() {
                 customMeetings={customMeetings}
                 customCampaigns={customCampaigns}
                 updateStateAndBroadcast={updateStateAndBroadcast}
-                newMeetTheme={newMeetTheme}
-                setNewMeetTheme={setNewMeetTheme}
-                newMeetType={newMeetType}
-                setNewMeetType={setNewMeetType}
-                newMeetWeeklyDay={newMeetWeeklyDay}
-                setNewMeetWeeklyDay={setNewMeetWeeklyDay}
-                newMeetDate={newMeetDate}
-                setNewMeetDate={setNewMeetDate}
-                newMeetTime={newMeetTime}
-                setNewMeetTime={setNewMeetTime}
-                showAddMeetingForm={showAddMeetingForm}
-                setShowAddMeetingForm={setShowAddMeetingForm}
-                editingMeetId={editingMeetId}
-                setEditingMeetId={setEditingMeetId}
-                newCampTitle={newCampTitle}
-                setNewCampTitle={setNewCampTitle}
-                newCampDuration={newCampDuration}
-                setNewCampDuration={setNewCampDuration}
-                newCampType={newCampType as any}
-                setNewCampType={setNewCampType as any}
-                newCampEndDate={newCampEndDate}
-                setNewCampEndDate={setNewCampEndDate}
-                showAddCampaignForm={showAddCampaignForm}
-                setShowAddCampaignForm={setShowAddCampaignForm}
-                isMeetingPanelOpen={isMeetingPanelOpen}
-                setIsMeetingPanelOpen={setIsMeetingPanelOpen}
-                isCampaignPanelOpen={isCampaignPanelOpen}
-                setIsCampaignPanelOpen={setIsCampaignPanelOpen}
+                showConfirm={showConfirm}
               />
             )}
 
@@ -1433,8 +1419,14 @@ export default function App() {
               />
             )}
 
-            <div className={activeMobileTab === 'sync' ? 'w-full' : 'hidden absolute w-0 h-0 overflow-hidden pointer-events-none'} aria-hidden={activeMobileTab !== 'sync'}>
-              <SyncSection showAlert={showAlert} showConfirm={showConfirm} />
+            {activeMobileTab === 'sync' && (
+              <div className="w-full">
+                <SyncSection showAlert={showAlert} showConfirm={showConfirm} />
+              </div>
+            )}
+            
+            <div className={activeMobileTab === 'sync' ? 'hidden absolute w-0 h-0 overflow-hidden pointer-events-none' : 'hidden absolute w-0 h-0 overflow-hidden pointer-events-none'} aria-hidden={activeMobileTab !== 'sync'}>
+              {/* Keep sync alive if necessary, wait, SyncSection uses effects that must stay mounted? */}
             </div>
 
             {activeMobileTab === 'monitor' && (
@@ -1468,7 +1460,6 @@ export default function App() {
                 nextMeetingDate={nextMeetingDate}
                 ongoingMeeting={ongoingMeeting}
                 volume={volume}
-                
                 tickerText={tickerText}
                 syncStatus={syncStatus}
                 isProjectionOpen={isProjectionOpen}
@@ -1508,12 +1499,13 @@ export default function App() {
               nextMeetingDate={nextMeetingDate}
               ongoingMeeting={ongoingMeeting}
               volume={volume}
-              
               tickerText={tickerText}
               syncStatus={syncStatus}
               isProjectionOpen={isProjectionOpen}
             />
-            
+
+
+
             <div className="text-xs text-zinc-500 leading-relaxed mt-4 border-t border-zinc-900 pt-4">
               <strong>Guia de Transmissão:</strong>
               <br />
@@ -1526,9 +1518,7 @@ export default function App() {
               4. Use este painel para monitorar, trocar slides e disparar alertas instantâneos!
             </div>
           </aside>
-
         </div>
-
         <CustomModal 
           isOpen={modalConfig.isOpen}
           title={modalConfig.title}
@@ -1691,14 +1681,12 @@ export default function App() {
         onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
         variant={modalConfig.variant}
       />
-
       <CustomToast 
         isVisible={toastConfig.isVisible}
         message={toastConfig.message}
         type={toastConfig.type}
         onClose={() => setToastConfig(prev => ({ ...prev, isVisible: false }))}
       />
-
     </div>
   );
 }
