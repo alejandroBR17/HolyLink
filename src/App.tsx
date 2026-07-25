@@ -190,6 +190,11 @@ export default function App() {
     return (localStorage.getItem('projection_videoPinBehavior') as 'unpin' | 'loop') || 'unpin';
   });
 
+  const [carouselStartTimeOffset, setCarouselStartTimeOffset] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0;
+    return parseInt(localStorage.getItem('projection_carouselStartTimeOffset') || '0', 10);
+  });
+
   // Modal Dialog global triggers
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -563,6 +568,7 @@ export default function App() {
     else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
     else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
     else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+    else if (key === 'carouselStartTimeOffset') setCarouselStartTimeOffset(value ? parseInt(value.toString(), 10) : 0);
     else if (key === 'isProjectionOpen') setIsProjectionOpen(value === 'true' || value === true);
     else if (key === 'projectionCloseTrigger') {
       setProjectionCloseTrigger(value);
@@ -785,6 +791,7 @@ export default function App() {
       else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
       else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value);
       else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+      else if (key === 'carouselStartTimeOffset') setCarouselStartTimeOffset(value !== null ? parseInt(value.toString(), 10) : 0);
       else if (key === 'isProjectionOpen') setIsProjectionOpen(value === 'true' || value === true);
       else if (key === 'projectionCloseTrigger') {
         setProjectionCloseTrigger(value);
@@ -853,6 +860,7 @@ export default function App() {
       setDismissedJustStarted(localStorage.getItem('projection_dismissedJustStarted') === 'true');
       setMediaUpdateTrigger(localStorage.getItem('projection_mediaUpdateTrigger') || '0');
       setVideoPinBehavior((localStorage.getItem('projection_videoPinBehavior') as 'unpin' | 'loop') || 'unpin');
+      setCarouselStartTimeOffset(parseInt(localStorage.getItem('projection_carouselStartTimeOffset') || '0', 10));
       setIsProjectionOpen(localStorage.getItem('projection_isProjectionOpen') === 'true');
       setProjectionCloseTrigger(localStorage.getItem('projection_projectionCloseTrigger'));
       try {
@@ -1084,8 +1092,9 @@ export default function App() {
   });
 
   const totalDuration = activeSlides.reduce((sum, id) => sum + getSlideDuration(id, customMediaList), 0);
-  const timeInLoop = currentTime.getTime() % totalDuration;
-  const loopIteration = Math.floor(currentTime.getTime() / totalDuration);
+  const adjustedTime = currentTime.getTime() - carouselStartTimeOffset;
+  const timeInLoop = ((adjustedTime % (totalDuration || 1)) + (totalDuration || 1)) % (totalDuration || 1);
+  const loopIteration = Math.floor(adjustedTime / (totalDuration || 1));
   let accumulatedTime = 0;
   let currentSlideId = activeSlides[0];
 
@@ -1119,6 +1128,20 @@ export default function App() {
 
   const handleVideoEnded = () => {
     if (videoPinBehavior === 'unpin') {
+      const activeSlideId = currentSlideId;
+      if (activeSlides.length > 0) {
+        const currentIndex = activeSlides.indexOf(activeSlideId);
+        if (currentIndex !== -1) {
+          const nextIndex = (currentIndex + 1) % activeSlides.length;
+          let targetAccumulatedTime = 0;
+          for (let i = 0; i < nextIndex; i++) {
+            targetAccumulatedTime += getSlideDuration(activeSlides[i], customMediaList);
+          }
+          const now = currentTime.getTime();
+          const newOffset = now - targetAccumulatedTime;
+          updateStateAndBroadcast('carouselStartTimeOffset', newOffset);
+        }
+      }
       updateStateAndBroadcast('manualSlideOverride', null);
     }
   };
