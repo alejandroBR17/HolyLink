@@ -1056,10 +1056,10 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (diffSeconds > 300 && dismissedJustStarted) {
+    if (!isJustStartedRaw && diffSeconds > 300 && dismissedJustStarted) {
       updateStateAndBroadcast('dismissedJustStarted', false);
     }
-  }, [diffSeconds, dismissedJustStarted]);
+  }, [isJustStartedRaw, diffSeconds, dismissedJustStarted]);
 
   const baseActiveSlides: SlideType[] = [...DEFAULT_SLIDES];
   customMediaList.forEach((media) => {
