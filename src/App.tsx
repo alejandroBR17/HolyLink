@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
+import React, { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen, 
@@ -64,21 +64,39 @@ export default function App() {
   // Electron Detection & Window Toggle States
   const [isProjectionWindowShowing, setIsProjectionWindowShowing] = useState(true);
   const ipcRendererRef = useRef<any>(null);
-  const [projectionWin, setProjectionWin] = useState<Window | null>(null);
+  const projectionWinRef = useRef<Window | null>(null);
+
+  const setProjectionWin = useCallback((win: Window | null) => {
+    if (win === null && projectionWinRef.current) {
+      try {
+        if (!projectionWinRef.current.closed) {
+          projectionWinRef.current.close();
+        }
+      } catch (e) {
+        // Safe catch for cross-origin or closed window
+      }
+    }
+    projectionWinRef.current = win;
+  }, []);
+
   const isElectron = typeof window !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
 
   // Monitor if window is closed
   useEffect(() => {
-    if (!projectionWin) return;
     const timer = setInterval(() => {
-      if (projectionWin.closed) {
-        setProjectionWin(null);
-        updateStateAndBroadcast('isProjectionOpen', false);
-        clearInterval(timer);
+      if (projectionWinRef.current) {
+        try {
+          if (projectionWinRef.current.closed) {
+            projectionWinRef.current = null;
+            updateStateAndBroadcast('isProjectionOpen', false);
+          }
+        } catch (e) {
+          // Cross-origin access error fallback
+        }
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [projectionWin]);
+  }, []);
 
   useEffect(() => {
     try {
@@ -270,10 +288,6 @@ export default function App() {
     return localStorage.getItem('projection_projectionCloseTrigger');
   });
 
-  const projectionWinRef = useRef<Window | null>(null);
-  useEffect(() => {
-    projectionWinRef.current = projectionWin;
-  }, [projectionWin]);
 
   const [mediaUpdateTrigger, setMediaUpdateTrigger] = useState<string>(() => {
     if (typeof window === 'undefined') return '0';
@@ -699,20 +713,43 @@ export default function App() {
     }
 
     const handleError = (event: ErrorEvent) => {
-      // Do not flood user with PeerJS expected connection aborts
-      if (event.message && (event.message.includes('peer') || event.message.includes('WebRTC') || event.message.includes('socket'))) {
+      const msg = event.message || (event.error && event.error.message) || '';
+      // Ignore peer/WebRTC, cross-origin SecurityError, $$typeof, or React internal work loop noise
+      if (
+        msg.includes('peer') || 
+        msg.includes('WebRTC') || 
+        msg.includes('socket') || 
+        msg.includes('$$typeof') || 
+        msg.includes('Blocked a frame') || 
+        msg.includes('SecurityError') || 
+        msg.includes('Should not already be working') ||
+        msg.includes('ResizeObserver')
+      ) {
         return;
       }
       console.error("Erro capturado globalmente:", event.error || event.message);
-      showAlert(`Aviso: ${event.message || 'Ocorreu um erro inesperado'}`, 'error');
+      setTimeout(() => {
+        showAlert(`Aviso: ${msg || 'Ocorreu um erro inesperado'}`, 'error');
+      }, 0);
     };
 
     const handleRejection = (event: PromiseRejectionEvent) => {
-      if (event.reason && (event.reason.message?.includes('peer') || event.reason.message?.includes('WebRTC'))) {
+      const reasonMsg = event.reason?.message || event.reason || '';
+      const strMsg = reasonMsg.toString();
+      if (
+        strMsg.includes('peer') || 
+        strMsg.includes('WebRTC') || 
+        strMsg.includes('$$typeof') ||
+        strMsg.includes('SecurityError') ||
+        strMsg.includes('Blocked a frame') ||
+        strMsg.includes('Should not already be working')
+      ) {
         return;
       }
       console.error("Promise rejeitada sem tratamento:", event.reason);
-      showAlert(`Falha de processamento: ${event.reason?.message || event.reason || 'Erro desconhecido'}`, 'error');
+      setTimeout(() => {
+        showAlert(`Falha de processamento: ${reasonMsg || 'Erro desconhecido'}`, 'error');
+      }, 0);
     };
 
     window.addEventListener('error', handleError);
@@ -1080,6 +1117,28 @@ export default function App() {
   const hoursStr = countHours.toString().padStart(2, '0');
   const minutesStr = countMinutes.toString().padStart(2, '0');
 
+  const handleVideoEnded = () => {
+    if (videoPinBehavior === 'unpin') {
+      const activeSlideId = currentSlideId;
+      if (activeSlides.length > 0) {
+        const currentIndex = activeSlides.indexOf(activeSlideId);
+        if (currentIndex !== -1) {
+          const nextIndex = (currentIndex + 1) % activeSlides.length;
+          const nextSlideId = activeSlides[nextIndex];
+          if (nextSlideId !== activeSlideId) {
+            updateStateAndBroadcast('manualSlideOverride', nextSlideId);
+          } else {
+            updateStateAndBroadcast('manualSlideOverride', null);
+          }
+        } else {
+          updateStateAndBroadcast('manualSlideOverride', null);
+        }
+      } else {
+        updateStateAndBroadcast('manualSlideOverride', null);
+      }
+    }
+  };
+
   const [isCurrentlyFullscreen, setIsCurrentlyFullscreen] = useState(false);
 
   useEffect(() => {
@@ -1398,7 +1457,7 @@ export default function App() {
 
             {activeMobileTab === 'controls' && (
               <ControlsPanel
-                projectionWin={projectionWin}
+                projectionWin={null}
                 setProjectionWin={setProjectionWin}
                 blackoutEnabled={blackoutEnabled}
                 clearContentEnabled={clearContentEnabled}
@@ -1431,7 +1490,7 @@ export default function App() {
 
             {activeMobileTab === 'monitor' && (
               <MonitorPanel
-                projectionWin={projectionWin}
+                projectionWin={null}
                 setProjectionWin={setProjectionWin}
                 currentTime={currentTime}
                 isLooping={isLooping}
@@ -1470,7 +1529,7 @@ export default function App() {
           {/* DESKTOP RIGHT PREVIEW MONITOR SIDEBAR */}
           <aside className="hidden lg:flex w-[320px] xl:w-[360px] border-l border-zinc-900 bg-zinc-950/40 p-6 flex-col gap-6 overflow-y-auto shrink-0 text-left">
             <MonitorPanel
-              projectionWin={projectionWin}
+              projectionWin={null}
               setProjectionWin={setProjectionWin}
               currentTime={currentTime}
               isLooping={isLooping}
@@ -1617,11 +1676,7 @@ export default function App() {
           
           tickerText={tickerText}
           syncStatus={syncStatus}
-          onVideoEnded={() => {
-            if (manualSlideOverride && videoPinBehavior === 'unpin') {
-              updateStateAndBroadcast('manualSlideOverride', null);
-            }
-          }}
+          onVideoEnded={handleVideoEnded}
         />
       </div>
 

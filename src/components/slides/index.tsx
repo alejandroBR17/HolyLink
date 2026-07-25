@@ -423,7 +423,9 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     if (!video || !media?.url) return;
 
     if (currentSlideId === media.id) {
-      if (video.src !== media.url) {
+      const loadedSrc = video.getAttribute('data-loaded-src');
+      if (loadedSrc !== media.url || video.ended) {
+        video.setAttribute('data-loaded-src', media.url);
         video.src = media.url;
         video.currentTime = 0;
       }
@@ -477,6 +479,7 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
 
   const videoFit = fit || media.fit || 'contain';
   const objectFitClass = videoFit === 'cover' ? "object-cover" : videoFit === 'fill' ? "object-fill" : "object-contain";
+  const shouldLoop = videoPinBehavior === 'loop';
 
   return (
     <div className="w-full h-full flex items-center justify-center relative">
@@ -485,10 +488,17 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
         className={`w-full h-full ${objectFitClass}`}
         playsInline
         controls={false}
-        loop={videoPinBehavior !== 'unpin'}
+        loop={shouldLoop}
         onEnded={() => {
-          if (onVideoEnded) {
-            onVideoEnded();
+          if (shouldLoop) {
+            if (videoRef.current) {
+              videoRef.current.currentTime = 0;
+              videoRef.current.play().catch((err) => console.error("Error looping video:", err));
+            }
+          } else {
+            if (!isBackgroundBlur && onVideoEnded) {
+              onVideoEnded();
+            }
           }
         }}
       />

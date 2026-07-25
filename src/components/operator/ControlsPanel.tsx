@@ -256,17 +256,18 @@ export function ControlsPanel({
 
   const handleOpenMonitor = () => {
     const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
-    const newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
-    setProjectionWin(newWin);
+    try {
+      const newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
+      setProjectionWin(newWin);
+    } catch (e) {
+      console.warn("Could not open projection window:", e);
+    }
     updateStateAndBroadcast('isProjectionOpen', true);
     updateStateAndBroadcast('projectionCloseTrigger', null);
   };
 
   const handleCloseMonitor = () => {
-    if (projectionWin) {
-      projectionWin.close();
-      setProjectionWin(null);
-    }
+    setProjectionWin(null);
     updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
     updateStateAndBroadcast('isProjectionOpen', false);
   };

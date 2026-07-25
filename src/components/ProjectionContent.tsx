@@ -209,7 +209,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                       media={media} 
                       currentSlideId={currentSlideId} 
                       videoPinBehavior={videoPinBehavior}
-                      onVideoEnded={onVideoEnded}
+                      onVideoEnded={undefined}
                       isBackgroundBlur
                       volume={0}
                     />
