@@ -1281,7 +1281,7 @@ export default function App() {
 
   if (!isProjectionView) {
     return (
-      <div className="w-screen h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
+      <div className="w-full h-full bg-[#09090b] text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
         
         {/* GLOBAL SYNC OVERLAY */}
         <AnimatePresence>
@@ -1522,7 +1522,7 @@ export default function App() {
           </aside>
 
           {/* ACTIVE CONTENT WORKSPACE */}
-          <main className="flex-1 overflow-y-auto bg-zinc-950/20 p-4 sm:p-6 pb-24 lg:pb-6 flex flex-col gap-6 h-full">
+          <main className="flex-1 overflow-y-auto bg-zinc-950/20 p-4 sm:p-6 pb-36 lg:pb-28 flex flex-col gap-6 min-h-0">
             
             <div className="text-left">
               <span className="text-[10px] text-amber-500 font-black uppercase tracking-widest block">

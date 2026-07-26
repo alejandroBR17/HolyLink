@@ -300,7 +300,7 @@ export function AgendaPanel({
             )}
 
             {/* MEETS LIST */}
-            <div className="flex flex-col gap-2 max-h-[550px] overflow-y-auto pr-1">
+            <div className="flex flex-col gap-2 pr-1">
               {(customMeetings || []).length === 0 ? (
                 <div className="text-zinc-500 text-center py-6 text-xs italic bg-zinc-950/20 border border-dashed border-zinc-850 rounded-xl">
                   Nenhuma reunião ou evento adicionado.
@@ -544,7 +544,7 @@ export function AgendaPanel({
             )}
 
             {/* CAMPAIGNS LIST */}
-            <div className="flex flex-col gap-2 max-h-[550px] overflow-y-auto pr-1">
+            <div className="flex flex-col gap-2 pr-1">
               {(customCampaigns || []).length === 0 ? (
                 <div className="text-zinc-500 text-center py-6 text-xs italic bg-zinc-950/20 border border-dashed border-zinc-850 rounded-xl">
                   Nenhuma campanha cadastrada.

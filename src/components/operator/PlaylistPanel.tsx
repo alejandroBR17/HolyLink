@@ -176,7 +176,7 @@ export function PlaylistPanel({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-1">
           {activeSlides.map((slideId, idx) => {
             const isActive = currentSlideId === slideId;
             const isOverridden = manualSlideOverride === slideId;
@@ -334,7 +334,7 @@ export function PlaylistPanel({
             Nenhuma imagem ou vídeo adicionado à fila ainda.
           </div>
         ) : (
-          <div className="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-1">
+          <div className="flex flex-col gap-3 pr-1">
             {customMediaList.map((media, index) => {
               const isSlideActive = currentSlideId === media.id;
               const isSlideOverridden = manualSlideOverride === media.id;
