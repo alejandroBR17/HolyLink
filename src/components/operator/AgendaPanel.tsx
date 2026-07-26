@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
-  CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame 
+  CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame, WifiOff, RefreshCw
 } from 'lucide-react';
 import { Meeting } from '../../types';
 
@@ -9,7 +9,7 @@ interface Campaign {
   id: string;
   title: string;
   duration: string;
-  iconType: 'flame' | 'globe' | 'faith';
+  iconType: 'flame' | 'wifi_off' | 'globe' | 'faith';
   endDate?: string; // Optional automatic hide limit
 }
 
@@ -18,13 +18,15 @@ interface AgendaPanelProps {
   customCampaigns: Campaign[];
   updateStateAndBroadcast: (key: string, value: any) => void;
   showConfirm?: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
+  onResetCampaigns?: () => void;
 }
 
 export function AgendaPanel({
   customMeetings,
   customCampaigns,
   updateStateAndBroadcast,
-  showConfirm
+  showConfirm,
+  onResetCampaigns
 }: AgendaPanelProps) {
   const [newMeetTheme, setNewMeetTheme] = useState('');
   const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
@@ -36,7 +38,7 @@ export function AgendaPanel({
 
   const [newCampTitle, setNewCampTitle] = useState('');
   const [newCampDuration, setNewCampDuration] = useState('');
-  const [newCampType, setNewCampType] = useState<'flame' | 'globe' | 'faith'>('flame');
+  const [newCampType, setNewCampType] = useState<'flame' | 'wifi_off' | 'globe' | 'faith'>('flame');
   const [newCampEndDate, setNewCampEndDate] = useState('');
   const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
 
@@ -400,18 +402,29 @@ export function AgendaPanel({
           <div className="p-5 border-t border-zinc-800/50 bg-zinc-950/20 flex flex-col gap-4">
             
             {!showAddCampaignForm ? (
-              <button
-                onClick={() => {
-                  setShowAddCampaignForm(true);
-                  setNewCampTitle('');
-                  setNewCampDuration('');
-                  setNewCampType('flame');
-                  setNewCampEndDate('');
-                }}
-                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-amber-500" /> Adicionar Novo Propósito
-              </button>
+              <div className="flex flex-col gap-2 w-full">
+                <button
+                  onClick={() => {
+                    setShowAddCampaignForm(true);
+                    setNewCampTitle('');
+                    setNewCampDuration('');
+                    setNewCampType('flame');
+                    setNewCampEndDate('');
+                  }}
+                  className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-amber-500" /> Adicionar Novo Propósito
+                </button>
+                {onResetCampaigns && (
+                  <button
+                    type="button"
+                    onClick={onResetCampaigns}
+                    className="w-full py-2 bg-zinc-950/40 hover:bg-zinc-900/40 text-zinc-400 hover:text-amber-500 border border-zinc-800/50 hover:border-amber-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 shrink-0" /> Restaurar Propósitos Padrão
+                  </button>
+                )}
+              </div>
             ) : (
               <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex flex-col gap-3.5 shadow-inner">
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
@@ -448,23 +461,35 @@ export function AgendaPanel({
 
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">Estilo Visual</label>
-                  <div className="grid grid-cols-3 gap-2 mt-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => setNewCampType('wifi_off')}
+                      className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                        newCampType === 'wifi_off'
+                          ? "bg-amber-500 border-amber-500 text-black shadow"
+                          : "bg-zinc-950 border-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      <WifiOff className="w-4 h-4" />
+                      Sem Wi-Fi (Daniel)
+                    </button>
                     <button
                       type="button"
                       onClick={() => setNewCampType('flame')}
-                      className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
                         newCampType === 'flame'
                           ? "bg-amber-500 border-amber-500 text-black shadow"
                           : "bg-zinc-950 border-zinc-800 text-zinc-400"
                       }`}
                     >
                       <Flame className="w-4 h-4" />
-                      Fogo / Jejum
+                      Fogueira / Fogo
                     </button>
                     <button
                       type="button"
                       onClick={() => setNewCampType('globe')}
-                      className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
                         newCampType === 'globe'
                           ? "bg-amber-500 border-amber-500 text-black shadow"
                           : "bg-zinc-950 border-zinc-800 text-zinc-400"
@@ -476,14 +501,14 @@ export function AgendaPanel({
                     <button
                       type="button"
                       onClick={() => setNewCampType('faith')}
-                      className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
                         newCampType === 'faith'
                           ? "bg-amber-500 border-amber-500 text-black shadow"
                           : "bg-zinc-950 border-zinc-800 text-zinc-400"
                       }`}
                     >
                       <CalendarDays className="w-4 h-4" />
-                      Propósito Geral
+                      Geral / Outros
                     </button>
                   </div>
                 </div>
@@ -542,7 +567,15 @@ export function AgendaPanel({
                     >
                       <div className="flex items-center gap-3 max-w-[70%] text-left">
                         <div className="p-1.5 bg-zinc-900 border border-zinc-800 text-amber-500 rounded-lg shrink-0">
-                          {camp.iconType === 'flame' || (camp as any).type === 'fogueira_santa' || (camp as any).type === 'jejum_daniel' ? <Flame className="w-4 h-4" /> : camp.iconType === 'globe' ? <Globe className="w-4 h-4" /> : <CalendarDays className="w-4 h-4" />}
+                          {camp.iconType === 'wifi_off' ? (
+                            <WifiOff className="w-4 h-4" />
+                          ) : camp.iconType === 'globe' ? (
+                            <Globe className="w-4 h-4" />
+                          ) : camp.iconType === 'faith' ? (
+                            <CalendarDays className="w-4 h-4" />
+                          ) : (
+                            <Flame className="w-4 h-4" />
+                          )}
                         </div>
                         <div className="flex flex-col gap-0.5 min-w-0">
                           <span className="text-zinc-200 font-bold truncate leading-snug">{camp.title}</span>

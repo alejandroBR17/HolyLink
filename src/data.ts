@@ -136,8 +136,8 @@ export const CAMPAIGNS = [
   {
     id: "camp_default_2",
     title: "Jejum de\nDaniel",
-    duration: "Até 2 de Agosto",
-    iconType: "flame",
+    duration: "21 Dias de Propósito",
+    iconType: "wifi_off",
     endDate: "2026-08-02"
   }
 ];

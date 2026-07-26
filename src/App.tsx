@@ -543,6 +543,38 @@ export default function App() {
   };
 
   const updateStateAndBroadcast = (key: string, value: any) => {
+    if (key === 'advanceToSlide') {
+      const targetSlideId = value;
+      const baseActive: SlideType[] = [...DEFAULT_SLIDES];
+      customMediaList.forEach((media) => {
+        if (media.enabledInLoop) baseActive.push(media.id);
+      });
+      customMeetings.forEach((meet) => {
+        if (meet.date) baseActive.push(`meeting_event_${meet.id}`);
+      });
+      if (diffSeconds <= 15 * 60) baseActive.push('soon');
+
+      let currentActiveSlides = slidesOrder.filter((id) => baseActive.includes(id));
+      baseActive.forEach((id) => {
+        if (!currentActiveSlides.includes(id)) currentActiveSlides.push(id);
+      });
+
+      if (currentActiveSlides.length > 0) {
+        const targetIndex = currentActiveSlides.indexOf(targetSlideId);
+        if (targetIndex !== -1) {
+          let targetAccumulatedTime = 0;
+          for (let i = 0; i < targetIndex; i++) {
+            targetAccumulatedTime += getSlideDuration(currentActiveSlides[i], customMediaList);
+          }
+          const now = Date.now();
+          const newOffset = now - targetAccumulatedTime;
+          updateStateAndBroadcast('carouselStartTimeOffset', newOffset);
+        }
+      }
+      updateStateAndBroadcast('manualSlideOverride', null);
+      return;
+    }
+
     if (value === null || value === undefined) {
       localStorage.removeItem(`projection_${key}`);
     } else {
@@ -1181,7 +1213,7 @@ export default function App() {
         if (activeSlides.length > 0) {
           const currentIndex = activeSlides.indexOf(currentSlideId);
           const nextIndex = (currentIndex + 1) % activeSlides.length;
-          updateStateAndBroadcast('manualSlideOverride', activeSlides[nextIndex]);
+          updateStateAndBroadcast('advanceToSlide', activeSlides[nextIndex]);
         }
       }
       // ArrowLeft or PageUp: Previous slide
@@ -1190,7 +1222,7 @@ export default function App() {
         if (activeSlides.length > 0) {
           const currentIndex = activeSlides.indexOf(currentSlideId);
           const prevIndex = (currentIndex - 1 + activeSlides.length) % activeSlides.length;
-          updateStateAndBroadcast('manualSlideOverride', activeSlides[prevIndex]);
+          updateStateAndBroadcast('advanceToSlide', activeSlides[prevIndex]);
         }
       }
       // Escape: Reset override / clear active verse / clear alert
@@ -1541,6 +1573,7 @@ export default function App() {
                 customCampaigns={customCampaigns}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 showConfirm={showConfirm}
+                onResetCampaigns={() => updateStateAndBroadcast('customCampaigns', CAMPAIGNS)}
               />
             )}
 

@@ -109,7 +109,7 @@ export function BiblePanel({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={handleShuffle}
-            className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-200 text-xs font-bold py-3 px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all"
+            className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-200 text-xs font-bold py-3 px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all whitespace-nowrap"
           >
             <Shuffle className="w-4 h-4 text-amber-500 animate-pulse" />
             Embaralhar Versículo
@@ -118,7 +118,7 @@ export function BiblePanel({
           <button
             onClick={handleResetVerse}
             disabled={activeVerseIndex === null && !customVerseText}
-            className={`border text-xs font-bold py-3 px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all ${
+            className={`border text-xs font-bold py-3 px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all whitespace-nowrap ${
               activeVerseIndex === null && !customVerseText
                 ? "bg-zinc-950/20 border-zinc-900 text-zinc-600 cursor-not-allowed"
                 : "bg-zinc-950 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-200"

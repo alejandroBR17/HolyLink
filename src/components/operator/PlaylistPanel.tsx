@@ -147,9 +147,9 @@ export function PlaylistPanel({
       
       {/* SEÇÃO SLIDES */}
       <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-        <div className="flex items-center justify-between border-b border-zinc-800/50 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/50 pb-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500">
+            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 shrink-0">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
@@ -158,20 +158,22 @@ export function PlaylistPanel({
             </div>
           </div>
 
-          {manualSlideOverride ? (
-            <button
-              onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
-              className="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 hover:bg-amber-500/20 transition-all font-bold cursor-pointer animate-pulse"
-            >
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              Voltar ao Automático
-            </button>
-          ) : (
-            <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-              Modo Automático Ativo
-            </span>
-          )}
+          <div className="flex items-center shrink-0">
+            {manualSlideOverride ? (
+              <button
+                onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
+                className="w-full sm:w-auto bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 hover:bg-amber-500/20 transition-all font-bold cursor-pointer animate-pulse whitespace-nowrap"
+              >
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                Voltar ao Automático
+              </button>
+            ) : (
+              <span className="w-full sm:w-auto bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center justify-center gap-1.5 animate-pulse whitespace-nowrap">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
+                Modo Automático Ativo
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-1">

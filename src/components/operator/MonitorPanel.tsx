@@ -201,14 +201,14 @@ export function MonitorPanel({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowShortcutsModal(!showShortcutsModal)}
-              className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 p-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all"
-              title="Atalhos de Teclado"
+              className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px]"
+              title="Atalhos e Comandos"
             >
-              <Keyboard className="w-3.5 h-3.5 text-amber-500" />
-              <span className="hidden sm:inline">Atalhos</span>
+              <Keyboard className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Atalhos</span>
             </button>
-            <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider animate-pulse flex items-center gap-1">
-              <span className="w-1 h-1 bg-emerald-400 rounded-full" />
+            <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-wider animate-pulse flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
               Live
             </span>
           </div>
@@ -265,43 +265,29 @@ export function MonitorPanel({
         </div>
 
         {/* QUICK TOUCH CONTROL BAR FOR MOBILE / TABLET OPERATORS */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-2 pt-1">
           <button
             onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}
-            className={`p-3 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${
+            className={`p-3 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md min-h-[44px] ${
               blackoutEnabled
                 ? 'bg-red-600 border-red-500 text-white shadow-red-900/30 animate-pulse'
                 : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-300'
             }`}
           >
-            <EyeOff className="w-4 h-4 text-amber-500" />
+            <EyeOff className="w-4 h-4 text-amber-500 shrink-0" />
             <span>{blackoutEnabled ? 'RESTAURAR TELA' : 'BLACKOUT (B)'}</span>
           </button>
 
           <button
             onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}
-            className={`p-3 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${
+            className={`p-3 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md min-h-[44px] ${
               clearContentEnabled
                 ? 'bg-amber-500 border-amber-400 text-black shadow-amber-500/20'
                 : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-300'
             }`}
           >
-            <Eye className="w-4 h-4 text-amber-500" />
+            <Eye className="w-4 h-4 text-amber-500 shrink-0" />
             <span>{clearContentEnabled ? 'MOSTRAR TEXTO' : 'LIMPAR TEXTO (C)'}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              if (activeSlides.length > 0) {
-                const currentIndex = activeSlides.indexOf(currentSlideId);
-                const nextIndex = (currentIndex + 1) % activeSlides.length;
-                updateStateAndBroadcast('manualSlideOverride', activeSlides[nextIndex]);
-              }
-            }}
-            className="col-span-2 sm:col-span-1 p-3 bg-amber-500 hover:bg-amber-400 text-black rounded-xl border border-amber-400 text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-amber-500/10"
-          >
-            <SkipForward className="w-4 h-4" />
-            <span>PRÓXIMO SLIDE</span>
           </button>
         </div>
 
@@ -310,24 +296,24 @@ export function MonitorPanel({
           {!isProjectionOpen ? (
             <button
               onClick={handleOpenMonitor}
-              className="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+              className="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 min-h-[42px]"
             >
-              <ExternalLink className="w-4 h-4 text-amber-500" />
-              Projetar na 2ª Tela (HDMI)
+              <ExternalLink className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Projetar na 2ª Tela (HDMI)</span>
             </button>
           ) : (
             <button
               onClick={handleCloseMonitor}
-              className="flex-1 p-2.5 bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+              className="flex-1 p-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all min-h-[42px]"
             >
-              <X className="w-4 h-4" />
-              Fechar 2ª Tela
+              <X className="w-4 h-4 shrink-0" />
+              <span>Fechar 2ª Tela</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* PRÓXIMA MÍDIA / A SEGUIR CARD - AMPLO E ADEQUADO PARA QUALQUER LARGURA */}
+      {/* PRÓXIMA MÍDIA / A SEGUIR CARD - DESIGN FLUIDO E LIMPO PARA CELULAR E PC */}
       <div className="bg-zinc-900 border border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col gap-3.5 relative">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/80 pb-3 gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -338,8 +324,8 @@ export function MonitorPanel({
               <h4 className="text-zinc-100 font-black text-xs sm:text-sm uppercase tracking-wider leading-snug">Fila de Transmissão: A Seguir</h4>
               <p className="text-[11px] text-zinc-400 font-medium leading-tight mt-0.5">
                 {activeSlides.length > 0
-                  ? `Item na Posição ${(activeSlides.indexOf(currentSlideId) + 2) > activeSlides.length ? 1 : activeSlides.indexOf(currentSlideId) + 2} de ${activeSlides.length} do Carrossel`
-                  : 'Aguardando mídias cadastradas'}
+                  ? `Posição ${(activeSlides.indexOf(currentSlideId) + 2) > activeSlides.length ? 1 : activeSlides.indexOf(currentSlideId) + 2} de ${activeSlides.length} do Carrossel`
+                  : 'Aguardando mídias'}
               </p>
             </div>
           </div>
@@ -354,20 +340,20 @@ export function MonitorPanel({
               {nextMedia.icon}
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-widest block mb-1">Próximo Conteúdo na Fila</span>
+              <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-widest block mb-0.5">Próximo Conteúdo</span>
               <p className="text-sm sm:text-base font-black text-white leading-snug break-words">{nextMedia.title}</p>
               <p className="text-xs text-zinc-400 font-medium leading-relaxed mt-1 break-words">
-                {customVerseText ? 'Aguardando fechamento do versículo bíblico ativo' : 'Pronto para entrar na tela principal do projetor'}
+                {customVerseText ? 'Aguardando encerramento do versículo ativo' : 'Pronto na fila do projetor'}
               </p>
             </div>
           </div>
 
           {nextMedia.id && (
             <button
-              onClick={() => updateStateAndBroadcast('manualSlideOverride', nextMedia.id)}
-              className="bg-amber-500 hover:bg-amber-400 text-black text-xs sm:text-sm font-black px-4 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-95 w-full min-h-[44px]"
+              onClick={() => updateStateAndBroadcast('advanceToSlide', nextMedia.id)}
+              className="bg-amber-500 hover:bg-amber-400 text-black text-xs sm:text-sm font-extrabold px-4 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-95 w-full min-h-[44px]"
             >
-              <SkipForward className="w-4 h-4" />
+              <SkipForward className="w-4 h-4 shrink-0" />
               <span>Avançar para este Slide Agora</span>
             </button>
           )}
@@ -375,20 +361,20 @@ export function MonitorPanel({
       </div>
 
       {/* HARDWARE DIAGNOSTIC & AUTOMATIC OPTIMIZATION BANNER */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left">
-        <div className="flex items-center gap-3.5 min-w-0">
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 shrink-0">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 text-left">
+        <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+          <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 shrink-0">
             <Gauge className="w-5 h-5" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Otimização de Hardware & RAM</h4>
+              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Desempenho & RAM</h4>
               <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">
-                {fps} FPS ({mode === 'light' ? 'Modo Economia' : 'Alto Desempenho'})
+                {fps} FPS ({mode === 'light' ? 'Economia' : 'Alto Desempenho'})
               </span>
             </div>
-            <p className="text-[11px] text-zinc-400 mt-0.5 leading-tight">
-              Análise automática de CPU, Placa de Vídeo e Limpeza de Cache de Vídeos
+            <p className="text-[11px] text-zinc-400 mt-0.5 leading-normal">
+              Otimização automática de CPU, GPU e memória
             </p>
           </div>
         </div>
@@ -397,8 +383,8 @@ export function MonitorPanel({
           onClick={() => setShowBenchmarkModal(true)}
           className="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-200 text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto min-h-[40px]"
         >
-          <Zap className="w-4 h-4 text-amber-500" />
-          <span>Testar e Otimizar Dispositivo</span>
+          <Zap className="w-4 h-4 text-amber-500 shrink-0" />
+          <span>Testar e Otimizar</span>
         </button>
       </div>
 
@@ -408,91 +394,148 @@ export function MonitorPanel({
         onClose={() => setShowBenchmarkModal(false)}
       />
 
-      {/* SHORTCUTS MODAL / EXPANDABLE PANEL */}
+      {/* SHORTCUTS & INTERACTIVE COMMANDS MODAL OVERLAY */}
       {showShortcutsModal && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-            <h4 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-              <Keyboard className="w-4 h-4 text-amber-500" />
-              Atalhos de Teclado Rápido
-            </h4>
-            <button onClick={() => setShowShortcutsModal(false)} className="text-zinc-500 hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300">
-            <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-850 flex items-center justify-between">
-              <span>Tela Preta (Blackout)</span>
-              <kbd className="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-400">B</kbd>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-amber-500/40 rounded-2xl p-5 shadow-2xl max-w-lg w-full flex flex-col gap-4 relative">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h4 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider flex items-center gap-2">
+                <Keyboard className="w-5 h-5 text-amber-500 shrink-0" />
+                Atalhos de Teclado & Comandos
+              </h4>
+              <button
+                onClick={() => setShowShortcutsModal(false)}
+                className="p-1.5 text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 rounded-lg cursor-pointer transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-850 flex items-center justify-between">
-              <span>Limpar Texto</span>
-              <kbd className="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-400">C</kbd>
-            </div>
-            <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-850 flex items-center justify-between">
-              <span>Próximo Slide/Versículo</span>
-              <kbd className="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-400">Espaço / →</kbd>
-            </div>
-            <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-850 flex items-center justify-between">
-              <span>Slide Anterior</span>
-              <kbd className="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-400">←</kbd>
-            </div>
-            <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-850 flex items-center justify-between">
-              <span>Cancelar / Resetar</span>
-              <kbd className="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-400">Esc</kbd>
-            </div>
-            <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-850 flex items-center justify-between">
-              <span>Mudar Volume / Mudo</span>
-              <kbd className="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-400">M</kbd>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              No computador, você pode pressionar as teclas diretamente. No celular ou tablet, pode tocar em qualquer comando abaixo:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              <button
+                onClick={() => { updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled); setShowShortcutsModal(false); }}
+                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+              >
+                <span className="font-bold text-zinc-200">Blackout (Ocultar Tela)</span>
+                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">B</kbd>
+              </button>
+
+              <button
+                onClick={() => { updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled); setShowShortcutsModal(false); }}
+                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+              >
+                <span className="font-bold text-zinc-200">Limpar Texto/Versículo</span>
+                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">C</kbd>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (activeSlides.length > 0) {
+                    const currentIndex = activeSlides.indexOf(currentSlideId);
+                    const nextIndex = (currentIndex + 1) % activeSlides.length;
+                    updateStateAndBroadcast('advanceToSlide', activeSlides[nextIndex]);
+                  }
+                  setShowShortcutsModal(false);
+                }}
+                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+              >
+                <span className="font-bold text-zinc-200">Próximo Slide da Fila</span>
+                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">Espaço / →</kbd>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (activeSlides.length > 0) {
+                    const currentIndex = activeSlides.indexOf(currentSlideId);
+                    const prevIndex = (currentIndex - 1 + activeSlides.length) % activeSlides.length;
+                    updateStateAndBroadcast('advanceToSlide', activeSlides[prevIndex]);
+                  }
+                  setShowShortcutsModal(false);
+                }}
+                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+              >
+                <span className="font-bold text-zinc-200">Slide Anterior</span>
+                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">←</kbd>
+              </button>
+
+              <button
+                onClick={() => {
+                  updateStateAndBroadcast('manualSlideOverride', null);
+                  if (customVerseText) {
+                    updateStateAndBroadcast('customVerseText', null);
+                    updateStateAndBroadcast('customVerseRef', null);
+                    updateStateAndBroadcast('activeVerseIndex', null);
+                  }
+                  if (activeAlert) updateStateAndBroadcast('activeAlert', null);
+                  setShowShortcutsModal(false);
+                }}
+                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+              >
+                <span className="font-bold text-zinc-200">Resetar / Seguir Fila</span>
+                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">Esc</kbd>
+              </button>
+
+              <button
+                onClick={() => {
+                  updateStateAndBroadcast('volume', volume > 0 ? 0 : 0.5);
+                  setShowShortcutsModal(false);
+                }}
+                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+              >
+                <span className="font-bold text-zinc-200">Mudo / Ativar Som</span>
+                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">M</kbd>
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* SMART DEVICE GUIDANCE CARD */}
-      <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl text-left">
-        <div className="flex items-center justify-between mb-2.5">
-          <h4 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 sm:p-5 shadow-xl text-left">
+        <div className="flex items-center justify-between mb-2.5 gap-2">
+          <h4 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-2 min-w-0">
             {isMobileDevice ? (
-              <Smartphone className="w-4 h-4 text-amber-500 animate-pulse" />
+              <Smartphone className="w-4 h-4 text-amber-500 animate-pulse shrink-0" />
             ) : (
-              <Laptop className="w-4 h-4 text-amber-500" />
+              <Laptop className="w-4 h-4 text-amber-500 shrink-0" />
             )}
-            Modo Inteligente: {isMobileDevice ? 'Celular / Tablet (Controle Remoto)' : 'Computador Desktop (Mesa de Som/Projeção)'}
+            <span className="truncate">Modo: {isMobileDevice ? 'Celular / Tablet' : 'Computador / Mesa'}</span>
           </h4>
-          <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[8px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
-            {isMobileDevice ? 'Controle por Toque' : 'Atalhos + HDMI'}
+          <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[9px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shrink-0">
+            {isMobileDevice ? 'Controle Remoto' : 'HDMI + Teclado'}
           </span>
         </div>
 
         {isMobileDevice ? (
-          <div className="text-[11px] text-zinc-400 space-y-2 leading-relaxed">
+          <div className="text-[11px] text-zinc-400 space-y-1.5 leading-relaxed">
             <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold">1</span>
-              Seu celular foi detectado automaticamente como <strong>Mesa de Controle Sem Fio</strong>.
+              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">1</span>
+              <span>Seu celular opera como <strong>Controle Remoto Sem Fio</strong> do projetor.</span>
             </p>
             <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold">2</span>
-              Abra este mesmo link no computador da transmissão conectado na TV/Projetor HDMI.
+              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">2</span>
+              <span>Abra este mesmo link no PC da igreja conectado à TV/HDMI.</span>
             </p>
             <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold">3</span>
-              Use os botões táteis de acesso rápido acima (<strong>BLACKOUT</strong>, <strong>LIMPAR TEXTO</strong> e <strong>PRÓXIMO SLIDE</strong>) para operar o culto diretamente da nave ou do altar!
+              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">3</span>
+              <span>Use os botões <strong>BLACKOUT</strong>, <strong>LIMPAR TEXTO</strong> e a <strong>FILA DE TRANSMISSÃO</strong> para controlar tudo em tempo real!</span>
             </p>
           </div>
         ) : (
-          <div className="text-[11px] text-zinc-400 space-y-2 leading-relaxed">
+          <div className="text-[11px] text-zinc-400 space-y-1.5 leading-relaxed">
             <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold">1</span>
-              Conecte a TV ou Projetor na 2ª saída HDMI do seu computador.
+              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">1</span>
+              <span>Conecte a TV ou Projetor na saída HDMI do computador.</span>
             </p>
             <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold">2</span>
-              Clique em <strong>"Projetar na 2ª Tela (HDMI)"</strong> para abrir o projetor em nova janela.
+              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">2</span>
+              <span>Clique em <strong>"Projetar na 2ª Tela (HDMI)"</strong>.</span>
             </p>
             <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold">3</span>
-              Use os atalhos de teclado <strong>B</strong> (Blackout), <strong>C</strong> (Clear Text), <strong>Espaço</strong> (Próximo) e <strong>ESC</strong> (Resetar) para agilidade total.
+              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">3</span>
+              <span>Atalhos: <strong>B</strong> (Blackout), <strong>C</strong> (Limpar), <strong>Espaço</strong> (Próximo) e <strong>ESC</strong> (Resetar).</span>
             </p>
           </div>
         )}

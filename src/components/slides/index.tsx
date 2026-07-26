@@ -373,41 +373,93 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
 
   return (
     <motion.div
-       initial={{ opacity: 0 }}
-       animate={{ opacity: 1 }}
-       className="flex flex-col items-center justify-center text-center max-w-[95%] w-full"
+       initial={{ opacity: 0, y: 20 }}
+       animate={{ opacity: 1, y: 0 }}
+       transition={{ duration: 0.8 }}
+       className="flex flex-col items-center justify-center w-full min-h-[85vh] px-12"
     >
-      <CalendarDays className="w-16 h-16 text-stone-500 mb-4" strokeWidth={1.5} />
-      <h1 className="font-sans font-semibold text-4xl tracking-wide text-stone-400 uppercase mb-16">
-        Propósitos Atuais
-      </h1>
-      <div className={`grid ${activeCampaigns.length === 1 ? 'grid-cols-1 max-w-2xl' : 'grid-cols-2'} gap-10 w-full justify-center`}>
+      <div className="flex items-center gap-4 mb-12">
+        <div className="h-[2px] w-12 bg-amber-500/40" />
+        <h1 className="font-sans font-bold text-3xl tracking-[0.3em] text-amber-500 uppercase">
+          Propósitos Atuais
+        </h1>
+        <div className="h-[2px] w-12 bg-amber-500/40" />
+      </div>
+
+      <div className={`w-full max-w-6xl ${activeCampaigns.length === 1 ? 'flex justify-center' : 'grid grid-cols-2 gap-12'}`}>
         {activeCampaigns.length > 0 ? (
           activeCampaigns.map((campaign, index) => {
             let Icon = Flame;
-            if (campaign.type === 'jejum_daniel') {
+            const iconKey = campaign.iconType || campaign.type || '';
+            if (iconKey === 'wifi_off' || iconKey.includes('daniel')) {
               Icon = WifiOff;
-            } else if (campaign.type === 'jejum_zacarias') {
-              Icon = MessageSquareOff;
-            } else if (campaign.type === 'ano_ide') {
+            } else if (iconKey === 'globe' || iconKey.includes('globe') || iconKey.includes('ide')) {
               Icon = Globe;
-            } else if (campaign.type === 'combate_gafanhoto') {
-              Icon = AlertTriangle;
+            } else if (iconKey === 'faith' || iconKey.includes('faith') || iconKey.includes('agenda')) {
+              Icon = CalendarDays;
+            } else if (iconKey === 'flame' || iconKey.includes('fogo') || iconKey.includes('fogueira')) {
+              Icon = Flame;
             }
+
+            if (activeCampaigns.length === 1) {
+              // Layout majestoso para 1 campanha
+              return (
+                <div key={index} className="bg-zinc-950/40 border border-amber-500/20 p-16 rounded-[2.5rem] flex items-center justify-between gap-16 w-full max-w-5xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/[0.02] to-transparent pointer-events-none" />
+                  <div className="absolute -right-24 -bottom-24 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+                  
+                  <div className="flex-1 text-left">
+                    <span className="text-amber-500 text-lg uppercase tracking-[0.25em] font-extrabold block mb-4">
+                      Em Andamento
+                    </span>
+                    <h3 className="text-white font-black text-[5.5rem] leading-[1.05] tracking-tight mb-8 whitespace-pre-line drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                      {campaign.title}
+                    </h3>
+                    <div className="inline-flex items-center gap-3 bg-amber-500/10 border border-amber-500/25 px-6 py-3 rounded-full mt-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="text-amber-400 text-xl uppercase tracking-wider font-extrabold">
+                        {campaign.duration}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-12 bg-gradient-to-b from-amber-500/[0.08] to-transparent border border-amber-500/20 rounded-[2rem] shadow-inner flex-shrink-0 relative">
+                    <div className="absolute inset-0 bg-amber-500/[0.02] animate-pulse rounded-[2rem]" />
+                    <Icon className="w-40 h-40 text-amber-500 relative z-10" strokeWidth={1} />
+                  </div>
+                </div>
+              );
+            }
+
+            // Layout de Grid refinado para múltiplas campanhas
             return (
-              <div key={index} className="bg-white/[0.03] border border-white/[0.08] p-16 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl relative overflow-hidden group transition-all">
-                 <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                 <Icon className="w-48 h-48 text-yellow-500 mb-12" strokeWidth={1} />
-                 <h3 className="text-white font-black text-[5.5rem] mb-8 tracking-tight leading-none drop-shadow-[0_0_30px_rgba(234,179,8,0.3)] whitespace-pre-line">{campaign.title}</h3>
-                 <p className="text-yellow-500 text-4xl uppercase tracking-[0.2em] font-bold mt-6">{campaign.duration}</p>
+              <div key={index} className="bg-zinc-950/30 border border-zinc-800 hover:border-amber-500/30 p-12 rounded-[2rem] flex flex-col items-center text-center shadow-xl relative overflow-hidden group transition-all duration-500">
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-500/[0.01] to-transparent pointer-events-none" />
+                <div className="absolute -right-16 -bottom-16 w-48 h-48 bg-amber-500/[0.02] rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="p-8 bg-zinc-900/50 border border-zinc-800 group-hover:border-amber-500/25 rounded-2xl mb-8 transition-colors duration-500">
+                  <Icon className="w-24 h-24 text-amber-500 group-hover:scale-105 transition-transform duration-500" strokeWidth={1.25} />
+                </div>
+                
+                <h3 className="text-white font-extrabold text-[3.25rem] leading-none mb-6 tracking-tight whitespace-pre-line group-hover:text-amber-100 transition-colors">
+                  {campaign.title}
+                </h3>
+                
+                <div className="mt-auto bg-amber-500/5 border border-amber-500/10 px-5 py-2 rounded-full">
+                  <p className="text-amber-500 text-sm uppercase tracking-[0.15em] font-extrabold">
+                    {campaign.duration}
+                  </p>
+                </div>
               </div>
             );
           })
         ) : (
-          <div className="col-span-2 bg-white/[0.03] border border-white/[0.08] p-20 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl">
-            <Flame className="w-36 h-36 text-yellow-500/35 mb-8" strokeWidth={1} />
-            <h3 className="text-stone-300 font-bold text-[3rem] mb-4">Mantenha a sua Fé Ativa</h3>
-            <p className="text-stone-400 text-2xl leading-relaxed max-w-lg">Participe diariamente das nossas reuniões de fé e fortaleça a sua comunhão com Deus.</p>
+          <div className="w-full max-w-3xl bg-zinc-950/20 border border-zinc-800/80 p-20 rounded-[2rem] flex flex-col items-center text-center shadow-xl">
+            <Flame className="w-24 h-24 text-zinc-600 mb-8" strokeWidth={1} />
+            <h3 className="text-zinc-300 font-bold text-[2.5rem] tracking-wide mb-4">Consagração Contínua</h3>
+            <p className="text-zinc-500 text-xl leading-relaxed max-w-lg">
+              Acompanhe as orientações do bispo e pastores para se manter firme em comunhão.
+            </p>
           </div>
         )}
       </div>
