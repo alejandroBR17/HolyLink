@@ -295,6 +295,10 @@ export default function App() {
     }
   }, [manualSlideOverride, slidesOrder, customMediaList]);
 
+  const handleResetCampaigns = useCallback(() => {
+    updateStateAndBroadcast('customCampaigns', CAMPAIGNS);
+  }, [updateStateAndBroadcast]);
+
   const handleMoveSlide = useCallback((slideId: string, direction: 'up' | 'down') => {
     let currentOrder = slidesOrder.filter((id) => baseActiveSlides.includes(id));
     baseActiveSlides.forEach((id) => {
@@ -483,6 +487,35 @@ export default function App() {
   const hoursStr = countHours.toString().padStart(2, '0');
   const minutesStr = countMinutes.toString().padStart(2, '0');
 
+  // Re-sync time immediately when returning to tab from background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setCurrentTime(new Date());
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Cleanup manualSlideOverride if the referenced custom media or meeting is deleted
+  useEffect(() => {
+    if (manualSlideOverride) {
+      if (manualSlideOverride.startsWith('custom_')) {
+        const exists = customMediaList.some((m) => m.id === manualSlideOverride);
+        if (!exists) {
+          updateStateAndBroadcast('manualSlideOverride', null);
+        }
+      } else if (manualSlideOverride.startsWith('meeting_event_')) {
+        const meetId = manualSlideOverride.replace('meeting_event_', '');
+        const exists = customMeetings.some((m) => m.id === meetId);
+        if (!exists) {
+          updateStateAndBroadcast('manualSlideOverride', null);
+        }
+      }
+    }
+  }, [manualSlideOverride, customMediaList, customMeetings, updateStateAndBroadcast]);
+
   const handleVideoEnded = useCallback(() => {
     if (videoPinBehavior === 'unpin') {
       const activeSlideId = currentSlideId;
@@ -494,14 +527,14 @@ export default function App() {
           for (let i = 0; i < nextIndex; i++) {
             targetAccumulatedTime += getSlideDuration(activeSlides[i], customMediaList);
           }
-          const now = currentTime.getTime();
+          const now = Date.now();
           const newOffset = now - targetAccumulatedTime;
           updateStateAndBroadcast('carouselStartTimeOffset', newOffset);
         }
       }
       updateStateAndBroadcast('manualSlideOverride', null);
     }
-  }, [videoPinBehavior, currentSlideId, activeSlides, customMediaList, currentTime, updateStateAndBroadcast]);
+  }, [videoPinBehavior, currentSlideId, activeSlides, customMediaList, updateStateAndBroadcast]);
 
   const [isCurrentlyFullscreen, setIsCurrentlyFullscreen] = useState(false);
 
@@ -816,7 +849,7 @@ export default function App() {
                 customCampaigns={customCampaigns}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 showConfirm={showConfirm}
-                onResetCampaigns={() => updateStateAndBroadcast('customCampaigns', CAMPAIGNS)}
+                onResetCampaigns={handleResetCampaigns}
               />
             )}
 

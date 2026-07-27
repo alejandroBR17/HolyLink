@@ -21,7 +21,7 @@ interface AgendaPanelProps {
   onResetCampaigns?: () => void;
 }
 
-export function AgendaPanel({
+export const AgendaPanel = React.memo(function AgendaPanel({
   customMeetings,
   customCampaigns,
   updateStateAndBroadcast,
@@ -610,4 +610,4 @@ export function AgendaPanel({
 
     </div>
   );
-}
+});

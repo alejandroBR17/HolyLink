@@ -10,7 +10,7 @@ interface BiblePanelProps {
   updateStateAndBroadcast: (key: string, value: any) => void;
 }
 
-export function BiblePanel({
+export const BiblePanel = React.memo(function BiblePanel({
   activeVerseIndex,
   customVerseText,
   customVerseRef,
@@ -224,4 +224,4 @@ export function BiblePanel({
 
     </div>
   );
-}
+});

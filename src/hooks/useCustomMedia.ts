@@ -209,7 +209,12 @@ export function useCustomMedia(
           video.src = objectUrl;
           video.onloadedmetadata = () => {
             URL.revokeObjectURL(objectUrl);
-            resolve(Math.round(video.duration * 1000));
+            const d = video.duration;
+            if (typeof d === 'number' && !isNaN(d) && isFinite(d) && d > 0) {
+              resolve(Math.round(d * 1000));
+            } else {
+              resolve(10000);
+            }
           };
           video.onerror = () => {
             URL.revokeObjectURL(objectUrl);

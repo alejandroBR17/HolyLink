@@ -39,7 +39,7 @@ interface PlaylistPanelProps {
   customMeetings: any[];
 }
 
-export function PlaylistPanel({
+export const PlaylistPanel = React.memo(function PlaylistPanel({
   currentSlideId,
   manualSlideOverride,
   activeSlides,
@@ -513,4 +513,4 @@ export function PlaylistPanel({
       </div>
     </div>
   );
-}
+});

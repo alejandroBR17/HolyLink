@@ -469,6 +469,11 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
 
 export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnded, isBackgroundBlur, volume = 0.5, fit }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasErroredRef = useRef(false);
+
+  useEffect(() => {
+    hasErroredRef.current = false;
+  }, [media?.id, media?.url]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -541,6 +546,14 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
         playsInline
         controls={false}
         loop={shouldLoop}
+        onError={(e) => {
+          if (hasErroredRef.current) return;
+          hasErroredRef.current = true;
+          console.error("Video playback error on slide:", media?.id, e);
+          if (!isBackgroundBlur && onVideoEnded) {
+            onVideoEnded();
+          }
+        }}
         onEnded={() => {
           if (shouldLoop) {
             if (videoRef.current) {

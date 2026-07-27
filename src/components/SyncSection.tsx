@@ -92,7 +92,7 @@ export function broadcastToPeers(data: any, excludeConn?: any) {
   }
 }
 
-export function SyncSection({ 
+export const SyncSection = React.memo(function SyncSection({ 
   showAlert, 
   showConfirm 
 }: { 
@@ -308,13 +308,13 @@ export function SyncSection({
               window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
               setDirectSyncStatus('success');
               setSyncMessage('Tudo sincronizado instantaneamente! (Sem re-download de mídias)');
-              conn.send({ type: 'SYNC_COMPLETE', message: 'Tudo atualizado sem re-download' });
+              try { conn.send({ type: 'SYNC_COMPLETE', message: 'Tudo atualizado sem re-download' }); } catch (e) { console.warn("Failed to send SYNC_COMPLETE:", e); }
               return;
             }
 
             // Request ONLY missing media items
             setSyncMessage(`Sincronizando ${missingIds.length} alteração(ões) de mídia...`);
-            conn.send({ type: 'REQUEST_DELTA_MEDIA', ids: missingIds });
+            try { conn.send({ type: 'REQUEST_DELTA_MEDIA', ids: missingIds }); } catch (e) { console.warn("Failed to send REQUEST_DELTA_MEDIA:", e); }
             return;
           }
 
@@ -345,10 +345,14 @@ export function SyncSection({
               })
             );
 
-            conn.send({
-              type: 'DELTA_MEDIA_ITEMS',
-              mediaItems: serializedMedia
-            });
+            try {
+              conn.send({
+                type: 'DELTA_MEDIA_ITEMS',
+                mediaItems: serializedMedia
+              });
+            } catch (e) {
+              console.warn("Failed to send DELTA_MEDIA_ITEMS:", e);
+            }
             return;
           }
 
@@ -799,8 +803,10 @@ export function SyncSection({
     });
 
     peer.on('error', (err: any) => {
-      if (err.type !== 'peer-unavailable' && err.type !== 'disconnected') {
-        console.error('Erro no remetente PeerJS:', err);
+      if (err.type === 'peer-unavailable' || err.type === 'disconnected' || err.type === 'network' || err.type === 'socket-error' || err.type === 'socket-closed') {
+        console.warn('PeerJS remetente (Aviso): Conexão indisponível ou instável.', err.type || err);
+      } else {
+        console.warn('PeerJS remetente (Aviso/Erro):', err.type || err);
       }
       
       const role = localStorage.getItem('projection_deviceRole');
@@ -1337,4 +1343,4 @@ export function SyncSection({
       </div>
     </div>
   );
-}
+});

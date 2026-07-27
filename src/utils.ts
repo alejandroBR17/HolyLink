@@ -189,7 +189,10 @@ export async function deleteMediaItem(id: string): Promise<void> {
 export const getSlideDuration = (slideId: string, customMedia: any[] = []): number => {
   if (slideId.startsWith('custom_')) {
     const item = customMedia.find(m => m.id === slideId);
-    return item ? item.duration : 10000;
+    if (item && item.duration && !isNaN(item.duration) && isFinite(item.duration) && item.duration > 0) {
+      return item.duration;
+    }
+    return 10000;
   }
   if (slideId.startsWith('agenda_day_')) return 12000;
   if (slideId.startsWith('meeting_event_')) return 12000;
