@@ -599,26 +599,33 @@ export default function App() {
         </AnimatePresence>
 
         {/* TOP BAR / NAVIGATION */}
-        <header className="h-auto lg:h-16 px-4 lg:px-6 py-3.5 lg:py-0 bg-zinc-950 border-b border-zinc-900 flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-10 shrink-0">
+        <header className="h-auto lg:h-16 px-4 lg:px-6 py-3 lg:py-0 bg-zinc-950 border-b border-zinc-900 flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-10 shrink-0">
           <div className="flex items-center justify-between w-full lg:w-auto gap-3">
-            <div className="flex items-center gap-2">
-              <Tv className="w-5 h-5 text-amber-500" />
-              <h1 className="text-white font-bold tracking-tight text-base">
-                HolyLink <span className="text-zinc-400 text-xs font-medium ml-1.5 sm:ml-2 border-l border-zinc-800 pl-1.5 sm:pl-2">Painel do Operador</span>
-              </h1>
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <Tv className="w-5 h-5 text-amber-500 shrink-0" />
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
+                <h1 className="text-white font-black tracking-tight text-base">
+                  HolyLink
+                </h1>
+                <span className="text-zinc-400 text-xs font-semibold sm:border-l sm:border-zinc-800 sm:pl-2">
+                  Painel do Operador
+                </span>
+              </div>
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-zinc-300 uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 {localStorage.getItem('projection_deviceRole') === 'phone' ? (
-                  <span className="flex items-center gap-1">
-                    <Smartphone className="w-3 h-3 text-amber-500" />
+                  <span className="flex items-center gap-1 text-amber-400 font-extrabold">
+                    <Smartphone className="w-3.5 h-3.5" />
                     Controle Móvel
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1">
-                    <Monitor className="w-3 h-3 text-amber-500" />
+                  <span className="flex items-center gap-1 text-zinc-300">
+                    <Monitor className="w-3.5 h-3.5 text-amber-500" />
                     Console Principal
                   </span>
                 )}
@@ -626,9 +633,11 @@ export default function App() {
             </div>
           </div>
           
-          <div className="flex items-center gap-2 w-full lg:w-auto">
+          <div className="flex items-center gap-2 w-full lg:w-auto flex-wrap sm:flex-nowrap">
             {isElectron && (
               <button
+                type="button"
+                aria-label={isProjectionWindowShowing ? 'Apagar Projetor' : 'Ligar Projetor'}
                 onClick={() => {
                   if (isProjectionWindowShowing) {
                     ipcRendererRef.current?.send('hide-projection');
@@ -638,49 +647,55 @@ export default function App() {
                     setIsProjectionWindowShowing(true);
                   }
                 }}
-                className={`flex-1 lg:flex-none border text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`flex-1 sm:flex-none min-h-[40px] border text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                   isProjectionWindowShowing
                     ? 'bg-red-500/10 border-red-500/25 hover:bg-red-500/20 text-red-400'
                     : 'bg-emerald-500/10 border-emerald-500/25 hover:bg-emerald-500/20 text-emerald-400 font-bold'
                 }`}
               >
-                <Tv className="w-3.5 h-3.5" />
-                <span>{isProjectionWindowShowing ? 'Apagar Projetor' : 'Ligar Projetor'}</span>
+                <Tv className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">{isProjectionWindowShowing ? 'Apagar Projetor' : 'Ligar Projetor'}</span>
               </button>
             )}
 
             <button
+              type="button"
+              aria-label="Projetar neste navegador"
               onClick={() => {
                 setIsLocalProjection(true);
                 toggleFullscreen();
               }}
-              className="flex-1 lg:flex-none bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              className="flex-1 sm:flex-none min-h-[40px] bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 border border-zinc-800 text-zinc-200 text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
             >
-              <Monitor className="w-3.5 h-3.5" />
-              <span>Projetar Aqui</span>
+              <Monitor className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <span className="whitespace-nowrap">Projetar Aqui</span>
             </button>
 
             <button
+              type="button"
+              aria-label="Sincronizar ou conectar celular"
               onClick={() => setActiveMobileTab('sync')}
-              className={`flex-1 lg:flex-none border text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-none min-h-[40px] border text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                 activeMobileTab === 'sync'
                   ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 font-extrabold'
-                  : 'bg-zinc-900 hover:bg-zinc-850 border-zinc-800 text-zinc-300'
+                  : 'bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800 border-zinc-800 text-zinc-300'
               }`}
             >
-              <Smartphone className="w-3.5 h-3.5 text-amber-500" />
-              <span>Conectar Celular</span>
+              <Smartphone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="whitespace-nowrap">Conectar Celular</span>
             </button>
 
             <button
+              type="button"
+              aria-label="Abrir janela do monitor em segunda tela"
               onClick={() => {
                 const url = window.location.origin + window.location.pathname + '?projection';
                 window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
               }}
-              className="flex-1 lg:flex-none bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-xs px-3.5 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(245,158,11,0.2)] transition-all cursor-pointer"
+              className="w-full sm:w-auto min-h-[40px] bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-black text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(245,158,11,0.25)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.35)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Abrir Monitor (2ª Tela)</span>
+              <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+              <span className="whitespace-nowrap">Abrir Monitor (2ª Tela)</span>
             </button>
           </div>
         </header>
@@ -723,7 +738,7 @@ export default function App() {
         )}
 
         {/* MOBILE NAVIGATION TABS (Visible on mobile/tablet) */}
-        <div className="lg:hidden grid grid-cols-6 bg-zinc-950 border-b border-zinc-900 sticky top-0 z-20 shrink-0">
+        <nav aria-label="Navegação Principal do Operador" className="lg:hidden flex overflow-x-auto no-scrollbar bg-zinc-950 border-b border-zinc-900 sticky top-0 z-20 shrink-0 divide-x divide-zinc-900/60">
           {[
             { id: 'slides', label: 'Mídias', icon: Layout },
             { id: 'texts', label: 'Bíblia', icon: BookOpen },
@@ -737,19 +752,23 @@ export default function App() {
             return (
               <button
                 key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`Aba ${tab.label}`}
                 onClick={() => setActiveMobileTab(tab.id as any)}
-                className={`py-3 text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1.5 transition-all ${
+                className={`flex-1 min-w-[68px] min-h-[48px] py-2.5 px-1 text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                   isActive
-                    ? "text-amber-500 border-b-2 border-amber-500 bg-zinc-900/40"
-                    : "text-zinc-500 hover:text-zinc-300"
+                    ? "text-amber-400 border-b-2 border-amber-500 bg-zinc-900/60 font-black"
+                    : "text-zinc-400 hover:text-zinc-200 active:bg-zinc-900/30"
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-500' : 'text-zinc-400'}`} />
+                <span className="truncate max-w-full">{tab.label}</span>
               </button>
             );
           })}
-        </div>
+        </nav>
 
         {/* MAIN PANEL CONTENT GRID */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
@@ -759,7 +778,7 @@ export default function App() {
             <div className="flex flex-col gap-6">
               <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest px-2">Navegação do Deck</span>
               
-              <nav className="flex flex-col gap-1.5">
+              <nav aria-label="Navegação Lateral" className="flex flex-col gap-1.5">
                 {[
                   { id: 'slides', label: 'Playlists & Mídias', icon: Layout },
                   { id: 'texts', label: 'Textos & Bíblia', icon: BookOpen },
@@ -772,14 +791,17 @@ export default function App() {
                   return (
                     <button
                       key={item.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
                       onClick={() => setActiveMobileTab(item.id as any)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                         isActive
-                          ? "bg-amber-500/10 text-amber-500 shadow-sm border border-amber-500/10"
-                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent"
+                          ? "bg-amber-500/10 text-amber-400 shadow-sm border border-amber-500/20 font-extrabold"
+                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/80 border border-transparent"
                       }`}
                     >
-                      <IconComponent className={`w-4 h-4 ${isActive ? "text-amber-500" : "text-zinc-500"}`} />
+                      <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-amber-500" : "text-zinc-500"}`} />
                       <span>{item.label}</span>
                     </button>
                   );
@@ -790,9 +812,9 @@ export default function App() {
             {/* Sidebar Footer status */}
             <div className="border-t border-zinc-900 pt-4 px-2 flex flex-col gap-1 text-left">
               <span className="text-[10px] text-zinc-500 font-bold uppercase">Status Local</span>
-              <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-mono mt-1">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                <span>Modo Operador</span>
+              <div className="flex items-center gap-2 text-[10px] text-zinc-300 font-mono mt-1">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shrink-0" />
+                <span>Modo Operador Ativo</span>
               </div>
             </div>
           </aside>
