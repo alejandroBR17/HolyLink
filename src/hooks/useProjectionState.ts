@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CHURCH_INFO, ALERTS, VERSES, CAMPAIGNS, MEETINGS } from '../data';
 import { Meeting } from '../types';
+import { broadcastToPeers } from '../components/SyncSection';
 
 export interface ProjectionState {
   manualSlideOverride: string | null;
@@ -247,10 +248,7 @@ export function useProjectionState() {
       // Fallback
     }
 
-    const peerConn = (window as any).holyrics_peer_conn;
-    if (peerConn && peerConn.open) {
-      peerConn.send({ type: 'UPDATE_STATE', key, value, version: 1 });
-    }
+    broadcastToPeers({ type: 'UPDATE_STATE', key, value, version: 1 });
   }, [setProjectionWin]);
 
   // Listener for BroadcastChannel, Storage, and PeerJS updates

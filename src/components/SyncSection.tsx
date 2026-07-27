@@ -47,6 +47,51 @@ async function blobToBase64(blobField: any): Promise<{ base64: string; mimeType:
   }
 }
 
+export function registerPeerConn(conn: any) {
+  if (!conn) return;
+  const list: any[] = (window as any).holyrics_peer_conns || [];
+  if (!list.includes(conn)) {
+    list.push(conn);
+  }
+  (window as any).holyrics_peer_conns = list;
+  (window as any).holyrics_peer_conn = conn;
+}
+
+export function unregisterPeerConn(conn: any) {
+  if (!conn) return;
+  const list: any[] = (window as any).holyrics_peer_conns || [];
+  const filtered = list.filter(c => c !== conn && c.open);
+  (window as any).holyrics_peer_conns = filtered;
+  if (filtered.length > 0) {
+    (window as any).holyrics_peer_conn = filtered[filtered.length - 1];
+  } else {
+    delete (window as any).holyrics_peer_conn;
+  }
+}
+
+export function broadcastToPeers(data: any, excludeConn?: any) {
+  const list: any[] = (window as any).holyrics_peer_conns || [];
+  const activeList: any[] = [];
+  for (const conn of list) {
+    if (conn && conn.open) {
+      activeList.push(conn);
+      if (conn !== excludeConn) {
+        try {
+          conn.send(data);
+        } catch (e) {
+          console.error("Erro ao enviar mensagem para peer:", e);
+        }
+      }
+    }
+  }
+  (window as any).holyrics_peer_conns = activeList;
+  if (activeList.length > 0) {
+    (window as any).holyrics_peer_conn = activeList[activeList.length - 1];
+  } else {
+    delete (window as any).holyrics_peer_conn;
+  }
+}
+
 export function SyncSection({ 
   showAlert, 
   showConfirm 
@@ -143,7 +188,7 @@ export function SyncSection({
       setSyncMessage('Celular conectado! Recebendo configurações e mídias...');
 
       // Guarda conexão para qualquer comunicação de volta
-      (window as any).holyrics_peer_conn = conn;
+      registerPeerConn(conn);
 
       conn.on('data', async (data: any) => {
         try {
@@ -155,6 +200,9 @@ export function SyncSection({
             
             // Dispatch custom event for App.tsx to catch if needed
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: data.key, value: data.value } }));
+            
+            // Relay to all other connected peers
+            broadcastToPeers({ type: 'UPDATE_STATE', key: data.key, value: data.value, version: 1 }, conn);
             return;
           }
 
@@ -190,12 +238,18 @@ export function SyncSection({
 
             await saveMediaItem(savePayload);
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
+            
+            // Relay to all other connected peers
+            broadcastToPeers(data, conn);
             return;
           }
 
           if (data && data.type === 'MEDIA_DELETE') {
             await deleteMediaItem(data.id);
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
+            
+            // Relay to all other connected peers
+            broadcastToPeers(data, conn);
             return;
           }
 
@@ -457,6 +511,7 @@ export function SyncSection({
 
       conn.on('close', () => {
         console.log("Conexão com o celular fechada.");
+        unregisterPeerConn(conn);
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'pc') {
           setDirectSyncStatus('listening');
@@ -466,6 +521,7 @@ export function SyncSection({
 
       conn.on('error', (err) => {
         console.error('Erro na conexão com celular:', err);
+        unregisterPeerConn(conn);
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'pc') {
           setDirectSyncStatus('listening');
@@ -649,7 +705,7 @@ export function SyncSection({
             conn.send({ type: 'REQUEST_FULL_SYNC', version: 1 });
             
             // Save globally for real-time control
-            (window as any).holyrics_peer_conn = conn;
+            registerPeerConn(conn);
 
             // Cleanup URL query params if any
             if (window.location.search.includes('syncCode=')) {
@@ -692,7 +748,7 @@ export function SyncSection({
           conn.send(payload);
 
           // Save globally for real-time control
-          (window as any).holyrics_peer_conn = conn;
+          registerPeerConn(conn);
 
           setDirectSyncStatus('success');
           setSyncMessage('Conectado! Verificando alterações incrementais...');
@@ -718,6 +774,7 @@ export function SyncSection({
 
       conn.on('close', () => {
         console.log("Conexão com o PC fechada.");
+        unregisterPeerConn(conn);
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'phone') {
           setDirectSyncStatus('connecting');
@@ -728,6 +785,7 @@ export function SyncSection({
 
       conn.on('error', (err) => {
         console.error('Erro na conexão com o destino:', err);
+        unregisterPeerConn(conn);
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'phone') {
           setDirectSyncStatus('connecting');

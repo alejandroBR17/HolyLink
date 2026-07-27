@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { saveMediaItem, getAllMediaItems, deleteMediaItem } from '../utils';
+import { broadcastToPeers } from '../components/SyncSection';
 
 export interface CustomMedia {
   id: string;
@@ -112,79 +113,73 @@ export function useCustomMedia(
   }, [mediaUpdateTrigger]);
 
   const broadcastMediaSave = useCallback(async (item: any) => {
-    const peerConn = (window as any).holyrics_peer_conn;
-    if (peerConn && peerConn.open) {
-      try {
-        let blobToUse = item.blob;
-        if (!blobToUse) {
-          const dbItems = await getAllMediaItems();
-          const found = dbItems.find(m => m.id === item.id);
-          if (found && found.blob) {
-            blobToUse = found.blob;
-          }
+    try {
+      let blobToUse = item.blob;
+      if (!blobToUse) {
+        const dbItems = await getAllMediaItems();
+        const found = dbItems.find(m => m.id === item.id);
+        if (found && found.blob) {
+          blobToUse = found.blob;
         }
-
-        let realBlob: Blob | null = null;
-        if (blobToUse instanceof Blob) {
-          realBlob = blobToUse;
-        } else if (blobToUse && typeof blobToUse === 'object') {
-          const anyBlob = blobToUse as any;
-          if (anyBlob.buffer && (anyBlob.buffer instanceof ArrayBuffer || anyBlob.buffer instanceof Uint8Array || Array.isArray(anyBlob.buffer))) {
-            realBlob = new Blob([anyBlob.buffer], { type: anyBlob.type || 'application/octet-stream' });
-          } else if (anyBlob.bytes && (anyBlob.bytes instanceof ArrayBuffer || anyBlob.bytes instanceof Uint8Array || Array.isArray(anyBlob.bytes))) {
-            realBlob = new Blob([anyBlob.bytes], { type: anyBlob.type || 'application/octet-stream' });
-          } else if (anyBlob.blob && anyBlob.blob instanceof Blob) {
-            realBlob = anyBlob.blob;
-          }
-        }
-
-        let base64: string | undefined = undefined;
-        let mimeType = 'application/octet-stream';
-
-        if (realBlob) {
-          mimeType = realBlob.type || 'application/octet-stream';
-          base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const res = reader.result as string;
-              resolve(res.split(',')[1] || '');
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(realBlob!);
-          });
-        }
-
-        peerConn.send({
-          type: 'MEDIA_SAVE',
-          mediaItem: {
-            id: item.id,
-            type: item.type,
-            name: item.name,
-            duration: item.duration,
-            enabledInLoop: item.enabledInLoop,
-            muted: item.muted,
-            order: item.order,
-            fit: item.fit,
-            mimeType,
-            base64
-          },
-          version: 1
-        });
-      } catch (e) {
-        console.error("Error broadcasting media save:", e);
       }
+
+      let realBlob: Blob | null = null;
+      if (blobToUse instanceof Blob) {
+        realBlob = blobToUse;
+      } else if (blobToUse && typeof blobToUse === 'object') {
+        const anyBlob = blobToUse as any;
+        if (anyBlob.buffer && (anyBlob.buffer instanceof ArrayBuffer || anyBlob.buffer instanceof Uint8Array || Array.isArray(anyBlob.buffer))) {
+          realBlob = new Blob([anyBlob.buffer], { type: anyBlob.type || 'application/octet-stream' });
+        } else if (anyBlob.bytes && (anyBlob.bytes instanceof ArrayBuffer || anyBlob.bytes instanceof Uint8Array || Array.isArray(anyBlob.bytes))) {
+          realBlob = new Blob([anyBlob.bytes], { type: anyBlob.type || 'application/octet-stream' });
+        } else if (anyBlob.blob && anyBlob.blob instanceof Blob) {
+          realBlob = anyBlob.blob;
+        }
+      }
+
+      let base64: string | undefined = undefined;
+      let mimeType = 'application/octet-stream';
+
+      if (realBlob) {
+        mimeType = realBlob.type || 'application/octet-stream';
+        base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const res = reader.result as string;
+            resolve(res.split(',')[1] || '');
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(realBlob!);
+        });
+      }
+
+      broadcastToPeers({
+        type: 'MEDIA_SAVE',
+        mediaItem: {
+          id: item.id,
+          type: item.type,
+          name: item.name,
+          duration: item.duration,
+          enabledInLoop: item.enabledInLoop,
+          muted: item.muted,
+          order: item.order,
+          fit: item.fit,
+          mimeType,
+          base64
+        },
+        version: 1
+      });
+    } catch (e) {
+      console.error("Error broadcasting media save:", e);
     }
   }, []);
 
   const broadcastMediaDelete = useCallback((id: string) => {
-    const peerConn = (window as any).holyrics_peer_conn;
-    if (peerConn && peerConn.open) {
-      peerConn.send({
-        type: 'MEDIA_DELETE',
-        id,
-        version: 1
-      });
-    }
+    broadcastToPeers({
+      type: 'MEDIA_DELETE',
+      id,
+      version: 1
+    });
   }, []);
 
   const handleFileUpload = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
