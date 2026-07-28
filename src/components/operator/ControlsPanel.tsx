@@ -422,21 +422,59 @@ export function ControlsPanel({
           </div>
 
           {!isProjectionOpen ? (
-            <button
-              onClick={handleOpenMonitor}
-              className="w-full p-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 animate-in fade-in duration-200"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Abrir Monitor HDMI (2ª Tela)
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleOpenMonitor}
+                className="w-full p-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 animate-in fade-in duration-200"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Abrir Monitor HDMI (2ª Tela)
+              </button>
+              <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Espelho Offline (Fallback Local) Ativo
+                </span>
+                <button
+                  onClick={() => {
+                    const bc = new BroadcastChannel('holyrics_projection_sync');
+                    bc.postMessage({ type: 'UPDATE_STATE', key: 'mediaUpdateTrigger', value: Date.now().toString() });
+                    bc.close();
+                    window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+                  }}
+                  className="text-[9px] font-bold text-amber-400 hover:text-amber-300 underline cursor-pointer"
+                >
+                  Forçar Re-sync Local
+                </button>
+              </div>
+            </div>
           ) : (
-            <button
-              onClick={handleCloseMonitor}
-              className="w-full p-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer animate-in fade-in duration-200"
-            >
-              <X className="w-4 h-4" />
-              Fechar Monitor HDMI
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleCloseMonitor}
+                className="w-full p-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer animate-in fade-in duration-200"
+              >
+                <X className="w-4 h-4" />
+                Fechar Monitor HDMI
+              </button>
+              <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Janela Espelho Ativa (Sincronização 0ms)
+                </span>
+                <button
+                  onClick={() => {
+                    const bc = new BroadcastChannel('holyrics_projection_sync');
+                    bc.postMessage({ type: 'UPDATE_STATE', key: 'mediaUpdateTrigger', value: Date.now().toString() });
+                    bc.close();
+                    window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+                  }}
+                  className="text-[9px] font-bold text-amber-400 hover:text-amber-300 underline cursor-pointer"
+                >
+                  Forçar Re-sync Local
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
@@ -535,6 +573,45 @@ export function ControlsPanel({
             >
               <RefreshCw className="w-3.5 h-3.5 text-zinc-500" /> Resetar
             </button>
+          </div>
+        </div>
+
+        {/* KEYBOARD SHORTCUTS CHEAT SHEET */}
+        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+          <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider border-b border-zinc-800/50 pb-3 flex items-center justify-between">
+            <span>Atalhos Rápidos de Teclado</span>
+            <span className="text-[9px] text-amber-500/80 font-mono">Teclas Ativas</span>
+          </h3>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
+              <span className="text-[10px] text-zinc-400 font-semibold">Blackout (Black)</span>
+              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">B</kbd>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
+              <span className="text-[10px] text-zinc-400 font-semibold">Limpar Texto (Clear)</span>
+              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">C</kbd>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
+              <span className="text-[10px] text-zinc-400 font-semibold">Próximo Slide</span>
+              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">Espaço / →</kbd>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
+              <span className="text-[10px] text-zinc-400 font-semibold">Slide Anterior</span>
+              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">←</kbd>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
+              <span className="text-[10px] text-zinc-400 font-semibold">Mute / Desmutar</span>
+              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">M</kbd>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
+              <span className="text-[10px] text-zinc-400 font-semibold">Tela Cheia</span>
+              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">F</kbd>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between col-span-2">
+              <span className="text-[10px] text-zinc-400 font-semibold">Resetar Versículo / Alertas / Modos</span>
+              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">Esc</kbd>
+            </div>
           </div>
         </div>
       </div>

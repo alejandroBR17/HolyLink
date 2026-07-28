@@ -469,11 +469,37 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
 
 export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnded, isBackgroundBlur, volume = 0.5, fit }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fadeIntervalRef = useRef<any>(null);
   const hasErroredRef = useRef(false);
 
   useEffect(() => {
     hasErroredRef.current = false;
   }, [media?.id, media?.url]);
+
+  // Smooth volume transition helper to prevent audio clicks and abrupt stops
+  const fadeVolumeTo = (video: HTMLVideoElement, targetVolume: number, durationMs = 200, onComplete?: () => void) => {
+    if (!video) return;
+    if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
+
+    const clampedTarget = Math.max(0, Math.min(1, targetVolume));
+    const startVolume = video.volume;
+    const steps = 10;
+    const stepTime = durationMs / steps;
+    let stepCount = 0;
+
+    fadeIntervalRef.current = setInterval(() => {
+      stepCount++;
+      const currentVal = startVolume + (clampedTarget - startVolume) * (stepCount / steps);
+      video.volume = Math.max(0, Math.min(1, currentVal));
+
+      if (stepCount >= steps) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+        video.volume = clampedTarget;
+        if (onComplete) onComplete();
+      }
+    }, stepTime);
+  };
 
   // Safe playback helper that avoids console.error when page is frozen, hidden, or play is interrupted
   const playVideoSafely = (video: HTMLVideoElement) => {
@@ -510,12 +536,20 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
       }
       
       const safeVol = Math.max(0, Math.min(1, isNaN(volume) ? 0.5 : volume));
-      video.volume = isBackgroundBlur ? 0 : safeVol;
-      video.muted = isBackgroundBlur || safeVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
+      const targetVol = isBackgroundBlur ? 0 : safeVol;
+      video.muted = isBackgroundBlur || targetVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
       
+      video.volume = 0;
       playVideoSafely(video);
+      if (!video.muted) {
+        fadeVolumeTo(video, targetVol, 250);
+      }
     } else {
-      video.pause();
+      if (!video.paused) {
+        fadeVolumeTo(video, 0, 150, () => {
+          video.pause();
+        });
+      }
     }
 
     const handleVisibilityChange = () => {
@@ -527,6 +561,7 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
     };
   }, [currentSlideId, media?.id, media?.url, volume, isBackgroundBlur]);
 
@@ -537,8 +572,11 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     // Se o volume mudar enquanto o vídeo está tocando
     if (!currentSlideId || currentSlideId === media.id) {
       const safeVol = Math.max(0, Math.min(1, isNaN(volume) ? 0.5 : volume));
-      video.volume = isBackgroundBlur ? 0 : safeVol;
-      video.muted = isBackgroundBlur || safeVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
+      const targetVol = isBackgroundBlur ? 0 : safeVol;
+      video.muted = isBackgroundBlur || targetVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
+      if (!video.muted) {
+        fadeVolumeTo(video, targetVol, 150);
+      }
     }
   }, [volume, currentSlideId, media?.id, isBackgroundBlur, media?.url]);
 
