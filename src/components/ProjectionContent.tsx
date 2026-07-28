@@ -155,8 +155,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       const media = customMediaList.find(m => m.id === slideId);
       if (!media) return <div className="text-stone-500 text-3xl font-bold flex items-center justify-center h-full w-full bg-black">Mídia não encontrada</div>;
       if (media.type === 'image') {
-        const isCover = media.fit === 'cover';
-        const isFullScreen = media.fit === 'fill';
+        const fitMode = media.fit || 'contain';
+        const isCover = fitMode === 'cover';
+        const isFullScreen = fitMode === 'fill';
         
         // Base padding and rounded corners logic
         const containerPadding = isFullScreen ? 'p-0' : 'p-12 md:p-20';
@@ -169,9 +170,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           <div className={`w-full h-full ${containerPadding} flex items-center justify-center bg-black/20`}>
             <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
               {/* Background blur for non-matching aspect ratios */}
-              {!isLightModeActive && media.fit === 'contain' && (
+              {fitMode === 'contain' && (
                 <div 
-                  className={`absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110 pointer-events-none`}
+                  className={`absolute inset-0 bg-cover bg-center blur-3xl opacity-35 scale-110 pointer-events-none`}
                   style={{ backgroundImage: `url(${media.url})` }}
                 />
               )}
@@ -188,8 +189,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           </div>
         );
       } else if (media.type === 'video') {
-        const isCover = media.fit === 'cover';
-        const isFullScreen = media.fit === 'fill';
+        const fitMode = media.fit || 'contain';
+        const isCover = fitMode === 'cover';
+        const isFullScreen = fitMode === 'fill';
 
         // Base padding and rounded corners logic
         const containerPadding = isFullScreen ? 'p-0' : 'p-12 md:p-20';
@@ -202,8 +204,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           <div className={`w-full h-full ${containerPadding} flex items-center justify-center bg-black/20`}>
             <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
               {/* Background blur for videos */}
-              {!isLightModeActive && media.fit === 'contain' && (
-                <div className={`absolute inset-0 blur-3xl opacity-30 scale-110 pointer-events-none overflow-hidden`}>
+              {fitMode === 'contain' && (
+                <div className={`absolute inset-0 blur-3xl opacity-35 scale-110 pointer-events-none overflow-hidden`}>
                   <div className="w-full h-full scale-[2]">
                     <VideoSlide 
                       media={media} 
