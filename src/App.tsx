@@ -85,6 +85,7 @@ export default function App() {
   // Custom media management hook
   const {
     customMediaList,
+    isMediaLoaded,
     isUploading,
     uploadError,
     handleFileUpload,
@@ -466,11 +467,10 @@ export default function App() {
       window.addEventListener('beforeunload', handleBeforeUnload);
       
       return () => {
-        updateStateAndBroadcast('isProjectionOpen', false);
         window.removeEventListener('beforeunload', handleBeforeUnload);
       };
     }
-  }, [isProjectionView, updateStateAndBroadcast]);
+  }, [isProjectionView]);
 
   const { width, height } = dimensions;
   const shouldRotate = manualRotateMode === 'auto' && height > width;
@@ -500,6 +500,9 @@ export default function App() {
 
   // Cleanup manualSlideOverride if the referenced custom media or meeting is deleted
   useEffect(() => {
+    // Only operator window (not projection view) and only when media is loaded should clean up deleted items
+    if (isProjectionView || !isMediaLoaded) return;
+
     if (manualSlideOverride) {
       if (manualSlideOverride.startsWith('custom_')) {
         const exists = customMediaList.some((m) => m.id === manualSlideOverride);
@@ -514,7 +517,7 @@ export default function App() {
         }
       }
     }
-  }, [manualSlideOverride, customMediaList, customMeetings, updateStateAndBroadcast]);
+  }, [manualSlideOverride, customMediaList, customMeetings, isMediaLoaded, isProjectionView, updateStateAndBroadcast]);
 
   const handleVideoEnded = useCallback(() => {
     if (videoPinBehavior === 'unpin') {
@@ -685,18 +688,37 @@ export default function App() {
               <span className="whitespace-nowrap">Conectar Celular</span>
             </button>
 
-            <button
-              type="button"
-              aria-label="Abrir janela do monitor em segunda tela"
-              onClick={() => {
-                const url = window.location.origin + window.location.pathname + '?projection';
-                window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
-              }}
-              className="w-full sm:w-auto min-h-[40px] bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-black text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(245,158,11,0.25)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.35)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-            >
-              <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-              <span className="whitespace-nowrap">Abrir Monitor (2ª Tela)</span>
-            </button>
+            {!isProjectionOpen ? (
+              <button
+                type="button"
+                aria-label="Abrir janela do monitor em segunda tela"
+                onClick={() => {
+                  const url = window.location.origin + window.location.pathname + '?projection';
+                  const newWin = window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
+                  if (newWin) setProjectionWin(newWin);
+                  updateStateAndBroadcast('isProjectionOpen', true);
+                  updateStateAndBroadcast('projectionCloseTrigger', null);
+                }}
+                className="w-full sm:w-auto min-h-[40px] bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-black text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(245,158,11,0.25)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.35)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              >
+                <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                <span className="whitespace-nowrap">Abrir Monitor (2ª Tela)</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label="Fechar janela do monitor em segunda tela"
+                onClick={() => {
+                  setProjectionWin(null);
+                  updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
+                  updateStateAndBroadcast('isProjectionOpen', false);
+                }}
+                className="w-full sm:w-auto min-h-[40px] bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-black text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(220,38,38,0.25)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+              >
+                <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                <span className="whitespace-nowrap">Fechar Monitor (2ª Tela)</span>
+              </button>
+            )}
           </div>
         </header>
 

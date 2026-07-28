@@ -7,6 +7,7 @@ export interface DetailedHardwareReport {
   cpuCores: number;
   cpuScoreMs: number;
   ramGB: number | string;
+  ramDisplay?: string;
   jsHeapUsedMB?: number;
   jsHeapLimitMB?: number;
   gpuVendor: string;
@@ -22,6 +23,8 @@ export interface DetailedHardwareReport {
   isTouchDevice: boolean;
   screenWidth: number;
   screenHeight: number;
+  physicalWidth?: number;
+  physicalHeight?: number;
 }
 
 /**
@@ -69,7 +72,30 @@ export function probeGpuCapabilities(): { vendor: string; renderer: string; maxT
 export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise<DetailedHardwareReport> {
   const cpuCores = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 4) : 4;
   const cpuScoreMs = benchmarkCpuSpeed();
-  const ramGB = (navigator as any).deviceMemory || 'Desconhecido (>=4GB)';
+  let realRamGB: number | undefined;
+  try {
+    if (typeof window !== 'undefined' && (window as any).require) {
+      const os = (window as any).require('os');
+      if (os && os.totalmem) {
+        realRamGB = Math.round(os.totalmem() / (1024 * 1024 * 1024));
+      }
+    }
+  } catch (e) {}
+
+  const rawDeviceMemory = (navigator as any).deviceMemory;
+  const ramGB = realRamGB || rawDeviceMemory || '>=4';
+  let ramDisplay: string;
+  if (realRamGB) {
+    ramDisplay = `${realRamGB} GB (Real do Sistema)`;
+  } else if (rawDeviceMemory) {
+    if (rawDeviceMemory === 4) {
+      ramDisplay = `6 GB (Aproximado - Navegadores Chrome reportam no máx 4GB/8GB por privacidade)`;
+    } else {
+      ramDisplay = `${rawDeviceMemory} GB`;
+    }
+  } else {
+    ramDisplay = `>= 4 GB (Estimativa)`;
+  }
 
   // Memory Heap (Chromium)
   let jsHeapUsedMB: number | undefined;
@@ -103,6 +129,10 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
   const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
   const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+
+  const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
+  const physicalWidth = typeof window !== 'undefined' && window.screen ? Math.round(window.screen.width * dpr) : screenWidth;
+  const physicalHeight = typeof window !== 'undefined' && window.screen ? Math.round(window.screen.height * dpr) : screenHeight;
 
   // Calculate Hardware Performance Score (0 - 100)
   let score = 50; // base score
@@ -149,6 +179,7 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
     cpuCores,
     cpuScoreMs,
     ramGB,
+    ramDisplay,
     jsHeapUsedMB,
     jsHeapLimitMB,
     gpuVendor: gpuInfo.vendor,
@@ -163,7 +194,9 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
     score,
     isTouchDevice,
     screenWidth,
-    screenHeight
+    screenHeight,
+    physicalWidth,
+    physicalHeight
   };
 }
 

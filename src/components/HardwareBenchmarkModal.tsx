@@ -174,8 +174,8 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                 </div>
                 <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Memória RAM & Heap JS</span>
-                  <p className="text-xs font-extrabold text-white truncate">
-                    RAM Estimada: {report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB'}
+                  <p className="text-xs font-extrabold text-white truncate" title={report?.ramDisplay || 'RAM Identificada'}>
+                    RAM: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
                   </p>
                   <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
                     {report?.jsHeapUsedMB ? `Uso Heap JS: ${report.jsHeapUsedMB} MB / ${report.jsHeapLimitMB || 2048} MB` : 'Gerenciamento Automático de Heap'}
@@ -209,8 +209,9 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                   <p className="text-xs font-extrabold text-white truncate">
                     {fps} FPS ({fps >= 50 ? 'Excelente / Estável' : fps >= 35 ? 'Aceitável' : 'Reduzido'})
                   </p>
-                  <p className="text-[10px] text-zinc-400 mt-0.5">
-                    Resolução: <span className="font-mono text-zinc-300">{report?.screenWidth}x{report?.screenHeight}</span>
+                  <p className="text-[10px] text-zinc-400 mt-0.5 truncate" title={`Física: ${report?.physicalWidth || report?.screenWidth}x${report?.physicalHeight || report?.screenHeight} px | Viewport CSS: ${report?.screenWidth}x${report?.screenHeight} px`}>
+                    Tela Física: <span className="font-mono text-zinc-200 font-bold">{report?.physicalWidth || report?.screenWidth}x{report?.physicalHeight || report?.screenHeight} px</span>
+                    <span className="text-zinc-500 text-[9px] block">Viewport CSS: {report?.screenWidth}x{report?.screenHeight} px</span>
                   </p>
                 </div>
               </div>

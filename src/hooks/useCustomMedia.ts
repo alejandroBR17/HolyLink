@@ -19,6 +19,7 @@ export function useCustomMedia(
   updateStateAndBroadcast: (key: string, value: any) => void
 ) {
   const [customMediaList, setCustomMediaList] = useState<CustomMedia[]>([]);
+  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -100,8 +101,10 @@ export function useCustomMedia(
             } catch (e) {}
           });
         }, 1000);
+        if (active) setIsMediaLoaded(true);
       } catch (err) {
         console.error("Failed to load custom media from DB", err);
+        if (active) setIsMediaLoaded(true);
       }
     };
 
@@ -299,6 +302,7 @@ export function useCustomMedia(
 
   return {
     customMediaList,
+    isMediaLoaded,
     isUploading,
     uploadError,
     handleFileUpload,

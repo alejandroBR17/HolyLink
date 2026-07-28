@@ -274,7 +274,7 @@ export function MonitorPanel({
                 : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-300'
             }`}
           >
-            <EyeOff className="w-4 h-4 text-amber-500 shrink-0" />
+            <EyeOff className={`w-4 h-4 shrink-0 ${blackoutEnabled ? 'text-white' : 'text-amber-500'}`} />
             <span>{blackoutEnabled ? 'RESTAURAR TELA' : 'BLACKOUT (B)'}</span>
           </button>
 
@@ -286,7 +286,7 @@ export function MonitorPanel({
                 : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-300'
             }`}
           >
-            <Eye className="w-4 h-4 text-amber-500 shrink-0" />
+            <Eye className={`w-4 h-4 shrink-0 ${clearContentEnabled ? 'text-black' : 'text-amber-500'}`} />
             <span>{clearContentEnabled ? 'MOSTRAR TEXTO' : 'LIMPAR TEXTO (C)'}</span>
           </button>
         </div>

@@ -216,6 +216,13 @@ export function useProjectionState() {
           }
           setProjectionWin(null);
         }
+        if (typeof window !== 'undefined' && (window.location.search.includes('projection') || window.location.pathname.endsWith('/projection'))) {
+          try {
+            window.close();
+          } catch (e) {
+            console.warn("Could not window.close():", e);
+          }
+        }
       }
     }
     else if (key === 'customMeetings') {
@@ -297,6 +304,13 @@ export function useProjectionState() {
               console.warn("Failed to close projectionWin:", e);
             }
             setProjectionWin(null);
+          }
+          if (typeof window !== 'undefined' && (window.location.search.includes('projection') || window.location.pathname.endsWith('/projection'))) {
+            try {
+              window.close();
+            } catch (e) {
+              console.warn("Could not window.close():", e);
+            }
           }
         }
       }

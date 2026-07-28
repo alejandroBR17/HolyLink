@@ -479,7 +479,7 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     const video = videoRef.current;
     if (!video || !media?.url) return;
 
-    if (currentSlideId === media.id) {
+    if (!currentSlideId || currentSlideId === media.id) {
       const loadedSrc = video.getAttribute('data-loaded-src');
       if (loadedSrc !== media.url || video.ended) {
         video.setAttribute('data-loaded-src', media.url);
@@ -509,7 +509,7 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     if (!video || !media?.url) return;
     
     // Se o volume mudar enquanto o vídeo está tocando
-    if (currentSlideId === media.id) {
+    if (!currentSlideId || currentSlideId === media.id) {
       const safeVol = Math.max(0, Math.min(1, isNaN(volume) ? 0.5 : volume));
       video.volume = isBackgroundBlur ? 0 : safeVol;
       video.muted = isBackgroundBlur || safeVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
@@ -542,6 +542,7 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     <div className="w-full h-full flex items-center justify-center relative">
       <video
         ref={videoRef}
+        src={media.url}
         className={`w-full h-full ${objectFitClass}`}
         playsInline
         controls={false}
@@ -549,9 +550,11 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
         onError={(e) => {
           if (hasErroredRef.current) return;
           hasErroredRef.current = true;
-          console.error("Video playback error on slide:", media?.id, e);
-          if (!isBackgroundBlur && onVideoEnded) {
-            onVideoEnded();
+          console.warn("Video playback warning on slide:", media?.id, e);
+          const video = videoRef.current;
+          if (video) {
+            video.muted = true;
+            video.play().catch(() => {});
           }
         }}
         onEnded={() => {
