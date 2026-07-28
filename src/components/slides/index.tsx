@@ -475,11 +475,33 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
     hasErroredRef.current = false;
   }, [media?.id, media?.url]);
 
+  // Safe playback helper that avoids console.error when page is frozen, hidden, or play is interrupted
+  const playVideoSafely = (video: HTMLVideoElement) => {
+    if (!video || document.visibilityState === 'hidden') return;
+
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((e) => {
+        // Handle autoplay policy or page freeze / interruption gracefully
+        if (e?.name === 'AbortError' || e?.name === 'NotAllowedError' || (e?.message && e.message.includes('frozen'))) {
+          video.muted = true;
+          video.play().catch(() => {
+            // Silently ignore if still blocked or page is frozen
+          });
+        } else {
+          console.warn("Video playback attempt warning:", e?.message || e);
+        }
+      });
+    }
+  };
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !media?.url) return;
 
-    if (!currentSlideId || currentSlideId === media.id) {
+    const isActive = !currentSlideId || currentSlideId === media.id;
+
+    if (isActive) {
       const loadedSrc = video.getAttribute('data-loaded-src');
       if (loadedSrc !== media.url || video.ended) {
         video.setAttribute('data-loaded-src', media.url);
@@ -491,17 +513,21 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
       video.volume = isBackgroundBlur ? 0 : safeVol;
       video.muted = isBackgroundBlur || safeVol === 0 ? true : (media.muted !== undefined ? media.muted : false);
       
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((e) => {
-          console.log("Autoplay unmuted blocked, playing muted", e);
-          video.muted = true;
-          video.play().catch((err) => console.error("Could not play video even muted", err));
-        });
-      }
+      playVideoSafely(video);
     } else {
       video.pause();
     }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isActive && video) {
+        playVideoSafely(video);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [currentSlideId, media?.id, media?.url, volume, isBackgroundBlur]);
 
   useEffect(() => {
@@ -554,14 +580,14 @@ export const VideoSlide = ({ media, currentSlideId, videoPinBehavior, onVideoEnd
           const video = videoRef.current;
           if (video) {
             video.muted = true;
-            video.play().catch(() => {});
+            playVideoSafely(video);
           }
         }}
         onEnded={() => {
           if (shouldLoop) {
             if (videoRef.current) {
               videoRef.current.currentTime = 0;
-              videoRef.current.play().catch((err) => console.error("Error looping video:", err));
+              playVideoSafely(videoRef.current);
             }
           } else {
             if (!isBackgroundBlur && onVideoEnded) {

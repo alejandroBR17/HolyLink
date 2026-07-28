@@ -84,7 +84,7 @@ export function MonitorPanel({
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
 
-  const { fps, mode, report } = usePerformanceDiagnostics();
+  const { fps, mode, effectiveMode, report } = usePerformanceDiagnostics();
 
   useEffect(() => {
     const checkDevice = () => {
@@ -369,8 +369,14 @@ export function MonitorPanel({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Desempenho & RAM</h4>
-              <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">
-                {fps} FPS ({mode === 'light' ? 'Economia' : 'Alto Desempenho'})
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${
+                effectiveMode === 'light'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  : effectiveMode === 'balanced'
+                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+              }`}>
+                {fps} FPS ({effectiveMode === 'light' ? 'Leve (Anti-Lag)' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Alto Desempenho'})
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 mt-0.5 leading-normal">

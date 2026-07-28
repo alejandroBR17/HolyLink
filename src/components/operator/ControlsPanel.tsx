@@ -1,86 +1,147 @@
 import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { 
   Tv, ExternalLink, X, EyeOff, Sparkles, Plus, Minus, Play, Pause, RefreshCw, 
-  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2 
+  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2, HardDrive 
 } from 'lucide-react';
 import { ALERTS } from '../../data';
 import { Meeting } from '../../types';
 import { usePerformanceDiagnostics } from '../../utils/performance';
 
 function PerformanceControlModule() {
-  const { fps, hardwareConcurrency, mode, isLightModeActive, isDetectedLowPerf, setPerformanceMode } = usePerformanceDiagnostics();
+  const { 
+    fps, 
+    hardwareConcurrency, 
+    mode, 
+    effectiveMode, 
+    isDetectedLowPerf, 
+    setPerformanceMode, 
+    report, 
+    purgeCache 
+  } = usePerformanceDiagnostics();
+
+  const [ramCleared, setRamCleared] = useState(false);
+
+  const handlePurgeRam = () => {
+    purgeCache();
+    setRamCleared(true);
+    setTimeout(() => setRamCleared(false), 2500);
+  };
 
   return (
     <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-      <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
+      <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
           <Gauge className="w-4 h-4 text-amber-500" />
           Desempenho & Anti-Travamento
         </h3>
         <span className={`text-[8px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${
-          isLightModeActive 
+          effectiveMode === 'light' 
             ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' 
+            : effectiveMode === 'balanced'
+            ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
             : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
         }`}>
-          {isLightModeActive ? (isDetectedLowPerf ? '⚡ Leve (Lag Detectado)' : '⚡ Modo Leve') : '🟢 Alta Qualidade'}
+          {effectiveMode === 'light' 
+            ? (isDetectedLowPerf ? '⚡ Leve (Lag Detectado)' : '⚡ Modo Leve (Anti-Lag)') 
+            : effectiveMode === 'balanced'
+            ? '⚖️ Modo Equilibrado'
+            : '🟢 Alta Qualidade'}
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="bg-zinc-950 border border-zinc-800/80 p-2.5 rounded-xl flex items-center justify-between">
-          <span className="text-[10px] text-zinc-500 font-bold uppercase">Quadros (FPS)</span>
-          <span className={`font-mono font-bold ${fps < 38 ? 'text-amber-400' : 'text-emerald-400'}`}>{fps} FPS</span>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div className="bg-zinc-950 border border-zinc-800/80 p-2 rounded-xl flex flex-col justify-between">
+          <span className="text-[9px] text-zinc-500 font-bold uppercase">Taxa FPS</span>
+          <span className={`font-mono font-bold text-xs mt-0.5 ${fps < 38 ? 'text-amber-400' : 'text-emerald-400'}`}>{fps} FPS</span>
         </div>
-        <div className="bg-zinc-950 border border-zinc-800/80 p-2.5 rounded-xl flex items-center justify-between">
-          <span className="text-[10px] text-zinc-500 font-bold uppercase">Núcleos CPU</span>
-          <span className="font-mono font-bold text-zinc-300">{hardwareConcurrency} Cores</span>
+        <div className="bg-zinc-950 border border-zinc-800/80 p-2 rounded-xl flex flex-col justify-between">
+          <span className="text-[9px] text-zinc-500 font-bold uppercase">CPU Cores</span>
+          <span className="font-mono font-bold text-xs text-zinc-300 mt-0.5">{hardwareConcurrency} Cores</span>
+        </div>
+        <div className="bg-zinc-950 border border-zinc-800/80 p-2 rounded-xl flex flex-col justify-between">
+          <span className="text-[9px] text-zinc-500 font-bold uppercase">Memória RAM</span>
+          <span className="font-mono font-bold text-xs text-blue-400 mt-0.5 truncate" title={report?.ramDisplay || 'RAM Identificada'}>
+            {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
+          </span>
+        </div>
+        <div className="bg-zinc-950 border border-zinc-800/80 p-2 rounded-xl flex flex-col justify-between">
+          <span className="text-[9px] text-zinc-500 font-bold uppercase">Heap JS</span>
+          <span className="font-mono font-bold text-xs text-purple-400 mt-0.5 truncate">
+            {report?.jsHeapUsedMB ? `${report.jsHeapUsedMB} MB` : 'Ativo'}
+          </span>
         </div>
       </div>
 
       <div className="flex items-start gap-2 bg-zinc-950 border border-zinc-800/80 p-2.5 rounded-xl text-[10px] leading-relaxed text-zinc-400">
         <CheckCircle2 className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
         <div>
-          {isLightModeActive ? (
-            <span><strong>Modo Leve Ativo:</strong> Desativa renderização dupla de vídeo, reduz partículas e filtros heavy blur para manter a projeção fluida sem travamentos.</span>
+          {effectiveMode === 'light' ? (
+            <span><strong>Modo Leve (Anti-Lag) Ativo:</strong> Renderização direta sem duplicar decodificadores de vídeo, sem partículas e sem heavy blur para eliminação total de lag.</span>
+          ) : effectiveMode === 'balanced' ? (
+            <span><strong>Modo Equilibrado Ativo:</strong> Transições suaves com fade rápido sem sobrecarregar a memória RAM nem a placa gráfica do computador.</span>
           ) : (
             <span><strong>Alta Qualidade Ativa:</strong> Exibe fundo desfocado em tempo real, iluminação ambiente dinâmica, partículas e transições suaves.</span>
           )}
         </div>
       </div>
 
+      <div className="flex items-center justify-between gap-2">
+        <button
+          onClick={handlePurgeRam}
+          className={`w-full py-2 px-3 rounded-xl border text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            ramCleared 
+              ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' 
+              : 'bg-zinc-950 hover:bg-zinc-850 border-zinc-800 hover:border-zinc-700 text-zinc-300'
+          }`}
+        >
+          <HardDrive className={`w-3.5 h-3.5 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-blue-400'}`} />
+          <span>{ramCleared ? '✓ Memória Cache Liberada!' : 'Limpar Memória RAM e Cache'}</span>
+        </button>
+      </div>
+
       <div className="flex flex-col gap-1.5">
-        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Modo de Exibição</span>
-        <div className="grid grid-cols-3 gap-1.5">
+        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Perfil Manual de Desempenho</span>
+        <div className="grid grid-cols-4 gap-1.5">
           <button
             onClick={() => setPerformanceMode('auto')}
-            className={`py-2 px-2 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+            className={`py-2 px-1 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
               mode === 'auto'
                 ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
                 : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500'
             }`}
           >
-            Auto Detectar
+            Auto
           </button>
           <button
             onClick={() => setPerformanceMode('light')}
-            className={`py-2 px-2 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border flex items-center justify-center gap-1 ${
+            className={`py-2 px-1 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border flex items-center justify-center gap-1 ${
               mode === 'light'
                 ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
                 : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500'
             }`}
           >
-            <Zap className="w-3 h-3 text-amber-500" />
-            Leve (Zero Lag)
+            <Zap className="w-3 h-3 text-amber-500 shrink-0" />
+            Leve
+          </button>
+          <button
+            onClick={() => setPerformanceMode('balanced')}
+            className={`py-2 px-1 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+              mode === 'balanced'
+                ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500'
+            }`}
+          >
+            Equilibrado
           </button>
           <button
             onClick={() => setPerformanceMode('high')}
-            className={`py-2 px-2 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+            className={`py-2 px-1 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
               mode === 'high'
                 ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
                 : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500'
             }`}
           >
-            Alta Qualidade
+            Alto
           </button>
         </div>
       </div>

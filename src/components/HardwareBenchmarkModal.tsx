@@ -226,12 +226,12 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               Seleção de Perfil de Desempenho
             </h4>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               
               {/* AUTO MODE */}
               <button
                 onClick={() => setPerformanceMode('auto')}
-                className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
                   mode === 'auto'
                     ? 'bg-amber-500/10 border-amber-500 text-white shadow-md shadow-amber-500/10'
                     : 'bg-zinc-950 border-zinc-850 hover:border-zinc-750 text-zinc-400'
@@ -239,11 +239,11 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase tracking-wider text-amber-400">Automático (Recomendado)</span>
+                    <span className="font-black text-xs uppercase tracking-wider text-amber-400">Automático</span>
                     {mode === 'auto' && <Check className="w-4 h-4 text-amber-400" />}
                   </div>
-                  <p className="text-[11px] text-zinc-400 mt-1.5 leading-snug">
-                    Ajusta automaticamente os gráficos com base nas especificações medidas do dispositivo.
+                  <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
+                    Ajusta os gráficos com base no teste do aparelho.
                   </p>
                 </div>
               </button>
@@ -251,7 +251,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               {/* HIGH MODE */}
               <button
                 onClick={() => setPerformanceMode('high')}
-                className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
                   mode === 'high'
                     ? 'bg-emerald-500/10 border-emerald-500 text-white shadow-md shadow-emerald-500/10'
                     : 'bg-zinc-950 border-zinc-850 hover:border-zinc-750 text-zinc-400'
@@ -259,11 +259,31 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase tracking-wider text-emerald-400">Modo Gráficos Altos</span>
+                    <span className="font-black text-xs uppercase tracking-wider text-emerald-400">Alto Desempenho</span>
                     {mode === 'high' && <Check className="w-4 h-4 text-emerald-400" />}
                   </div>
-                  <p className="text-[11px] text-zinc-400 mt-1.5 leading-snug">
-                    Mantém todos os efeitos visuais, desfoque (blur) de fundo e pré-carregamento total de vídeos.
+                  <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
+                    Mantém todos os efeitos visuais, blurs e transições.
+                  </p>
+                </div>
+              </button>
+
+              {/* BALANCED MODE */}
+              <button
+                onClick={() => setPerformanceMode('balanced')}
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                  mode === 'balanced'
+                    ? 'bg-blue-500/10 border-blue-500 text-white shadow-md shadow-blue-500/10'
+                    : 'bg-zinc-950 border-zinc-850 hover:border-zinc-750 text-zinc-400'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-xs uppercase tracking-wider text-blue-400">Modo Equilibrado</span>
+                    {mode === 'balanced' && <Check className="w-4 h-4 text-blue-400" />}
+                  </div>
+                  <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
+                    Equilíbrio ideal entre fluidez de slides e efeitos visuais.
                   </p>
                 </div>
               </button>
@@ -271,7 +291,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               {/* LIGHT MODE */}
               <button
                 onClick={() => setPerformanceMode('light')}
-                className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
                   mode === 'light'
                     ? 'bg-amber-500/10 border-amber-500 text-white shadow-md shadow-amber-500/10'
                     : 'bg-zinc-950 border-zinc-850 hover:border-zinc-750 text-zinc-400'
@@ -279,11 +299,11 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase tracking-wider text-amber-400">Modo Economia / Leve</span>
+                    <span className="font-black text-xs uppercase tracking-wider text-amber-400">Modo Leve</span>
                     {mode === 'light' && <Check className="w-4 h-4 text-amber-400" />}
                   </div>
-                  <p className="text-[11px] text-zinc-400 mt-1.5 leading-snug">
-                    Reduz sombras e desfoque pesados, priorizando velocidade máxima e travamento zero em cultos longos.
+                  <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
+                    Zero lag para computadores básicos.
                   </p>
                 </div>
               </button>

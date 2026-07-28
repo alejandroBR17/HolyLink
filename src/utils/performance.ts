@@ -83,18 +83,14 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
   } catch (e) {}
 
   const rawDeviceMemory = (navigator as any).deviceMemory;
-  const ramGB = realRamGB || rawDeviceMemory || '>=4';
+  const ramGB: number | string = realRamGB || rawDeviceMemory || '>=4';
   let ramDisplay: string;
   if (realRamGB) {
-    ramDisplay = `${realRamGB} GB (Real do Sistema)`;
+    ramDisplay = `${realRamGB} GB`;
   } else if (rawDeviceMemory) {
-    if (rawDeviceMemory === 4) {
-      ramDisplay = `6 GB (Aproximado - Navegadores Chrome reportam no máx 4GB/8GB por privacidade)`;
-    } else {
-      ramDisplay = `${rawDeviceMemory} GB`;
-    }
+    ramDisplay = `${rawDeviceMemory} GB`;
   } else {
-    ramDisplay = `>= 4 GB (Estimativa)`;
+    ramDisplay = `>= 4 GB`;
   }
 
   // Memory Heap (Chromium)
@@ -346,14 +342,21 @@ export function usePerformanceDiagnostics() {
     }
   };
 
-  const isLightModeActive = (() => {
-    if (mode === 'light') return true;
-    if (mode === 'high') return false;
-    if (mode === 'balanced') return false;
+  const effectiveMode: 'high' | 'balanced' | 'light' = (() => {
+    if (mode === 'light') return 'light';
+    if (mode === 'high') return 'high';
+    if (mode === 'balanced') return 'balanced';
     // Auto mode decision based on report or low FPS
-    if (report) return report.recommendedMode === 'light' || isDetectedLowPerf;
-    return isDetectedLowPerf || hardwareConcurrency <= 2;
+    if (isDetectedLowPerf) return 'light';
+    if (report) return report.recommendedMode;
+    if (hardwareConcurrency <= 2) return 'light';
+    if (hardwareConcurrency <= 4) return 'balanced';
+    return 'high';
   })();
+
+  const isLightModeActive = effectiveMode === 'light';
+  const isBalancedModeActive = effectiveMode === 'balanced';
+  const isHighModeActive = effectiveMode === 'high';
 
   const setPerformanceMode = (newMode: PerformanceMode) => {
     setModeState(newMode);
@@ -365,8 +368,11 @@ export function usePerformanceDiagnostics() {
     fps,
     hardwareConcurrency,
     mode,
+    effectiveMode,
     isDetectedLowPerf,
     isLightModeActive,
+    isBalancedModeActive,
+    isHighModeActive,
     report,
     isDiagnosticRunning,
     diagnosticStep,

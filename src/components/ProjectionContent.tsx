@@ -114,7 +114,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   const shadowColor = isFJU ? 'shadow-[0_40px_120px_rgba(180,83,9,0.5)]' : 'shadow-[0_40px_120px_rgba(0,0,0,0.9)]';
 
   // Performance diagnostics hook
-  const { isLightModeActive } = usePerformanceDiagnostics();
+  const { isLightModeActive, isHighModeActive, effectiveMode } = usePerformanceDiagnostics();
 
   const getTransitionVariants = (slideId: string) => {
     if (isLightModeActive) {
@@ -123,6 +123,14 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         animate: { opacity: 1 },
         exit: { opacity: 0 },
         transition: { duration: 0.15, ease: "linear" as const }
+      };
+    }
+    if (effectiveMode === 'balanced') {
+      return {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.3, ease: "easeInOut" as const }
       };
     }
     if (slideId.startsWith('verse_') || slideId === 'world_god') {
@@ -201,7 +209,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
               {/* Background for videos */}
               {fitMode === 'contain' && (
-                !isLightModeActive ? (
+                isHighModeActive ? (
                   /* High Performance: Dual-layer video background blur ambient illumination */
                   <div className={`absolute inset-0 blur-3xl opacity-35 scale-110 pointer-events-none overflow-hidden`}>
                     <div className="w-full h-full scale-[2]">
@@ -216,7 +224,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                     </div>
                   </div>
                 ) : (
-                  /* Light Mode: Zero duplicate video decoders, lightweight dark vignette */
+                  /* Balanced & Light Mode: Zero duplicate video decoders, lightweight dark vignette */
                   <div className="absolute inset-0 bg-gradient-to-tr from-stone-950 via-zinc-900 to-black opacity-90 pointer-events-none" />
                 )
               )}
@@ -323,7 +331,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   };
   return (
     <div className="w-full h-full relative select-none font-sans overflow-hidden bg-[#050000] text-white flex flex-col justify-between">
-      <ParticlesBackground disabled={isMiniature || isLightModeActive} />
+      <ParticlesBackground disabled={isMiniature || !isHighModeActive} />
       
       {/* BLACKOUT OVERLAY */}
       {blackoutEnabled && (
