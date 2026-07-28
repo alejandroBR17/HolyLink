@@ -320,6 +320,18 @@ export function ControlsPanel({
   currentTime,
   isProjectionOpen = false
 }: ControlsPanelProps) {
+  const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const handleOpenMonitor = () => {
     const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
@@ -432,8 +444,8 @@ export function ControlsPanel({
               </button>
               <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Espelho Offline (Fallback Local) Ativo
+                  <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                  {isOnline ? 'Sincronização Local (Rede Conectada)' : 'Modo Offline (Sincronização Local Garantida)'}
                 </span>
                 <button
                   onClick={() => {
@@ -444,7 +456,7 @@ export function ControlsPanel({
                   }}
                   className="text-[9px] font-bold text-amber-400 hover:text-amber-300 underline cursor-pointer"
                 >
-                  Forçar Re-sync Local
+                  Forçar Re-sync
                 </button>
               </div>
             </div>
@@ -459,8 +471,8 @@ export function ControlsPanel({
               </button>
               <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Janela Espelho Ativa (Sincronização 0ms)
+                  <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                  {isOnline ? 'Janela HDMI Ativa (Sincronização 0ms)' : 'Janela HDMI Ativa (Modo Offline 0ms)'}
                 </span>
                 <button
                   onClick={() => {
@@ -471,7 +483,7 @@ export function ControlsPanel({
                   }}
                   className="text-[9px] font-bold text-amber-400 hover:text-amber-300 underline cursor-pointer"
                 >
-                  Forçar Re-sync Local
+                  Forçar Re-sync
                 </button>
               </div>
             </div>
