@@ -8,6 +8,7 @@ import { VerseSlide } from './VerseSlide';
 import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide, MeetingEventSlide } from './slides';
 import { SOCIAL } from '../data';
 import { Meeting } from '../types';
+import { usePerformanceDiagnostics } from '../utils/performance';
 
 interface CustomMedia {
   id: string;
@@ -112,18 +113,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   const borderColor = isFJU ? 'border-amber-500/40' : 'border-white/10';
   const shadowColor = isFJU ? 'shadow-[0_40px_120px_rgba(180,83,9,0.5)]' : 'shadow-[0_40px_120px_rgba(0,0,0,0.9)]';
 
-  // Performance mode state (auto, high, light)
-  const [perfMode, setPerfMode] = React.useState<string>(() => localStorage.getItem('projection_perfMode') || 'auto');
-
-  React.useEffect(() => {
-    const handlePerfChange = (e: any) => {
-      if (e.detail) setPerfMode(e.detail);
-    };
-    window.addEventListener('projection_perf_mode_change', handlePerfChange);
-    return () => window.removeEventListener('projection_perf_mode_change', handlePerfChange);
-  }, []);
-
-  const isLightModeActive = perfMode === 'light' || (perfMode === 'auto' && (typeof navigator !== 'undefined' && (navigator.hardwareConcurrency || 4) <= 4));
+  // Performance diagnostics hook
+  const { isLightModeActive } = usePerformanceDiagnostics();
 
   const getTransitionVariants = (slideId: string) => {
     if (isLightModeActive) {
@@ -131,7 +122,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         initial: { opacity: 0 },
         animate: { opacity: 1 },
         exit: { opacity: 0 },
-        transition: { duration: 0.2, ease: "linear" as const }
+        transition: { duration: 0.15, ease: "linear" as const }
       };
     }
     if (slideId.startsWith('verse_') || slideId === 'world_god') {
@@ -169,12 +160,17 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         return (
           <div className={`w-full h-full ${containerPadding} flex items-center justify-center bg-black/20`}>
             <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
-              {/* Background blur for non-matching aspect ratios */}
+              {/* Background for non-matching aspect ratios */}
               {fitMode === 'contain' && (
-                <div 
-                  className={`absolute inset-0 bg-cover bg-center blur-3xl opacity-35 scale-110 pointer-events-none`}
-                  style={{ backgroundImage: `url(${media.url})` }}
-                />
+                !isLightModeActive ? (
+                  <div 
+                    className={`absolute inset-0 bg-cover bg-center blur-3xl opacity-40 scale-110 pointer-events-none`}
+                    style={{ backgroundImage: `url(${media.url})` }}
+                  />
+                ) : (
+                  /* Light Mode: Lightweight dark vignette, no blur filter pass */
+                  <div className="absolute inset-0 bg-gradient-to-tr from-stone-950 via-zinc-900 to-black opacity-90 pointer-events-none" />
+                )
               )}
               <img 
                 src={media.url || null} 
@@ -203,20 +199,26 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         return (
           <div className={`w-full h-full ${containerPadding} flex items-center justify-center bg-black/20`}>
             <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
-              {/* Background blur for videos */}
+              {/* Background for videos */}
               {fitMode === 'contain' && (
-                <div className={`absolute inset-0 blur-3xl opacity-35 scale-110 pointer-events-none overflow-hidden`}>
-                  <div className="w-full h-full scale-[2]">
-                    <VideoSlide 
-                      media={media} 
-                      currentSlideId={currentSlideId} 
-                      videoPinBehavior={videoPinBehavior}
-                      onVideoEnded={undefined}
-                      isBackgroundBlur
-                      volume={0}
-                    />
+                !isLightModeActive ? (
+                  /* High Performance: Dual-layer video background blur ambient illumination */
+                  <div className={`absolute inset-0 blur-3xl opacity-35 scale-110 pointer-events-none overflow-hidden`}>
+                    <div className="w-full h-full scale-[2]">
+                      <VideoSlide 
+                        media={media} 
+                        currentSlideId={currentSlideId} 
+                        videoPinBehavior={videoPinBehavior}
+                        onVideoEnded={undefined}
+                        isBackgroundBlur
+                        volume={0}
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* Light Mode: Zero duplicate video decoders, lightweight dark vignette */
+                  <div className="absolute inset-0 bg-gradient-to-tr from-stone-950 via-zinc-900 to-black opacity-90 pointer-events-none" />
+                )
               )}
               <div className="w-full h-full relative z-10">
                 <VideoSlide 

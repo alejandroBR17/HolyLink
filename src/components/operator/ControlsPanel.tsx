@@ -8,7 +8,7 @@ import { Meeting } from '../../types';
 import { usePerformanceDiagnostics } from '../../utils/performance';
 
 function PerformanceControlModule() {
-  const { fps, hardwareConcurrency, mode, isLightModeActive, setPerformanceMode } = usePerformanceDiagnostics();
+  const { fps, hardwareConcurrency, mode, isLightModeActive, isDetectedLowPerf, setPerformanceMode } = usePerformanceDiagnostics();
 
   return (
     <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
@@ -22,7 +22,7 @@ function PerformanceControlModule() {
             ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' 
             : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
         }`}>
-          {isLightModeActive ? '⚡ Modo Leve' : '🟢 Modo Fluido'}
+          {isLightModeActive ? (isDetectedLowPerf ? '⚡ Leve (Lag Detectado)' : '⚡ Modo Leve') : '🟢 Alta Qualidade'}
         </span>
       </div>
 
@@ -37,13 +37,19 @@ function PerformanceControlModule() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-emerald-500/5 border border-emerald-500/20 p-2.5 rounded-xl text-emerald-400 text-[10px]">
-        <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
-        <span>Pré-carregamento ativo: mídias e próximos slides pré-alocados na memória.</span>
+      <div className="flex items-start gap-2 bg-zinc-950 border border-zinc-800/80 p-2.5 rounded-xl text-[10px] leading-relaxed text-zinc-400">
+        <CheckCircle2 className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
+        <div>
+          {isLightModeActive ? (
+            <span><strong>Modo Leve Ativo:</strong> Desativa renderização dupla de vídeo, reduz partículas e filtros heavy blur para manter a projeção fluida sem travamentos.</span>
+          ) : (
+            <span><strong>Alta Qualidade Ativa:</strong> Exibe fundo desfocado em tempo real, iluminação ambiente dinâmica, partículas e transições suaves.</span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Ajuste de Transmissão</span>
+        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Modo de Exibição</span>
         <div className="grid grid-cols-3 gap-1.5">
           <button
             onClick={() => setPerformanceMode('auto')}

@@ -263,8 +263,27 @@ export function usePerformanceDiagnostics() {
   const frameCountRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(performance.now());
   const lowFpsCountRef = useRef<number>(0);
+  const highFpsCountRef = useRef<number>(0);
 
   const hardwareConcurrency = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 4) : 4;
+
+  // Listen to storage and custom events across windows/tabs
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'projection_perfMode' && e.newValue) {
+        setModeState(e.newValue as PerformanceMode);
+      }
+    };
+    const handleCustom = (e: any) => {
+      if (e.detail) setModeState(e.detail as PerformanceMode);
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('projection_perf_mode_change', handleCustom);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('projection_perf_mode_change', handleCustom);
+    };
+  }, []);
 
   // Measure FPS continuously
   useEffect(() => {
@@ -281,11 +300,16 @@ export function usePerformanceDiagnostics() {
 
         if (currentFps < 38) {
           lowFpsCountRef.current++;
+          highFpsCountRef.current = 0;
           if (lowFpsCountRef.current >= 3) {
             setIsDetectedLowPerf(true);
           }
-        } else {
-          if (lowFpsCountRef.current > 0) lowFpsCountRef.current--;
+        } else if (currentFps >= 52) {
+          highFpsCountRef.current++;
+          if (highFpsCountRef.current >= 5) {
+            setIsDetectedLowPerf(false);
+            lowFpsCountRef.current = 0;
+          }
         }
 
         frameCountRef.current = 0;
