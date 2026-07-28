@@ -224,6 +224,12 @@ export default function App() {
   }, [isJustStartedRaw, diffSeconds, dismissedJustStarted, baseUpdateStateAndBroadcast]);
 
   // Slides Queue Calculation
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
+
   const baseActiveSlides: SlideType[] = [...DEFAULT_SLIDES];
   customMediaList.forEach((media) => {
     if (media.enabledInLoop) {
@@ -232,7 +238,10 @@ export default function App() {
   });
   customMeetings.forEach((meet) => {
     if (meet.date) {
-      baseActiveSlides.push(`meeting_event_${meet.id}`);
+      // Exclui eventos pontuais passados da fila de reprodução automaticamente
+      if (meet.date >= todayStr) {
+        baseActiveSlides.push(`meeting_event_${meet.id}`);
+      }
     }
   });
   if (diffSeconds <= 15 * 60) {

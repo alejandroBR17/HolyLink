@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
-  CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame, WifiOff, RefreshCw
+  CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame, WifiOff, RefreshCw, AlertTriangle, Sparkles
 } from 'lucide-react';
 import { Meeting } from '../../types';
 
@@ -41,11 +41,39 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const [newCampType, setNewCampType] = useState<'flame' | 'wifi_off' | 'globe' | 'faith'>('flame');
   const [newCampEndDate, setNewCampEndDate] = useState('');
   const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
+  const [editingCampId, setEditingCampId] = useState<string | null>(null);
 
   const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(false);
   const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(false);
 
   const daysMap = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+  // Current local date YYYY-MM-DD
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
+
+  const expiredMeetings = (customMeetings || []).filter(m => m.date && m.date < todayStr);
+
+  const handleClearExpiredMeetings = () => {
+    if (expiredMeetings.length === 0) return;
+    if (showConfirm) {
+      showConfirm(
+        'Limpar Eventos Passados?',
+        `Deseja remover ${expiredMeetings.length} evento(s) pontual(is) cuja data já passou?`,
+        () => {
+          const updated = (customMeetings || []).filter(m => !(m.date && m.date < todayStr));
+          updateStateAndBroadcast('customMeetings', updated);
+        },
+        'info'
+      );
+    } else {
+      const updated = (customMeetings || []).filter(m => !(m.date && m.date < todayStr));
+      updateStateAndBroadcast('customMeetings', updated);
+    }
+  };
 
   const handleSaveMeeting = () => {
     if (!newMeetTheme.trim()) return;
@@ -107,15 +135,21 @@ export const AgendaPanel = React.memo(function AgendaPanel({
     if (!newCampTitle.trim()) return;
     
     const cObject: Campaign = {
-      id: `camp_${Date.now()}`,
+      id: editingCampId || `camp_${Date.now()}`,
       title: newCampTitle.trim(),
       duration: newCampDuration.trim() || "Diariamente",
       iconType: newCampType,
       endDate: newCampEndDate ? newCampEndDate : undefined
     };
 
-    const updated = [...customCampaigns, cObject];
-    updateStateAndBroadcast('customCampaigns', updated);
+    if (editingCampId) {
+      const updated = (customCampaigns || []).map(c => c.id === editingCampId ? cObject : c);
+      updateStateAndBroadcast('customCampaigns', updated);
+      setEditingCampId(null);
+    } else {
+      const updated = [...customCampaigns, cObject];
+      updateStateAndBroadcast('customCampaigns', updated);
+    }
     
     setShowAddCampaignForm(false);
     setNewCampTitle('');
@@ -299,6 +333,27 @@ export const AgendaPanel = React.memo(function AgendaPanel({
               </div>
             )}
 
+            {/* EXPIRED MEETINGS NOTIFICATION BANNER */}
+            {expiredMeetings.length > 0 && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between gap-3 text-xs shadow-inner">
+                <div className="flex items-center gap-2 text-amber-400 font-semibold min-w-0">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 animate-pulse" />
+                  <span className="truncate">
+                    {expiredMeetings.length === 1
+                      ? `1 evento pontual ("${expiredMeetings[0].theme}") já passou.`
+                      : `${expiredMeetings.length} eventos pontuais já passaram.`}
+                  </span>
+                </div>
+                <button
+                  onClick={handleClearExpiredMeetings}
+                  className="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg text-[11px] transition-colors cursor-pointer flex items-center gap-1 shadow"
+                  title="Remover eventos passados da agenda"
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> Limpar Passados
+                </button>
+              </div>
+            )}
+
             {/* MEETS LIST */}
             <div className="flex flex-col gap-2 pr-1">
               {(customMeetings || []).length === 0 ? (
@@ -313,52 +368,67 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     if (dayA !== dayB) return dayA - dayB;
                     return (a.hours * 60 + a.minutes) - (b.hours * 60 + b.minutes);
                   })
-                  .map((meet) => (
-                    <div 
-                      key={meet.id}
-                      className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
-                        meet.date 
-                          ? "bg-amber-500/5 border-amber-500/20" 
-                          : "bg-zinc-950 border-zinc-850"
-                      }`}
-                    >
-                      <div className="flex flex-col gap-1 max-w-[70%] text-left">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase ${
-                            meet.date ? "bg-amber-500 text-black" : "bg-zinc-900 text-zinc-500 border border-zinc-800"
-                          }`}>
-                            {meet.date ? "Único" : "Semanal"}
-                          </span>
-                          <span className="text-zinc-200 font-bold">{meet.dayName}</span>
-                          <span className="text-amber-500 font-mono font-bold">às {meet.time}</span>
+                  .map((meet) => {
+                    const isExpired = !!(meet.date && meet.date < todayStr);
+
+                    return (
+                      <div 
+                        key={meet.id}
+                        className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
+                          isExpired 
+                            ? "bg-red-950/10 border-red-900/30 opacity-60" 
+                            : meet.date 
+                              ? "bg-amber-500/5 border-amber-500/20" 
+                              : "bg-zinc-950 border-zinc-850"
+                        }`}
+                      >
+                        <div className="flex flex-col gap-1 max-w-[70%] text-left">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {isExpired ? (
+                              <span className="text-[8px] px-1.5 py-0.5 rounded font-black uppercase bg-red-500/20 text-red-400 border border-red-500/30">
+                                Passou
+                              </span>
+                            ) : (
+                              <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase ${
+                                meet.date ? "bg-amber-500 text-black" : "bg-zinc-900 text-zinc-500 border border-zinc-800"
+                              }`}>
+                                {meet.date ? "Único" : "Semanal"}
+                              </span>
+                            )}
+                            <span className="text-zinc-200 font-bold">{meet.dayName}</span>
+                            <span className="text-amber-500 font-mono font-bold">às {meet.time}</span>
+                          </div>
+                          <span className="text-zinc-400 truncate font-semibold">{meet.theme}</span>
+                          {isExpired && (
+                            <span className="text-[9px] text-zinc-500 italic">Encerrado (removido do telão)</span>
+                          )}
                         </div>
-                        <span className="text-zinc-400 truncate font-semibold">{meet.theme}</span>
+                        
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditingMeetId(meet.id);
+                              setNewMeetTheme(meet.theme);
+                              setNewMeetTime(meet.time);
+                              setNewMeetType(meet.date ? 'one_time' : 'weekly');
+                              if (meet.date) setNewMeetDate(meet.date);
+                              if (meet.day !== undefined) setNewMeetWeeklyDay(meet.day);
+                              setShowAddMeetingForm(true);
+                            }}
+                            className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMeeting(meet.id)}
+                            className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-900 hover:bg-red-950/20 rounded-lg text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => {
-                            setEditingMeetId(meet.id);
-                            setNewMeetTheme(meet.theme);
-                            setNewMeetTime(meet.time);
-                            setNewMeetType(meet.date ? 'one_time' : 'weekly');
-                            if (meet.date) setNewMeetDate(meet.date);
-                            if (meet.day !== undefined) setNewMeetWeeklyDay(meet.day);
-                            setShowAddMeetingForm(true);
-                          }}
-                          className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMeeting(meet.id)}
-                          className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-900 hover:bg-red-950/20 rounded-lg text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
               )}
             </div>
           </div>
@@ -405,6 +475,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
               <div className="flex flex-col gap-2 w-full">
                 <button
                   onClick={() => {
+                    setEditingCampId(null);
                     setShowAddCampaignForm(true);
                     setNewCampTitle('');
                     setNewCampDuration('');
@@ -428,9 +499,14 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             ) : (
               <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex flex-col gap-3.5 shadow-inner">
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                  <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">Novo Propósito</span>
+                  <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">
+                    {editingCampId ? "Editar Propósito" : "Novo Propósito"}
+                  </span>
                   <button 
-                    onClick={() => setShowAddCampaignForm(false)}
+                    onClick={() => {
+                      setShowAddCampaignForm(false);
+                      setEditingCampId(null);
+                    }}
                     className="text-zinc-500 hover:text-zinc-300 transition-colors p-1 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
@@ -534,7 +610,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddCampaignForm(false)}
+                    onClick={() => {
+                      setShowAddCampaignForm(false);
+                      setEditingCampId(null);
+                    }}
                     className="px-4 py-2 bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold cursor-pointer transition-colors"
                   >
                     Cancelar
@@ -565,7 +644,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                         isExpired ? "opacity-45" : ""
                       }`}
                     >
-                      <div className="flex items-center gap-3 max-w-[70%] text-left">
+                      <div className="flex items-center gap-3 max-w-[65%] text-left">
                         <div className="p-1.5 bg-zinc-900 border border-zinc-800 text-amber-500 rounded-lg shrink-0">
                           {camp.iconType === 'wifi_off' ? (
                             <WifiOff className="w-4 h-4" />
@@ -586,15 +665,30 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         {isExpired ? (
                           <span className="text-[9px] bg-red-500/10 border border-red-500/25 text-red-500 px-2 py-0.5 rounded font-bold">Expirado</span>
                         ) : (
                           <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 px-2 py-0.5 rounded font-bold">Ativo</span>
                         )}
                         <button
+                          onClick={() => {
+                            setEditingCampId(camp.id);
+                            setNewCampTitle(camp.title);
+                            setNewCampDuration(camp.duration);
+                            setNewCampType(camp.iconType || 'flame');
+                            setNewCampEndDate(camp.endDate || '');
+                            setShowAddCampaignForm(true);
+                          }}
+                          className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          title="Editar Propósito"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
                           onClick={() => handleDeleteCampaign(camp.id)}
                           className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-900 hover:bg-red-950/20 rounded-lg text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
+                          title="Excluir Propósito"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
