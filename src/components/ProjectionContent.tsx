@@ -4,6 +4,7 @@ import { Bell, X, Armchair, DoorOpen, Smartphone, MessageSquareOff, Clock, Insta
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ParticlesBackground } from './ParticlesBackground';
+import { ThreeBackground3D, BackgroundStyleOption } from './ThreeBackground3D';
 import { VerseSlide } from './VerseSlide';
 import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide, MeetingEventSlide } from './slides';
 import { SOCIAL } from '../data';
@@ -54,6 +55,9 @@ interface ProjectionContentProps {
   ongoingMeeting?: Meeting | null;
   volume?: number;
   tickerText?: string | null;
+  background3DStyle?: BackgroundStyleOption;
+  background3DFps?: 30 | 60;
+  background3DIntensity?: 'high' | 'medium' | 'low';
   syncStatus?: { active: boolean; message: string; progress?: number } | null;
 }
 
@@ -90,6 +94,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   ongoingMeeting,
   volume = 1,
   tickerText = null,
+  background3DStyle = 'auto',
+  background3DFps = 60,
+  background3DIntensity = 'high',
   syncStatus = null
 }) => {
   // Logic to detect FJU mode: 
@@ -331,7 +338,17 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   };
   return (
     <div className="w-full h-full relative select-none font-sans overflow-hidden bg-[#050000] text-white flex flex-col justify-between">
-      <ParticlesBackground disabled={isMiniature || !isHighModeActive} />
+      {/* 3D Volumetric Background Engine */}
+      <ThreeBackground3D 
+        disabled={background3DStyle === 'off' || background3DStyle === 'particles_2d'}
+        isFJU={isFJU}
+        diffSeconds={diffSeconds}
+        stylePreset={background3DStyle}
+        fpsLimit={background3DFps}
+        intensity={background3DIntensity}
+      />
+      {/* Efeitos 2D Clássicos */}
+      <ParticlesBackground disabled={background3DStyle !== 'particles_2d'} />
       
       {/* BLACKOUT OVERLAY */}
       {blackoutEnabled && (
@@ -382,7 +399,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex flex-col"
           >
-            <header className={`h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.05] bg-[#050505] relative z-50`}>
+            <header className={`h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.08] bg-[#050505]/70 backdrop-blur-md relative z-50`}>
               <div className="flex flex-col gap-3">
                 <div>
                   <h1 className="font-sans font-black text-[3.2rem] tracking-[0.16em] text-white leading-none uppercase">
@@ -426,7 +443,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               </div>
             </header>
 
-            <main className="flex-1 relative w-full overflow-hidden bg-black">
+            <main className="flex-1 relative w-full overflow-hidden bg-transparent">
               <AnimatePresence>
                 <motion.div
                   key={currentSlideId}
@@ -447,9 +464,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex w-full h-full bg-black relative"
+            className="absolute inset-0 flex w-full h-full bg-black/20 relative"
           >
-            <div className={`w-[35%] h-full flex flex-col items-center justify-center border-r ${isFJU ? 'border-amber-500/20 bg-[#080400]' : 'border-white/5 bg-[#030000]'} z-20`}>
+            <div className={`w-[35%] h-full flex flex-col items-center justify-center border-r ${isFJU ? 'border-amber-500/20 bg-[#080400]/80 backdrop-blur-md' : 'border-white/5 bg-[#030000]/80 backdrop-blur-md'} z-20`}>
               <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[2rem] font-bold uppercase tracking-[0.4em] mb-4`}>
                 Faltam
               </span>
@@ -500,7 +517,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black relative overflow-hidden"
+            className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black/30 backdrop-blur-xs relative overflow-hidden"
           >
             <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] ${isFJU ? 'bg-amber-600/10' : 'bg-yellow-600/10'} blur-[200px] rounded-full pointer-events-none`} />
             

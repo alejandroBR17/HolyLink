@@ -37,6 +37,9 @@ interface MonitorPanelProps {
   ongoingMeeting: Meeting | null;
   volume: number;
   tickerText: string | null;
+  background3DStyle?: 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off';
+  background3DFps?: 30 | 60;
+  background3DIntensity?: 'high' | 'medium' | 'low';
   syncStatus: any;
   isProjectionOpen?: boolean;
   activeSlides?: string[];
@@ -73,6 +76,9 @@ export function MonitorPanel({
   ongoingMeeting,
   volume,
   tickerText,
+  background3DStyle = 'auto',
+  background3DFps = 60,
+  background3DIntensity = 'high',
   syncStatus,
   isProjectionOpen = false,
   activeSlides = []
@@ -259,6 +265,9 @@ export function MonitorPanel({
               ongoingMeeting={ongoingMeeting}
               volume={volume}
               tickerText={tickerText}
+              background3DStyle={background3DStyle}
+              background3DFps={background3DFps}
+              background3DIntensity={background3DIntensity}
               syncStatus={syncStatus}
             />
           </div>

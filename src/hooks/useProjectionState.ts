@@ -25,6 +25,9 @@ export interface ProjectionState {
   isProjectionOpen: boolean;
   projectionCloseTrigger: string | null;
   mediaUpdateTrigger: string;
+  background3DStyle: 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off';
+  background3DFps: 30 | 60;
+  background3DIntensity: 'high' | 'medium' | 'low';
 }
 
 export function useProjectionState() {
@@ -156,6 +159,22 @@ export function useProjectionState() {
     return localStorage.getItem('projection_mediaUpdateTrigger') || '0';
   });
 
+  const [background3DStyle, setBackground3DStyle] = useState<'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off'>(() => {
+    if (typeof window === 'undefined') return 'auto';
+    return (localStorage.getItem('projection_background3DStyle') as any) || 'auto';
+  });
+
+  const [background3DFps, setBackground3DFps] = useState<30 | 60>(() => {
+    if (typeof window === 'undefined') return 60;
+    const val = localStorage.getItem('projection_background3DFps');
+    return val === '30' ? 30 : 60;
+  });
+
+  const [background3DIntensity, setBackground3DIntensity] = useState<'high' | 'medium' | 'low'>(() => {
+    if (typeof window === 'undefined') return 'high';
+    return (localStorage.getItem('projection_background3DIntensity') as any) || 'high';
+  });
+
   const [syncStatus, setSyncStatus] = useState<{ active: boolean; message: string; progress?: number } | null>(null);
 
   const projectionWinRef = useRef<Window | null>(null);
@@ -232,6 +251,9 @@ export function useProjectionState() {
         console.error("Error setting customMeetings:", e);
       }
     }
+    else if (key === 'background3DStyle') setBackground3DStyle(value || 'auto');
+    else if (key === 'background3DFps') setBackground3DFps(String(value) === '30' ? 30 : 60);
+    else if (key === 'background3DIntensity') setBackground3DIntensity(value || 'high');
     else if (key === 'customCampaigns') {
       try {
         setCustomCampaigns(typeof value === 'string' ? JSON.parse(value) : value);
@@ -292,6 +314,9 @@ export function useProjectionState() {
       else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
       else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value?.toString() || '0');
       else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+      else if (key === 'background3DStyle') setBackground3DStyle(value || 'auto');
+      else if (key === 'background3DFps') setBackground3DFps(value === '30' || value === 30 ? 30 : 60);
+      else if (key === 'background3DIntensity') setBackground3DIntensity(value || 'high');
       else if (key === 'carouselStartTimeOffset') setCarouselStartTimeOffset(value !== null && value !== undefined ? parseInt(value.toString(), 10) : 0);
       else if (key === 'isProjectionOpen') setIsProjectionOpen(value === 'true' || value === true);
       else if (key === 'projectionCloseTrigger') {
@@ -376,6 +401,10 @@ export function useProjectionState() {
       setCarouselStartTimeOffset(parseInt(localStorage.getItem('projection_carouselStartTimeOffset') || '0', 10));
       setIsProjectionOpen(localStorage.getItem('projection_isProjectionOpen') === 'true');
       setProjectionCloseTrigger(localStorage.getItem('projection_projectionCloseTrigger'));
+      setBackground3DStyle((localStorage.getItem('projection_background3DStyle') as any) || 'auto');
+      const fpsVal = localStorage.getItem('projection_background3DFps');
+      setBackground3DFps(fpsVal === '30' ? 30 : 60);
+      setBackground3DIntensity((localStorage.getItem('projection_background3DIntensity') as any) || 'high');
       try {
         const order = localStorage.getItem('projection_slidesOrder');
         setSlidesOrder(order ? JSON.parse(order) : []);
@@ -451,6 +480,9 @@ export function useProjectionState() {
       isProjectionOpen,
       projectionCloseTrigger,
       mediaUpdateTrigger,
+      background3DStyle,
+      background3DFps,
+      background3DIntensity,
       syncStatus
     },
     updateStateAndBroadcast,

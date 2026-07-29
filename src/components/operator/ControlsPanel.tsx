@@ -295,6 +295,9 @@ interface ControlsPanelProps {
   activeAlert: string | null;
   volume: number;
   tickerText: string | null;
+  background3DStyle?: 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off';
+  background3DFps?: 30 | 60;
+  background3DIntensity?: 'high' | 'medium' | 'low';
   updateStateAndBroadcast: (key: string, value: any) => void;
   currentTime: Date;
   isProjectionOpen?: boolean;
@@ -316,6 +319,9 @@ export function ControlsPanel({
   activeAlert,
   volume,
   tickerText,
+  background3DStyle = 'auto',
+  background3DFps = 60,
+  background3DIntensity = 'high',
   updateStateAndBroadcast,
   currentTime,
   isProjectionOpen = false
@@ -488,6 +494,100 @@ export function ControlsPanel({
               </div>
             </div>
           )}
+        </div>
+
+        {/* 3D VOLUMETRIC BACKGROUND CARD */}
+        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
+          <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
+            <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              Fundo 3D & Efeitos de Recepção (Three.js)
+            </h3>
+            <span className="text-[9px] bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono px-2 py-0.5 rounded-md font-bold">
+              100% Offline
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Estilo de Ambiência 3D</span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { id: 'auto', label: '🤖 Auto Adaptativo' },
+                { id: 'aurora', label: '🌅 Aurora Sacra 3D' },
+                { id: 'veil', label: '🕊️ Véu Divino 3D' },
+                { id: 'fju_aura', label: '⚡ Aura FJU 3D' },
+                { id: 'particles_2d', label: '✨ 2D Clássico' },
+                { id: 'off', label: '🚫 Desativar' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => updateStateAndBroadcast('background3DStyle', item.id)}
+                  className={`py-2 px-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer border truncate ${
+                    background3DStyle === item.id
+                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
+                      : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-400'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-800/50">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Modo Desempenho / FPS</span>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => updateStateAndBroadcast('background3DFps', 60)}
+                  className={`py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+                    background3DFps === 60
+                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                  }`}
+                >
+                  60 FPS
+                </button>
+                <button
+                  onClick={() => updateStateAndBroadcast('background3DFps', 30)}
+                  className={`py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+                    background3DFps === 30
+                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                      : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                  }`}
+                  title="Economiza processamento no computador"
+                >
+                  30 FPS (Leve)
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Carga Gráfica 3D</span>
+              <div className="grid grid-cols-3 gap-1">
+                {[
+                  { id: 'high', label: 'Alta' },
+                  { id: 'medium', label: 'Média' },
+                  { id: 'low', label: '⚡ Leve' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => updateStateAndBroadcast('background3DIntensity', item.id)}
+                    className={`py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+                      background3DIntensity === item.id
+                        ? item.id === 'low'
+                          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-extrabold'
+                          : 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                        : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                    }`}
+                    title={item.id === 'low' ? 'Modo Anti-Lag ultra otimizado para computadores fracos' : undefined}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* TIMER COUNTDOWN CARD */}

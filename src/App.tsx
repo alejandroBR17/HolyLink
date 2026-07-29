@@ -79,6 +79,9 @@ export default function App() {
     customCampaigns,
     isProjectionOpen,
     mediaUpdateTrigger,
+    background3DStyle,
+    background3DFps,
+    background3DIntensity,
     syncStatus
   } = state;
 
@@ -923,6 +926,9 @@ export default function App() {
                 activeAlert={activeAlert}
                 volume={volume}
                 tickerText={tickerText}
+                background3DStyle={background3DStyle}
+                background3DFps={background3DFps}
+                background3DIntensity={background3DIntensity}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 currentTime={currentTime}
                 isProjectionOpen={isProjectionOpen}
@@ -966,6 +972,9 @@ export default function App() {
                 ongoingMeeting={ongoingMeeting}
                 volume={volume}
                 tickerText={tickerText}
+                background3DStyle={background3DStyle}
+                background3DFps={background3DFps}
+                background3DIntensity={background3DIntensity}
                 syncStatus={syncStatus}
                 isProjectionOpen={isProjectionOpen}
                 activeSlides={activeSlides}
@@ -1006,6 +1015,9 @@ export default function App() {
               ongoingMeeting={ongoingMeeting}
               volume={volume}
               tickerText={tickerText}
+              background3DStyle={background3DStyle}
+              background3DFps={background3DFps}
+              background3DIntensity={background3DIntensity}
               syncStatus={syncStatus}
               isProjectionOpen={isProjectionOpen}
               activeSlides={activeSlides}
@@ -1121,6 +1133,9 @@ export default function App() {
           ongoingMeeting={ongoingMeeting}
           volume={volume}
           tickerText={tickerText}
+          background3DStyle={background3DStyle}
+          background3DFps={background3DFps}
+          background3DIntensity={background3DIntensity}
           syncStatus={syncStatus}
           onVideoEnded={handleVideoEnded}
         />
