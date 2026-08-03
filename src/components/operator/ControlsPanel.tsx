@@ -201,25 +201,58 @@ function AudioVolumeControl({
   };
 
   const displayVolume = isDraggingRef.current ? localVolume : volume;
+  const volPercent = Math.round(displayVolume * 100);
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Volume da Transmissão</span>
-        <span className="text-xs font-mono font-bold text-amber-500">{Math.round(displayVolume * 100)}%</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Volume Geral da Mídia</span>
+          {displayVolume === 0 ? (
+            <span className="text-[8px] font-extrabold bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded uppercase">
+              Mudo
+            </span>
+          ) : (
+            <span className="text-[8px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded uppercase">
+              Ativo
+            </span>
+          )}
+        </div>
+        <span className="text-xs font-mono font-black text-amber-400">{volPercent}%</span>
       </div>
       
+      {/* LED Meter Visual Indicator */}
+      <div className="flex items-center gap-1 bg-zinc-950 p-1.5 rounded-lg border border-zinc-850">
+        {[0.2, 0.4, 0.6, 0.8, 1.0].map((threshold, idx) => {
+          const isActive = displayVolume >= threshold - 0.05;
+          return (
+            <div
+              key={idx}
+              className={`h-1.5 flex-1 rounded-full transition-all duration-200 ${
+                isActive
+                  ? idx < 3
+                    ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                    : idx === 3
+                    ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                    : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+                  : 'bg-zinc-800/60'
+              }`}
+            />
+          );
+        })}
+      </div>
+
       <div className="flex items-center gap-3">
         <button 
-          onClick={() => handlePresetClick(displayVolume === 0 ? 0.5 : 0)}
+          onClick={() => handlePresetClick(displayVolume === 0 ? 0.8 : 0)}
           className={`p-2.5 rounded-xl transition-all border cursor-pointer ${
             displayVolume === 0 
-              ? 'bg-red-500/10 border-red-500/30 text-red-500' 
-              : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+              ? 'bg-red-500/20 border-red-500/40 text-red-400 font-bold shadow-md shadow-red-500/10 animate-pulse' 
+              : 'bg-zinc-950 border-zinc-800 text-zinc-300 hover:text-amber-400 hover:border-amber-500/40'
           }`}
-          title={displayVolume === 0 ? "Ativar Áudio" : "Silenciar"}
+          title={displayVolume === 0 ? "Ativar Áudio (80%)" : "Silenciar Imediatamente"}
         >
-          {displayVolume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          {displayVolume === 0 ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4" />}
         </button>
 
         <div className="flex-1 flex items-center relative">
@@ -236,44 +269,35 @@ function AudioVolumeControl({
             onMouseDown={handlePointerDown}
             onMouseUp={handlePointerUp}
             onChange={handleSliderChange}
-            className="w-full h-2 bg-zinc-950 rounded-lg appearance-none cursor-pointer accent-amber-500 hover:accent-amber-400 focus:outline-none"
+            className="w-full h-2.5 bg-zinc-950 rounded-lg appearance-none cursor-pointer accent-amber-500 hover:accent-amber-400 focus:outline-none border border-zinc-800"
           />
         </div>
       </div>
       
-      <div className="grid grid-cols-4 gap-1.5">
-        <button 
-          onClick={() => handlePresetClick(0)} 
-          className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
-            displayVolume === 0 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          Mudo
-        </button>
-        <button 
-          onClick={() => handlePresetClick(0.25)} 
-          className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
-            Math.abs(displayVolume - 0.25) < 0.05 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          25%
-        </button>
-        <button 
-          onClick={() => handlePresetClick(0.5)} 
-          className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
-            Math.abs(displayVolume - 0.5) < 0.05 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          50%
-        </button>
-        <button 
-          onClick={() => handlePresetClick(1)} 
-          className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
-            displayVolume === 1 ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          100%
-        </button>
+      {/* Quick Volume Presets */}
+      <div className="grid grid-cols-5 gap-1">
+        {[
+          { label: 'Mudo', val: 0 },
+          { label: '20%', val: 0.2 },
+          { label: '50%', val: 0.5 },
+          { label: '80%', val: 0.8 },
+          { label: '100%', val: 1.0 },
+        ].map((item) => {
+          const isSelected = Math.abs(displayVolume - item.val) < 0.05;
+          return (
+            <button 
+              key={item.label}
+              onClick={() => handlePresetClick(item.val)} 
+              className={`py-1.5 rounded-lg text-[9px] font-bold transition-all uppercase cursor-pointer border ${
+                isSelected 
+                  ? 'bg-amber-500 border-amber-500 text-black font-extrabold shadow-sm' 
+                  : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -326,6 +350,7 @@ export function ControlsPanel({
   currentTime,
   isProjectionOpen = false
 }: ControlsPanelProps) {
+  const { setPerformanceMode } = usePerformanceDiagnostics();
   const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
 
   useEffect(() => {
@@ -378,20 +403,93 @@ export function ControlsPanel({
     updateStateAndBroadcast('pausedSeconds', null);
   };
 
+  const [alertType, setAlertType] = useState<'custom' | 'car_plate' | 'ebi_child'>('custom');
+  const [carPlate, setCarPlate] = useState('');
+  const [carModel, setCarModel] = useState('');
+  const [childName, setChildName] = useState('');
+  const [alertHistory, setAlertHistory] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('projection_alert_history');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const CHURCH_ALERT_PRESETS = [
+    {
+      id: 'baby',
+      title: '👶 Berçário (EBI)',
+      msg: 'Atenção pais: Compareçam ao berçário (EBI).'
+    },
+    {
+      id: 'car',
+      title: '🚗 Estacionamento',
+      msg: 'Proprietário de veículo: Compareça ao estacionamento.'
+    },
+    {
+      id: 'keys',
+      title: '🔑 Chave Achada',
+      msg: 'Uma chave foi encontrada. Procurar a recepção ao final.'
+    },
+    {
+      id: 'rain',
+      title: '🌧️ Alerta de Chuva',
+      msg: 'Atenção condutores: Verificar janelas dos veículos.'
+    },
+    {
+      id: 'workers',
+      title: '📢 Reunião Obreiros',
+      msg: 'Breve reunião com todos os obreiros e colaboradores após o cultivo.'
+    }
+  ];
+
+  const handleSendAlertMessage = (message: string) => {
+    if (!message.trim()) return;
+    updateStateAndBroadcast('activeAlert', message.trim());
+    
+    // Save to history
+    const updated = [message.trim(), ...alertHistory.filter(h => h !== message.trim())].slice(0, 10);
+    setAlertHistory(updated);
+    localStorage.setItem('projection_alert_history', JSON.stringify(updated));
+  };
+
   const handleCustomAlertSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const input = form.elements.namedItem('customAlertText') as HTMLInputElement;
-    if (input && input.value.trim()) {
-      updateStateAndBroadcast('activeAlert', input.value.trim());
-      input.value = "";
+    if (alertType === 'car_plate') {
+      if (!carPlate.trim()) return;
+      const text = `Atenção: Veículo ${carModel ? carModel + ' ' : ''}placa ${carPlate.toUpperCase().trim()}, favor comparecer ao estacionamento.`;
+      handleSendAlertMessage(text);
+      setCarPlate('');
+      setCarModel('');
+    } else if (alertType === 'ebi_child') {
+      if (!childName.trim()) return;
+      const text = `Atenção: Responsável pela criança ${childName.trim()}, favor dirigir-se à EBI.`;
+      handleSendAlertMessage(text);
+      setChildName('');
+    } else {
+      const form = e.currentTarget;
+      const input = form.elements.namedItem('customAlertText') as HTMLInputElement;
+      if (input && input.value.trim()) {
+        handleSendAlertMessage(input.value.trim());
+        input.value = "";
+      }
     }
   };
 
+  const handleDeleteHistoryItem = (idx: number) => {
+    const updated = alertHistory.filter((_, i) => i !== idx);
+    setAlertHistory(updated);
+    localStorage.setItem('projection_alert_history', JSON.stringify(updated));
+  };
+
   const tickerSuggestions = [
-    "Bem-vindos à Casa de Deus!",
-    "Participe da Corrente dos 70 às 15h.",
-    "PIX de Ofertas: dízimos@universal.org"
+    "Seja muito bem-vindo à Casa de Deus!",
+    "Por favor, silencie o seu aparelho celular para a reunião.",
+    "EBI: Traga seus filhos para o Espaço Infantil durante o culto.",
+    "Participe da Corrente de Libertação nesta Sexta-feira.",
+    "Santo Culto do Domingo: Traga toda a sua família!",
+    "FJU: Encontro Jovem neste Sábado às 16h."
   ];
 
   return (
@@ -506,6 +604,59 @@ export function ControlsPanel({
             <span className="text-[9px] bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono px-2 py-0.5 rounded-md font-bold">
               100% Offline
             </span>
+          </div>
+
+          {/* 1-CLICK PRESET MODES FOR QUICK OPERATOR SETUP */}
+          <div className="flex flex-col gap-1.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-850">
+            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+              <Zap className="w-3 h-3 text-amber-500" /> Otimização Rápida de Desempenho (1-Clique):
+            </span>
+            <div className="grid grid-cols-3 gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  updateStateAndBroadcast('background3DStyle', 'particles_2d');
+                  updateStateAndBroadcast('background3DFps', 30);
+                  updateStateAndBroadcast('background3DIntensity', 'low');
+                  setPerformanceMode('light');
+                }}
+                className="py-2 px-1.5 bg-zinc-900 hover:bg-emerald-950/40 border border-zinc-800 hover:border-emerald-500/50 rounded-lg text-[10px] font-bold text-emerald-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
+                title="Ideal para notebooks ou PCs antigos sem placa gráfica dedicada"
+              >
+                <span>🛡️ Anti-Lag Total</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-emerald-300 font-normal">30 FPS + 2D Leve</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  updateStateAndBroadcast('background3DStyle', 'auto');
+                  updateStateAndBroadcast('background3DFps', 60);
+                  updateStateAndBroadcast('background3DIntensity', 'medium');
+                  setPerformanceMode('auto');
+                }}
+                className="py-2 px-1.5 bg-zinc-900 hover:bg-amber-950/40 border border-zinc-800 hover:border-amber-500/50 rounded-lg text-[10px] font-bold text-amber-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
+                title="Equilíbrio ideal entre fluidez e efeitos visuais"
+              >
+                <span>⚖️ Equilibrado</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-amber-300 font-normal">60 FPS + Auto 3D</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  updateStateAndBroadcast('background3DStyle', 'aurora');
+                  updateStateAndBroadcast('background3DFps', 60);
+                  updateStateAndBroadcast('background3DIntensity', 'high');
+                  setPerformanceMode('high');
+                }}
+                className="py-2 px-1.5 bg-zinc-900 hover:bg-blue-950/40 border border-zinc-800 hover:border-blue-500/50 rounded-lg text-[10px] font-bold text-blue-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
+                title="Qualidade gráfica máxima com volumetria 3D completa"
+              >
+                <span>✨ Alta Qualidade</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-blue-300 font-normal">60 FPS + 3D Aurora</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -733,65 +884,168 @@ export function ControlsPanel({
         
         {/* ALERTS MODULE */}
         <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-          <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider border-b border-zinc-800/50 pb-3">
-            Disparador de Alertas Visuais
-          </h3>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              onClick={() => updateStateAndBroadcast('activeAlert', activeAlert === 'baby' ? null : 'baby')}
-              className={`p-3 rounded-xl border text-[11px] font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                activeAlert === 'baby'
-                  ? "bg-amber-500 border-amber-500 text-black shadow-lg shadow-amber-500/10"
-                  : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900"
-              }`}
-            >
-              <Bell className="w-3.5 h-3.5 shrink-0" />
-              {ALERTS.baby.buttonTitle}
-            </button>
-            
-            <button
-              onClick={() => updateStateAndBroadcast('activeAlert', activeAlert === 'car' ? null : 'car')}
-              className={`p-3 rounded-xl border text-[11px] font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                activeAlert === 'car'
-                  ? "bg-amber-500 border-amber-500 text-black shadow-lg shadow-amber-500/10"
-                  : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900"
-              }`}
-            >
-              <Bell className="w-3.5 h-3.5 shrink-0" />
-              {ALERTS.car.buttonTitle}
-            </button>
+          <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
+            <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
+              <Bell className="w-4 h-4 text-amber-500" />
+              Disparador de Alertas no Telão
+            </h3>
+            {activeAlert && (
+              <span className="text-[8px] bg-amber-500/20 border border-amber-500/40 text-amber-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">
+                Alerta Na Tela
+              </span>
+            )}
           </div>
 
-          <form onSubmit={handleCustomAlertSubmit} className="flex gap-2">
-            <input
-              type="text"
-              name="customAlertText"
-              placeholder="Ex: Mãe da Sofia comparecer à EBI..."
-              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 font-sans"
-            />
-            <button
-              type="submit"
-              className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-200 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-all shrink-0"
-            >
-              <Send className="w-3.5 h-3.5" /> Enviar
-            </button>
-          </form>
-
+          {/* ACTIVE ALERT CARD IF ANY */}
           {activeAlert && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center justify-between text-amber-500 text-xs">
-              <div className="flex items-center gap-2 text-left">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 animate-pulse" />
-                <span className="leading-snug truncate max-w-[200px]">
-                  <strong>Ativo:</strong> {activeAlert === 'baby' ? ALERTS.baby.message : activeAlert === 'car' ? ALERTS.car.message : activeAlert}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between text-amber-400 text-xs shadow-inner">
+              <div className="flex items-center gap-2.5 text-left">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 animate-bounce text-amber-400" />
+                <span className="leading-snug truncate max-w-[210px] font-medium">
+                  <strong className="text-amber-300">Exibindo:</strong> {activeAlert === 'baby' ? ALERTS.baby.message : activeAlert === 'car' ? ALERTS.car.message : activeAlert}
                 </span>
               </div>
               <button
                 onClick={() => updateStateAndBroadcast('activeAlert', null)}
-                className="bg-amber-500/10 hover:bg-amber-500/20 p-1 rounded-full text-amber-500 transition-colors cursor-pointer"
+                className="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
               >
-                <Trash2 className="w-4.5 h-4.5" />
+                <X className="w-3.5 h-3.5" /> Remover
               </button>
+            </div>
+          )}
+
+          {/* PRESET CHURCH ALERTS BUTTONS */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Alertas Rápidos de Igreja</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {CHURCH_ALERT_PRESETS.map((preset) => {
+                const isActive = activeAlert === preset.id || activeAlert === preset.msg;
+                return (
+                  <button
+                    key={preset.id}
+                    onClick={() => updateStateAndBroadcast('activeAlert', isActive ? null : preset.msg)}
+                    className={`p-2.5 rounded-xl border text-[10px] font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
+                      isActive
+                        ? "bg-amber-500 border-amber-500 text-black shadow-lg shadow-amber-500/20"
+                        : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-amber-500/40 hover:bg-zinc-900"
+                    }`}
+                  >
+                    <span className="font-extrabold truncate">{preset.title}</span>
+                    <span className={`text-[8px] truncate mt-0.5 ${isActive ? 'text-black/80 font-medium' : 'text-zinc-500'}`}>
+                      {preset.msg}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* BUILDER SELECTOR & CUSTOM INPUT */}
+          <div className="flex flex-col gap-2 pt-2 border-t border-zinc-800/50">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Montar Alerta Específico</span>
+              <div className="flex gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-[9px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setAlertType('custom')}
+                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${alertType === 'custom' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-white'}`}
+                >
+                  Livre
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAlertType('car_plate')}
+                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${alertType === 'car_plate' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-white'}`}
+                >
+                  🚗 Carro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAlertType('ebi_child')}
+                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${alertType === 'ebi_child' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-white'}`}
+                >
+                  👶 Criança
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleCustomAlertSubmit} className="flex flex-col gap-2">
+              {alertType === 'car_plate' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="Placa (Ex: ABC-1234)"
+                    value={carPlate}
+                    onChange={(e) => setCarPlate(e.target.value)}
+                    className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 uppercase font-mono"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Modelo/Cor (Ex: Onix Prata)"
+                    value={carModel}
+                    onChange={(e) => setCarModel(e.target.value)}
+                    className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50"
+                  />
+                </div>
+              )}
+
+              {alertType === 'ebi_child' && (
+                <input
+                  type="text"
+                  placeholder="Nome da criança (Ex: Sofia Rodrigues)"
+                  value={childName}
+                  onChange={(e) => setChildName(e.target.value)}
+                  className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50"
+                />
+              )}
+
+              {alertType === 'custom' && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="customAlertText"
+                    placeholder="Ex: Mãe do Samuel comparacer à EBI..."
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 font-sans"
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-black py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0 shadow-md shadow-amber-500/10"
+              >
+                <Send className="w-3.5 h-3.5" /> Disparar Alerta no Telão
+              </button>
+            </form>
+          </div>
+
+          {/* HISTÓRICO DE ALERTAS RECENTES */}
+          {alertHistory.length > 0 && (
+            <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-800/50">
+              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Histórico Recente (1-Clique)</span>
+              <div className="flex flex-col gap-1 max-h-[120px] overflow-y-auto pr-1">
+                {alertHistory.map((histMsg, hIdx) => (
+                  <div
+                    key={hIdx}
+                    className="bg-zinc-950 border border-zinc-850 p-1.5 rounded-lg flex items-center justify-between text-[10px] gap-2 group hover:border-zinc-700"
+                  >
+                    <button
+                      onClick={() => handleSendAlertMessage(histMsg)}
+                      className="text-left text-zinc-300 hover:text-amber-400 truncate flex-1 font-medium cursor-pointer"
+                      title="Re-enviar este alerta"
+                    >
+                      {histMsg}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteHistoryItem(hIdx)}
+                      className="p-1 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
+                      title="Excluir do histórico"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

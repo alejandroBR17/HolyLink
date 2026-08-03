@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
-  CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame, WifiOff, RefreshCw, AlertTriangle, Sparkles
+  CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame, WifiOff, RefreshCw, AlertTriangle, Sparkles, Copy, Zap, Check
 } from 'lucide-react';
 import { Meeting } from '../../types';
 
@@ -20,6 +20,22 @@ interface AgendaPanelProps {
   showConfirm?: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
   onResetCampaigns?: () => void;
 }
+
+const DEFAULT_MEETING_PRESETS = [
+  { theme: "Santo Culto do Domingo", day: 0, dayName: "Domingo", time: "18:00", hours: 18, minutes: 0 },
+  { theme: "Prosperidade com Deus", day: 1, dayName: "Segunda-feira", time: "19:30", hours: 19, minutes: 30 },
+  { theme: "Escola da Fé & Salvação", day: 3, dayName: "Quarta-feira", time: "19:30", hours: 19, minutes: 30 },
+  { theme: "Nação dos Casais & Família", day: 4, dayName: "Quinta-feira", time: "19:30", hours: 19, minutes: 30 },
+  { theme: "Corrente de Libertação & Cura", day: 5, dayName: "Sexta-feira", time: "19:30", hours: 19, minutes: 30 },
+  { theme: "Encontro Força Jovem (FJU)", day: 6, dayName: "Sábado", time: "16:00", hours: 16, minutes: 0 },
+];
+
+const DEFAULT_CAMPAIGN_PRESETS: Array<{ title: string; duration: string; iconType: 'flame' | 'wifi_off' | 'globe' | 'faith' }> = [
+  { title: "Jejum de Daniel", duration: "21 Dias de Desconexão", iconType: "wifi_off" },
+  { title: "Fogueira Santa de Israel", duration: "Propósito no Altar", iconType: "flame" },
+  { title: "7 Domingos da Família", duration: "Oração pela Família", iconType: "faith" },
+  { title: "Clamor Evangelístico", duration: "Salvação de Almas", iconType: "globe" },
+];
 
 export const AgendaPanel = React.memo(function AgendaPanel({
   customMeetings,
@@ -73,6 +89,51 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       const updated = (customMeetings || []).filter(m => !(m.date && m.date < todayStr));
       updateStateAndBroadcast('customMeetings', updated);
     }
+  };
+
+  const handleAddMeetingPreset = (preset: typeof DEFAULT_MEETING_PRESETS[0]) => {
+    const newM: Meeting = {
+      id: `meet_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      day: preset.day,
+      dayName: preset.dayName,
+      theme: preset.theme,
+      time: preset.time,
+      hours: preset.hours,
+      minutes: preset.minutes
+    };
+    const updated = [...(customMeetings || []), newM];
+    updateStateAndBroadcast('customMeetings', updated);
+  };
+
+  const handleDuplicateMeeting = (m: Meeting) => {
+    const newM: Meeting = {
+      ...m,
+      id: `meet_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      theme: `${m.theme} (Cópia)`
+    };
+    const updated = [...(customMeetings || []), newM];
+    updateStateAndBroadcast('customMeetings', updated);
+  };
+
+  const handleAddCampaignPreset = (preset: typeof DEFAULT_CAMPAIGN_PRESETS[0]) => {
+    const newC: Campaign = {
+      id: `camp_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      title: preset.title,
+      duration: preset.duration,
+      iconType: preset.iconType
+    };
+    const updated = [...(customCampaigns || []), newC];
+    updateStateAndBroadcast('customCampaigns', updated);
+  };
+
+  const handleDuplicateCampaign = (c: Campaign) => {
+    const newC: Campaign = {
+      ...c,
+      id: `camp_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      title: `${c.title} (Cópia)`
+    };
+    const updated = [...(customCampaigns || []), newC];
+    updateStateAndBroadcast('customCampaigns', updated);
   };
 
   const handleSaveMeeting = () => {
@@ -209,20 +270,42 @@ export const AgendaPanel = React.memo(function AgendaPanel({
           <div className="p-5 border-t border-zinc-800/50 bg-zinc-950/20 flex flex-col gap-4">
             
             {!showAddMeetingForm ? (
-              <button
-                onClick={() => {
-                  setShowAddMeetingForm(true);
-                  setEditingMeetId(null);
-                  setNewMeetTheme('');
-                  setNewMeetType('weekly');
-                  setNewMeetWeeklyDay(new Date().getDay());
-                  setNewMeetDate(new Date().toISOString().split('T')[0]);
-                  setNewMeetTime('19:30');
-                }}
-                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-amber-500" /> Adicionar Reunião ou Evento
-              </button>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setShowAddMeetingForm(true);
+                    setEditingMeetId(null);
+                    setNewMeetTheme('');
+                    setNewMeetType('weekly');
+                    setNewMeetWeeklyDay(new Date().getDay());
+                    setNewMeetDate(new Date().toISOString().split('T')[0]);
+                    setNewMeetTime('19:30');
+                  }}
+                  className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-amber-500" /> Adicionar Reunião Personalizada
+                </button>
+
+                {/* Modelos Prontos de Reuniões em 1-Clique */}
+                <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-800/60">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-500" /> Adicionar Reuniões Rápidas (1-Clique):
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {DEFAULT_MEETING_PRESETS.map((preset, pIdx) => (
+                      <button
+                        key={pIdx}
+                        type="button"
+                        onClick={() => handleAddMeetingPreset(preset)}
+                        className="bg-zinc-950 border border-zinc-850 hover:border-amber-500/40 text-left p-2 rounded-lg text-[10px] text-zinc-300 hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group"
+                      >
+                        <span className="font-bold text-amber-400 group-hover:text-amber-300 truncate">{preset.theme}</span>
+                        <span className="text-zinc-500 text-[9px] font-mono">{preset.dayName} às {preset.time}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex flex-col gap-3.5 shadow-inner">
                 <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
@@ -379,7 +462,9 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                             ? "bg-red-950/10 border-red-900/30 opacity-60" 
                             : meet.date 
                               ? "bg-amber-500/5 border-amber-500/20" 
-                              : "bg-zinc-950 border-zinc-850"
+                              : meet.day === now.getDay()
+                                ? "bg-amber-500/10 border-amber-500/40 shadow-sm"
+                                : "bg-zinc-950 border-zinc-850"
                         }`}
                       >
                         <div className="flex flex-col gap-1 max-w-[70%] text-left">
@@ -395,6 +480,11 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                                 {meet.date ? "Único" : "Semanal"}
                               </span>
                             )}
+                            {meet.day === now.getDay() && !isExpired && (
+                              <span className="text-[8px] px-1.5 py-0.5 rounded font-black uppercase bg-emerald-500 text-black animate-pulse">
+                                Hoje!
+                              </span>
+                            )}
                             <span className="text-zinc-200 font-bold">{meet.dayName}</span>
                             <span className="text-amber-500 font-mono font-bold">às {meet.time}</span>
                           </div>
@@ -406,6 +496,13 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                         
                         <div className="flex items-center gap-1 shrink-0">
                           <button
+                            onClick={() => handleDuplicateMeeting(meet)}
+                            className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
+                            title="Duplicar Reunião"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button
                             onClick={() => {
                               setEditingMeetId(meet.id);
                               setNewMeetTheme(meet.theme);
@@ -416,12 +513,14 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                               setShowAddMeetingForm(true);
                             }}
                             className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                            title="Editar Reunião"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteMeeting(meet.id)}
                             className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-900 hover:bg-red-950/20 rounded-lg text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
+                            title="Excluir Reunião"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -472,7 +571,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
           <div className="p-5 border-t border-zinc-800/50 bg-zinc-950/20 flex flex-col gap-4">
             
             {!showAddCampaignForm ? (
-              <div className="flex flex-col gap-2 w-full">
+              <div className="flex flex-col gap-3 w-full">
                 <button
                   onClick={() => {
                     setEditingCampId(null);
@@ -484,13 +583,34 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   }}
                   className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 text-amber-500" /> Adicionar Novo Propósito
+                  <Plus className="w-4 h-4 text-amber-500" /> Adicionar Propósito Personalizado
                 </button>
+
+                {/* Modelos Prontos de Campanhas */}
+                <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-800/60">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-500" /> Modelos Rápidos de Campanhas:
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {DEFAULT_CAMPAIGN_PRESETS.map((preset, pIdx) => (
+                      <button
+                        key={pIdx}
+                        type="button"
+                        onClick={() => handleAddCampaignPreset(preset)}
+                        className="bg-zinc-950 border border-zinc-850 hover:border-amber-500/40 text-left p-2 rounded-lg text-[10px] text-zinc-300 hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group"
+                      >
+                        <span className="font-bold text-amber-400 group-hover:text-amber-300 truncate">{preset.title}</span>
+                        <span className="text-zinc-500 text-[9px] truncate">{preset.duration}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {onResetCampaigns && (
                   <button
                     type="button"
                     onClick={onResetCampaigns}
-                    className="w-full py-2 bg-zinc-950/40 hover:bg-zinc-900/40 text-zinc-400 hover:text-amber-500 border border-zinc-800/50 hover:border-amber-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    className="w-full py-2 bg-zinc-950/40 hover:bg-zinc-900/40 text-zinc-400 hover:text-amber-500 border border-zinc-800/50 hover:border-amber-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-1"
                   >
                     <RefreshCw className="w-3.5 h-3.5 shrink-0" /> Restaurar Propósitos Padrão
                   </button>
@@ -671,6 +791,13 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                         ) : (
                           <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 px-2 py-0.5 rounded font-bold">Ativo</span>
                         )}
+                        <button
+                          onClick={() => handleDuplicateCampaign(camp)}
+                          className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
+                          title="Duplicar Propósito"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           onClick={() => {
                             setEditingCampId(camp.id);

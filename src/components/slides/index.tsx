@@ -386,7 +386,7 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
         <div className="h-[2px] w-12 bg-amber-500/40" />
       </div>
 
-      <div className={`w-full max-w-6xl ${activeCampaigns.length === 1 ? 'flex justify-center' : 'grid grid-cols-2 gap-12'}`}>
+      <div className={`w-full max-w-6xl ${activeCampaigns.length > 1 ? 'grid grid-cols-2 gap-12' : 'flex justify-center items-center mx-auto'}`}>
         {activeCampaigns.length > 0 ? (
           activeCampaigns.map((campaign, index) => {
             let Icon = Flame;
@@ -402,9 +402,9 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
             }
 
             if (activeCampaigns.length === 1) {
-              // Layout majestoso para 1 campanha
+              // Layout majestoso para 1 campanha centralizada
               return (
-                <div key={index} className="bg-zinc-950/40 border border-amber-500/20 p-16 rounded-[2.5rem] flex items-center justify-between gap-16 w-full max-w-5xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+                <div key={index} className="bg-zinc-950/40 border border-amber-500/20 p-16 rounded-[2.5rem] flex items-center justify-between gap-16 w-full max-w-5xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group mx-auto">
                   <div className="absolute inset-0 bg-gradient-to-r from-amber-500/[0.02] to-transparent pointer-events-none" />
                   <div className="absolute -right-24 -bottom-24 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
                   
@@ -454,11 +454,13 @@ export const CampaignSlide = ({ campaigns = [] }: { campaigns?: any[] }) => {
             );
           })
         ) : (
-          <div className="w-full max-w-3xl bg-zinc-950/20 border border-zinc-800/80 p-20 rounded-[2rem] flex flex-col items-center text-center shadow-xl">
-            <Flame className="w-24 h-24 text-zinc-600 mb-8" strokeWidth={1} />
-            <h3 className="text-zinc-300 font-bold text-[2.5rem] tracking-wide mb-4">Consagração Contínua</h3>
-            <p className="text-zinc-500 text-xl leading-relaxed max-w-lg">
-              Acompanhe as orientações do bispo e pastores para se manter firme em comunhão.
+          <div className="w-full max-w-4xl bg-zinc-950/40 border border-amber-500/20 p-16 rounded-[2.5rem] flex flex-col items-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden mx-auto">
+            <div className="p-8 bg-amber-500/10 border border-amber-500/20 rounded-3xl mb-8">
+              <Flame className="w-20 h-20 text-amber-500" strokeWidth={1.25} />
+            </div>
+            <h3 className="text-white font-extrabold text-[3rem] tracking-tight mb-4">Ainda Não Há Propósitos em Andamento</h3>
+            <p className="text-zinc-300 text-2xl leading-relaxed max-w-2xl font-medium">
+              Você pode procurar o pastor da igreja ou um dos nossos obreiros para ajudar a criar um propósito, avivar sua fé e se fortalecer sempre no Senhor.
             </p>
           </div>
         )}
