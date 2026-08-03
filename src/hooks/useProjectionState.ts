@@ -6,6 +6,7 @@ import { broadcastToPeers } from '../components/SyncSection';
 export interface ProjectionState {
   manualSlideOverride: string | null;
   slidesOrder: string[];
+  disabledSlides: string[];
   customVerseText: string;
   customVerseRef: string;
   activeVerseIndex: number | null;
@@ -40,6 +41,16 @@ export function useProjectionState() {
     if (typeof window === 'undefined') return [];
     try {
       const saved = localStorage.getItem('projection_slidesOrder');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [disabledSlides, setDisabledSlides] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = localStorage.getItem('projection_disabledSlides');
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
       return [];
@@ -268,6 +279,13 @@ export function useProjectionState() {
         setSlidesOrder([]);
       }
     }
+    else if (key === 'disabledSlides') {
+      try {
+        setDisabledSlides(value ? (typeof value === 'string' ? JSON.parse(value) : value) : []);
+      } catch (e) {
+        setDisabledSlides([]);
+      }
+    }
 
     try {
       const bc = new BroadcastChannel('holyrics_projection_sync');
@@ -360,6 +378,13 @@ export function useProjectionState() {
           setSlidesOrder([]);
         }
       }
+      else if (key === 'disabledSlides') {
+        try {
+          setDisabledSlides(value ? (typeof value === 'string' ? JSON.parse(value) : value) : []);
+        } catch (e) {
+          setDisabledSlides([]);
+        }
+      }
     };
 
     try {
@@ -412,6 +437,12 @@ export function useProjectionState() {
         setSlidesOrder([]);
       }
       try {
+        const disabled = localStorage.getItem('projection_disabledSlides');
+        setDisabledSlides(disabled ? JSON.parse(disabled) : []);
+      } catch (e) {
+        setDisabledSlides([]);
+      }
+      try {
         const meets = localStorage.getItem('projection_customMeetings');
         setCustomMeetings(meets ? JSON.parse(meets) : MEETINGS);
       } catch (e) {
@@ -461,6 +492,7 @@ export function useProjectionState() {
     state: {
       manualSlideOverride,
       slidesOrder,
+      disabledSlides,
       customVerseText,
       customVerseRef,
       activeVerseIndex,

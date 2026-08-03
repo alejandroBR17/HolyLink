@@ -61,6 +61,7 @@ export default function App() {
   const {
     manualSlideOverride,
     slidesOrder,
+    disabledSlides,
     customVerseText,
     customVerseRef,
     activeVerseIndex,
@@ -233,23 +234,32 @@ export default function App() {
   const day = String(now.getDate()).padStart(2, '0');
   const todayStr = `${year}-${month}-${day}`;
 
-  const baseActiveSlides: SlideType[] = [...DEFAULT_SLIDES];
+  const allAvailableSlides: string[] = [...DEFAULT_SLIDES];
   customMediaList.forEach((media) => {
-    if (media.enabledInLoop) {
-      baseActiveSlides.push(media.id);
+    if (!allAvailableSlides.includes(media.id)) {
+      allAvailableSlides.push(media.id);
     }
   });
   customMeetings.forEach((meet) => {
-    if (meet.date) {
-      // Exclui eventos pontuais passados da fila de reprodução automaticamente
-      if (meet.date >= todayStr) {
-        baseActiveSlides.push(`meeting_event_${meet.id}`);
+    if (meet.date && meet.date >= todayStr) {
+      const meetSlideId = `meeting_event_${meet.id}`;
+      if (!allAvailableSlides.includes(meetSlideId)) {
+        allAvailableSlides.push(meetSlideId);
       }
     }
   });
-  if (diffSeconds <= 15 * 60) {
-    baseActiveSlides.push('soon');
+  if (diffSeconds <= 15 * 60 && !allAvailableSlides.includes('soon')) {
+    allAvailableSlides.push('soon');
   }
+
+  const baseActiveSlides: SlideType[] = allAvailableSlides.filter((id) => {
+    if (disabledSlides && disabledSlides.includes(id)) return false;
+    if (id.startsWith('custom_')) {
+      const media = customMediaList.find((m) => m.id === id);
+      return media ? media.enabledInLoop : false;
+    }
+    return true;
+  }) as SlideType[];
 
   let activeSlides = slidesOrder.filter((id) => baseActiveSlides.includes(id));
   baseActiveSlides.forEach((id) => {
@@ -308,13 +318,23 @@ export default function App() {
     }
   }, [manualSlideOverride, slidesOrder, customMediaList]);
 
+  const handleToggleDisableSlide = useCallback((slideId: string) => {
+    let newDisabled = [...(disabledSlides || [])];
+    if (newDisabled.includes(slideId)) {
+      newDisabled = newDisabled.filter(id => id !== slideId);
+    } else {
+      newDisabled.push(slideId);
+    }
+    updateStateAndBroadcast('disabledSlides', JSON.stringify(newDisabled));
+  }, [disabledSlides, updateStateAndBroadcast]);
+
   const handleResetCampaigns = useCallback(() => {
     updateStateAndBroadcast('customCampaigns', CAMPAIGNS);
   }, [updateStateAndBroadcast]);
 
-  const handleMoveSlide = useCallback((slideId: string, direction: 'up' | 'down') => {
+  const handleMoveSlide = useCallback((slideId: string, direction: 'up' | 'down' | 'top' | 'bottom') => {
     let currentOrder = [...slidesOrder];
-    baseActiveSlides.forEach((id) => {
+    allAvailableSlides.forEach((id) => {
       if (!currentOrder.includes(id)) {
         currentOrder.push(id);
       }
@@ -323,7 +343,13 @@ export default function App() {
     const idx = currentOrder.indexOf(slideId);
     if (idx === -1) return;
 
-    if (direction === 'up' && idx > 0) {
+    if (direction === 'top') {
+      currentOrder.splice(idx, 1);
+      currentOrder.unshift(slideId);
+    } else if (direction === 'bottom') {
+      currentOrder.splice(idx, 1);
+      currentOrder.push(slideId);
+    } else if (direction === 'up' && idx > 0) {
       const temp = currentOrder[idx];
       currentOrder[idx] = currentOrder[idx - 1];
       currentOrder[idx - 1] = temp;
@@ -336,7 +362,68 @@ export default function App() {
     }
 
     updateStateAndBroadcast('slidesOrder', JSON.stringify(currentOrder));
-  }, [slidesOrder, baseActiveSlides, updateStateAndBroadcast]);
+  }, [slidesOrder, allAvailableSlides, updateStateAndBroadcast]);
+
+  const handleReorderGrouped = useCallback(() => {
+    const getGroupRank = (id: string) => {
+      if (['seat', 'phone', 'bathroom', 'no_chat', 'soon'].includes(id)) return 1;
+      if (id.startsWith('agenda_day_') || id.startsWith('meeting_event_')) return 2;
+      if (['donations', 'social', 'world_god'].includes(id)) return 3;
+      if (id === 'campaigns') return 4;
+      if (id.startsWith('custom_')) return 5;
+      return 6;
+    };
+
+    let currentOrder = [...allAvailableSlides];
+    currentOrder.sort((a, b) => getGroupRank(a) - getGroupRank(b));
+    updateStateAndBroadcast('slidesOrder', JSON.stringify(currentOrder));
+  }, [allAvailableSlides, updateStateAndBroadcast]);
+
+  const handleReorderInterleaved = useCallback(() => {
+    // Separa slides em categorias
+    const fixos: string[] = [];
+    const agendas: string[] = [];
+    const contribuicao: string[] = [];
+    const campanhas: string[] = [];
+    const midias: string[] = [];
+    const outros: string[] = [];
+
+    allAvailableSlides.forEach((id) => {
+      if (['seat', 'phone', 'bathroom', 'no_chat', 'soon'].includes(id)) {
+        fixos.push(id);
+      } else if (id.startsWith('agenda_day_') || id.startsWith('meeting_event_')) {
+        agendas.push(id);
+      } else if (['donations', 'social', 'world_god'].includes(id)) {
+        contribuicao.push(id);
+      } else if (id === 'campaigns') {
+        campanhas.push(id);
+      } else if (id.startsWith('custom_')) {
+        midias.push(id);
+      } else {
+        outros.push(id);
+      }
+    });
+
+    const groups = [fixos, agendas, contribuicao, campanhas, midias, outros];
+    const interleavedOrder: string[] = [];
+    let maxLen = Math.max(...groups.map(g => g.length));
+
+    for (let i = 0; i < maxLen; i++) {
+      for (const group of groups) {
+        if (i < group.length) {
+          interleavedOrder.push(group[i]);
+        }
+      }
+    }
+
+    updateStateAndBroadcast('slidesOrder', JSON.stringify(interleavedOrder));
+  }, [allAvailableSlides, updateStateAndBroadcast]);
+
+  const handleResetSlidesOrder = useCallback(() => {
+    const defaultOrder = [...DEFAULT_SLIDES];
+    customMediaList.forEach(m => defaultOrder.push(m.id));
+    updateStateAndBroadcast('slidesOrder', JSON.stringify(defaultOrder));
+  }, [customMediaList, updateStateAndBroadcast]);
 
   // Window viewport calculations
   const [dimensions, setDimensions] = useState({
@@ -871,10 +958,16 @@ export default function App() {
                 currentSlideId={currentSlideId}
                 manualSlideOverride={manualSlideOverride}
                 activeSlides={activeSlides}
+                allAvailableSlides={allAvailableSlides}
+                disabledSlides={disabledSlides}
                 customMediaList={customMediaList}
                 getSlideDuration={getSlideDuration}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 handleMoveSlide={handleMoveSlide}
+                handleToggleDisableSlide={handleToggleDisableSlide}
+                handleReorderGrouped={handleReorderGrouped}
+                handleReorderInterleaved={handleReorderInterleaved}
+                handleResetSlidesOrder={handleResetSlidesOrder}
                 handleFileUpload={handleFileUpload}
                 isUploading={isUploading}
                 uploadError={uploadError}

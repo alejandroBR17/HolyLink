@@ -203,6 +203,12 @@ export function useCustomMedia(
 
     try {
       let duration = 10000;
+      if (isImage) {
+        const customDefDur = Number(localStorage.getItem('projection_default_img_duration'));
+        if (customDefDur && !isNaN(customDefDur) && customDefDur >= 2000) {
+          duration = customDefDur;
+        }
+      }
 
       if (isVideo) {
         duration = await new Promise<number>((resolve) => {
@@ -243,6 +249,20 @@ export function useCustomMedia(
       };
       await saveMediaItem(mediaItemPayload);
       broadcastMediaSave(mediaItemPayload);
+
+      try {
+        const savedOrderStr = localStorage.getItem('projection_slidesOrder');
+        let currentOrder: string[] = [];
+        if (savedOrderStr) {
+          try {
+            currentOrder = JSON.parse(savedOrderStr);
+          } catch (e) {}
+        }
+        if (!currentOrder.includes(id)) {
+          currentOrder.push(id);
+          updateStateAndBroadcast('slidesOrder', JSON.stringify(currentOrder));
+        }
+      } catch (e) {}
 
       updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
     } catch (err: any) {

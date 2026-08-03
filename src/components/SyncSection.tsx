@@ -438,6 +438,25 @@ export const SyncSection = React.memo(function SyncSection({
 
           if (data && data.type === 'MEDIA_DELETE') {
             await deleteMediaItem(data.id);
+            
+            const savedOrderStr = localStorage.getItem('projection_slidesOrder');
+            if (savedOrderStr) {
+              try {
+                const savedOrder = JSON.parse(savedOrderStr);
+                if (Array.isArray(savedOrder) && savedOrder.includes(data.id)) {
+                  const newOrder = savedOrder.filter((id: string) => id !== data.id);
+                  localStorage.setItem('projection_slidesOrder', JSON.stringify(newOrder));
+                  window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'slidesOrder', value: JSON.stringify(newOrder) } }));
+                }
+              } catch (e) {}
+            }
+
+            const currentOverride = localStorage.getItem('projection_manualSlideOverride');
+            if (currentOverride === data.id) {
+              localStorage.removeItem('projection_manualSlideOverride');
+              window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'manualSlideOverride', value: null } }));
+            }
+
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
             
             // Relay to all other connected peers
@@ -848,6 +867,25 @@ export const SyncSection = React.memo(function SyncSection({
 
           if (incomingData && incomingData.type === 'MEDIA_DELETE') {
             await deleteMediaItem(incomingData.id);
+
+            const savedOrderStr = localStorage.getItem('projection_slidesOrder');
+            if (savedOrderStr) {
+              try {
+                const savedOrder = JSON.parse(savedOrderStr);
+                if (Array.isArray(savedOrder) && savedOrder.includes(incomingData.id)) {
+                  const newOrder = savedOrder.filter((id: string) => id !== incomingData.id);
+                  localStorage.setItem('projection_slidesOrder', JSON.stringify(newOrder));
+                  window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'slidesOrder', value: JSON.stringify(newOrder) } }));
+                }
+              } catch (e) {}
+            }
+
+            const currentOverride = localStorage.getItem('projection_manualSlideOverride');
+            if (currentOverride === incomingData.id) {
+              localStorage.removeItem('projection_manualSlideOverride');
+              window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'manualSlideOverride', value: null } }));
+            }
+
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
             return;
           }
