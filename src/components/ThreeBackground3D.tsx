@@ -13,7 +13,7 @@ interface ThreeBackground3DProps {
 }
 
 // ----------------------------------------------------------------------
-// GLSL SHADERS - LUZ VOLUMÉTRICA CONTINUA E ULTRA-OPTIMIZADA
+// GLSL SHADERS - EFEITOS 3D ALTAMENTE DISTINTOS E DESEMPENHO SILK-SMOOTH
 // ----------------------------------------------------------------------
 const vertexShader = `
   varying vec2 vUv;
@@ -26,7 +26,7 @@ const vertexShader = `
 const fragmentShader = `
   uniform float uTime;
   uniform vec2 uResolution;
-  uniform int uStyle; // 0: Aurora Sacra, 1: Véu Divino, 2: Aura FJU
+  uniform int uStyle; // 0: Aurora Sacra (Ondas Horizontais), 1: Véu Divino (Raios Verticais), 2: Aura FJU (Halo Concêntrico)
   uniform float uIntensity;
   uniform int uOctaves;
   varying vec2 vUv;
@@ -59,11 +59,11 @@ const fragmentShader = `
     return 130.0 * dot(m, g);
   }
 
-  // Fractional Brownian Motion adaptável para performance maxima
+  // Fractional Brownian Motion adaptável para performance extrema
   float fbm(vec2 st) {
     float value = 0.0;
     float amplitude = 0.5;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
       if (i >= uOctaves) break;
       value += amplitude * snoise(st);
       st *= 2.0;
@@ -74,73 +74,78 @@ const fragmentShader = `
 
   void main() {
     vec2 st = vUv;
-    float time = uTime * 0.10;
+    float time = uTime * 0.12;
 
     vec3 finalColor = vec3(0.0);
     float alpha = 0.0;
 
-    // -------------------------------------------------------------
-    // ESTILO 0: AURORA SACRA 3D (Ondas Suaves Douradas na Base)
-    // -------------------------------------------------------------
+    // =============================================================
+    // ESTILO 0: AURORA SACRA 3D
+    // VISUAL: Ondas Douradas e Carmesim Flutuando no Horizonte
+    // =============================================================
     if (uStyle == 0) {
-      vec2 q = vec2(0.0);
-      q.x = fbm(st + vec2(0.0, time * 0.4));
-      q.y = fbm(st + vec2(1.0, time * 0.2));
+      float wave1 = sin(st.x * 3.5 + time * 1.5 + fbm(st * 1.8)) * 0.18;
+      float wave2 = cos(st.x * 2.2 - time * 1.0 + fbm(st * 1.2)) * 0.15;
+      
+      float waveY = 0.42 + wave1 + wave2;
+      float dist = abs(st.y - waveY);
+      
+      float glow = exp(-dist * 4.2) * (0.85 + 0.35 * fbm(st * 2.5 + vec2(time * 0.4, 0.0)));
+      
+      vec3 colGold = vec3(0.95, 0.72, 0.05);   // Ouro Sacro
+      vec3 colCrimson = vec3(0.52, 0.06, 0.08); // Carmesim Profundo
+      vec3 colAmber = vec3(0.90, 0.45, 0.08);   // Âmbar Quente
 
-      vec2 r = vec2(0.0);
-      r.x = fbm(st + 1.0 * q + vec2(1.7, 9.2) + 0.1 * time);
-      r.y = fbm(st + 1.0 * q + vec2(8.3, 2.8) + 0.08 * time);
+      float mixRatio = sin(st.x * 2.5 + time * 0.8) * 0.5 + 0.5;
+      vec3 waveColor = mix(colGold, colCrimson, mixRatio);
+      finalColor = mix(waveColor, colAmber, glow * 0.5);
 
-      float f = fbm(st + r);
-
-      vec3 colGold = vec3(0.91, 0.70, 0.03); 
-      vec3 colCrimson = vec3(0.35, 0.04, 0.04);
-      vec3 colAmber = vec3(0.85, 0.45, 0.05);
-
-      finalColor = mix(colCrimson, colGold, clamp(f * f * 4.0, 0.0, 1.0));
-      finalColor = mix(finalColor, colAmber, clamp(length(q), 0.0, 1.0));
-
-      float glow = smoothstep(0.0, 0.9, f);
-      alpha = glow * 0.32 * uIntensity;
+      alpha = glow * 0.45 * uIntensity * smoothstep(1.0, 0.1, st.y);
     }
-    // -------------------------------------------------------------
-    // ESTILO 1: VÉU DIVINO (Feixes Radiais Marfim/Dourado do Alto)
-    // -------------------------------------------------------------
+    // =============================================================
+    // ESTILO 1: VÉU DIVINO / RAIOS CELESTIAIS 3D
+    // VISUAL: Raios e Cortinas Verticais Descendo do Alto do Céu
+    // =============================================================
     else if (uStyle == 1) {
-      vec2 p = st * vec2(3.0, 1.5);
+      vec2 topOrigin = vec2(0.5, 1.3);
+      vec2 dir = st - topOrigin;
+      float angle = atan(dir.x, dir.y);
+      float distToTop = length(dir);
+
+      float rayPattern1 = sin(angle * 12.0 + time * 1.6 + fbm(st * 1.8)) * 0.5 + 0.5;
+      float rayPattern2 = cos(angle * 20.0 - time * 1.1 + fbm(st * 1.0)) * 0.5 + 0.5;
+      float rays = (rayPattern1 * 0.65 + rayPattern2 * 0.35);
+
+      float coneMask = smoothstep(1.5, 0.1, distToTop) * smoothstep(0.0, 0.85, 1.0 - st.y);
       
-      float ray1 = sin(p.x * 4.0 + p.y * 2.0 + time * 1.8) * 0.5 + 0.5;
-      float ray2 = cos(p.x * 6.0 - p.y * 2.5 + time * 1.2) * 0.5 + 0.5;
-      float noiseVal = fbm(st * 2.0 + vec2(0.0, time * 0.6));
+      vec3 colPearlWhite = vec3(0.98, 0.96, 0.82); // Marfim Celestial
+      vec3 colDivineGold = vec3(0.92, 0.68, 0.15); // Dourado Divino
 
-      float beam = (ray1 * 0.6 + ray2 * 0.4) * noiseVal;
-
-      vec3 colWarmWhite = vec3(0.98, 0.94, 0.75); 
-      vec3 colDivineGold = vec3(0.90, 0.65, 0.15); 
-
-      finalColor = mix(colDivineGold, colWarmWhite, beam);
-      
-      float topGlow = smoothstep(0.0, 1.0, 1.0 - st.y * 0.7);
-      alpha = beam * topGlow * 0.28 * uIntensity;
+      finalColor = mix(colDivineGold, colPearlWhite, rays);
+      alpha = rays * coneMask * 0.40 * uIntensity;
     }
-    // -------------------------------------------------------------
-    // ESTILO 2: AURA FJU 3D (Ondas Vibrantes Joviais FJU)
-    // -------------------------------------------------------------
+    // =============================================================
+    // ESTILO 2: AURA FJU 3D
+    // VISUAL: Portal / Halo Concêntrico Pulsante Energético Jovem
+    // =============================================================
     else if (uStyle == 2) {
-      vec2 pos = st * 2.0;
-      float n1 = fbm(pos + vec2(time * 0.5, time * 0.3));
-      float n2 = fbm(pos * 1.3 - vec2(time * 0.2, time * 0.4));
+      vec2 center = vec2(0.5, 0.5);
+      vec2 distVec = (st - center);
+      distVec.x *= (uResolution.x / uResolution.y);
+      float r = length(distVec);
 
-      float wave = sin(n1 * 5.0 + n2 * 3.5) * 0.5 + 0.5;
+      float pulse = sin(r * 16.0 - time * 2.2 + fbm(st * 2.5) * 1.8) * 0.5 + 0.5;
+      float ringHalo = smoothstep(0.65, 0.25, abs(r - 0.35 - sin(time * 0.7) * 0.04));
 
-      vec3 colBlueFJU = vec3(0.22, 0.74, 0.97);  
-      vec3 colAmberFJU = vec3(0.96, 0.62, 0.07); 
-      vec3 colIndigo = vec3(0.38, 0.40, 0.94);   
+      vec3 colBlueFJU = vec3(0.22, 0.74, 0.97);  // Azul Céu FJU
+      vec3 colAmberFJU = vec3(0.98, 0.62, 0.08); // Âmbar Energia
+      vec3 colIndigo = vec3(0.38, 0.40, 0.94);   // Indigo Jovem
 
-      finalColor = mix(colBlueFJU, colAmberFJU, wave);
-      finalColor = mix(finalColor, colIndigo, clamp(n2, 0.0, 1.0));
+      vec3 auraColor = mix(colBlueFJU, colAmberFJU, pulse);
+      finalColor = mix(auraColor, colIndigo, smoothstep(0.0, 0.65, r));
 
-      alpha = wave * 0.30 * uIntensity;
+      float coreGlow = smoothstep(0.85, 0.0, r);
+      alpha = (ringHalo * 0.55 + pulse * 0.3) * coreGlow * 0.42 * uIntensity;
     }
 
     gl_FragColor = vec4(finalColor, alpha);
@@ -171,22 +176,42 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     let width = container.clientWidth || window.innerWidth || 1920;
     let height = container.clientHeight || window.innerHeight || 1080;
 
-    // 1. CENA & CÂMERA
+    // 1. CENA & CÂMERA ORTOGRÁFICA
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    // 2. RENDERER (Pixel ratio adaptável para garantir NENHUM TRAVAMENTO)
-    const targetPixelRatio = intensity === 'low' ? 0.5 : intensity === 'medium' ? 0.75 : Math.min(window.devicePixelRatio || 1, 1.25);
+    // 2. RENDERER COM RESOLUÇÃO E RECURSOS ULTRA-OTIMIZADOS
+    // Limita o pixelRatio máximo a 1.0 para evitar sobrecarregar GPUs integradas em telas 4K/Retina
+    const targetPixelRatio = intensity === 'low' ? 0.5 : intensity === 'medium' ? 0.75 : Math.min(window.devicePixelRatio || 1, 1.0);
 
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: false,
-      powerPreference: 'high-performance',
-      precision: 'lowp',
-    });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: false,
+        powerPreference: 'default', // Evita superaquecimento e reset de GPU em notebooks/PCs modestos
+        precision: 'mediump',
+      });
+    } catch (e) {
+      console.warn("WebGL renderer creation failed, falling back safely.");
+      return;
+    }
+
     renderer.setSize(width, height);
     renderer.setPixelRatio(targetPixelRatio);
     container.appendChild(renderer.domElement);
+
+    // Proteção contra crash da aba em caso de GPU overload (webglcontextlost)
+    let isContextLost = false;
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      isContextLost = true;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      console.warn("WebGL Context Lost - Interrompendo renderização 3D com segurança para proteger o navegador.");
+    };
+
+    const canvasEl = renderer.domElement;
+    canvasEl.addEventListener('webglcontextlost', handleContextLost, false);
 
     // Decisão do estilo efetivo
     let styleInt = 0; // 0: Aurora, 1: Véu Divino, 2: Aura FJU
@@ -200,7 +225,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     else styleInt = 0; // 'aurora'
 
     const intensityValue = intensity === 'high' ? 1.0 : intensity === 'medium' ? 0.7 : 0.45;
-    const octaves = intensity === 'low' ? 1 : intensity === 'medium' ? 2 : 3;
+    let currentOctaves = intensity === 'low' ? 1 : 2;
 
     // 3. SHADER MATERIAL VOLUMÉTRICO SUAVE
     const uniforms = {
@@ -208,7 +233,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       uResolution: { value: new THREE.Vector2(width, height) },
       uStyle: { value: styleInt },
       uIntensity: { value: intensityValue },
-      uOctaves: { value: octaves },
+      uOctaves: { value: currentOctaves },
     };
 
     const shaderMaterial = new THREE.ShaderMaterial({
@@ -229,7 +254,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     const particleCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
     particleCamera.position.z = 100;
 
-    const particleCount = intensity === 'high' ? 120 : intensity === 'medium' ? 70 : 30;
+    const particleCount = intensity === 'high' ? 100 : intensity === 'medium' ? 60 : 25;
     const geometryParticles = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
 
@@ -265,12 +290,13 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     const particleSystem = new THREE.Points(geometryParticles, particleMaterial);
     particleScene.add(particleSystem);
 
-    // Loop de animação otimizado com limitador de FPS
+    // Loop de animação otimizado com limitador de FPS e proteção de contexto
     let animationFrameId: number;
     let lastTime = performance.now();
     const frameInterval = 1000 / fpsLimit;
 
     const animate = (now: number) => {
+      if (isContextLost) return;
       animationFrameId = requestAnimationFrame(animate);
 
       const delta = now - lastTime;
@@ -289,17 +315,22 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       }
       posAttr.needsUpdate = true;
 
-      // Render em duas camadas de transparência
-      renderer.autoClear = false;
-      renderer.clear();
-      renderer.render(scene, camera);
-      renderer.render(particleScene, particleCamera);
+      try {
+        // Render em duas camadas de transparência
+        renderer.autoClear = false;
+        renderer.clear();
+        renderer.render(scene, camera);
+        renderer.render(particleScene, particleCamera);
+      } catch (e) {
+        console.warn("Render loop caught WebGL exception, pausing animation safely:", e);
+        isContextLost = true;
+      }
     };
 
     animate(performance.now());
 
     const handleResize = () => {
-      if (!container) return;
+      if (!container || isContextLost) return;
       width = container.clientWidth || window.innerWidth || 1920;
       height = container.clientHeight || window.innerHeight || 1080;
       uniforms.uResolution.value.set(width, height);
@@ -313,6 +344,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      canvasEl.removeEventListener('webglcontextlost', handleContextLost);
 
       planeGeometry.dispose();
       shaderMaterial.dispose();

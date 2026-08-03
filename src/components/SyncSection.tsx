@@ -448,14 +448,26 @@ export const SyncSection = React.memo(function SyncSection({
           if (data && data.type === 'SYNC_MANIFEST') {
             setSyncMessage('Comparando alterações com dados locais...');
             
-            // 1. Restore/Update localStorage keys
+            // 1. Restore/Update localStorage keys (preserva chaves do próprio dispositivo)
             if (data.localStorage) {
+              const currentRole = localStorage.getItem('projection_deviceRole') || 'pc';
+              const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
+
               Object.entries(data.localStorage).forEach(([key, val]) => {
+                if (
+                  key === 'projection_deviceRole' ||
+                  key === 'projection_myReceiverCode' ||
+                  key === 'projection_lastPairedPeerCode'
+                ) {
+                  return; // Preserva a identidade do próprio PC
+                }
                 localStorage.setItem(key, val as string);
               });
-            }
-            if (code) {
-              localStorage.setItem('projection_lastPairedPeerCode', code);
+
+              localStorage.setItem('projection_deviceRole', currentRole);
+              if (currentReceiverCode) {
+                localStorage.setItem('projection_myReceiverCode', currentReceiverCode);
+              }
             }
 
             // 2. Compare local media items vs manifest
@@ -637,16 +649,26 @@ export const SyncSection = React.memo(function SyncSection({
           setSyncMessage('Dados recebidos! Gravando e aplicando configurações...');
           window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: 'Gravando configurações no PC...', progress: 10 } }));
 
-          // 1. Restore localStorage
+          // 1. Restore localStorage (preservando chaves de identidade do PC)
           if (data.localStorage) {
+            const currentRole = localStorage.getItem('projection_deviceRole') || 'pc';
+            const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
+
             Object.entries(data.localStorage).forEach(([key, val]) => {
+              if (
+                key === 'projection_deviceRole' ||
+                key === 'projection_myReceiverCode' ||
+                key === 'projection_lastPairedPeerCode'
+              ) {
+                return;
+              }
               localStorage.setItem(key, val as string);
             });
-          }
 
-          // Salva código pareado para consistência de reconexão
-          if (code) {
-            localStorage.setItem('projection_lastPairedPeerCode', code);
+            localStorage.setItem('projection_deviceRole', currentRole);
+            if (currentReceiverCode) {
+              localStorage.setItem('projection_myReceiverCode', currentReceiverCode);
+            }
           }
 
           // 2. Restore IndexedDB media files
@@ -833,9 +855,24 @@ export const SyncSection = React.memo(function SyncSection({
           if (incomingData && incomingData.type === 'FULL_SYNC') {
             setSyncMessage('Dados recebidos do PC! Sincronizando celular...');
             if (incomingData.localStorage) {
+              const currentRole = localStorage.getItem('projection_deviceRole') || 'phone';
+              const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
+
               Object.entries(incomingData.localStorage).forEach(([key, val]) => {
+                if (
+                  key === 'projection_deviceRole' ||
+                  key === 'projection_myReceiverCode' ||
+                  key === 'projection_lastPairedPeerCode'
+                ) {
+                  return;
+                }
                 localStorage.setItem(key, val as string);
               });
+
+              localStorage.setItem('projection_deviceRole', currentRole);
+              if (currentPairedCode) {
+                localStorage.setItem('projection_lastPairedPeerCode', currentPairedCode);
+              }
             }
             if (incomingData.mediaItems && Array.isArray(incomingData.mediaItems)) {
               for (const item of incomingData.mediaItems) {
@@ -1083,23 +1120,24 @@ export const SyncSection = React.memo(function SyncSection({
     const savedRole = localStorage.getItem('projection_deviceRole');
     const params = new URLSearchParams(window.location.search);
     const codeFromUrl = params.get('syncCode');
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
 
     if (codeFromUrl) {
-      // Se possui código na URL, assumimos o papel de Celular automaticamente e conectamos
+      // Se possui código na URL (escaneado via QR code), assume o papel de Celular automaticamente e conecta
       localStorage.setItem('projection_deviceRole', 'phone');
       const timer = setTimeout(() => {
         connectAndSendData(codeFromUrl);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (savedRole === 'pc' || !savedRole) {
-      // Se era PC, ou se é a primeira vez sem papel definido, inicia receptor silenciosa e imediatamente
+    } else if (isDesktop || savedRole === 'pc' || !savedRole) {
+      // Em computadores (PC / Desktop) ou quando não há papel definido, inicia receptor (PC) imediatamente
       localStorage.setItem('projection_deviceRole', 'pc');
       const timer = setTimeout(() => {
         startReceiver();
       }, 500);
       return () => clearTimeout(timer);
     } else if (savedRole === 'phone') {
-      // Se era Celular, tenta reconectar ao último PC pareado se houver
+      // Se for celular com papel de controle remoto, tenta reconectar ao PC pareado
       const lastPaired = localStorage.getItem('projection_lastPairedPeerCode');
       if (lastPaired) {
         setSyncInputCode(lastPaired);
@@ -1203,11 +1241,26 @@ export const SyncSection = React.memo(function SyncSection({
           throw new Error('Arquivo de backup inválido.');
         }
 
-        // 1. Restore localStorage keys
+        // 1. Restore localStorage keys (preserva papel de PC/Celular do dispositivo atual)
         if (data.localStorage) {
+          const currentRole = localStorage.getItem('projection_deviceRole');
+          const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
+          const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
+
           Object.entries(data.localStorage).forEach(([key, val]) => {
+            if (
+              key === 'projection_deviceRole' ||
+              key === 'projection_myReceiverCode' ||
+              key === 'projection_lastPairedPeerCode'
+            ) {
+              return;
+            }
             localStorage.setItem(key, val as string);
           });
+
+          if (currentRole) localStorage.setItem('projection_deviceRole', currentRole);
+          if (currentReceiverCode) localStorage.setItem('projection_myReceiverCode', currentReceiverCode);
+          if (currentPairedCode) localStorage.setItem('projection_lastPairedPeerCode', currentPairedCode);
         }
 
         // 2. Restore media items to IndexedDB

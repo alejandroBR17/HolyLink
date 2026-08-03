@@ -313,7 +313,7 @@ export default function App() {
   }, [updateStateAndBroadcast]);
 
   const handleMoveSlide = useCallback((slideId: string, direction: 'up' | 'down') => {
-    let currentOrder = slidesOrder.filter((id) => baseActiveSlides.includes(id));
+    let currentOrder = [...slidesOrder];
     baseActiveSlides.forEach((id) => {
       if (!currentOrder.includes(id)) {
         currentOrder.push(id);
