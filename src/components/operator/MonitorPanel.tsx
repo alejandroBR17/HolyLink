@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Monitor, Tv, ExternalLink, X, SkipForward, Film, Image as ImageIcon, BookOpen, Calendar, Heart, Keyboard, Smartphone, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, Cpu } from 'lucide-react';
+import { Monitor, Tv, ExternalLink, X, SkipForward, Film, Image as ImageIcon, BookOpen, Calendar, Heart, Keyboard, Smartphone, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, Cpu, HardDrive, CheckCircle2 } from 'lucide-react';
 import { ProjectionContent } from '../ProjectionContent';
 import { CHURCH_INFO, ALERTS } from '../../data';
 import { Meeting } from '../../types';
@@ -90,7 +90,14 @@ export function MonitorPanel({
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
 
-  const { fps, mode, effectiveMode, report } = usePerformanceDiagnostics();
+  const [ramCleared, setRamCleared] = useState(false);
+  const { fps, mode, effectiveMode, report, purgeCache } = usePerformanceDiagnostics();
+
+  const handleClearRam = () => {
+    purgeCache();
+    setRamCleared(true);
+    setTimeout(() => setRamCleared(false), 3000);
+  };
 
   useEffect(() => {
     const checkDevice = () => {
@@ -370,37 +377,55 @@ export function MonitorPanel({
       </div>
 
       {/* HARDWARE DIAGNOSTIC & AUTOMATIC OPTIMIZATION BANNER */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 text-left">
-        <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
-          <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 shrink-0">
+      <div className="bg-zinc-900/90 border border-zinc-800/90 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 text-left">
+        <div className="flex items-center gap-3.5 min-w-0 w-full lg:w-auto">
+          <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-400 shrink-0 shadow-md">
             <Gauge className="w-5 h-5" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Desempenho & RAM</h4>
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${
+              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Desempenho do Sistema & Memória RAM</h4>
+              <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-extrabold border ${
                 effectiveMode === 'light'
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
                   : effectiveMode === 'balanced'
                   ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                   : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
               }`}>
-                {fps} FPS ({effectiveMode === 'light' ? 'Leve (Anti-Lag)' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Alto Desempenho'})
+                {fps} FPS ({effectiveMode === 'light' ? 'Anti-Lag Ativo' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Máxima Qualidade'})
+              </span>
+              <span className="text-[10px] font-mono bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800 text-blue-400 font-bold">
+                RAM: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
               </span>
             </div>
-            <p className="text-[11px] text-zinc-400 mt-0.5 leading-normal">
-              Otimização automática de CPU, GPU e memória
+            <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
+              Otimização contínua de GPU/WebGL, núcleos de CPU ({report?.cpuCores || 4} cores) e limpeza de heap JS.
             </p>
           </div>
         </div>
 
-        <button
-          onClick={() => setShowBenchmarkModal(true)}
-          className="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-200 text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto min-h-[40px]"
-        >
-          <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-          <span>Testar e Otimizar</span>
-        </button>
+        <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 flex-wrap sm:flex-nowrap">
+          <button
+            onClick={handleClearRam}
+            className={`flex-1 sm:flex-initial text-xs font-bold px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[40px] ${
+              ramCleared
+                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                : 'bg-zinc-950 hover:bg-zinc-850 border-zinc-800 hover:border-zinc-700 text-zinc-300'
+            }`}
+            title="Limpa cache de vídeos e imagens armazenados na RAM"
+          >
+            <HardDrive className={`w-4 h-4 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-blue-400'}`} />
+            <span>{ramCleared ? 'RAM Liberada!' : 'Limpar RAM'}</span>
+          </button>
+
+          <button
+            onClick={() => setShowBenchmarkModal(true)}
+            className="flex-1 sm:flex-initial bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-500/10 min-h-[40px] active:scale-95"
+          >
+            <Zap className="w-4 h-4 shrink-0 fill-current" />
+            <span>Testar e Otimizar</span>
+          </button>
+        </div>
       </div>
 
       {/* HARDWARE BENCHMARK MODAL */}

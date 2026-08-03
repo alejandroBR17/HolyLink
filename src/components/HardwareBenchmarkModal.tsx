@@ -93,24 +93,24 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
           <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 shadow-inner relative overflow-hidden">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3.5">
-                <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-500 shrink-0">
-                  <Activity className={`w-6 h-6 ${isDiagnosticRunning ? 'animate-spin' : ''}`} />
+                <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-500 shrink-0 shadow-md">
+                  <Activity className={`w-6 h-6 ${isDiagnosticRunning ? 'animate-spin text-amber-400' : ''}`} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-black text-white uppercase tracking-wider">
-                      Pontuação de Hardware: {report ? `${report.score} / 100` : 'Calculando...'}
+                      Pontuação do Hardware: {report ? `${report.score} / 100` : 'Calculando...'}
                     </span>
                     {report && (
-                      <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border uppercase tracking-wider font-bold ${getTierColor(report.recommendedMode)}`}>
+                      <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border uppercase tracking-wider font-extrabold ${getTierColor(report.recommendedMode)}`}>
                         {getTierBadgeText(report.recommendedMode)}
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
                     {report?.isTouchDevice
-                      ? 'Dispositivo Móvel Detectado: Otimizado para controle rápido com baixo consumo de bateria.'
-                      : 'Computador / Notebook Detectado: Otimizado para projeção de tela e renderização fluida.'}
+                      ? '📱 Dispositivo Móvel Detectado: Modo econômico ativado para preservar bateria e evitar aquecimento.'
+                      : '💻 Computador / Notebook de Operação: Analisado para transmissão em alta definição (1080p/4K).'}
                   </p>
                 </div>
               </div>
@@ -118,10 +118,10 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               <button
                 onClick={runBenchmark}
                 disabled={isDiagnosticRunning}
-                className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 active:scale-95"
+                className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black text-xs font-black px-4 py-2.5 rounded-xl shadow-md shadow-amber-500/10 transition-all cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 active:scale-95"
               >
                 <RefreshCw className={`w-4 h-4 ${isDiagnosticRunning ? 'animate-spin' : ''}`} />
-                <span>{isDiagnosticRunning ? 'Analisando Hardware...' : 'Executar Diagnóstico Completo'}</span>
+                <span>{isDiagnosticRunning ? 'Analisando Sistema...' : 'Executar Teste de Estresse'}</span>
               </button>
             </div>
 
@@ -132,9 +132,9 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                   <span>{diagnosticStep}</span>
                   <span className="text-amber-400 font-bold">{diagnosticProgress}%</span>
                 </div>
-                <div className="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
+                <div className="w-full bg-zinc-900 h-2.5 rounded-full overflow-hidden border border-zinc-800">
                   <div
-                    className="bg-amber-500 h-full transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
+                    className="bg-gradient-to-r from-amber-500 to-emerald-400 h-full transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
                     style={{ width: `${diagnosticProgress}%` }}
                   />
                 </div>
@@ -146,7 +146,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
           <div>
             <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
               <Cpu className="w-4 h-4 text-amber-500" />
-              Especificações do Sistema Identificadas
+              Recursos de Hardware Identificados
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -159,10 +159,10 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                 <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Processador (CPU)</span>
                   <p className="text-xs font-extrabold text-white truncate">
-                    {report?.cpuCores ? `${report.cpuCores} Cores Lógicos` : '4 Núcleos'}
+                    {report?.cpuCores ? `${report.cpuCores} Núcleos Lógicos` : '4 Núcleos'}
                   </p>
                   <p className="text-[10px] text-zinc-400 mt-0.5">
-                    Tempo de Teste Math: <span className="font-mono text-amber-400 font-bold">{report?.cpuScoreMs || 20}ms</span>
+                    Benchmark Math JS: <span className="font-mono text-amber-400 font-bold">{report?.cpuScoreMs || 20}ms</span>
                   </p>
                 </div>
               </div>
@@ -173,13 +173,27 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                   <HardDrive className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Memória RAM & Heap JS</span>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Memória RAM do Dispositivo & App</span>
                   <p className="text-xs font-extrabold text-white truncate" title={report?.ramDisplay || 'RAM Identificada'}>
-                    RAM: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
+                    RAM Total do Dispositivo: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
                   </p>
-                  <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
-                    {report?.jsHeapUsedMB ? `Uso Heap JS: ${report.jsHeapUsedMB} MB / ${report.jsHeapLimitMB || 2048} MB` : 'Gerenciamento Automático de Heap'}
-                  </p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden border border-zinc-800 flex-1">
+                      <div
+                        className="bg-blue-500 h-full rounded-full"
+                        style={{
+                          width: `${
+                            report?.jsHeapUsedMB && report?.jsHeapLimitMB
+                              ? Math.min(100, Math.round((report.jsHeapUsedMB / report.jsHeapLimitMB) * 100))
+                              : 25
+                          }%`
+                        }}
+                      />
+                    </div>
+                    <span className="text-[9px] font-mono text-blue-400 font-bold shrink-0" title="Memória RAM consumida no momento por este sistema de projeção">
+                      App usando: {report?.jsHeapUsedMB ? `${report.jsHeapUsedMB} MB` : '10 MB'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -189,12 +203,12 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Acelerador Gráfico (GPU)</span>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Placa de Vídeo (GPU / WebGL)</span>
                   <p className="text-xs font-extrabold text-white truncate" title={report?.gpuRenderer}>
-                    {report?.gpuRenderer || 'Placa de Vídeo Detectada'}
+                    {report?.gpuRenderer || 'Aceleração de Hardware Ativa'}
                   </p>
                   <p className="text-[10px] text-zinc-400 mt-0.5">
-                    Textura Máxima WebGL: <span className="font-mono text-purple-400">{report?.maxTextureSize || 4096}px</span>
+                    Textura Máx: <span className="font-mono text-purple-400">{report?.maxTextureSize || 4096}px</span>
                   </p>
                 </div>
               </div>
@@ -205,13 +219,13 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                   <Monitor className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Tela & Taxa de Quadros (FPS)</span>
-                  <p className="text-xs font-extrabold text-white truncate">
-                    {fps} FPS ({fps >= 50 ? 'Excelente / Estável' : fps >= 35 ? 'Aceitável' : 'Reduzido'})
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Taxa de Quadros (FPS Real)</span>
+                  <p className="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
+                    <span className={fps < 38 ? 'text-amber-400' : 'text-emerald-400'}>{fps} FPS</span>
+                    <span className="text-[10px] font-normal text-zinc-400">({fps >= 50 ? 'Estável 60Hz' : fps >= 35 ? 'Fluido' : 'Economia'})</span>
                   </p>
-                  <p className="text-[10px] text-zinc-400 mt-0.5 truncate" title={`Física: ${report?.physicalWidth || report?.screenWidth}x${report?.physicalHeight || report?.screenHeight} px | Viewport CSS: ${report?.screenWidth}x${report?.screenHeight} px`}>
-                    Tela Física: <span className="font-mono text-zinc-200 font-bold">{report?.physicalWidth || report?.screenWidth}x{report?.physicalHeight || report?.screenHeight} px</span>
-                    <span className="text-zinc-500 text-[9px] block">Viewport CSS: {report?.screenWidth}x{report?.screenHeight} px</span>
+                  <p className="text-[10px] text-zinc-400 mt-0.5 truncate" title={`Resolução: ${report?.physicalWidth || report?.screenWidth}x${report?.physicalHeight || report?.screenHeight} px`}>
+                    Monitor: <span className="font-mono text-zinc-300 font-bold">{report?.physicalWidth || report?.screenWidth}x{report?.physicalHeight || report?.screenHeight}</span>
                   </p>
                 </div>
               </div>
