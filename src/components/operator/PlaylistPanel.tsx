@@ -4,7 +4,7 @@ import {
   BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2, 
   Maximize, Zap, Minimize, Send, Trash2, Image as ImageIcon, AlertTriangle,
   Eye, EyeOff, Search, Layers, ChevronsUp, ChevronsDown, Filter, Sparkles, Check,
-  LayoutGrid, List, Edit3, Maximize2, X, Clock
+  LayoutGrid, List, Edit3, Maximize2, X, Clock, Pin
 } from 'lucide-react';
 
 interface CustomMedia {
@@ -316,7 +316,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   {activeSlides.length} Ativos • {formatTotalTime(totalLoopDuration)}
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Organize a sequência exata de avisos, vídeos e agendas exibidos na projeção</p>
+              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Organize a sequência de exibição na projeção</p>
             </div>
           </div>
 
@@ -377,19 +377,54 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               <button
                 type="button"
                 onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
-                className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 hover:bg-amber-500/20 transition-all font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
+                title="Clique para destravar e voltar ao carrossel automático"
+                className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-amber-500/20 transition-all font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px] shrink-0"
               >
                 <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400 shrink-0" />
-                <span>Voltar ao Carrossel Automático</span>
+                <span className="hidden sm:inline">Desfixar Slide</span>
+                <span className="sm:hidden">Voltar</span>
               </button>
             ) : (
-              <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-2 min-h-[32px]">
+              <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-2 min-h-[32px] shrink-0">
                 <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0" />
-                <span>Loop Automático Ativo</span>
+                <span className="hidden sm:inline">Loop Automático Ativo</span>
+                <span className="sm:hidden">Loop Ativo</span>
               </span>
             )}
           </div>
         </div>
+
+        {/* BANNER INFORMATIVO QUANDO CONTEÚDO ESTÁ FIXADO */}
+        {manualSlideOverride && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-amber-500/20 border border-amber-500/30 rounded-lg text-amber-400 shrink-0">
+                <Pin className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
+                    Conteúdo Fixado Manualmente no Telão
+                  </span>
+                  <span className="bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded border border-amber-500/30 uppercase">
+                    Carrossel Pausado
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-300 mt-0.5">
+                  Carrossel pausado. Clique ao lado para destravar e retomar a projeção automática.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
+              className="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-500/10 shrink-0 cursor-pointer w-full sm:w-auto active:scale-95"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Voltar ao Carrossel</span>
+            </button>
+          </div>
+        )}
 
         {/* FERRAMENTAS DE BUSCA E FILTROS DA FILA */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
@@ -401,7 +436,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar slide na fila por nome ou tipo..."
+              placeholder="Buscar slide na fila..."
               className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-amber-500 placeholder-zinc-500 transition-all"
             />
             {searchTerm && (
@@ -663,8 +698,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               <Film className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Central de Mídias & Arquivos Local</h2>
-              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Envio, pré-visualização, enquadramento e renomeação de imagens e vídeos</p>
+              <h2 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Central de Mídias & Arquivos</h2>
+              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Envio, enquadramento e gestão de vídeos e imagens</p>
             </div>
           </div>
 
@@ -1103,24 +1138,34 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       {/* AJUSTES RÁPIDOS DE DURAÇÃO, FIT E ÁUDIO */}
                       <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-zinc-400">
                         {/* DURAÇÃO */}
-                        <div className="flex items-center gap-1.5 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                          <span className="text-[10px] uppercase text-zinc-500 font-bold">Duração:</span>
-                          <button
-                            type="button"
-                            onClick={() => handleAdjustDuration(media, -1000)}
-                            className="w-4 h-4 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                        {media.type === 'video' ? (
+                          <div 
+                            className="flex items-center gap-1 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 text-[10px] text-zinc-400 font-bold"
+                            title="O carrossel avança automaticamente assim que o vídeo termina de tocar"
                           >
-                            -
-                          </button>
-                          <span className="font-mono text-zinc-200 font-bold">{media.duration / 1000}s</span>
-                          <button
-                            type="button"
-                            onClick={() => handleAdjustDuration(media, 1000)}
-                            className="w-4 h-4 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center text-xs font-bold cursor-pointer"
-                          >
-                            +
-                          </button>
-                        </div>
+                            <Clock className="w-3 h-3 text-amber-500" />
+                            <span>Duração Nativa (Auto)</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800" title="Tempo em segundos que esta imagem permanece na tela no carrossel automático">
+                            <span className="text-[10px] uppercase text-zinc-500 font-bold">Tempo:</span>
+                            <button
+                              type="button"
+                              onClick={() => handleAdjustDuration(media, -1000)}
+                              className="w-4 h-4 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                            >
+                              -
+                            </button>
+                            <span className="font-mono text-zinc-200 font-bold">{media.duration / 1000}s</span>
+                            <button
+                              type="button"
+                              onClick={() => handleAdjustDuration(media, 1000)}
+                              className="w-4 h-4 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        )}
 
                         {/* FIT / MODO DE ENQUADRAMENTO */}
                         <button
@@ -1249,19 +1294,20 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               </button>
             </div>
 
-            <div className="flex-1 bg-black rounded-xl border border-zinc-800 overflow-hidden flex items-center justify-center min-h-[300px] max-h-[60vh]">
+            <div className="flex-1 bg-zinc-950 rounded-xl border border-zinc-800/80 overflow-hidden flex items-center justify-center p-3 min-h-[300px] max-h-[60vh] relative shadow-inner">
               {previewMedia.type === 'video' ? (
                 <video 
                   src={previewMedia.url} 
                   controls 
                   autoPlay 
-                  className={`w-full h-full object-${previewMedia.fit || 'contain'}`} 
+                  playsInline
+                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl" 
                 />
               ) : (
                 <img 
                   src={previewMedia.url} 
                   alt={previewMedia.name} 
-                  className={`w-full h-full object-${previewMedia.fit || 'contain'}`} 
+                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl" 
                 />
               )}
             </div>

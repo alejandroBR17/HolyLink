@@ -801,7 +801,7 @@ export default function App() {
                 className="w-full sm:w-auto min-h-[40px] bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-black text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(245,158,11,0.25)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.35)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
                 <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-                <span className="whitespace-nowrap">Abrir Monitor (2ª Tela)</span>
+                <span className="whitespace-nowrap">Monitor 2ª Tela</span>
               </button>
             ) : (
               <button
@@ -815,7 +815,7 @@ export default function App() {
                 className="w-full sm:w-auto min-h-[40px] bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-black text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(220,38,38,0.25)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
               >
                 <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-                <span className="whitespace-nowrap">Fechar Monitor (2ª Tela)</span>
+                <span className="whitespace-nowrap">Fechar 2ª Tela</span>
               </button>
             )}
           </div>
@@ -823,37 +823,37 @@ export default function App() {
 
         {/* ACTIVE BROADCAST HEADER BANNER */}
         {isJustStartedRaw && (
-          <div className={`px-4 py-3 border-b flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all z-10 ${
+          <div className={`px-4 py-2.5 border-b flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all z-10 ${
             dismissedJustStarted 
               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" 
               : "bg-amber-500/10 border-amber-500/20 text-amber-500"
           }`}>
-            <div className="flex items-center gap-2.5 text-xs sm:text-sm font-medium">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-medium">
               {dismissedJustStarted ? (
                 <>
-                  <span className="flex h-2.5 w-2.5 relative">
+                  <span className="flex h-2 w-2 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
-                  <span><strong>Carrossel de Slides Liberado:</strong> Os anúncios, PIX e mídias estão rodando de forma automática e manual na projeção.</span>
+                  <span><strong>Carrossel Ativo:</strong> Anúncios e mídias rodando automaticamente.</span>
                 </>
               ) : (
                 <>
                   <BookOpen className="w-4 h-4 animate-pulse shrink-0" />
-                  <span><strong>Modo Culto Iniciado Ativo:</strong> A TV de projeção está exibindo os Versículos Bíblicos. O carrossel automático está em pausa.</span>
+                  <span><strong>Modo Culto Ativo:</strong> Exibindo Bíblia (Carrossel Pausado).</span>
                 </>
               )}
             </div>
             
             <button
               onClick={() => updateStateAndBroadcast('dismissedJustStarted', !dismissedJustStarted)}
-              className={`text-xs font-bold px-4 py-2 rounded-lg transition-all cursor-pointer shadow-md shrink-0 w-full md:w-auto text-center ${
+              className={`text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-md shrink-0 w-full md:w-auto text-center ${
                 dismissedJustStarted 
                   ? "bg-emerald-500 hover:bg-emerald-600 text-black shadow-emerald-500/10" 
                   : "bg-amber-500 hover:bg-amber-600 text-black shadow-amber-500/10"
               }`}
             >
-              {dismissedJustStarted ? "Mostrar Versículos na TV" : "Liberar Carrossel de Slides"}
+              {dismissedJustStarted ? "Exibir Bíblia" : "Liberar Carrossel"}
             </button>
           </div>
         )}
@@ -947,8 +947,8 @@ export default function App() {
               <span className="text-[10px] text-amber-500 font-black uppercase tracking-widest block">
                 {activeMobileTab === 'slides' ? 'Mídia' : activeMobileTab === 'texts' ? 'Escrituras' : activeMobileTab === 'agenda' ? 'Programação' : activeMobileTab === 'controls' ? 'Broadcasting' : 'Segurança'}
               </span>
-              <h2 className="text-xl font-extrabold text-zinc-100 uppercase tracking-tight mt-0.5">
-                {activeMobileTab === 'slides' ? 'Fila de Slides & Carrossel' : activeMobileTab === 'texts' ? 'Bíblia Sagrada & Textos' : activeMobileTab === 'agenda' ? 'Eventos & Campanhas' : activeMobileTab === 'controls' ? 'Controle de Stage & Alertas' : 'Conexão Sem Fio & Backup'}
+              <h2 className="text-lg sm:text-xl font-extrabold text-zinc-100 uppercase tracking-tight mt-0.5">
+                {activeMobileTab === 'slides' ? 'Fila de Mídias & Slides' : activeMobileTab === 'texts' ? 'Bíblia & Textos' : activeMobileTab === 'agenda' ? 'Programação & Agenda' : activeMobileTab === 'controls' ? 'Controles & Stage' : 'Conexão & Backup'}
               </h2>
             </div>
 

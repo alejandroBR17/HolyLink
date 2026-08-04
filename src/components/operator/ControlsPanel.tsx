@@ -76,11 +76,11 @@ function PerformanceControlModule() {
         <CheckCircle2 className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
         <div>
           {effectiveMode === 'light' ? (
-            <span><strong>Modo Leve (Anti-Lag) Ativo:</strong> Renderização direta sem duplicar decodificadores de vídeo, sem partículas e sem heavy blur para eliminação total de lag.</span>
+            <span><strong>Modo Leve (Anti-Lag):</strong> Otimizado para máxima fluidez, sem efeitos visuais pesados.</span>
           ) : effectiveMode === 'balanced' ? (
-            <span><strong>Modo Equilibrado Ativo:</strong> Transições suaves com fade rápido sem sobrecarregar a memória RAM nem a placa gráfica do computador.</span>
+            <span><strong>Modo Equilibrado:</strong> Transições suaves mantendo baixo uso de memória e GPU.</span>
           ) : (
-            <span><strong>Alta Qualidade Ativa:</strong> Exibe fundo desfocado em tempo real, iluminação ambiente dinâmica, partículas e transições suaves.</span>
+            <span><strong>Alta Qualidade:</strong> Efeitos visuais completos, desfoques e partículas ativas.</span>
           )}
         </div>
       </div>
@@ -95,7 +95,7 @@ function PerformanceControlModule() {
           }`}
         >
           <HardDrive className={`w-3.5 h-3.5 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-blue-400'}`} />
-          <span>{ramCleared ? '✓ Memória Cache Liberada!' : 'Limpar Memória RAM e Cache'}</span>
+          <span>{ramCleared ? '✓ Memória Cache Liberada!' : 'Limpar Memória RAM'}</span>
         </button>
       </div>
 
@@ -544,12 +544,12 @@ export function ControlsPanel({
                 className="w-full p-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 animate-in fade-in duration-200"
               >
                 <ExternalLink className="w-4 h-4" />
-                Abrir Monitor HDMI (2ª Tela)
+                Abrir Monitor 2ª Tela
               </button>
               <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
                 <span className="flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                  {isOnline ? 'Sincronização Local (Rede Conectada)' : 'Modo Offline (Sincronização Local Garantida)'}
+                  {isOnline ? 'Sincronização Ativa' : 'Modo Offline'}
                 </span>
                 <button
                   onClick={() => {
@@ -571,12 +571,12 @@ export function ControlsPanel({
                 className="w-full p-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer animate-in fade-in duration-200"
               >
                 <X className="w-4 h-4" />
-                Fechar Monitor HDMI
+                Fechar 2ª Tela
               </button>
               <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
                 <span className="flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                  {isOnline ? 'Janela HDMI Ativa (Sincronização 0ms)' : 'Janela HDMI Ativa (Modo Offline 0ms)'}
+                  {isOnline ? '2ª Tela Conectada' : '2ª Tela Offline'}
                 </span>
                 <button
                   onClick={() => {
@@ -599,7 +599,7 @@ export function ControlsPanel({
           <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
             <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
-              Fundo 3D & Efeitos de Recepção (Three.js)
+              Fundo 3D & Efeitos Visuais
             </h3>
             <span className="text-[9px] bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono px-2 py-0.5 rounded-md font-bold">
               100% Offline
@@ -609,7 +609,7 @@ export function ControlsPanel({
           {/* 1-CLICK PRESET MODES FOR QUICK OPERATOR SETUP */}
           <div className="flex flex-col gap-1.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-850">
             <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-              <Zap className="w-3 h-3 text-amber-500" /> Otimização Rápida de Desempenho (1-Clique):
+              <Zap className="w-3 h-3 text-amber-500" /> Otimização Rápida:
             </span>
             <div className="grid grid-cols-3 gap-1.5">
               <button
@@ -621,10 +621,10 @@ export function ControlsPanel({
                   setPerformanceMode('light');
                 }}
                 className="py-2 px-1.5 bg-zinc-900 hover:bg-emerald-950/40 border border-zinc-800 hover:border-emerald-500/50 rounded-lg text-[10px] font-bold text-emerald-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
-                title="Ideal para notebooks ou PCs antigos sem placa gráfica dedicada"
+                title="Ideal para computadores sem GPU dedicada"
               >
-                <span>🛡️ Anti-Lag Total</span>
-                <span className="text-[8px] text-zinc-500 group-hover:text-emerald-300 font-normal">30 FPS + 2D Leve</span>
+                <span>🛡️ Anti-Lag</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-emerald-300 font-normal">30 FPS (Leve)</span>
               </button>
 
               <button
@@ -636,10 +636,10 @@ export function ControlsPanel({
                   setPerformanceMode('auto');
                 }}
                 className="py-2 px-1.5 bg-zinc-900 hover:bg-amber-950/40 border border-zinc-800 hover:border-amber-500/50 rounded-lg text-[10px] font-bold text-amber-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
-                title="Equilíbrio ideal entre fluidez e efeitos visuais"
+                title="Equilíbrio ideal entre fluidez e visual"
               >
                 <span>⚖️ Equilibrado</span>
-                <span className="text-[8px] text-zinc-500 group-hover:text-amber-300 font-normal">60 FPS + Auto 3D</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-amber-300 font-normal">60 FPS (Auto)</span>
               </button>
 
               <button
@@ -651,10 +651,10 @@ export function ControlsPanel({
                   setPerformanceMode('high');
                 }}
                 className="py-2 px-1.5 bg-zinc-900 hover:bg-blue-950/40 border border-zinc-800 hover:border-blue-500/50 rounded-lg text-[10px] font-bold text-blue-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
-                title="Qualidade gráfica máxima com volumetria 3D completa"
+                title="Qualidade gráfica máxima"
               >
                 <span>✨ Alta Qualidade</span>
-                <span className="text-[8px] text-zinc-500 group-hover:text-blue-300 font-normal">60 FPS + 3D Aurora</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-blue-300 font-normal">60 FPS (3D)</span>
               </button>
             </div>
           </div>
@@ -663,12 +663,12 @@ export function ControlsPanel({
             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Estilo de Ambiência 3D</span>
             <div className="grid grid-cols-3 gap-1.5">
               {[
-                { id: 'auto', label: '🤖 Auto Adaptativo' },
-                { id: 'aurora', label: '🌅 Aurora Sacra 3D' },
-                { id: 'veil', label: '🕊️ Véu Divino 3D' },
-                { id: 'fju_aura', label: '⚡ Aura FJU 3D' },
-                { id: 'particles_2d', label: '✨ 2D Clássico' },
-                { id: 'off', label: '🚫 Desativar' },
+                { id: 'auto', label: '🤖 Automático' },
+                { id: 'aurora', label: '🌅 Aurora 3D' },
+                { id: 'veil', label: '🕊️ Véu 3D' },
+                { id: 'fju_aura', label: '⚡ Aura 3D' },
+                { id: 'particles_2d', label: '✨ 2D' },
+                { id: 'off', label: '🚫 Desativado' },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -887,7 +887,7 @@ export function ControlsPanel({
           <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
             <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
               <Bell className="w-4 h-4 text-amber-500" />
-              Disparador de Alertas no Telão
+              Disparador de Alertas
             </h3>
             {activeAlert && (
               <span className="text-[8px] bg-amber-500/20 border border-amber-500/40 text-amber-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">
@@ -1014,7 +1014,7 @@ export function ControlsPanel({
                 type="submit"
                 className="w-full bg-amber-500 hover:bg-amber-600 text-black py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all shrink-0 shadow-md shadow-amber-500/10"
               >
-                <Send className="w-3.5 h-3.5" /> Disparar Alerta no Telão
+                <Send className="w-3.5 h-3.5" /> Enviar Alerta
               </button>
             </form>
           </div>
@@ -1022,7 +1022,7 @@ export function ControlsPanel({
           {/* HISTÓRICO DE ALERTAS RECENTES */}
           {alertHistory.length > 0 && (
             <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-800/50">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Histórico Recente (1-Clique)</span>
+              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Histórico Recente</span>
               <div className="flex flex-col gap-1 max-h-[120px] overflow-y-auto pr-1">
                 {alertHistory.map((histMsg, hIdx) => (
                   <div

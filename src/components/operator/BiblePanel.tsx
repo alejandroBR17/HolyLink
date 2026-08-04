@@ -151,7 +151,7 @@ export const BiblePanel = React.memo(function BiblePanel({
             </div>
             <div>
               <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Texto & Versículo Transmitido</h3>
-              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">Supervisão em tempo real do texto visível no telão principal</p>
+              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">Texto exibido atualmente na projeção</p>
             </div>
           </div>
 
@@ -197,7 +197,7 @@ export const BiblePanel = React.memo(function BiblePanel({
             className="bg-zinc-950 border border-zinc-800 hover:border-amber-500/40 hover:bg-zinc-900 text-zinc-200 text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all whitespace-nowrap"
           >
             <Shuffle className="w-4 h-4 text-amber-500" />
-            <span>Embaralhar Versículo Aleatório</span>
+            <span>Versículo Aleatório</span>
           </button>
           
           <button
@@ -211,7 +211,7 @@ export const BiblePanel = React.memo(function BiblePanel({
             }`}
           >
             <RefreshCw className="w-3.5 h-3.5 text-amber-500" />
-            <span>Restaurar Rotação Automática</span>
+            <span>Restaurar Rotação</span>
           </button>
         </div>
       </div>
@@ -221,17 +221,17 @@ export const BiblePanel = React.memo(function BiblePanel({
         <div className="flex items-center justify-between border-b border-zinc-800/50 pb-3">
           <div className="flex items-center gap-2.5">
             <Bell className="w-4.5 h-4.5 text-amber-500" />
-            <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Avisos Frequentes & Transmissão Personalizada</h3>
+            <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Avisos Rápidos & Texto Personalizado</h3>
           </div>
           <span className="text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono font-bold px-2.5 py-0.5 rounded-full">
-            1-Clique no Telão
+            Projeção Direta
           </span>
         </div>
 
         {/* PRESETS DE AVISOS DE CULTO */}
         <div>
           <label className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider mb-2 block">
-            Avisos de Culto Pré-Cadastrados:
+            Avisos Pré-Cadastrados:
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {DEFAULT_CHURCH_NOTICES.map((notice, idx) => (
@@ -256,11 +256,11 @@ export const BiblePanel = React.memo(function BiblePanel({
         <div className="flex flex-col gap-3 pt-2 border-t border-zinc-800/60">
           <div>
             <label className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider mb-2 block">
-              Escrever Texto ou Mensagem ao Vivo:
+              Texto Personalizado:
             </label>
             <textarea
               id="operator-custom-verse-textarea"
-              placeholder="Digite o texto do aviso, recado ou versículo especial que deseja projetar..."
+              placeholder="Digite o aviso ou versículo para projetar..."
               rows={3}
               className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500 font-sans resize-none transition-all"
             />
@@ -270,7 +270,7 @@ export const BiblePanel = React.memo(function BiblePanel({
             <input
               id="operator-custom-verse-ref"
               type="text"
-              placeholder="Assinatura / Referência (ex: Bispo Clodomir / João 3:16)"
+              placeholder="Referência ou Assinatura (ex: João 3:16)"
               className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500 font-sans"
             />
             
@@ -373,6 +373,7 @@ export const BiblePanel = React.memo(function BiblePanel({
         {/* BUSCADOR DA BÍBLIA SAGRADA */}
         <div className="pt-2">
           <BibleSection 
+            currentProjectedRef={customVerseRef || (activeVerseIndex !== null ? VERSES[activeVerseIndex]?.ref : null)}
             onShowVerse={(text, ref) => {
               updateStateAndBroadcast('activeVerseIndex', null);
               updateStateAndBroadcast('customVerseText', text);

@@ -257,7 +257,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
               <CalendarDays className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Gerenciar Agenda & Eventos</h3>
+              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Agenda & Reuniões</h3>
               <p className="text-[10px] text-zinc-500 font-normal mt-0.5">{(customMeetings || []).length} reuniões registradas</p>
             </div>
           </div>
@@ -283,13 +283,13 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   }}
                   className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 text-amber-500" /> Adicionar Reunião Personalizada
+                  <Plus className="w-4 h-4 text-amber-500" /> Nova Reunião
                 </button>
 
-                {/* Modelos Prontos de Reuniões em 1-Clique */}
+                {/* Modelos Prontos de Reuniões */}
                 <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-800/60">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-amber-500" /> Adicionar Reuniões Rápidas (1-Clique):
+                    <Zap className="w-3 h-3 text-amber-500" /> Adicionar Rápido:
                   </span>
                   <div className="grid grid-cols-2 gap-1.5">
                     {DEFAULT_MEETING_PRESETS.map((preset, pIdx) => (
@@ -558,7 +558,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
               <Flame className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Propósitos de Fé & Campanhas</h3>
+              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Campanhas & Propósitos</h3>
               <p className="text-[10px] text-zinc-500 font-normal mt-0.5">{(customCampaigns || []).length} campanhas registradas</p>
             </div>
           </div>
@@ -583,13 +583,13 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   }}
                   className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 text-amber-500" /> Adicionar Propósito Personalizado
+                  <Plus className="w-4 h-4 text-amber-500" /> Nova Campanha
                 </button>
 
                 {/* Modelos Prontos de Campanhas */}
                 <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-800/60">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-amber-500" /> Modelos Rápidos de Campanhas:
+                    <Zap className="w-3 h-3 text-amber-500" /> Modelos Rápidos:
                   </span>
                   <div className="grid grid-cols-2 gap-1.5">
                     {DEFAULT_CAMPAIGN_PRESETS.map((preset, pIdx) => (

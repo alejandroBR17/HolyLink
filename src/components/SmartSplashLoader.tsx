@@ -47,7 +47,7 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
 
       if (needsPrompt) {
         // Stop automatically and wait for user to click or grant permissions one by one
-        setStatusText('Aprovação de permissões necessária para transmissão perfeita');
+        setStatusText('Aprovação de permissões recomendada');
       } else {
         // All permissions granted or supported, proceed to media stage
         proceedToMediaStage();
@@ -63,7 +63,7 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
 
   const proceedToMediaStage = async () => {
     setStage('media');
-    setStatusText(`Preparações para ${customMediaList.length} mídia(s) em memória cache...`);
+    setStatusText(`Carregando ${customMediaList.length} mídia(s)...`);
     setProgress(50);
 
     if (customMediaList.length === 0) {
@@ -83,10 +83,10 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
     setStage('optimizing');
     setStatusText(
       effectiveMode === 'light' 
-        ? 'Ativando otimização Anti-Lag para este PC...' 
+        ? 'Otimização Anti-Lag ativada' 
         : effectiveMode === 'balanced'
-        ? 'Configurando perfil gráfico Equilibrado...'
-        : 'Ajustando motor gráfico para alta performance...'
+        ? 'Modo Equilibrado ativado'
+        : 'Alta Performance ativada'
     );
     setProgress(95);
     await new Promise((r) => setTimeout(r, 600));

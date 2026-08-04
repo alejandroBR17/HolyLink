@@ -128,11 +128,11 @@ export const SyncSection = React.memo(function SyncSection({
     setTestSummary(null);
 
     const initialSteps = [
-      { id: 'bc', name: '1. Sincronização Local entre Abas (BroadcastChannel)', status: 'pending' as const },
-      { id: 'db', name: '2. Gravação/Leitura de Mídias em Banco de Dados (IndexedDB Blobs)', status: 'pending' as const },
-      { id: 'p2p_init', name: '3. Conectividade WebRTC P2P (Sinalização PeerJS)', status: 'pending' as const },
-      { id: 'p2p_file', name: '4. Transmissão P2P de Vídeo/Imagem em Alta Velocidade', status: 'pending' as const },
-      { id: 'p2p_event', name: '5. Sincronização de Controles, Slides e Volume em Tempo Real', status: 'pending' as const },
+      { id: 'bc', name: '1. Sincronização entre Janelas', status: 'pending' as const },
+      { id: 'db', name: '2. Armazenamento de Mídias', status: 'pending' as const },
+      { id: 'p2p_init', name: '3. Conexão Sem Fio (P2P)', status: 'pending' as const },
+      { id: 'p2p_file', name: '4. Transmissão de Mídias', status: 'pending' as const },
+      { id: 'p2p_event', name: '5. Controles em Tempo Real', status: 'pending' as const },
     ];
     setTestSteps(initialSteps);
 
@@ -169,7 +169,7 @@ export const SyncSection = React.memo(function SyncSection({
 
         bcTx.postMessage({ ping: 'diag_ok' });
       });
-      updateStep('bc', 'ok', 'Comunicação direta entre abas e monitores operando instantaneamente (< 5ms)');
+      updateStep('bc', 'ok', 'Sincronização entre janelas OK (< 5ms)');
 
       // Step 2: IndexedDB Blob Read/Write/Delete (Images + Video Blobs)
       updateStep('db', 'running');
@@ -194,10 +194,10 @@ export const SyncSection = React.memo(function SyncSection({
       const allItems = await getAllMediaItems();
       const found = allItems.find(item => item.id === testMediaId);
       if (!found || !found.blob || found.blob.size === 0) {
-        throw new Error("Falha ao salvar ou carregar o arquivo de vídeo no armazenamento IndexedDB local");
+        throw new Error("Falha ao salvar ou carregar o arquivo de vídeo no armazenamento local");
       }
       await deleteMediaItem(testMediaId);
-      updateStep('db', 'ok', `Escrita, leitura e exclusão de vídeo MP4 (${found.blob.size} bytes) validadas no armazenamento do navegador`);
+      updateStep('db', 'ok', 'Armazenamento local de mídias OK');
 
       // Step 3 & 4 & 5: PeerJS Loopback
       updateStep('p2p_init', 'running');
@@ -209,7 +209,7 @@ export const SyncSection = React.memo(function SyncSection({
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
           testRxPeer.destroy();
-          reject(new Error("Timeout na conexão com o servidor de sinalização WebRTC"));
+          reject(new Error("Timeout de conexão"));
         }, 8000);
 
         testRxPeer.on('open', () => {
@@ -222,7 +222,7 @@ export const SyncSection = React.memo(function SyncSection({
           reject(new Error(`Erro no servidor P2P: ${err.message || err.type}`));
         });
       });
-      updateStep('p2p_init', 'ok', `Handshake WebRTC P2P bem-sucedido. Servidor de teste escutando no canal (ID: ${testCode})`);
+      updateStep('p2p_init', 'ok', 'Servidor de conexão sem fio OK');
 
       // Step 4: Transmissão P2P de Arquivos (Vídeo & Imagem via DataChannel)
       updateStep('p2p_file', 'running');
@@ -232,7 +232,7 @@ export const SyncSection = React.memo(function SyncSection({
         const timeout = setTimeout(() => {
           testTxPeer.destroy();
           testRxPeer.destroy();
-          reject(new Error("Timeout na transferência P2P de vídeo/mídia"));
+          reject(new Error("Timeout na transferência de dados"));
         }, 8000);
 
         testTxPeer.on('open', () => {
@@ -252,7 +252,7 @@ export const SyncSection = React.memo(function SyncSection({
                   clearTimeout(timeout);
                   testTxPeer.destroy();
                   testRxPeer.destroy();
-                  reject(new Error("Integridade do arquivo de vídeo comprometida no transporte P2P"));
+                  reject(new Error("Erro na integridade dos dados"));
                 }
               }
             });
@@ -277,21 +277,21 @@ export const SyncSection = React.memo(function SyncSection({
           clearTimeout(timeout);
           testTxPeer.destroy();
           testRxPeer.destroy();
-          reject(new Error(`Erro na conexão cliente P2P: ${err.message || err.type}`));
+          reject(new Error(`Erro P2P: ${err.message || err.type}`));
         });
       });
 
-      updateStep('p2p_file', 'ok', `Transmissão P2P de arquivo de vídeo/imagem enviada e confirmada via WebRTC DataChannel (Latência: ${measuredLatencyMs}ms)`);
+      updateStep('p2p_file', 'ok', `Transmissão de dados OK (${measuredLatencyMs}ms)`);
 
       // Step 5: Real-time Event (Slide controls, video volume, quick alerts)
       updateStep('p2p_event', 'running');
       window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'diag_sync_test_event', value: Date.now() } }));
-      updateStep('p2p_event', 'ok', 'Comandos de troca de slides, controle de áudio/vídeo e alertas sincronizados com sucesso sem alterar suas configurações reais');
+      updateStep('p2p_event', 'ok', 'Comandos remotos em tempo real OK');
 
       setTestSummary({
         success: true,
         latencyMs: measuredLatencyMs,
-        message: 'A plataforma passou em 100% dos testes reais! O envio de vídeos, imagens, comandos de slide e controle em tempo real entre dispositivos estão totalmente operacionais.'
+        message: 'Todos os testes de conexão foram concluídos com sucesso!'
       });
 
     } catch (err: any) {
@@ -1354,10 +1354,10 @@ export const SyncSection = React.memo(function SyncSection({
           </div>
           <div>
             <h2 className="text-zinc-100 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-              Conexão Sem Fio & Backup do Templo
+              Conexão Sem Fio & Backup
             </h2>
             <p className="text-[11px] text-zinc-400 mt-0.5">
-              Sincronização P2P direta em tempo real (Celular do Operador & PC de Projeção) e Gestão de Backup (.json).
+              Sincronização P2P em tempo real (Celular & PC) e backup em arquivo JSON.
             </p>
           </div>
         </div>
@@ -1366,7 +1366,7 @@ export const SyncSection = React.memo(function SyncSection({
         <div className="flex items-center gap-2 bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-            Papel Atual: <strong className="text-amber-400">{localStorage.getItem('projection_deviceRole') === 'phone' ? 'Celular (Controle Remoto)' : 'PC do Templo (Receptor)'}</strong>
+            Papel Atual: <strong className="text-amber-400">{localStorage.getItem('projection_deviceRole') === 'phone' ? 'Celular (Controle)' : 'PC (Receptor)'}</strong>
           </span>
         </div>
       </div>
@@ -1377,15 +1377,15 @@ export const SyncSection = React.memo(function SyncSection({
           <div className="flex items-center gap-2">
             <FlaskConical className="w-4 h-4 text-amber-400" />
             <div>
-              <span className="text-xs font-bold text-zinc-200 block">Diagnóstico do Sistema & Teste de Transmissão</span>
-              <span className="text-[10px] text-zinc-500">Valida BroadcastChannel local, banco IndexedDB e sinalização P2P WebRTC</span>
+              <span className="text-xs font-bold text-zinc-200 block">Diagnóstico do Sistema & Rede</span>
+              <span className="text-[10px] text-zinc-500">Validação da rede local, banco de dados e sinalização P2P</span>
             </div>
           </div>
           <button
             onClick={runDiagnosticTest}
             disabled={isTesting}
             className="bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-extrabold px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-amber-500/10 disabled:opacity-50"
-            title="Executa teste simulação interna para validar envio de mídias e comandos de tela"
+            title="Executa teste interno para validar comunicação de rede"
           >
             {isTesting ? (
               <>
@@ -1393,7 +1393,7 @@ export const SyncSection = React.memo(function SyncSection({
               </>
             ) : (
               <>
-                <Play className="w-3.5 h-3.5 fill-current" /> Testar Sincronização & Rede
+                <Play className="w-3.5 h-3.5 fill-current" /> Testar Conexão
               </>
             )}
           </button>
@@ -1456,17 +1456,17 @@ export const SyncSection = React.memo(function SyncSection({
         <div className="flex items-center justify-between border-b border-zinc-800/60 pb-2">
           <div className="flex items-center gap-2 text-xs font-bold text-zinc-200">
             <Zap className="w-4 h-4 text-amber-400" />
-            <span>Sincronização Direta sem Fio (PeerJS P2P)</span>
+            <span>Sincronização P2P Sem Fio</span>
           </div>
           <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-mono font-bold">
-            0ms de Atraso
+            Rede Local
           </span>
         </div>
 
         {directSyncStatus === 'idle' && (
           <div className="flex flex-col gap-3">
             <p className="text-[11px] text-zinc-400 leading-normal">
-              Selecione a função deste dispositivo para parear a transmissão:
+              Selecione o papel deste dispositivo para parear:
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -1474,8 +1474,8 @@ export const SyncSection = React.memo(function SyncSection({
                 className="bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 hover:bg-zinc-850 text-zinc-200 text-[11px] font-bold py-3 px-3 rounded-xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-24 group"
               >
                 <Laptop className="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span className="text-zinc-100 font-extrabold">TERMINAL (PC DO TEMPLO)</span>
-                <span className="text-[8px] text-zinc-500 uppercase tracking-tighter">Recebe Mídias e Projeta</span>
+                <span className="text-zinc-100 font-extrabold">RECEPTOR (PC)</span>
+                <span className="text-[8px] text-zinc-500 uppercase tracking-tighter">Projeta mídias no telão</span>
               </button>
               <button
                 onClick={() => setDirectSyncStatus('connecting')}
@@ -1483,7 +1483,7 @@ export const SyncSection = React.memo(function SyncSection({
               >
                 <Smartphone className="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" />
                 <span className="text-zinc-100 font-extrabold">CONTROLE (CELULAR)</span>
-                <span className="text-[8px] text-zinc-500 uppercase tracking-tighter">Edita Agenda e Dispara Slides</span>
+                <span className="text-[8px] text-zinc-500 uppercase tracking-tighter">Controla transmissão</span>
               </button>
             </div>
 
@@ -1535,7 +1535,7 @@ export const SyncSection = React.memo(function SyncSection({
                 </div>
 
                 <div className="text-[10px] text-zinc-300 bg-zinc-950/80 p-3 rounded-lg text-center leading-normal border border-zinc-800 max-w-sm">
-                  <strong>Instruções do Operador:</strong> Abra a câmera do celular, aponte para o QR Code acima e toque no link para sincronizar automaticamente a agenda e vídeos!
+                  <strong>Instruções:</strong> Aponte a câmera do celular para o QR Code acima para conectar.
                 </div>
               </div>
             )}
@@ -1548,7 +1548,7 @@ export const SyncSection = React.memo(function SyncSection({
               }}
               className="text-zinc-500 hover:text-zinc-300 text-[10px] underline cursor-pointer mt-1"
             >
-              Alterar Função ou Cancelar Conexão
+              Alterar Função ou Cancelar
             </button>
           </div>
         )}
@@ -1563,7 +1563,7 @@ export const SyncSection = React.memo(function SyncSection({
 
             {directSyncStatus === 'connecting' && (
               <div className="flex flex-col gap-2.5 w-full">
-                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Código PIN do PC do Templo:</label>
+                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Código PIN do PC:</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -1582,7 +1582,7 @@ export const SyncSection = React.memo(function SyncSection({
                   </button>
                 </div>
                 <p className="text-[10px] text-zinc-500 leading-normal">
-                  Digite o código de 6 letras exibido no monitor do computador para iniciar a sincronização remota.
+                  Digite o código de 6 letras exibido na tela do computador.
                 </p>
               </div>
             )}
@@ -1595,7 +1595,7 @@ export const SyncSection = React.memo(function SyncSection({
               }}
               className="text-zinc-500 hover:text-zinc-300 text-[10px] underline cursor-pointer mt-1 self-center"
             >
-              Voltar ao Menu Anterior
+              Voltar ao Menu
             </button>
           </div>
         )}
@@ -1607,19 +1607,19 @@ export const SyncSection = React.memo(function SyncSection({
               ✓
             </div>
             <div className="text-center">
-              <span className="text-xs font-extrabold text-emerald-400 block uppercase tracking-wider">Sincronização Ativa & Dispositivos Conectados!</span>
+              <span className="text-xs font-extrabold text-emerald-400 block uppercase tracking-wider">Dispositivos Conectados!</span>
               <p className="text-[11px] text-zinc-300 mt-2 max-w-sm mx-auto leading-relaxed">
-                Todas as mídias, textos da Bíblia e hinos foram transmitidos para o PC do Templo.
+                Sincronização realizada com sucesso.
               </p>
               <p className="text-[10px] text-zinc-400 mt-1 max-w-sm mx-auto leading-relaxed">
-                Qualquer comando de slide, alteração de vídeo ou alerta disparado no celular refletirá instantaneamente no telão.
+                Comandos enviados pelo celular refletem na projeção.
               </p>
             </div>
 
             {localStorage.getItem('projection_deviceRole') === 'phone' && syncMessage && (
               <div className="w-full bg-zinc-950/80 border border-zinc-800 p-2.5 rounded-lg text-center mt-1">
                 <span className="text-[10px] text-amber-400 font-mono font-medium tracking-wide block leading-normal">
-                  Status da Rede: {syncMessage}
+                  Status: {syncMessage}
                 </span>
               </div>
             )}
@@ -1639,7 +1639,7 @@ export const SyncSection = React.memo(function SyncSection({
                 }}
                 className="text-zinc-500 hover:text-red-400 text-[10px] underline cursor-pointer"
               >
-                Desconectar Dispositivo
+                Desconectar
               </button>
             </div>
           </div>
@@ -1651,7 +1651,7 @@ export const SyncSection = React.memo(function SyncSection({
             <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500 text-red-400 font-bold text-lg">
               ✕
             </div>
-            <span className="text-xs font-bold text-red-400">Falha na Conexão sem Fio</span>
+            <span className="text-xs font-bold text-red-400">Falha na Conexão</span>
             <p className="text-[11px] text-zinc-400 leading-snug">
               {syncMessage}
             </p>
@@ -1667,7 +1667,7 @@ export const SyncSection = React.memo(function SyncSection({
                 }}
                 className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 hover:border-amber-500/40 text-[10px] font-bold py-2 px-3 rounded-lg cursor-pointer transition-all"
               >
-                Tentar Reconectar Agora
+                Reconectar
               </button>
               <button
                 onClick={() => {
@@ -1677,7 +1677,7 @@ export const SyncSection = React.memo(function SyncSection({
                 }}
                 className="text-zinc-500 hover:text-zinc-300 text-[10px] underline cursor-pointer mt-1"
               >
-                Alterar Função do Dispositivo
+                Alterar Função
               </button>
             </div>
           </div>
@@ -1689,13 +1689,13 @@ export const SyncSection = React.memo(function SyncSection({
         <div className="flex items-center justify-between border-b border-zinc-800/60 pb-2">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
             <Download className="w-3.5 h-3.5 text-amber-400" />
-            Backup & Restauração Completa em Arquivo (.json)
+            Backup & Restauração (.json)
           </span>
-          <span className="text-[9px] text-zinc-500 font-mono">Formato JSON Seguro</span>
+          <span className="text-[9px] text-zinc-500 font-mono">Arquivo JSON</span>
         </div>
         
         <p className="text-[11px] text-zinc-400 leading-relaxed">
-          Exporte todo o acervo de hinos, mídias, campanhas, bíblia e preferências para um arquivo `.json` de segurança ou restaure em outro computador do templo.
+          Exporte ou restaure um arquivo de segurança (.json) com todas as mídias, dados e configurações.
         </p>
 
         <div className="grid grid-cols-2 gap-2.5">

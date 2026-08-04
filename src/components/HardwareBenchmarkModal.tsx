@@ -333,10 +333,10 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               </div>
               <div>
                 <h5 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                  Limpeza de Memória e Cache de Mídias
+                  Limpeza de Memória RAM
                 </h5>
                 <p className="text-[11px] text-zinc-400 mt-0.5">
-                  Libera recursos de vídeos e imagens antigos armazenados na RAM sem perder nenhum arquivo salvo.
+                  Libera recursos temporários de mídias na RAM sem apagar arquivos salvos.
                 </p>
               </div>
             </div>
@@ -357,7 +357,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               ) : (
                 <>
                   <Trash2 className="w-4 h-4 text-amber-500" />
-                  <span>Limpar Memória RAM Agora</span>
+                  <span>Limpar Memória RAM</span>
                 </>
               )}
             </button>

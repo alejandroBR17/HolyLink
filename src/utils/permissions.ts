@@ -17,15 +17,15 @@ export async function checkAllPermissions(): Promise<PermissionStatusItem[]> {
     if (audioCtx.state === 'running') {
       items.push({
         id: 'audio',
-        title: 'Áudio & Autoplay Mídia',
-        description: 'Permite reprodução direta de hinos e trilhas nos vídeos',
+        title: 'Áudio & Mídia',
+        description: 'Reprodução de hinos e trilhas de vídeo',
         status: 'granted'
       });
     } else {
       items.push({
         id: 'audio',
-        title: 'Áudio & Autoplay Mídia',
-        description: 'Requer interação para liberar reprodução automática de som',
+        title: 'Áudio & Mídia',
+        description: 'Clique para liberar reprodução de som',
         status: 'prompt'
       });
     }
@@ -33,8 +33,8 @@ export async function checkAllPermissions(): Promise<PermissionStatusItem[]> {
   } catch (e) {
     items.push({
       id: 'audio',
-      title: 'Áudio & Autoplay Mídia',
-      description: 'Navegador com áudio básico',
+      title: 'Áudio & Mídia',
+      description: 'Áudio ativo',
       status: 'granted'
     });
   }
@@ -46,31 +46,31 @@ export async function checkAllPermissions(): Promise<PermissionStatusItem[]> {
       if (isPersisted) {
         items.push({
           id: 'storage',
-          title: 'Armazenamento Persistente',
-          description: 'Cache ilimitado de vídeos e imagens salvo sem apagar',
+          title: 'Armazenamento',
+          description: 'Cache de vídeos e imagens ativado',
           status: 'granted'
         });
       } else {
         items.push({
           id: 'storage',
-          title: 'Armazenamento Persistente',
-          description: 'Necessário autorizar para não perder vídeos em limpezas do navegador',
+          title: 'Armazenamento',
+          description: 'Salvar arquivos e dados no navegador',
           status: 'prompt'
         });
       }
     } else {
       items.push({
         id: 'storage',
-        title: 'Armazenamento Local',
-        description: 'Suporte a IndexedDB ativo',
+        title: 'Armazenamento',
+        description: 'Armazenamento local ativo',
         status: 'granted'
       });
     }
   } catch (e) {
     items.push({
       id: 'storage',
-      title: 'Armazenamento Local',
-      description: 'IndexedDB ativo',
+      title: 'Armazenamento',
+      description: 'Armazenamento ativo',
       status: 'granted'
     });
   }
@@ -81,22 +81,22 @@ export async function checkAllPermissions(): Promise<PermissionStatusItem[]> {
       if (Notification.permission === 'granted') {
         items.push({
           id: 'notifications',
-          title: 'Notificações de Alertas',
-          description: 'Avisos visuais na tela do operador',
+          title: 'Notificações',
+          description: 'Alertas visuais ativados',
           status: 'granted'
         });
       } else if (Notification.permission === 'denied') {
         items.push({
           id: 'notifications',
-          title: 'Notificações de Alertas',
-          description: 'Bloqueado nas configurações do navegador',
+          title: 'Notificações',
+          description: 'Desativado no navegador',
           status: 'denied'
         });
       } else {
         items.push({
           id: 'notifications',
-          title: 'Notificações de Alertas',
-          description: 'Avisar sobre carros, crianças e recados do culto',
+          title: 'Notificações',
+          description: 'Alertas e avisos do sistema',
           status: 'prompt'
         });
       }
@@ -104,7 +104,7 @@ export async function checkAllPermissions(): Promise<PermissionStatusItem[]> {
       items.push({
         id: 'notifications',
         title: 'Notificações',
-        description: 'Não suportado neste navegador',
+        description: 'Não suportado',
         status: 'unsupported'
       });
     }

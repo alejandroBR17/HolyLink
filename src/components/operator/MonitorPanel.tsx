@@ -370,7 +370,7 @@ export function MonitorPanel({
               className="bg-amber-500 hover:bg-amber-400 text-black text-xs sm:text-sm font-extrabold px-4 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-95 w-full min-h-[44px]"
             >
               <SkipForward className="w-4 h-4 shrink-0" />
-              <span>Avançar para este Slide Agora</span>
+              <span>Avançar Slide</span>
             </button>
           )}
         </div>
@@ -384,7 +384,7 @@ export function MonitorPanel({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Desempenho do Sistema & Memória RAM</h4>
+              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Desempenho & Memória</h4>
               <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-extrabold border ${
                 effectiveMode === 'light'
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
@@ -399,7 +399,7 @@ export function MonitorPanel({
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
-              Otimização contínua de GPU/WebGL, núcleos de CPU ({report?.cpuCores || 4} cores) e limpeza de heap JS.
+              Otimização contínua de GPU, CPU ({report?.cpuCores || 4} cores) e memória.
             </p>
           </div>
         </div>
