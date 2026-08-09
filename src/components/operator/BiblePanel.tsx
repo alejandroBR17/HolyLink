@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Undo2, Shuffle, RefreshCw, Send, MessageSquarePlus, Sparkles, Bell, Check, Trash2 } from 'lucide-react';
 import { BibleSection } from '../BibleSection';
 import { VERSES } from '../../data';
@@ -55,14 +55,17 @@ export const BiblePanel = React.memo(function BiblePanel({
   customVerseRef,
   updateStateAndBroadcast
 }: BiblePanelProps) {
-  const [savedNotices, setSavedNotices] = useState<NoticePreset[]>(() => {
-    try {
-      const stored = localStorage.getItem('projection_saved_notices');
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [savedNotices, setSavedNotices] = useState<NoticePreset[]>([]);
+  const [isNoticesLoaded, setIsNoticesLoaded] = useState(false);
+
+  useEffect(() => {
+    import('../../utils').then(({ getSetting }) => {
+      getSetting('projection_saved_notices', []).then(saved => {
+        setSavedNotices(saved);
+        setIsNoticesLoaded(true);
+      });
+    });
+  }, []);
 
   const handleResetVerse = () => {
     updateStateAndBroadcast('activeVerseIndex', null);
@@ -121,13 +124,17 @@ export const BiblePanel = React.memo(function BiblePanel({
 
     const updated = [newNotice, ...savedNotices.filter(n => n.text !== text)];
     setSavedNotices(updated);
-    localStorage.setItem('projection_saved_notices', JSON.stringify(updated));
+    import('../../utils').then(({ saveSetting }) => {
+      saveSetting('projection_saved_notices', updated);
+    });
   };
 
   const handleDeleteSavedNotice = (idx: number) => {
     const updated = savedNotices.filter((_, i) => i !== idx);
     setSavedNotices(updated);
-    localStorage.setItem('projection_saved_notices', JSON.stringify(updated));
+    import('../../utils').then(({ saveSetting }) => {
+      saveSetting('projection_saved_notices', updated);
+    });
   };
 
   const handleClearCustomText = () => {

@@ -69,26 +69,30 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
 
   // Estados dos Versículos Salvos / Favoritos
-  const [customBookmarks, setCustomBookmarks] = useState<Array<{ text: string; ref: string; category?: string; id?: string }>>(() => {
-    try {
-      const stored = localStorage.getItem('custom_saved_bible_verses');
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [customBookmarks, setCustomBookmarks] = useState<Array<{ text: string; ref: string; category?: string; id?: string }>>([]);
+  const [isBookmarksLoaded, setIsBookmarksLoaded] = useState(false);
+
+  useEffect(() => {
+    import('../utils').then(({ getSetting }) => {
+      getSetting('custom_saved_bible_verses', []).then(saved => {
+        setCustomBookmarks(saved);
+        setIsBookmarksLoaded(true);
+      });
+    });
+  }, []);
 
   const [activeCategory, setActiveCategory] = useState('todos');
   const [savedSearchQuery, setSavedSearchQuery] = useState('');
 
-  // Salva novos favoritos no localStorage
+  // Salva novos favoritos no IndexedDB
   useEffect(() => {
-    try {
-      localStorage.setItem('custom_saved_bible_verses', JSON.stringify(customBookmarks));
-    } catch (e) {
-      console.error('Erro ao salvar favoritos', e);
-    }
-  }, [customBookmarks]);
+    if (!isBookmarksLoaded) return;
+    import('../utils').then(({ saveSetting }) => {
+      saveSetting('custom_saved_bible_verses', customBookmarks).catch(e => {
+        console.error('Erro ao salvar favoritos no DB', e);
+      });
+    });
+  }, [customBookmarks, isBookmarksLoaded]);
 
   // Versículos combinados (Iniciais + Customizados)
   const allSavedVerses = useMemo(() => {

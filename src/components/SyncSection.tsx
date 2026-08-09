@@ -4,6 +4,7 @@ import QRCode from "react-qr-code";
 import { Download, Upload, Laptop, Smartphone, RefreshCw, Activity, CheckCircle2, XCircle, FlaskConical, Zap, ShieldCheck, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import { getAllMediaItems, saveMediaItem, deleteMediaItem } from '../utils';
+import { sendMediaInChunks, handleIncomingChunk } from '../utils/webrtcChunking';
 
 function getRealBlob(blobInput: any): Blob | null {
   if (!blobInput) return null;
@@ -384,6 +385,16 @@ export const SyncSection = React.memo(function SyncSection({
 
       conn.on('data', async (data: any) => {
         try {
+          if (data && (data.type === 'MEDIA_CHUNK_START' || data.type === 'MEDIA_CHUNK_DATA')) {
+            const res = await handleIncomingChunk(data);
+            if (res.complete) {
+              window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
+              setSyncMessage('Mídia recebida e salva com sucesso!');
+            }
+            broadcastToPeers(data, conn);
+            return;
+          }
+
           if (data && data.type === 'UPDATE_STATE') {
             // Forward real-time state update to BroadcastChannel
             const bc = new BroadcastChannel('holyrics_projection_sync');
@@ -546,35 +557,40 @@ export const SyncSection = React.memo(function SyncSection({
             const allMedia = await getAllMediaItems();
             const mediaToTransfer = allMedia.filter(item => requestedIds.has(item.id));
             
-            const serializedMedia = await Promise.all(
-              mediaToTransfer.map(async (item, index) => {
-                const progress = Math.round(((index + 1) / mediaToTransfer.length) * 100);
-                window.dispatchEvent(new CustomEvent('projection_sync_progress', { 
-                  detail: { message: `Enviando alteração (${index + 1}/${mediaToTransfer.length}): ${item.name}`, progress } 
-                }));
-                const { base64, mimeType } = await blobToBase64(item.blob);
-                return {
-                  id: item.id,
-                  type: item.type,
-                  name: item.name,
-                  duration: item.duration,
-                  enabledInLoop: item.enabledInLoop,
-                  muted: item.muted,
-                  order: item.order,
-                  fit: item.fit,
-                  mimeType,
-                  base64
-                };
-              })
-            );
+            for (let i = 0; i < mediaToTransfer.length; i++) {
+              const item = mediaToTransfer[i];
+              const realBlob = getRealBlob(item.blob);
+              if (realBlob && realBlob.size > 0) {
+                await sendMediaInChunks(
+                  (payload) => {
+                    try { conn.send(payload); } catch (e) {}
+                  },
+                  {
+                    id: item.id,
+                    type: item.type,
+                    name: item.name,
+                    duration: item.duration,
+                    enabledInLoop: item.enabledInLoop,
+                    muted: item.muted,
+                    order: item.order,
+                    fit: item.fit,
+                    mimeType: realBlob.type || 'application/octet-stream',
+                    size: realBlob.size
+                  },
+                  realBlob,
+                  (progress) => {
+                    window.dispatchEvent(new CustomEvent('projection_sync_progress', { 
+                      detail: { message: `Enviando alteração (${i + 1}/${mediaToTransfer.length}): ${item.name} (${progress}%)`, progress } 
+                    }));
+                  }
+                );
+              }
+            }
 
             try {
-              conn.send({
-                type: 'DELTA_MEDIA_ITEMS',
-                mediaItems: serializedMedia
-              });
+              conn.send({ type: 'SYNC_COMPLETE' });
             } catch (e) {
-              console.warn("Failed to send DELTA_MEDIA_ITEMS:", e);
+              console.warn("Failed to send SYNC_COMPLETE:", e);
             }
             return;
           }

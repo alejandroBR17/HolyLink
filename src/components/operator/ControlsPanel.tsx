@@ -364,11 +364,38 @@ export function ControlsPanel({
     };
   }, []);
 
-  const handleOpenMonitor = () => {
+  const handleOpenMonitor = async () => {
     const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
     try {
-      const newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
+      let windowFeatures = 'width=1280,height=720,menubar=no,status=no,titlebar=no';
+      
+      // Attempt to use Window Management API (Screen Details)
+      if ('getScreenDetails' in window) {
+        try {
+          const screenDetails = await (window as any).getScreenDetails();
+          // Find the first screen that is NOT the current internal/primary screen
+          const secondaryScreen = screenDetails.screens.find((s: any) => s !== screenDetails.currentScreen);
+          
+          if (secondaryScreen) {
+            // Position the window on the secondary screen
+            windowFeatures = `left=${secondaryScreen.availLeft},top=${secondaryScreen.availTop},width=${secondaryScreen.availWidth},height=${secondaryScreen.availHeight},menubar=no,status=no,titlebar=no,fullscreen=yes`;
+          }
+        } catch (err) {
+          console.warn("Screen Details API permission denied or error:", err);
+        }
+      }
+
+      const newWin = window.open(projectionUrl, 'holyrics_projection', windowFeatures);
       setProjectionWin(newWin);
+      
+      // Request fullscreen on the new window if possible
+      if (newWin && newWin.document) {
+        newWin.onload = () => {
+          if (newWin.document.documentElement.requestFullscreen) {
+            newWin.document.documentElement.requestFullscreen().catch(() => {});
+          }
+        };
+      }
     } catch (e) {
       console.warn("Could not open projection window:", e);
     }
@@ -407,14 +434,17 @@ export function ControlsPanel({
   const [carPlate, setCarPlate] = useState('');
   const [carModel, setCarModel] = useState('');
   const [childName, setChildName] = useState('');
-  const [alertHistory, setAlertHistory] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem('projection_alert_history');
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [alertHistory, setAlertHistory] = useState<string[]>([]);
+  const [isAlertHistoryLoaded, setIsAlertHistoryLoaded] = useState(false);
+
+  useEffect(() => {
+    import('../../utils').then(({ getSetting }) => {
+      getSetting('projection_alert_history', []).then(history => {
+        setAlertHistory(history);
+        setIsAlertHistoryLoaded(true);
+      });
+    });
+  }, []);
 
   const CHURCH_ALERT_PRESETS = [
     {
@@ -451,7 +481,7 @@ export function ControlsPanel({
     // Save to history
     const updated = [message.trim(), ...alertHistory.filter(h => h !== message.trim())].slice(0, 10);
     setAlertHistory(updated);
-    localStorage.setItem('projection_alert_history', JSON.stringify(updated));
+    import('../../utils').then(({ saveSetting }) => saveSetting('projection_alert_history', updated));
   };
 
   const handleCustomAlertSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -480,7 +510,7 @@ export function ControlsPanel({
   const handleDeleteHistoryItem = (idx: number) => {
     const updated = alertHistory.filter((_, i) => i !== idx);
     setAlertHistory(updated);
-    localStorage.setItem('projection_alert_history', JSON.stringify(updated));
+    import('../../utils').then(({ saveSetting }) => saveSetting('projection_alert_history', updated));
   };
 
   const tickerSuggestions = [

@@ -1,3 +1,4 @@
+import { useSlideManager } from "./hooks/useSlideManager";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -7,6 +8,7 @@ import {
 import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS } from './data';
 import { getNextMeeting, getSlideDuration } from './utils';
 import { mediaPreloader } from './utils/preloader';
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { SmartSplashLoader } from './components/SmartSplashLoader';
 import { Meeting } from './types';
 import { ProjectionContent } from './components/ProjectionContent';
@@ -307,6 +309,7 @@ export default function App() {
       baseUpdateStateAndBroadcast('manualSlideOverride', null);
       return;
     }
+
     baseUpdateStateAndBroadcast(key, value);
   }, [activeSlides, customMediaList, baseUpdateStateAndBroadcast]);
 
@@ -318,112 +321,22 @@ export default function App() {
     }
   }, [manualSlideOverride, slidesOrder, customMediaList]);
 
-  const handleToggleDisableSlide = useCallback((slideId: string) => {
-    let newDisabled = [...(disabledSlides || [])];
-    if (newDisabled.includes(slideId)) {
-      newDisabled = newDisabled.filter(id => id !== slideId);
-    } else {
-      newDisabled.push(slideId);
-    }
-    updateStateAndBroadcast('disabledSlides', JSON.stringify(newDisabled));
-  }, [disabledSlides, updateStateAndBroadcast]);
-
-  const handleResetCampaigns = useCallback(() => {
-    updateStateAndBroadcast('customCampaigns', CAMPAIGNS);
-  }, [updateStateAndBroadcast]);
-
-  const handleMoveSlide = useCallback((slideId: string, direction: 'up' | 'down' | 'top' | 'bottom') => {
-    let currentOrder = [...slidesOrder];
-    allAvailableSlides.forEach((id) => {
-      if (!currentOrder.includes(id)) {
-        currentOrder.push(id);
-      }
-    });
-
-    const idx = currentOrder.indexOf(slideId);
-    if (idx === -1) return;
-
-    if (direction === 'top') {
-      currentOrder.splice(idx, 1);
-      currentOrder.unshift(slideId);
-    } else if (direction === 'bottom') {
-      currentOrder.splice(idx, 1);
-      currentOrder.push(slideId);
-    } else if (direction === 'up' && idx > 0) {
-      const temp = currentOrder[idx];
-      currentOrder[idx] = currentOrder[idx - 1];
-      currentOrder[idx - 1] = temp;
-    } else if (direction === 'down' && idx < currentOrder.length - 1) {
-      const temp = currentOrder[idx];
-      currentOrder[idx] = currentOrder[idx + 1];
-      currentOrder[idx + 1] = temp;
-    } else {
-      return;
-    }
-
-    updateStateAndBroadcast('slidesOrder', JSON.stringify(currentOrder));
-  }, [slidesOrder, allAvailableSlides, updateStateAndBroadcast]);
-
-  const handleReorderGrouped = useCallback(() => {
-    const getGroupRank = (id: string) => {
-      if (['seat', 'phone', 'bathroom', 'no_chat', 'soon'].includes(id)) return 1;
-      if (id.startsWith('agenda_day_') || id.startsWith('meeting_event_')) return 2;
-      if (['donations', 'social', 'world_god'].includes(id)) return 3;
-      if (id === 'campaigns') return 4;
-      if (id.startsWith('custom_')) return 5;
-      return 6;
-    };
-
-    let currentOrder = [...allAvailableSlides];
-    currentOrder.sort((a, b) => getGroupRank(a) - getGroupRank(b));
-    updateStateAndBroadcast('slidesOrder', JSON.stringify(currentOrder));
-  }, [allAvailableSlides, updateStateAndBroadcast]);
-
-  const handleReorderInterleaved = useCallback(() => {
-    // Separa slides em categorias
-    const fixos: string[] = [];
-    const agendas: string[] = [];
-    const contribuicao: string[] = [];
-    const campanhas: string[] = [];
-    const midias: string[] = [];
-    const outros: string[] = [];
-
-    allAvailableSlides.forEach((id) => {
-      if (['seat', 'phone', 'bathroom', 'no_chat', 'soon'].includes(id)) {
-        fixos.push(id);
-      } else if (id.startsWith('agenda_day_') || id.startsWith('meeting_event_')) {
-        agendas.push(id);
-      } else if (['donations', 'social', 'world_god'].includes(id)) {
-        contribuicao.push(id);
-      } else if (id === 'campaigns') {
-        campanhas.push(id);
-      } else if (id.startsWith('custom_')) {
-        midias.push(id);
-      } else {
-        outros.push(id);
-      }
-    });
-
-    const groups = [fixos, agendas, contribuicao, campanhas, midias, outros];
-    const interleavedOrder: string[] = [];
-    let maxLen = Math.max(...groups.map(g => g.length));
-
-    for (let i = 0; i < maxLen; i++) {
-      for (const group of groups) {
-        if (i < group.length) {
-          interleavedOrder.push(group[i]);
-        }
-      }
-    }
-
-    updateStateAndBroadcast('slidesOrder', JSON.stringify(interleavedOrder));
-  }, [allAvailableSlides, updateStateAndBroadcast]);
-
-  const handleResetSlidesOrder = useCallback(() => {
-    const defaultOrder = [...DEFAULT_SLIDES];
-    customMediaList.forEach(m => defaultOrder.push(m.id));
-    updateStateAndBroadcast('slidesOrder', JSON.stringify(defaultOrder));
-  }, [customMediaList, updateStateAndBroadcast]);
+  const {
+    handleToggleDisableSlide,
+    handleResetCampaigns,
+    handleMoveSlide,
+    handleReorderGrouped,
+    handleReorderInterleaved,
+    handleResetSlidesOrder
+  } = useSlideManager(
+    updateStateAndBroadcast,
+    disabledSlides || [],
+    slidesOrder || DEFAULT_SLIDES,
+    DEFAULT_SLIDES,
+    allAvailableSlides,
+    customMediaList,
+    CAMPAIGNS
+  );
 
   // Window viewport calculations
   const [dimensions, setDimensions] = useState({
@@ -467,93 +380,21 @@ export default function App() {
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
-
-  // Global Keyboard Shortcuts for Operator agility
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-
-      const key = e.key.toLowerCase();
-
-      // B: Toggle Blackout
-      if (key === 'b') {
-        e.preventDefault();
-        updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled);
-      }
-      // C: Toggle Clear Content / Hide Text
-      else if (key === 'c') {
-        e.preventDefault();
-        updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled);
-      }
-      // Space or ArrowRight or PageDown: Next slide
-      else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') {
-        e.preventDefault();
-        if (activeSlides.length > 0) {
-          const currentIndex = activeSlides.indexOf(currentSlideId);
-          const nextIndex = (currentIndex + 1) % activeSlides.length;
-          updateStateAndBroadcast('advanceToSlide', activeSlides[nextIndex]);
-        }
-      }
-      // ArrowLeft or PageUp: Previous slide
-      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        e.preventDefault();
-        if (activeSlides.length > 0) {
-          const currentIndex = activeSlides.indexOf(currentSlideId);
-          const prevIndex = (currentIndex - 1 + activeSlides.length) % activeSlides.length;
-          updateStateAndBroadcast('advanceToSlide', activeSlides[prevIndex]);
-        }
-      }
-      // Escape: Reset override / clear active verse / clear alert
-      else if (e.key === 'Escape') {
-        e.preventDefault();
-        if (isLocalProjection) {
-          setIsLocalProjection(false);
-          return;
-        }
-        if (manualSlideOverride) updateStateAndBroadcast('manualSlideOverride', null);
-        if (customVerseText) {
-          updateStateAndBroadcast('customVerseText', null);
-          updateStateAndBroadcast('customVerseRef', null);
-          updateStateAndBroadcast('activeVerseIndex', null);
-        }
-        if (activeAlert) updateStateAndBroadcast('activeAlert', null);
-      }
-      // M: Toggle Mute
-      else if (key === 'm') {
-        e.preventDefault();
-        updateStateAndBroadcast('volume', volume > 0 ? 0 : 0.5);
-      }
-      // F: Fullscreen
-      else if (key === 'f') {
-        toggleFullscreen();
-      }
-      // 1-5: Switch tab
-      else if (['1', '2', '3', '4', '5'].includes(key)) {
-        const tabMap: Record<string, string> = {
-          '1': 'slides',
-          '2': 'texts',
-          '3': 'agenda',
-          '4': 'controls',
-          '5': 'sync'
-        };
-        if (tabMap[key]) {
-          setActiveMobileTab(tabMap[key] as any);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [blackoutEnabled, clearContentEnabled, activeSlides, currentSlideId, manualSlideOverride, customVerseText, activeAlert, volume, isLocalProjection, toggleFullscreen, updateStateAndBroadcast]);
+  useKeyboardShortcuts({
+    updateStateAndBroadcast,
+    blackoutEnabled,
+    clearContentEnabled,
+    activeSlides,
+    currentSlideId,
+    isLocalProjection,
+    setIsLocalProjection,
+    manualSlideOverride,
+    customVerseText,
+    activeAlert,
+    volume,
+    toggleFullscreen,
+    setActiveMobileTab
+  });
 
   useEffect(() => {
     if (isProjectionView) {

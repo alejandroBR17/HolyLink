@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { saveMediaItem, getAllMediaItems, deleteMediaItem } from '../utils';
 import { broadcastToPeers } from '../components/SyncSection';
+import { sendMediaInChunks } from '../utils/webrtcChunking';
 
 export interface CustomMedia {
   id: string;
@@ -34,9 +35,12 @@ export function useCustomMedia(
         if (!active) return;
         
         setCustomMediaList((prevList) => {
-          // Track existing object URLs to revoke after replacing state
+          const prevMap = new Map(prevList.map(m => [m.id, m]));
+          const currentIds = new Set(items.map(i => i.id));
+
+          // Revoke URLs for deleted items only
           prevList.forEach((m) => {
-            if (m.url && m.url.startsWith('blob:')) {
+            if (!currentIds.has(m.id) && m.url && m.url.startsWith('blob:')) {
               objectUrlsToRevoke.push(m.url);
             }
           });
@@ -57,8 +61,13 @@ export function useCustomMedia(
           });
 
           return sortedItems.map((item) => {
+            const existing = prevMap.get(item.id);
             let itemUrl = '';
-            if (item.blob instanceof Blob) {
+
+            // Reuse existing Object URL if valid
+            if (existing && existing.url && existing.url.startsWith('blob:')) {
+              itemUrl = existing.url;
+            } else if (item.blob instanceof Blob) {
               try {
                 itemUrl = URL.createObjectURL(item.blob);
               } catch (e) {
@@ -140,38 +149,40 @@ export function useCustomMedia(
         }
       }
 
-      let base64: string | undefined = undefined;
-      let mimeType = 'application/octet-stream';
-
-      if (realBlob) {
-        mimeType = realBlob.type || 'application/octet-stream';
-        base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const res = reader.result as string;
-            resolve(res.split(',')[1] || '');
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(realBlob!);
+      if (realBlob && realBlob.size > 0) {
+        const mimeType = realBlob.type || 'application/octet-stream';
+        await sendMediaInChunks(
+          (data) => broadcastToPeers(data),
+          {
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            duration: item.duration,
+            enabledInLoop: item.enabledInLoop,
+            muted: item.muted,
+            order: item.order,
+            fit: item.fit,
+            mimeType,
+            size: realBlob.size
+          },
+          realBlob
+        );
+      } else {
+        broadcastToPeers({
+          type: 'MEDIA_SAVE',
+          mediaItem: {
+            id: item.id,
+            type: item.type,
+            name: item.name,
+            duration: item.duration,
+            enabledInLoop: item.enabledInLoop,
+            muted: item.muted,
+            order: item.order,
+            fit: item.fit
+          },
+          version: 1
         });
       }
-
-      broadcastToPeers({
-        type: 'MEDIA_SAVE',
-        mediaItem: {
-          id: item.id,
-          type: item.type,
-          name: item.name,
-          duration: item.duration,
-          enabledInLoop: item.enabledInLoop,
-          muted: item.muted,
-          order: item.order,
-          fit: item.fit,
-          mimeType,
-          base64
-        },
-        version: 1
-      });
     } catch (e) {
       console.error("Error broadcasting media save:", e);
     }

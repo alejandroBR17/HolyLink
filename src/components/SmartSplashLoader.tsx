@@ -10,11 +10,10 @@ interface SmartSplashLoaderProps {
 }
 
 export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLoaderProps) {
-  const [stage, setStage] = useState<'hardware' | 'permissions' | 'media' | 'optimizing' | 'ready'>('hardware');
+  const [stage, setStage] = useState<'splash' | 'loader' | 'permissions' | 'ready'>('splash');
   const [progress, setProgress] = useState<number>(0);
-  const [statusText, setStatusText] = useState<string>('Avaliando capacidade de hardware...');
+  const [statusText, setStatusText] = useState<string>('Iniciando Holyrics Projection...');
   const [permissions, setPermissions] = useState<PermissionStatusItem[]>([]);
-  const [activePermIdx, setActivePermIdx] = useState<number>(0);
   const [isGranting, setIsGranting] = useState<boolean>(false);
 
   const { hardwareConcurrency, effectiveMode } = usePerformanceDiagnostics();
@@ -29,76 +28,66 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
   useEffect(() => {
     let isMounted = true;
 
-    async function startSmartBoot() {
-      // Step 1: Hardware check delay
-      setProgress(15);
-      await new Promise((r) => setTimeout(r, 500));
+    async function runBootSequence() {
+      // ETAPA 1: SPLASH SCREEN (Apresentação Visual)
+      setStage('splash');
+      setStatusText('Carregando Painel de Transmissão...');
+      for (let p = 0; p <= 100; p += 20) {
+        if (!isMounted) return;
+        setProgress(p);
+        await new Promise((r) => setTimeout(r, 150));
+      }
+
       if (!isMounted) return;
 
-      // Step 2: Check Browser Permissions one-by-one
+      // ETAPA 2: LOADER DE RECURSOS E MÍDIAS
+      setStage('loader');
+      setStatusText('Verificando hardware e armazenamento...');
+      setProgress(10);
+      await new Promise((r) => setTimeout(r, 300));
+      if (!isMounted) return;
+
+      if (customMediaList.length === 0) {
+        setProgress(100);
+        setStatusText('Recursos e mídias prontos!');
+      } else {
+        await mediaPreloader.preloadAllInitialMedia(
+          customMediaList,
+          (completed, total) => {
+            const pct = Math.round((completed / total) * 100);
+            setProgress(pct);
+            setStatusText(`Pré-carregando mídias (${completed}/${total})...`);
+          }
+        );
+      }
+
+      await new Promise((r) => setTimeout(r, 300));
+      if (!isMounted) return;
+
+      // ETAPA 3: VERIFICAÇÃO DE PERMISSÕES NECESSÁRIAS
       setStage('permissions');
       setStatusText('Verificando permissões do navegador...');
-      setProgress(30);
-
       const perms = await refreshPermissions();
       if (!isMounted) return;
 
       const needsPrompt = perms.some((p) => p.status === 'prompt');
 
-      if (needsPrompt) {
-        // Stop automatically and wait for user to click or grant permissions one by one
-        setStatusText('Aprovação de permissões recomendada');
+      if (!needsPrompt) {
+        // Se todas as permissões já foram concedidas ou são suportadas, avança direto!
+        setStatusText('Tudo pronto! Entrando na aplicação...');
+        await new Promise((r) => setTimeout(r, 400));
+        onComplete();
       } else {
-        // All permissions granted or supported, proceed to media stage
-        proceedToMediaStage();
+        setStatusText('Aprovação de permissões recomendada para melhor desempenho.');
       }
     }
 
-    startSmartBoot();
+    runBootSequence();
 
     return () => {
       isMounted = false;
     };
   }, []);
-
-  const proceedToMediaStage = async () => {
-    setStage('media');
-    setStatusText(`Carregando ${customMediaList.length} mídia(s)...`);
-    setProgress(50);
-
-    if (customMediaList.length === 0) {
-      setProgress(85);
-    } else {
-      await mediaPreloader.preloadAllInitialMedia(
-        customMediaList,
-        (completed, total) => {
-          const pct = 50 + Math.round((completed / total) * 35);
-          setProgress(pct);
-          setStatusText(`Pré-carregando mídias (${completed}/${total})...`);
-        }
-      );
-    }
-
-    // Step 4: Optimization phase
-    setStage('optimizing');
-    setStatusText(
-      effectiveMode === 'light' 
-        ? 'Otimização Anti-Lag ativada' 
-        : effectiveMode === 'balanced'
-        ? 'Modo Equilibrado ativado'
-        : 'Alta Performance ativada'
-    );
-    setProgress(95);
-    await new Promise((r) => setTimeout(r, 600));
-
-    // Step 5: Ready
-    setStage('ready');
-    setProgress(100);
-    setStatusText('Sistema de Transmissão Pronto!');
-    await new Promise((r) => setTimeout(r, 400));
-
-    onComplete();
-  };
 
   const handleGrantPermission = async (id: PermissionStatusItem['id']) => {
     setIsGranting(true);
@@ -106,14 +95,20 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
       await requestSinglePermission(id);
       const updated = await refreshPermissions();
 
-      // Check if any prompt permission still remains
       const remainingPrompt = updated.some((p) => p.status === 'prompt');
       if (!remainingPrompt) {
-        await proceedToMediaStage();
+        setStage('ready');
+        setStatusText('Permissões concedidas! Entrando...');
+        await new Promise((r) => setTimeout(r, 400));
+        onComplete();
       }
     } finally {
       setIsGranting(false);
     }
+  };
+
+  const handleAdvance = () => {
+    onComplete();
   };
 
   const getPermIcon = (id: PermissionStatusItem['id']) => {
@@ -143,33 +138,38 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
           Holyrics Projection Pro
         </h1>
         <p className="text-[11px] text-zinc-500 font-medium mb-5">
-          Sincronizador Inteligente de Transmissão
+          {stage === 'splash' && 'Painel de Transmissão Inteligente'}
+          {stage === 'loader' && 'Pré-carregamento e Verificação de Recursos'}
+          {stage === 'permissions' && 'Verificação de Permissões do Navegador'}
+          {stage === 'ready' && 'Sistema Pronto'}
         </p>
 
-        {/* Progress Bar Container */}
-        <div className="w-full bg-zinc-950 border border-zinc-800/80 rounded-2xl p-3.5 mb-4 flex flex-col gap-2.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-zinc-400 font-mono text-[11px] font-semibold truncate max-w-[280px]">{statusText}</span>
-            <span className="font-mono font-bold text-amber-500">{progress}%</span>
-          </div>
+        {/* STAGE 1 & 2: SPLASH / LOADER PROGRESS BAR */}
+        {(stage === 'splash' || stage === 'loader') && (
+          <div className="w-full bg-zinc-950 border border-zinc-800/80 rounded-2xl p-3.5 mb-4 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-zinc-400 font-mono text-[11px] font-semibold truncate max-w-[280px]">{statusText}</span>
+              <span className="font-mono font-bold text-amber-500">{progress}%</span>
+            </div>
 
-          <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50 p-0.5 relative">
-            <div 
-              className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
-              style={{ width: `${progress}%` }}
-            />
+            <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50 p-0.5 relative">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* STAGE: PERMISSIONS INTERACTIVE LIST */}
-        {stage === 'permissions' && permissions.some((p) => p.status === 'prompt') && (
+        {/* STAGE 3: PERMISSIONS INTERACTIVE LIST */}
+        {stage === 'permissions' && (
           <div className="w-full bg-zinc-950/80 border border-amber-500/30 rounded-2xl p-4 mb-4 flex flex-col gap-3 text-left animate-fadeIn">
             <div className="flex items-center justify-between border-b border-zinc-850 pb-2">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Verificação de Permissões</span>
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Permissões Recomendadas</span>
               </div>
-              <span className="text-[10px] text-zinc-500 font-mono">1 por 1</span>
+              <span className="text-[10px] text-zinc-500 font-mono">Status</span>
             </div>
 
             <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1">
@@ -212,11 +212,11 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
             </div>
 
             <button
-              onClick={proceedToMediaStage}
-              className="w-full mt-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              onClick={handleAdvance}
+              className="w-full mt-1 bg-amber-500 hover:bg-amber-400 text-black text-xs font-black py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-amber-500/20"
             >
-              <span>Continuar sem alterar as restantes</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Entrar na Aplicação</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         )}
