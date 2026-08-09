@@ -44,6 +44,8 @@ interface ProjectionContentProps {
   alerts: Record<string, { message: string }>;
   customMediaList?: CustomMedia[];
   videoPinBehavior?: string;
+  finalMinuteDisplayMode?: 'split' | 'full_video';
+  verseDisplayPriority?: 'verse_over_video' | 'video_over_verse';
   loopIteration?: number;
   onClearAlert: () => void;
   onVideoEnded?: () => void;
@@ -83,6 +85,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   alerts,
   customMediaList = [],
   videoPinBehavior = 'loop',
+  finalMinuteDisplayMode = 'split',
+  verseDisplayPriority = 'verse_over_video',
   loopIteration = 0,
   onClearAlert,
   onVideoEnded,
@@ -336,6 +340,13 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         return null;
     }
   };
+  const isCountdownActive = isFinalFiveMinutes || isFinalMinute;
+  const shouldShowVerse = Boolean(
+    customVerseText && (
+      !isCountdownActive || verseDisplayPriority === 'verse_over_video'
+    )
+  );
+
   return (
     <div className="w-full h-full relative select-none font-sans overflow-hidden bg-[#050000] text-white flex flex-col justify-between">
       {/* 3D Volumetric Background Engine */}
@@ -390,7 +401,157 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {isLooping && (
+        {shouldShowVerse ? (
+          <motion.div
+            key="verse-active"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 w-full h-full z-40 flex items-center justify-center bg-[#050000]"
+          >
+            <VerseSlide 
+              currentTime={currentTime} 
+              customVerseText={customVerseText} 
+              customVerseRef={customVerseRef} 
+              activeVerseIndex={activeVerseIndex} 
+            />
+          </motion.div>
+        ) : isFinalMinute ? (
+          <motion.div
+            key="final-minute"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 flex w-full h-full bg-black/20 relative"
+          >
+            {finalMinuteDisplayMode === 'full_video' ? (
+              <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black">
+                <AnimatePresence>
+                  <motion.div
+                    key={currentSlideId}
+                    {...getTransitionVariants(currentSlideId)}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            ) : (
+              <>
+                <div className={`w-[35%] h-full flex flex-col items-center justify-center border-r ${isFJU ? 'border-amber-500/20 bg-[#080400]/80 backdrop-blur-md' : 'border-white/5 bg-[#030000]/80 backdrop-blur-md'} z-20`}>
+                  <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[1.6rem] xl:text-[1.8rem] font-bold uppercase tracking-[0.25em] mb-4 text-center px-4 animate-pulse`}>
+                    {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
+                  </span>
+                  <div className="relative h-[13rem] w-full flex items-center justify-center overflow-hidden">
+                    <AnimatePresence mode="popLayout">
+                      <motion.div
+                        key={diffSeconds}
+                        initial={{ opacity: 0, scale: 0.8, y: 30 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 1.2, y: -30 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className={`absolute font-mono text-[9rem] xl:text-[11rem] text-white font-black leading-none tracking-tighter tabular-nums ${isFJU ? 'drop-shadow-[0_0_60px_rgba(245,158,11,0.25)]' : 'drop-shadow-[0_0_60px_rgba(255,255,255,0.1)]'}`}
+                      >
+                        {diffSeconds}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                  <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
+                    {diffSeconds === 1 ? "Segundo" : "Segundos"}
+                  </span>
+                </div>
+                <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
+                  <div 
+                    className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.65]"
+                    style={{
+                      width: '1920px',
+                      height: '1080px',
+                    }}
+                  >
+                    <AnimatePresence>
+                      <motion.div
+                        key={currentSlideId}
+                        {...getTransitionVariants(currentSlideId)}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </>
+            )}
+          </motion.div>
+        ) : isFinalFiveMinutes ? (
+          <motion.div
+            key="final-five"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 flex w-full h-full bg-black/20 relative"
+          >
+            <div className={`w-[35%] h-full flex flex-col items-center justify-center border-r ${isFJU ? 'border-amber-500/20 bg-[#080400]/80 backdrop-blur-md' : 'border-white/5 bg-[#030000]/80 backdrop-blur-md'} z-20`}>
+              <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[2rem] font-bold uppercase tracking-[0.4em] mb-4`}>
+                Faltam
+              </span>
+              <div className="relative h-[12rem] w-full flex items-center justify-center overflow-hidden">
+                <AnimatePresence mode="popLayout">
+                  <motion.div
+                    key={diffSeconds}
+                    initial={{ opacity: 0, y: 25 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -25 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className={`absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums ${isFJU ? 'drop-shadow-[0_0_50px_rgba(245,158,11,0.15)]' : 'drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]'}`}
+                  >
+                    {formatMinutesPart}:{formatSecondsPart}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
+                Minutos e Segundos
+              </span>
+            </div>
+            <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
+              <div 
+                className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.65]"
+                style={{
+                  width: '1920px',
+                  height: '1080px',
+                }}
+              >
+                <AnimatePresence>
+                  <motion.div
+                    key={currentSlideId}
+                    {...getTransitionVariants(currentSlideId)}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    {clearContentEnabled ? null : renderSlide(currentSlideId)}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        ) : isJustStarted ? (
+          <motion.div
+            key="just-started"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 w-full h-full"
+          >
+            <VerseSlide 
+              currentTime={currentTime} 
+              customVerseText={customVerseText} 
+              customVerseRef={customVerseRef} 
+              activeVerseIndex={activeVerseIndex} 
+            />
+          </motion.div>
+        ) : isLooping ? (
           <motion.div
             key="looping"
             initial={{ opacity: 0 }}
@@ -455,115 +616,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               </AnimatePresence>
             </main>
           </motion.div>
-        )}
-
-        {isFinalFiveMinutes && (
-          <motion.div
-            key="final-five"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex w-full h-full bg-black/20 relative"
-          >
-            <div className={`w-[35%] h-full flex flex-col items-center justify-center border-r ${isFJU ? 'border-amber-500/20 bg-[#080400]/80 backdrop-blur-md' : 'border-white/5 bg-[#030000]/80 backdrop-blur-md'} z-20`}>
-              <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[2rem] font-bold uppercase tracking-[0.4em] mb-4`}>
-                Faltam
-              </span>
-              <div className="relative h-[12rem] w-full flex items-center justify-center overflow-hidden">
-                <AnimatePresence mode="popLayout">
-                  <motion.div
-                    key={diffSeconds}
-                    initial={{ opacity: 0, y: 25 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -25 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    className={`absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums ${isFJU ? 'drop-shadow-[0_0_50px_rgba(245,158,11,0.15)]' : 'drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]'}`}
-                  >
-                    {formatMinutesPart}:{formatSecondsPart}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-              <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
-                Minutos e Segundos
-              </span>
-            </div>
-            <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
-              <div 
-                className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.65]"
-                style={{
-                  width: '1920px',
-                  height: '1080px',
-                }}
-              >
-                <AnimatePresence>
-                  <motion.div
-                    key={currentSlideId}
-                    {...getTransitionVariants(currentSlideId)}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
-                    {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {isFinalMinute && (
-          <motion.div
-            key="final-minute"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black/30 backdrop-blur-xs relative overflow-hidden"
-          >
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] ${isFJU ? 'bg-amber-600/10' : 'bg-yellow-600/10'} blur-[200px] rounded-full pointer-events-none`} />
-            
-            <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-3xl font-bold uppercase tracking-[0.5em] mb-8 animate-pulse z-10`}>
-              {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
-            </span>
-            
-            <div className="relative h-[24rem] w-full flex items-center justify-center overflow-hidden z-10">
-              <AnimatePresence mode="popLayout">
-                <motion.div
-                  key={diffSeconds}
-                  initial={{ opacity: 0, y: 60 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -60 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute font-sans text-[24rem] text-white font-black leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(255,255,255,0.15)] tabular-nums"
-                >
-                  {diffSeconds}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            
-            <span className="text-stone-300 text-5xl font-medium tracking-[0.3em] mt-12 uppercase z-10">
-              {diffSeconds === 1 ? "Segundo" : "Segundos"}
-            </span>
-          </motion.div>
-        )}
-
-        {isJustStarted && (
-          <motion.div
-            key="just-started"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 w-full h-full"
-          >
-            <VerseSlide 
-              currentTime={currentTime} 
-              customVerseText={customVerseText} 
-              customVerseRef={customVerseRef} 
-              activeVerseIndex={activeVerseIndex} 
-              
-            />
-          </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
 
       {/* TICKER (LETREIRO DIGITAL) */}

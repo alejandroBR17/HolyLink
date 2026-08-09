@@ -114,6 +114,16 @@ export function useProjectionState() {
     return (localStorage.getItem('projection_videoPinBehavior') as 'unpin' | 'loop') || 'unpin';
   });
 
+  const [finalMinuteDisplayMode, setFinalMinuteDisplayMode] = useState<'split' | 'full_video'>(() => {
+    if (typeof window === 'undefined') return 'split';
+    return (localStorage.getItem('projection_finalMinuteDisplayMode') as 'split' | 'full_video') || 'split';
+  });
+
+  const [verseDisplayPriority, setVerseDisplayPriority] = useState<'verse_over_video' | 'video_over_verse'>(() => {
+    if (typeof window === 'undefined') return 'verse_over_video';
+    return (localStorage.getItem('projection_verseDisplayPriority') as 'verse_over_video' | 'video_over_verse') || 'verse_over_video';
+  });
+
   const [carouselStartTimeOffset, setCarouselStartTimeOffset] = useState<number>(() => {
     if (typeof window === 'undefined') return 0;
     return parseInt(localStorage.getItem('projection_carouselStartTimeOffset') || '0', 10);
@@ -233,6 +243,8 @@ export function useProjectionState() {
     else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
     else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value?.toString() || '0');
     else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+    else if (key === 'finalMinuteDisplayMode') setFinalMinuteDisplayMode(value || 'split');
+    else if (key === 'verseDisplayPriority') setVerseDisplayPriority(value || 'verse_over_video');
     else if (key === 'carouselStartTimeOffset') setCarouselStartTimeOffset(value ? parseInt(value.toString(), 10) : 0);
     else if (key === 'isProjectionOpen') setIsProjectionOpen(value === 'true' || value === true);
     else if (key === 'projectionCloseTrigger') {
@@ -332,6 +344,8 @@ export function useProjectionState() {
       else if (key === 'dismissedJustStarted') setDismissedJustStarted(value === 'true' || value === true);
       else if (key === 'mediaUpdateTrigger') setMediaUpdateTrigger(value?.toString() || '0');
       else if (key === 'videoPinBehavior') setVideoPinBehavior(value);
+      else if (key === 'finalMinuteDisplayMode') setFinalMinuteDisplayMode(value || 'split');
+      else if (key === 'verseDisplayPriority') setVerseDisplayPriority(value || 'verse_over_video');
       else if (key === 'background3DStyle') setBackground3DStyle(value || 'auto');
       else if (key === 'background3DFps') setBackground3DFps(value === '30' || value === 30 ? 30 : 60);
       else if (key === 'background3DIntensity') setBackground3DIntensity(value || 'high');
@@ -504,6 +518,8 @@ export function useProjectionState() {
       countdownOffset,
       dismissedJustStarted,
       videoPinBehavior,
+      finalMinuteDisplayMode,
+      verseDisplayPriority,
       carouselStartTimeOffset,
       customMeetings,
       volume,

@@ -75,6 +75,8 @@ export default function App() {
     countdownOffset,
     dismissedJustStarted,
     videoPinBehavior,
+    finalMinuteDisplayMode,
+    verseDisplayPriority,
     carouselStartTimeOffset,
     customMeetings,
     volume,
@@ -216,10 +218,19 @@ export default function App() {
   let isLooping = !isJustStarted && !isFinalFiveMinutes && !isFinalMinute;
 
   if (manualSlideOverride) {
-    if (isFinalMinute || isJustStarted) {
-      isFinalMinute = false;
-      isJustStarted = false;
-      isLooping = true;
+    if (finalMinuteDisplayMode === 'full_video') {
+      if (isFinalMinute || isJustStarted) {
+        isFinalMinute = false;
+        isJustStarted = false;
+        isLooping = true;
+      }
+    } else {
+      // Em modo 'split' (dividido), se a mídia está fixada manualmente, mantemos isFinalMinute ativado
+      // para exibir o cronômetro de 60s ao lado do vídeo fixado!
+      if (isJustStarted) {
+        isJustStarted = false;
+        isLooping = true;
+      }
     }
   }
 
@@ -813,6 +824,8 @@ export default function App() {
                 isUploading={isUploading}
                 uploadError={uploadError}
                 videoPinBehavior={videoPinBehavior}
+                finalMinuteDisplayMode={finalMinuteDisplayMode}
+                verseDisplayPriority={verseDisplayPriority}
                 handleMoveMedia={handleMoveMedia}
                 showConfirm={showConfirm}
                 showAlert={showAlert}
@@ -897,6 +910,8 @@ export default function App() {
                 activeVerseIndex={activeVerseIndex}
                 customMediaList={customMediaList}
                 videoPinBehavior={videoPinBehavior}
+                finalMinuteDisplayMode={finalMinuteDisplayMode}
+                verseDisplayPriority={verseDisplayPriority}
                 loopIteration={loopIteration}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 customMeetings={customMeetings}
@@ -940,6 +955,8 @@ export default function App() {
               activeVerseIndex={activeVerseIndex}
               customMediaList={customMediaList}
               videoPinBehavior={videoPinBehavior}
+              finalMinuteDisplayMode={finalMinuteDisplayMode}
+              verseDisplayPriority={verseDisplayPriority}
               loopIteration={loopIteration}
               updateStateAndBroadcast={updateStateAndBroadcast}
               customMeetings={customMeetings}
@@ -1058,6 +1075,8 @@ export default function App() {
           alerts={ALERTS}
           customMediaList={customMediaList}
           videoPinBehavior={videoPinBehavior}
+          finalMinuteDisplayMode={finalMinuteDisplayMode}
+          verseDisplayPriority={verseDisplayPriority}
           loopIteration={loopIteration}
           onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
           customMeetings={customMeetings}

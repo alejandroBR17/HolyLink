@@ -28,6 +28,8 @@ interface MonitorPanelProps {
   activeVerseIndex: number | null;
   customMediaList: any[];
   videoPinBehavior: 'loop' | 'unpin';
+  finalMinuteDisplayMode?: 'split' | 'full_video';
+  verseDisplayPriority?: 'verse_over_video' | 'video_over_verse';
   loopIteration: number;
   updateStateAndBroadcast: (key: string, value: any) => void;
   customMeetings: Meeting[];
@@ -67,6 +69,8 @@ export function MonitorPanel({
   activeVerseIndex,
   customMediaList,
   videoPinBehavior,
+  finalMinuteDisplayMode = 'split',
+  verseDisplayPriority = 'verse_over_video',
   loopIteration,
   updateStateAndBroadcast,
   customMeetings,
@@ -262,6 +266,8 @@ export function MonitorPanel({
               alerts={ALERTS}
               customMediaList={customMediaList}
               videoPinBehavior={videoPinBehavior}
+              finalMinuteDisplayMode={finalMinuteDisplayMode}
+              verseDisplayPriority={verseDisplayPriority}
               loopIteration={loopIteration}
               onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
               isMiniature={true}

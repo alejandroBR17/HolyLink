@@ -4,7 +4,7 @@ import {
   BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2, 
   Maximize, Zap, Minimize, Send, Trash2, Image as ImageIcon, AlertTriangle,
   Eye, EyeOff, Search, Layers, ChevronsUp, ChevronsDown, Filter, Sparkles, Check,
-  LayoutGrid, List, Edit3, Maximize2, X, Clock, Pin
+  LayoutGrid, List, Edit3, Maximize2, X, Clock, Pin, Layout
 } from 'lucide-react';
 
 interface CustomMedia {
@@ -37,6 +37,8 @@ interface PlaylistPanelProps {
   isUploading: boolean;
   uploadError: string | null;
   videoPinBehavior: 'loop' | 'unpin';
+  finalMinuteDisplayMode?: 'split' | 'full_video';
+  verseDisplayPriority?: 'verse_over_video' | 'video_over_verse';
   handleMoveMedia: (id: string, direction: 'up' | 'down') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
   showAlert: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -67,6 +69,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   isUploading,
   uploadError,
   videoPinBehavior,
+  finalMinuteDisplayMode = 'split',
+  verseDisplayPriority = 'verse_over_video',
   handleMoveMedia,
   showConfirm,
   showAlert,
@@ -904,6 +908,78 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             >
               <Minimize className="w-3.5 h-3.5 shrink-0" />
               <span>Desafixar ao Fim</span>
+            </button>
+          </div>
+        </div>
+
+        {/* MODO DOS 60 SEGUNDOS FINAIS */}
+        <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Últimos 60s (Vídeo em Reprodução):</span>
+            <span className="text-zinc-500 text-[10px] font-normal">Exibir dividindo tela ou apenas o vídeo</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 max-w-sm w-full">
+            <button
+              type="button"
+              onClick={() => updateStateAndBroadcast('finalMinuteDisplayMode', 'split')}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+                finalMinuteDisplayMode === 'split'
+                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+              }`}
+              title="Exibe a contagem de 60s em um lado e o vídeo rodando ao lado"
+            >
+              <Layout className="w-3.5 h-3.5 shrink-0" />
+              <span>Dividido (60s + Vídeo)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => updateStateAndBroadcast('finalMinuteDisplayMode', 'full_video')}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+                finalMinuteDisplayMode === 'full_video'
+                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+              }`}
+              title="Mantém o vídeo em tela cheia ignorando o cronômetro do último minuto"
+            >
+              <Maximize2 className="w-3.5 h-3.5 shrink-0" />
+              <span>Apenas Vídeo</span>
+            </button>
+          </div>
+        </div>
+
+        {/* PRIORIDADE QUANDO VERSÍCULO É EXIBIDO */}
+        <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Versículos Durante o Cronômetro:</span>
+            <span className="text-zinc-500 text-[10px] font-normal">Prioridade de exibição se um versículo for clicado</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 max-w-sm w-full">
+            <button
+              type="button"
+              onClick={() => updateStateAndBroadcast('verseDisplayPriority', 'verse_over_video')}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+                verseDisplayPriority === 'verse_over_video'
+                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+              }`}
+              title="Aparece sobre o vídeo/cronômetro se selecionado"
+            >
+              <BookOpen className="w-3.5 h-3.5 shrink-0" />
+              <span>Sobrepõe Vídeo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => updateStateAndBroadcast('verseDisplayPriority', 'video_over_verse')}
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+                verseDisplayPriority === 'video_over_verse'
+                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+              }`}
+              title="Aparece apenas após o término do cronômetro"
+            >
+              <Film className="w-3.5 h-3.5 shrink-0" />
+              <span>Apenas Após Contagem</span>
             </button>
           </div>
         </div>
