@@ -256,7 +256,7 @@ export default function App() {
     }
   });
   customMeetings.forEach((meet) => {
-    if (!meet.date || meet.date >= todayStr) {
+    if (meet.date && meet.date >= todayStr) {
       const meetSlideId = `meeting_event_${meet.id}`;
       if (!allAvailableSlides.includes(meetSlideId)) {
         allAvailableSlides.push(meetSlideId);
