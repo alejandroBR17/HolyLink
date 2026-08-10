@@ -163,7 +163,36 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   const renderSlide = (slideId: string) => {
     if (slideId.startsWith("custom_")) {
       const media = customMediaList.find(m => m.id === slideId);
-      if (!media) return <div className="text-stone-500 text-3xl font-bold flex items-center justify-center h-full w-full bg-black">Mídia não encontrada</div>;
+      if (!media) {
+        return (
+          <div className="text-stone-400 text-2xl font-bold flex flex-col items-center justify-center h-full w-full bg-black/60 p-8 text-center">
+            <span className="text-amber-500 font-extrabold text-3xl mb-2">Mídia Não Encontrada</span>
+            <p className="text-stone-300 text-lg">A mídia associada a este slide não está disponível na lista atual.</p>
+          </div>
+        );
+      }
+
+      // Validação do caminho/URL da mídia
+      const isMediaUrlValid = Boolean(
+        media.url && 
+        typeof media.url === 'string' && 
+        media.url.trim().length > 0
+      );
+
+      if (!isMediaUrlValid) {
+        return (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-black/70 text-white p-8 text-center">
+            <div className="p-8 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex flex-col items-center max-w-lg">
+              <span className="text-amber-400 font-extrabold text-2xl mb-2">Aguardando Mídia / URL Inválida</span>
+              <p className="text-stone-300 text-base mb-4">{media.name || 'Arquivo de mídia com URL ausente ou em sincronização'}</p>
+              <span className="text-xs text-amber-500/80 bg-black/40 px-3 py-1 rounded-full uppercase tracking-wider font-mono">
+                {media.type === 'video' ? 'Vídeo' : 'Imagem'} • ID: {media.id}
+              </span>
+            </div>
+          </div>
+        );
+      }
+
       if (media.type === 'image') {
         const fitMode = media.fit || 'contain';
         const isCover = fitMode === 'cover';
@@ -176,6 +205,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         const innerBorder = isFullScreen ? 'border-none' : borderColor;
         const innerShadow = isFullScreen ? '' : shadowColor;
 
+        const safeBgUrl = `url("${media.url.replace(/"/g, '\\"')}")`;
+
         return (
           <div className={`w-full h-full ${containerPadding} flex items-center justify-center bg-black/20`}>
             <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
@@ -184,7 +215,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 !isLightModeActive ? (
                   <div 
                     className={`absolute inset-0 bg-cover bg-center blur-3xl opacity-40 scale-110 pointer-events-none`}
-                    style={{ backgroundImage: `url(${media.url})` }}
+                    style={{ backgroundImage: safeBgUrl }}
                   />
                 ) : (
                   /* Light Mode: Lightweight dark vignette, no blur filter pass */
@@ -192,10 +223,22 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 )
               )}
               <img 
-                src={media.url || null} 
+                src={media.url} 
                 alt={media.name} 
                 className={`w-full h-full relative z-10 ${isCover ? 'object-cover' : isFullScreen ? 'object-fill' : 'object-contain'}`}
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  console.warn("Erro ao carregar imagem de projeção:", media.name, media.url);
+                  const img = e.currentTarget;
+                  img.style.display = 'none';
+                  const parent = img.parentElement;
+                  if (parent && !parent.querySelector('.img-error-fallback')) {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'img-error-fallback absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-amber-400 p-6 text-center';
+                    fallback.innerHTML = `<span class="font-bold text-xl mb-1">Erro de Carregamento</span><span class="text-stone-300 text-sm">${media.name}</span>`;
+                    parent.appendChild(fallback);
+                  }
+                }}
               />
               {!isFullScreen && (
                 <div className={`absolute inset-0 z-20 ring-1 ring-inset ${isFJU ? 'ring-amber-500/20' : 'ring-white/20'} shadow-[inset_0_0_150px_rgba(0,0,0,0.6)] pointer-events-none`} />

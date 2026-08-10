@@ -94,12 +94,15 @@ export function broadcastToPeers(data: any, excludeConn?: any) {
 }
 
 export const SyncSection = React.memo(function SyncSection({ 
+  showToast,
   showAlert, 
   showConfirm 
 }: { 
+  showToast?: (message: string, type?: 'error' | 'success' | 'info') => void;
   showAlert: (message: string, type?: 'error' | 'success' | 'info') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
 }) {
+  const notify = showToast || showAlert;
   // States for local backup and restore (import/export)
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -784,16 +787,26 @@ export const SyncSection = React.memo(function SyncSection({
     });
 
     peer.on('error', (err: any) => {
-      // Evita logs excessivos para erros comuns de conexão
-      if (err.type === 'peer-unavailable' || err.type === 'disconnected' || err.type === 'network') {
-        console.warn('PeerJS (Aviso): Conexão temporariamente indisponível.', err.type);
-      } else if (err.type === 'unavailable-id') {
-        console.error('Erro: ID já está em uso. Tentando gerar novo código...');
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
+      if (err.type === 'unavailable-id') {
+        console.warn('PeerJS (Aviso): ID já está em uso no servidor. Gerando novo código de receptor...');
         localStorage.removeItem('projection_myReceiverCode');
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'pc') {
-          setTimeout(() => startReceiver(), 1000);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            startReceiver();
+          }, 1500);
         }
+        return;
+      }
+
+      // Evita logs excessivos para erros comuns de conexão
+      if (err.type === 'peer-unavailable' || err.type === 'disconnected' || err.type === 'network') {
+        console.warn('PeerJS (Aviso): Conexão temporariamente indisponível.', err.type);
       } else {
         console.error('Erro no receptor PeerJS:', err);
       }
@@ -803,7 +816,6 @@ export const SyncSection = React.memo(function SyncSection({
         setDirectSyncStatus('initializing');
         setSyncMessage('Rede instável. Tentando restabelecer conexão...');
         
-        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = setTimeout(() => {
           startReceiver();
         }, 5000);
@@ -1210,6 +1222,7 @@ export const SyncSection = React.memo(function SyncSection({
         } else {
           setDirectSyncStatus('error');
           setSyncMessage('Não foi possível conectar ao PC. Verifique se o código está correto e ativo.');
+          notify('Não foi possível conectar ao PC. Verifique se o código PIN está correto e ativo no computador.', 'error');
         }
       });
     });
@@ -1229,6 +1242,7 @@ export const SyncSection = React.memo(function SyncSection({
       } else {
         setDirectSyncStatus('error');
         setSyncMessage('Erro de conexão. Verifique a internet.');
+        notify('Erro de conexão P2P. Verifique sua conexão com a internet e se o PC está ativo.', 'error');
       }
     });
 
@@ -1240,7 +1254,7 @@ export const SyncSection = React.memo(function SyncSection({
   const forcePushToPC = async () => {
     const conn = connRef.current;
     if (!conn) {
-      showAlert("Conexão inativa. Reconecte primeiro.", "error");
+      notify("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
 
@@ -1290,7 +1304,7 @@ export const SyncSection = React.memo(function SyncSection({
   const forcePullFromPC = () => {
     const conn = connRef.current;
     if (!conn) {
-      showAlert("Conexão inativa. Reconecte primeiro.", "error");
+      notify("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
     setIsPulling(true);
@@ -1399,9 +1413,11 @@ export const SyncSection = React.memo(function SyncSection({
       URL.revokeObjectURL(url);
 
       setBackupMessage({ type: 'success', text: 'Backup exportado com sucesso!' });
+      notify('Backup exportado com sucesso!', 'success');
     } catch (err) {
       console.error('Erro ao exportar backup:', err);
       setBackupMessage({ type: 'error', text: 'Falha ao exportar backup. Tente novamente.' });
+      notify('Falha ao exportar backup. Tente novamente.', 'error');
     } finally {
       setIsExporting(false);
     }
@@ -1471,6 +1487,7 @@ export const SyncSection = React.memo(function SyncSection({
         }
 
         setBackupMessage({ type: 'success', text: 'Backup importado! Reiniciando...' });
+        notify('Backup importado com sucesso! Reiniciando aplicação...', 'success');
         
         setTimeout(() => {
           window.location.reload();
@@ -1479,11 +1496,13 @@ export const SyncSection = React.memo(function SyncSection({
       } catch (err) {
         console.error('Erro ao importar backup:', err);
         setBackupMessage({ type: 'error', text: 'Falha ao importar o arquivo. Verifique se o arquivo está correto.' });
+        notify('Falha ao importar backup. O arquivo selecionado é inválido ou corrompido.', 'error');
         setIsImporting(false);
       }
     };
     reader.onerror = () => {
       setBackupMessage({ type: 'error', text: 'Erro ao ler arquivo.' });
+      notify('Erro ao ler o arquivo de backup.', 'error');
       setIsImporting(false);
     };
     reader.readAsText(file);

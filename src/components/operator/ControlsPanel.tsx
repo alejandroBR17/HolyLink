@@ -325,6 +325,8 @@ interface ControlsPanelProps {
   updateStateAndBroadcast: (key: string, value: any) => void;
   currentTime: Date;
   isProjectionOpen?: boolean;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
+  showAlert?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 export function ControlsPanel({
@@ -348,8 +350,11 @@ export function ControlsPanel({
   background3DIntensity = 'high',
   updateStateAndBroadcast,
   currentTime,
-  isProjectionOpen = false
+  isProjectionOpen = false,
+  showToast,
+  showAlert
 }: ControlsPanelProps) {
+  const notify = showToast || showAlert;
   const { setPerformanceMode } = usePerformanceDiagnostics();
   const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
 
@@ -386,18 +391,21 @@ export function ControlsPanel({
       }
 
       const newWin = window.open(projectionUrl, 'holyrics_projection', windowFeatures);
-      setProjectionWin(newWin);
-      
-      // Request fullscreen on the new window if possible
-      if (newWin && newWin.document) {
-        newWin.onload = () => {
-          if (newWin.document.documentElement.requestFullscreen) {
-            newWin.document.documentElement.requestFullscreen().catch(() => {});
-          }
-        };
+      if (newWin) {
+        setProjectionWin(newWin);
+        if (newWin.document) {
+          newWin.onload = () => {
+            if (newWin.document.documentElement.requestFullscreen) {
+              newWin.document.documentElement.requestFullscreen().catch(() => {});
+            }
+          };
+        }
+      } else {
+        if (notify) notify('Janela do monitor foi bloqueada. Permita pop-ups no seu navegador.', 'error');
       }
     } catch (e) {
       console.warn("Could not open projection window:", e);
+      if (notify) notify('Erro ao tentar abrir janela do monitor.', 'error');
     }
     updateStateAndBroadcast('isProjectionOpen', true);
     updateStateAndBroadcast('projectionCloseTrigger', null);

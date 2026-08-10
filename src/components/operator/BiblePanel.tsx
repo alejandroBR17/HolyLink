@@ -8,6 +8,8 @@ interface BiblePanelProps {
   customVerseText: string | null;
   customVerseRef: string | null;
   updateStateAndBroadcast: (key: string, value: any) => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
+  showAlert?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 interface NoticePreset {
@@ -53,8 +55,11 @@ export const BiblePanel = React.memo(function BiblePanel({
   activeVerseIndex,
   customVerseText,
   customVerseRef,
-  updateStateAndBroadcast
+  updateStateAndBroadcast,
+  showToast,
+  showAlert
 }: BiblePanelProps) {
+  const notify = showToast || showAlert;
   const [savedNotices, setSavedNotices] = useState<NoticePreset[]>([]);
   const [isNoticesLoaded, setIsNoticesLoaded] = useState(false);
 
@@ -105,6 +110,9 @@ export const BiblePanel = React.memo(function BiblePanel({
       updateStateAndBroadcast('activeVerseIndex', null);
       updateStateAndBroadcast('customVerseText', textEl.value.trim());
       updateStateAndBroadcast('customVerseRef', refEl.value.trim() || null);
+      if (notify) notify("Texto/Aviso projetado no telão com sucesso!", "success");
+    } else {
+      if (notify) notify("Por favor, digite o texto ou versículo antes de projetar.", "error");
     }
   };
 
@@ -114,7 +122,10 @@ export const BiblePanel = React.memo(function BiblePanel({
     const text = textEl?.value.trim();
     const ref = refEl?.value.trim() || "Aviso do Operador";
 
-    if (!text) return;
+    if (!text) {
+      if (notify) notify("Digite o texto do aviso antes de salvar.", "error");
+      return;
+    }
 
     const newNotice: NoticePreset = {
       title: text.length > 25 ? text.substring(0, 25) + '...' : text,
@@ -126,6 +137,7 @@ export const BiblePanel = React.memo(function BiblePanel({
     setSavedNotices(updated);
     import('../../utils').then(({ saveSetting }) => {
       saveSetting('projection_saved_notices', updated);
+      if (notify) notify("Aviso salvo na lista rápida!", "success");
     });
   };
 

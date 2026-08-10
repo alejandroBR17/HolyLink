@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, XCircle, Info, X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -111,14 +111,17 @@ export const CustomToast: React.FC<ToastProps> = ({ message, isVisible, onClose,
         >
           <div className={`flex items-center gap-4 p-5 rounded-2xl border backdrop-blur-xl shadow-2xl ${
             type === 'error' 
-              ? 'bg-red-500/10 border-red-500/20 text-red-500' 
+              ? 'bg-red-950/90 border-red-500/40 text-red-300' 
               : type === 'success'
-              ? 'bg-green-500/10 border-green-500/20 text-green-500'
-              : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
+              ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-300'
+              : 'bg-stone-900/90 border-amber-500/40 text-amber-300'
           }`}>
-            <AlertTriangle className="w-6 h-6 shrink-0" />
-            <p className="flex-1 font-bold text-sm tracking-wide uppercase">{message}</p>
-            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
+            {type === 'error' && <XCircle className="w-6 h-6 shrink-0 text-red-400" />}
+            {type === 'success' && <CheckCircle2 className="w-6 h-6 shrink-0 text-emerald-400" />}
+            {type === 'info' && <Info className="w-6 h-6 shrink-0 text-amber-400" />}
+            
+            <p className="flex-1 font-semibold text-sm tracking-wide text-stone-100">{message}</p>
+            <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-stone-400 hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>

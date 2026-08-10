@@ -18,6 +18,8 @@ interface AgendaPanelProps {
   customCampaigns: Campaign[];
   updateStateAndBroadcast: (key: string, value: any) => void;
   showConfirm?: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
+  showAlert?: (message: string, type?: 'success' | 'error' | 'info') => void;
   onResetCampaigns?: () => void;
 }
 
@@ -42,8 +44,11 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   customCampaigns,
   updateStateAndBroadcast,
   showConfirm,
+  showToast,
+  showAlert,
   onResetCampaigns
 }: AgendaPanelProps) {
+  const notify = showToast || showAlert;
   const [newMeetTheme, setNewMeetTheme] = useState('');
   const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
   const [newMeetWeeklyDay, setNewMeetWeeklyDay] = useState(0);
@@ -137,7 +142,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   };
 
   const handleSaveMeeting = () => {
-    if (!newMeetTheme.trim()) return;
+    if (!newMeetTheme.trim()) {
+      if (notify) notify("Por favor, preencha o tema/título da reunião.", "error");
+      return;
+    }
     
     const [hours, minutes] = newMeetTime.split(':').map(Number);
     let finalDayName = '';
@@ -148,7 +156,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       finalDayName = daysMap[newMeetWeeklyDay];
       finalDay = newMeetWeeklyDay;
     } else {
-      if (!newMeetDate) return;
+      if (!newMeetDate) {
+        if (notify) notify("Por favor, selecione a data do evento.", "error");
+        return;
+      }
       const dateParts = newMeetDate.split('-');
       const dateObj = new Date(newMeetDate + 'T12:00:00');
       finalDay = dateObj.getDay();
@@ -171,9 +182,11 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       const updated = (customMeetings || []).map(m => m.id === editingMeetId ? mObject : m);
       updateStateAndBroadcast('customMeetings', updated);
       setEditingMeetId(null);
+      if (notify) notify("Reunião atualizada com sucesso!", "success");
     } else {
       const updated = [...customMeetings, mObject];
       updateStateAndBroadcast('customMeetings', updated);
+      if (notify) notify("Nova reunião adicionada à agenda!", "success");
     }
     
     setShowAddMeetingForm(false);
@@ -185,15 +198,20 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       showConfirm('Excluir Reunião?', 'Tem certeza que deseja remover esta reunião?', () => {
         const updated = customMeetings.filter(m => m.id !== id);
         updateStateAndBroadcast('customMeetings', updated);
+        if (notify) notify("Reunião removida.", "info");
       }, 'danger');
     } else {
       const updated = customMeetings.filter(m => m.id !== id);
       updateStateAndBroadcast('customMeetings', updated);
+      if (notify) notify("Reunião removida.", "info");
     }
   };
 
   const handleSaveCampaign = () => {
-    if (!newCampTitle.trim()) return;
+    if (!newCampTitle.trim()) {
+      if (notify) notify("Por favor, informe o título do propósito/campanha.", "error");
+      return;
+    }
     
     const cObject: Campaign = {
       id: editingCampId || `camp_${Date.now()}`,
@@ -207,9 +225,11 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       const updated = (customCampaigns || []).map(c => c.id === editingCampId ? cObject : c);
       updateStateAndBroadcast('customCampaigns', updated);
       setEditingCampId(null);
+      if (notify) notify("Propósito/Campanha atualizado!", "success");
     } else {
       const updated = [...customCampaigns, cObject];
       updateStateAndBroadcast('customCampaigns', updated);
+      if (notify) notify("Novo propósito/campanha adicionado!", "success");
     }
     
     setShowAddCampaignForm(false);

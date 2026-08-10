@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2, 
@@ -41,6 +41,7 @@ interface PlaylistPanelProps {
   verseDisplayPriority?: 'verse_over_video' | 'video_over_verse';
   handleMoveMedia: (id: string, direction: 'up' | 'down') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
+  showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
   showAlert: (message: string, type?: 'success' | 'error' | 'info') => void;
   deleteMediaItem: (id: string) => Promise<void>;
   broadcastMediaDelete: (id: string) => void;
@@ -73,6 +74,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   verseDisplayPriority = 'verse_over_video',
   handleMoveMedia,
   showConfirm,
+  showToast,
   showAlert,
   deleteMediaItem,
   broadcastMediaDelete,
@@ -80,6 +82,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   saveMediaItem,
   customMeetings
 }: PlaylistPanelProps) {
+  const notify = showToast || showAlert;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filterMode, setFilterMode] = useState<QueueFilterMode>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -95,6 +98,12 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
     const customDefDur = Number(localStorage.getItem('projection_default_img_duration'));
     return (customDefDur && customDefDur >= 2000) ? Math.round(customDefDur / 1000) : 10;
   });
+
+  useEffect(() => {
+    if (uploadError) {
+      notify(uploadError, 'error');
+    }
+  }, [uploadError, notify]);
 
   const filteredCustomMedia = useMemo(() => {
     return customMediaList.filter((media) => {

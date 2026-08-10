@@ -199,6 +199,13 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
 
     renderer.setSize(width, height);
     renderer.setPixelRatio(targetPixelRatio);
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.pointerEvents = 'none';
     container.appendChild(renderer.domElement);
 
     // Proteção contra crash da aba em caso de GPU overload (webglcontextlost)

@@ -167,13 +167,15 @@ export default function App() {
     type: 'success'
   });
 
-  const showAlert = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastConfig({
       isVisible: true,
       message,
       type
     });
   }, []);
+
+  const showAlert = showToast;
 
   const [isSmartBooting, setIsSmartBooting] = useState<boolean>(true);
 
@@ -644,11 +646,19 @@ export default function App() {
                 type="button"
                 aria-label="Abrir janela do monitor em segunda tela"
                 onClick={() => {
-                  const url = window.location.origin + window.location.pathname + '?projection';
-                  const newWin = window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
-                  if (newWin) setProjectionWin(newWin);
-                  updateStateAndBroadcast('isProjectionOpen', true);
-                  updateStateAndBroadcast('projectionCloseTrigger', null);
+                  try {
+                    const url = window.location.origin + window.location.pathname + '?projection';
+                    const newWin = window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
+                    if (newWin) {
+                      setProjectionWin(newWin);
+                      updateStateAndBroadcast('isProjectionOpen', true);
+                      updateStateAndBroadcast('projectionCloseTrigger', null);
+                    } else {
+                      showAlert('A janela de projeção foi bloqueada pelo navegador. Permita pop-ups nas configurações e tente novamente.', 'error');
+                    }
+                  } catch (err) {
+                    showAlert('Erro ao tentar abrir a janela de projeção. Verifique permissões de pop-up.', 'error');
+                  }
                 }}
                 className="w-full sm:w-auto min-h-[40px] bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-black text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(245,158,11,0.25)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.35)] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
@@ -828,6 +838,7 @@ export default function App() {
                 verseDisplayPriority={verseDisplayPriority}
                 handleMoveMedia={handleMoveMedia}
                 showConfirm={showConfirm}
+                showToast={showToast}
                 showAlert={showAlert}
                 deleteMediaItem={deleteMediaItem}
                 broadcastMediaDelete={broadcastMediaDelete}
@@ -843,6 +854,8 @@ export default function App() {
                 customVerseText={customVerseText}
                 customVerseRef={customVerseRef}
                 updateStateAndBroadcast={updateStateAndBroadcast}
+                showToast={showToast}
+                showAlert={showAlert}
               />
             )}
 
@@ -852,6 +865,8 @@ export default function App() {
                 customCampaigns={customCampaigns}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 showConfirm={showConfirm}
+                showToast={showToast}
+                showAlert={showAlert}
                 onResetCampaigns={handleResetCampaigns}
               />
             )}
@@ -879,12 +894,14 @@ export default function App() {
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 currentTime={currentTime}
                 isProjectionOpen={isProjectionOpen}
+                showToast={showToast}
+                showAlert={showAlert}
               />
             )}
 
             {/* Persistent WebRTC & Peer Sync Section (Kept mounted in background so connection stays active) */}
             <div className={activeMobileTab === 'sync' ? 'w-full' : 'hidden'}>
-              <SyncSection showAlert={showAlert} showConfirm={showConfirm} />
+              <SyncSection showToast={showToast} showAlert={showAlert} showConfirm={showConfirm} />
             </div>
 
             {activeMobileTab === 'monitor' && (
