@@ -16,6 +16,18 @@ export interface ChunkTransferMetadata {
   size: number;
 }
 
+// Fast Uint8Array to Base64 using chunked String.fromCharCode.apply
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const len = bytes.byteLength;
+  const CHUNK_LEN = 8192;
+  for (let i = 0; i < len; i += CHUNK_LEN) {
+    const chunk = bytes.subarray(i, Math.min(i + CHUNK_LEN, len));
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
+  }
+  return btoa(binary);
+}
+
 // In-memory buffer for assembling chunks on receiving side
 const transferBuffers = new Map<string, {
   metadata: ChunkTransferMetadata;
@@ -35,13 +47,15 @@ export async function sendMediaInChunks(
   const totalSize = arrayBuffer.byteLength;
   const totalChunks = Math.ceil(totalSize / CHUNK_SIZE);
 
+  const fallbackMime = metadata.mimeType || (metadata.type === 'image' ? 'image/png' : 'video/mp4');
+
   // Send header
   sendFn({
     type: 'MEDIA_CHUNK_START',
     transferId,
-    metadata,
+    metadata: { ...metadata, mimeType: fallbackMime },
     totalChunks,
-    mimeType: blob.type || 'application/octet-stream',
+    mimeType: blob.type || fallbackMime,
     size: totalSize,
     version: 1
   });
@@ -52,13 +66,7 @@ export async function sendMediaInChunks(
     const end = Math.min(start + CHUNK_SIZE, totalSize);
     const chunkBuffer = arrayBuffer.slice(start, end);
     const bytes = new Uint8Array(chunkBuffer);
-    
-    // Convert chunk bytes to binary string for JSON compatibility
-    let binary = '';
-    for (let j = 0; j < bytes.byteLength; j++) {
-      binary += String.fromCharCode(bytes[j]);
-    }
-    const chunkBase64 = btoa(binary);
+    const chunkBase64 = uint8ToBase64(bytes);
 
     sendFn({
       type: 'MEDIA_CHUNK_DATA',
@@ -73,9 +81,9 @@ export async function sendMediaInChunks(
       onProgress(progress);
     }
 
-    // Yield every 10 chunks to keep UI responsive
-    if (i % 10 === 0) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    // Yield every 5 chunks to keep UI and event loop responsive
+    if (i % 5 === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
     }
   }
 }
@@ -110,7 +118,7 @@ export async function handleIncomingChunk(data: any): Promise<{ complete: boolea
       }));
     }
 
-    if (buffer.receivedCount === buffer.totalChunks) {
+    if (buffer.receivedCount >= buffer.totalChunks) {
       // All chunks received -> combine into single Blob
       const combinedBlobParts: Uint8Array[] = [];
       for (let i = 0; i < buffer.totalChunks; i++) {
@@ -118,7 +126,11 @@ export async function handleIncomingChunk(data: any): Promise<{ complete: boolea
         if (chunk) combinedBlobParts.push(chunk);
       }
 
-      const blob = new Blob(combinedBlobParts, { type: buffer.metadata.mimeType || 'application/octet-stream' });
+      const mimeType = buffer.metadata.mimeType && buffer.metadata.mimeType !== 'application/octet-stream'
+        ? buffer.metadata.mimeType
+        : (buffer.metadata.type === 'image' ? 'image/png' : 'video/mp4');
+
+      const blob = new Blob(combinedBlobParts, { type: mimeType });
       
       const savePayload = {
         id: buffer.metadata.id,

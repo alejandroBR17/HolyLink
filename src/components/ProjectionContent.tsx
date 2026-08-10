@@ -340,10 +340,14 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         return null;
     }
   };
+  const activeMedia = customMediaList.find(m => m.id === currentSlideId);
+  const isCurrentSlideVideo = Boolean(activeMedia && activeMedia.type === 'video');
   const isCountdownActive = isFinalFiveMinutes || isFinalMinute;
+
   const shouldShowVerse = Boolean(
     customVerseText && (
-      !isCountdownActive || verseDisplayPriority === 'verse_over_video'
+      verseDisplayPriority === 'verse_over_video' ||
+      !isCountdownActive
     )
   );
 
@@ -426,7 +430,30 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex w-full h-full bg-black/20 relative"
           >
-            {finalMinuteDisplayMode === 'full_video' ? (
+            {!isCurrentSlideVideo ? (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-[#050000] z-20">
+                <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[2.2rem] xl:text-[2.8rem] font-bold uppercase tracking-[0.3em] mb-6 text-center px-4 animate-pulse`}>
+                  {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
+                </span>
+                <div className="relative h-[16rem] w-full flex items-center justify-center overflow-hidden">
+                  <AnimatePresence mode="popLayout">
+                    <motion.div
+                      key={diffSeconds}
+                      initial={{ opacity: 0, scale: 0.8, y: 30 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 1.2, y: -30 }}
+                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                      className={`absolute font-mono text-[12rem] xl:text-[16rem] text-white font-black leading-none tracking-tighter tabular-nums ${isFJU ? 'drop-shadow-[0_0_80px_rgba(245,158,11,0.3)]' : 'drop-shadow-[0_0_80px_rgba(255,255,255,0.15)]'}`}
+                    >
+                      {diffSeconds}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+                <span className="text-stone-400 text-3xl font-medium tracking-[0.3em] mt-8 uppercase">
+                  {diffSeconds === 1 ? "Segundo" : "Segundos"}
+                </span>
+              </div>
+            ) : finalMinuteDisplayMode === 'full_video' ? (
               <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black">
                 <AnimatePresence>
                   <motion.div

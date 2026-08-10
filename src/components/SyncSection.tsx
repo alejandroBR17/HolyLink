@@ -840,6 +840,135 @@ export const SyncSection = React.memo(function SyncSection({
       // Listen to data from PC (for both full sync and real-time state updates)
       conn.on('data', async (incomingData: any) => {
         try {
+          if (incomingData && (incomingData.type === 'MEDIA_CHUNK_START' || incomingData.type === 'MEDIA_CHUNK_DATA')) {
+            const res = await handleIncomingChunk(incomingData);
+            if (res.complete) {
+              window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
+              setSyncMessage('Mídia recebida e salva com sucesso!');
+            }
+            return;
+          }
+
+          if (incomingData && incomingData.type === 'REQUEST_DELTA_MEDIA') {
+            const requestedIds = new Set(incomingData.ids || []);
+            const allMedia = await getAllMediaItems();
+            const mediaToTransfer = allMedia.filter(item => requestedIds.has(item.id));
+            
+            for (let i = 0; i < mediaToTransfer.length; i++) {
+              const item = mediaToTransfer[i];
+              const realBlob = getRealBlob(item.blob);
+              if (realBlob && realBlob.size > 0) {
+                await sendMediaInChunks(
+                  (payload) => {
+                    try { conn.send(payload); } catch (e) {}
+                  },
+                  {
+                    id: item.id,
+                    type: item.type,
+                    name: item.name,
+                    duration: item.duration,
+                    enabledInLoop: item.enabledInLoop,
+                    muted: item.muted,
+                    order: item.order,
+                    fit: item.fit,
+                    mimeType: realBlob.type || (item.type === 'image' ? 'image/png' : 'video/mp4'),
+                    size: realBlob.size
+                  },
+                  realBlob,
+                  (progress) => {
+                    window.dispatchEvent(new CustomEvent('projection_sync_progress', { 
+                      detail: { message: `Enviando mídia (${i + 1}/${mediaToTransfer.length}): ${item.name} (${progress}%)`, progress } 
+                    }));
+                  }
+                );
+              }
+            }
+
+            try {
+              conn.send({ type: 'SYNC_COMPLETE' });
+            } catch (e) {
+              console.warn("Failed to send SYNC_COMPLETE:", e);
+            }
+            return;
+          }
+
+          if (incomingData && incomingData.type === 'SYNC_MANIFEST') {
+            setSyncMessage('Comparando alterações com dados do PC...');
+            if (incomingData.localStorage) {
+              const currentRole = localStorage.getItem('projection_deviceRole') || 'phone';
+              const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
+
+              Object.entries(incomingData.localStorage).forEach(([key, val]) => {
+                if (
+                  key === 'projection_deviceRole' ||
+                  key === 'projection_myReceiverCode' ||
+                  key === 'projection_lastPairedPeerCode'
+                ) {
+                  return;
+                }
+                localStorage.setItem(key, val as string);
+              });
+
+              localStorage.setItem('projection_deviceRole', currentRole);
+              if (currentPairedCode) {
+                localStorage.setItem('projection_lastPairedPeerCode', currentPairedCode);
+              }
+            }
+
+            const localMedia = await getAllMediaItems();
+            const manifestItems = incomingData.mediaManifest || [];
+            const manifestIds = new Set(manifestItems.map((m: any) => m.id));
+
+            for (const localItem of localMedia) {
+              if (!manifestIds.has(localItem.id)) {
+                await deleteMediaItem(localItem.id);
+              }
+            }
+
+            const localMap = new Map(localMedia.map(item => [item.id, item]));
+            const missingIds: string[] = [];
+
+            for (const item of manifestItems) {
+              const local = localMap.get(item.id);
+              const localSize = local?.blob ? local.blob.size : 0;
+              if (!local || localSize !== item.size) {
+                missingIds.push(item.id);
+              } else {
+                await saveMediaItem({
+                  id: item.id,
+                  type: item.type,
+                  name: item.name,
+                  duration: item.duration,
+                  enabledInLoop: item.enabledInLoop,
+                  muted: item.muted,
+                  order: item.order,
+                  fit: item.fit,
+                  blob: local.blob
+                });
+              }
+            }
+
+            if (missingIds.length === 0) {
+              window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+              setDirectSyncStatus('success');
+              setSyncMessage('Tudo sincronizado!');
+              try { conn.send({ type: 'SYNC_COMPLETE' }); } catch (e) {}
+              return;
+            }
+
+            setSyncMessage(`Sincronizando ${missingIds.length} alteração(ões)...`);
+            try { conn.send({ type: 'REQUEST_DELTA_MEDIA', ids: missingIds }); } catch (e) {}
+            return;
+          }
+
+          if (incomingData && incomingData.type === 'SYNC_COMPLETE') {
+            window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+            setDirectSyncStatus('success');
+            setSyncMessage('Sincronização de mídias concluída!');
+            setIsPulling(false);
+            return;
+          }
+
           if (incomingData && incomingData.type === 'UPDATE_STATE') {
             const bc = new BroadcastChannel('holyrics_projection_sync');
             bc.postMessage({ type: 'UPDATE_STATE', key: incomingData.key, value: incomingData.value });

@@ -325,6 +325,17 @@ export function useCustomMedia(
         broadcastMediaSave(sortedItems[i]);
       }
 
+      const savedOrderStr = localStorage.getItem('projection_slidesOrder');
+      if (savedOrderStr) {
+        try {
+          let currentOrder: string[] = JSON.parse(savedOrderStr);
+          const newMediaOrderIds = sortedItems.map(m => m.id);
+          const nonMediaOrder = currentOrder.filter(id => !newMediaOrderIds.includes(id));
+          const updatedSlidesOrder = [...nonMediaOrder, ...newMediaOrderIds];
+          updateStateAndBroadcast('slidesOrder', JSON.stringify(updatedSlidesOrder));
+        } catch (e) {}
+      }
+
       updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
     } catch (err) {
       console.error("Failed to move media item:", err);
