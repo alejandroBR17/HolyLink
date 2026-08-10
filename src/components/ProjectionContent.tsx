@@ -412,7 +412,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-0 w-full h-full z-40 flex items-center justify-center bg-[#050000]"
+            className="absolute inset-0 w-full h-full z-40 flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
           >
             <VerseSlide 
               currentTime={currentTime} 
@@ -428,10 +428,10 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex w-full h-full bg-black/20 relative"
+            className="absolute inset-0 flex w-full h-full bg-black/10 relative"
           >
             {!isCurrentSlideVideo ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-[#050000] z-20">
+              <div className="w-full h-full flex flex-col items-center justify-center bg-transparent z-20">
                 <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[2.2rem] xl:text-[2.8rem] font-bold uppercase tracking-[0.3em] mb-6 text-center px-4 animate-pulse`}>
                   {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
                 </span>
