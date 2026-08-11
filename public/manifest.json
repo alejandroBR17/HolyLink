@@ -1,24 +1,38 @@
 {
-  "name": "HolyLink - Transmissão P2P",
+  "id": "holylink-pwa-app",
+  "name": "HolyLink — Transmissão & Projeção",
   "short_name": "HolyLink",
+  "description": "Sistema profissional de projeção P2P, cronômetro e transmissão ao vivo para eventos e celebrações.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#020617",
   "theme_color": "#020617",
-  "description": "Sistema profissional de projeção e gerenciamento de telas para transmissão ao vivo",
   "icons": [
     {
-      "src": "/icon-192.jpg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icon-512.jpg",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

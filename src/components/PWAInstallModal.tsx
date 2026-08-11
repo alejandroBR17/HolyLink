@@ -48,7 +48,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
           {/* Title & App Icon */}
           <div className="flex items-center gap-4 mb-6">
             <img
-              src="/icon-192.jpg"
+              src="/icon-192.png"
               alt="HolyLink Logo"
               className="w-16 h-16 rounded-2xl shadow-lg border border-amber-500/30 object-cover"
               onError={(e) => {

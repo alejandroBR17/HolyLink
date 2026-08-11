@@ -207,31 +207,31 @@ export function MonitorPanel({
       
       {/* MONITOR CANVAS CONTAINER */}
       <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-        <div className="flex items-center justify-between border-b border-zinc-800/50 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 animate-pulse">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/50 pb-3 gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 animate-pulse shrink-0">
               <Monitor className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Monitor de Transmissão</h3>
-              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">Visualização em tempo real da 2ª tela</p>
+            <div className="min-w-0">
+              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider truncate">Monitor de Transmissão</h3>
+              <p className="text-[10px] text-zinc-500 font-normal mt-0.5 truncate">Visualização em tempo real da 2ª tela</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap sm:flex-nowrap">
             <button
               onClick={() => setShowPwaModal(true)}
-              className="bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px]"
+              className="bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 px-2 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px] shrink-0"
               title="Instalar App HolyLink (PWA)"
             >
-              <Download className="w-4 h-4 text-amber-500 shrink-0" />
-              <span>Instalar App</span>
+              <Download className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="hidden sm:inline">App</span>
             </button>
             <button
               onClick={() => setShowShortcutsModal(!showShortcutsModal)}
-              className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px]"
+              className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white px-2 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px] shrink-0"
               title="Atalhos e Comandos"
             >
-              <Keyboard className="w-4 h-4 text-amber-500 shrink-0" />
+              <Keyboard className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Atalhos</span>
             </button>
             <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-wider animate-pulse flex items-center gap-1 shrink-0">
