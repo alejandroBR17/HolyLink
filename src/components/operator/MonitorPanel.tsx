@@ -6,6 +6,7 @@ import { Meeting } from '../../types';
 import { HardwareBenchmarkModal } from '../HardwareBenchmarkModal';
 import { usePerformanceDiagnostics } from '../../utils/performance';
 import { PWAInstallModal } from '../PWAInstallModal';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 interface MonitorPanelProps {
   projectionWin: Window | null;
@@ -98,6 +99,7 @@ export function MonitorPanel({
 
   const [ramCleared, setRamCleared] = useState(false);
   const { fps, mode, effectiveMode, report, purgeCache } = usePerformanceDiagnostics();
+  const { isInstalled } = usePWAInstall();
 
   const handleClearRam = () => {
     purgeCache();
@@ -218,13 +220,15 @@ export function MonitorPanel({
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => setShowPwaModal(true)}
-              className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 rounded-lg text-xs font-bold flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
-              title="Instalar App HolyLink (PWA)"
-            >
-              <Download className="w-4 h-4 text-amber-500 shrink-0" />
-            </button>
+            {!isInstalled && (
+              <button
+                onClick={() => setShowPwaModal(true)}
+                className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 rounded-lg text-xs font-bold flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
+                title="Instalar App HolyLink (PWA)"
+              >
+                <Download className="w-4 h-4 text-amber-500 shrink-0" />
+              </button>
+            )}
             <button
               onClick={() => setShowShortcutsModal(!showShortcutsModal)}
               className="px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
