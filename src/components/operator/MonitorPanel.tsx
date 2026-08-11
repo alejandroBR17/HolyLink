@@ -207,7 +207,7 @@ export function MonitorPanel({
       
       {/* MONITOR CANVAS CONTAINER */}
       <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/50 pb-3 gap-2">
+        <div className="flex items-center justify-between border-b border-zinc-800/50 pb-3 gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 animate-pulse shrink-0">
               <Monitor className="w-5 h-5" />
@@ -217,24 +217,23 @@ export function MonitorPanel({
               <p className="text-[10px] text-zinc-500 font-normal mt-0.5 truncate">Visualização em tempo real da 2ª tela</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setShowPwaModal(true)}
-              className="bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 px-2 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px] shrink-0"
+              className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 rounded-lg text-xs font-bold flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
               title="Instalar App HolyLink (PWA)"
             >
-              <Download className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="hidden sm:inline">App</span>
+              <Download className="w-4 h-4 text-amber-500 shrink-0" />
             </button>
             <button
               onClick={() => setShowShortcutsModal(!showShortcutsModal)}
-              className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white px-2 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px] shrink-0"
+              className="px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
               title="Atalhos e Comandos"
             >
               <Keyboard className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Atalhos</span>
+              <span className="hidden sm:inline">Atalhos</span>
             </button>
-            <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-wider animate-pulse flex items-center gap-1 shrink-0">
+            <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-1.5 rounded-lg uppercase tracking-wider animate-pulse flex items-center gap-1 shrink-0">
               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
               Live
             </span>

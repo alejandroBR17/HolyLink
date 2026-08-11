@@ -9,8 +9,16 @@ export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
   const [isInIframe, setIsInIframe] = useState<boolean>(false);
+  const [swStatus, setSwStatus] = useState<'checking' | 'active' | 'not_registered' | 'unsupported'>('checking');
+  const [manifestStatus, setManifestStatus] = useState<'checking' | 'ok' | 'error'>('checking');
+  const [isHttps, setIsHttps] = useState<boolean>(true);
 
-  useEffect(() => {
+  const checkStatus = useCallback(async () => {
+    // Check HTTPS
+    if (typeof window !== 'undefined') {
+      setIsHttps(window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    }
+
     // Check if running inside iframe
     try {
       setIsInIframe(window.self !== window.top);
@@ -25,6 +33,45 @@ export function usePWAInstall() {
       document.referrer.includes('android-app://');
 
     setIsInstalled(isStandalone);
+
+    // Check Service Worker
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg && (reg.active || reg.installing || reg.waiting)) {
+          setSwStatus('active');
+        } else {
+          // Attempt manual registration if missing
+          const newReg = await navigator.serviceWorker.register('/sw.js');
+          if (newReg) {
+            setSwStatus('active');
+          } else {
+            setSwStatus('not_registered');
+          }
+        }
+      } catch (err) {
+        console.warn('SW check warning:', err);
+        setSwStatus('not_registered');
+      }
+    } else {
+      setSwStatus('unsupported');
+    }
+
+    // Check Manifest
+    try {
+      const res = await fetch('/manifest.json', { cache: 'no-cache' });
+      if (res.ok) {
+        setManifestStatus('ok');
+      } else {
+        setManifestStatus('error');
+      }
+    } catch (e) {
+      setManifestStatus('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    checkStatus();
 
     const handleBeforeInstallPrompt = (e: Event) => {
       // Prevent browser default automatic banner
@@ -44,7 +91,7 @@ export function usePWAInstall() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [checkStatus]);
 
   const triggerInstall = useCallback(async (): Promise<boolean> => {
     if (!deferredPrompt) return false;
@@ -67,6 +114,10 @@ export function usePWAInstall() {
     isInstallable: Boolean(deferredPrompt),
     isInstalled,
     isInIframe,
+    swStatus,
+    manifestStatus,
+    isHttps,
     triggerInstall,
+    checkStatus,
   };
 }
