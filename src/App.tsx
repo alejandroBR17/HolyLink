@@ -27,6 +27,8 @@ import { MonitorPanel } from './components/operator/MonitorPanel';
 import { useProjectionState } from './hooks/useProjectionState';
 import { useCustomMedia } from './hooks/useCustomMedia';
 
+import { setupGlobalAudioUnlock } from './utils/permissions';
+
 type SlideType = string;
 
 const DEFAULT_SLIDES: SlideType[] = [
@@ -185,8 +187,9 @@ export default function App() {
   const [isSmartBooting, setIsSmartBooting] = useState<boolean>(true);
   const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
 
-  // Time ticker (updates currentTime every second)
+  // Time ticker (updates currentTime every second) & global audio unlock
   useEffect(() => {
+    setupGlobalAudioUnlock();
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);

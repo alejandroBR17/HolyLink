@@ -7,6 +7,38 @@ export interface PermissionStatusItem {
   status: 'granted' | 'prompt' | 'denied' | 'unsupported';
 }
 
+let isAudioUnlockedGlobal = false;
+
+/**
+ * Silently unlocks audio context on the first user interaction anywhere in the app
+ */
+export function setupGlobalAudioUnlock() {
+  if (typeof window === 'undefined' || isAudioUnlockedGlobal) return;
+
+  const unlock = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+      }
+      isAudioUnlockedGlobal = true;
+    } catch (e) {
+      // ignore
+    }
+
+    ['click', 'touchstart', 'keydown', 'pointerdown'].forEach((evt) => {
+      window.removeEventListener(evt, unlock, true);
+    });
+  };
+
+  ['click', 'touchstart', 'keydown', 'pointerdown'].forEach((evt) => {
+    window.addEventListener(evt, unlock, { once: true, capture: true });
+  });
+}
+
 /**
   Checks current browser permission status for all critical projection features
  */

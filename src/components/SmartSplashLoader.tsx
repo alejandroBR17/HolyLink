@@ -61,25 +61,16 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
         );
       }
 
+      await new Promise((r) => setTimeout(r, 200));
+      if (!isMounted) return;
+
+      // ETAPA 3: FINALIZAÇÃO RÁPIDA
+      setStage('ready');
+      setProgress(100);
+      setStatusText('Tudo pronto! Entrando na aplicação...');
       await new Promise((r) => setTimeout(r, 300));
       if (!isMounted) return;
-
-      // ETAPA 3: VERIFICAÇÃO DE PERMISSÕES NECESSÁRIAS
-      setStage('permissions');
-      setStatusText('Verificando permissões do navegador...');
-      const perms = await refreshPermissions();
-      if (!isMounted) return;
-
-      const needsPrompt = perms.some((p) => p.status === 'prompt');
-
-      if (!needsPrompt) {
-        // Se todas as permissões já foram concedidas ou são suportadas, avança direto!
-        setStatusText('Tudo pronto! Entrando na aplicação...');
-        await new Promise((r) => setTimeout(r, 400));
-        onComplete();
-      } else {
-        setStatusText('Aprovação de permissões recomendada para melhor desempenho.');
-      }
+      onComplete();
     }
 
     runBootSequence();
