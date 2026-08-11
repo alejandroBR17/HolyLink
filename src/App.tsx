@@ -1,4 +1,5 @@
 import { useSlideManager } from "./hooks/useSlideManager";
+import { useWakeLock } from "./hooks/useWakeLock";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -50,6 +51,9 @@ const DEFAULT_SLIDES: SlideType[] = [
 ];
 
 export default function App() {
+  // Screen Wake Lock API - prevents browser sleep and keeps connection alive continuously
+  useWakeLock(true);
+
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [manualRotateMode] = useState<'auto' | 'force-landscape'>('auto');
 

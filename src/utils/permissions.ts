@@ -1,3 +1,5 @@
+import { requestWakeLock } from './wakeLock';
+
 export interface PermissionStatusItem {
   id: 'audio' | 'storage' | 'notifications' | 'wakelock' | 'projection_window';
   title: string;
@@ -163,6 +165,10 @@ export async function requestSinglePermission(id: PermissionStatusItem['id']): P
         return result === 'granted';
       }
       return true;
+    }
+
+    if (id === 'wakelock') {
+      return await requestWakeLock();
     }
 
     return true;

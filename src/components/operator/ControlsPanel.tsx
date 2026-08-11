@@ -1,13 +1,15 @@
 import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { 
   Tv, ExternalLink, X, EyeOff, Sparkles, Plus, Minus, Play, Pause, RefreshCw, 
-  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2, HardDrive 
+  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2, HardDrive, Monitor 
 } from 'lucide-react';
 import { ALERTS } from '../../data';
 import { Meeting } from '../../types';
 import { usePerformanceDiagnostics } from '../../utils/performance';
+import { useWakeLock } from '../../hooks/useWakeLock';
 
 function PerformanceControlModule() {
+  const { isSupported: wakeLockSupported, isActive: wakeLockActive, enable: enableWakeLock, disable: disableWakeLock } = useWakeLock(true);
   const { 
     fps, 
     hardwareConcurrency, 
@@ -25,6 +27,14 @@ function PerformanceControlModule() {
     purgeCache();
     setRamCleared(true);
     setTimeout(() => setRamCleared(false), 2500);
+  };
+
+  const handleToggleWakeLock = async () => {
+    if (wakeLockActive) {
+      await disableWakeLock();
+    } else {
+      await enableWakeLock();
+    }
   };
 
   return (
@@ -85,7 +95,7 @@ function PerformanceControlModule() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <button
           onClick={handlePurgeRam}
           className={`w-full py-2 px-3 rounded-xl border text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
@@ -96,6 +106,22 @@ function PerformanceControlModule() {
         >
           <HardDrive className={`w-3.5 h-3.5 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-blue-400'}`} />
           <span>{ramCleared ? '✓ Memória Cache Liberada!' : 'Limpar Memória RAM'}</span>
+        </button>
+
+        <button
+          onClick={handleToggleWakeLock}
+          disabled={!wakeLockSupported}
+          className={`w-full py-2 px-3 rounded-xl border text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            wakeLockActive
+              ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+              : wakeLockSupported
+              ? 'bg-zinc-950 hover:bg-zinc-850 border-zinc-800 hover:border-zinc-700 text-zinc-400'
+              : 'bg-zinc-950 border-zinc-800/50 text-zinc-600 cursor-not-allowed'
+          }`}
+          title={wakeLockSupported ? 'Impedir hibernação do navegador durante transmissão' : 'Wake Lock não suportado pelo navegador'}
+        >
+          <Monitor className={`w-3.5 h-3.5 ${wakeLockActive ? 'text-emerald-400' : 'text-amber-500'}`} />
+          <span>{wakeLockActive ? '🟢 Tela Acesa (Wake Lock)' : wakeLockSupported ? 'Activar Tela Acesa' : 'Wake Lock Indisponível'}</span>
         </button>
       </div>
 
