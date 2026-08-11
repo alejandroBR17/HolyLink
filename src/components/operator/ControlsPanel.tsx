@@ -1,12 +1,13 @@
 import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { 
   Tv, ExternalLink, X, EyeOff, Sparkles, Plus, Minus, Play, Pause, RefreshCw, 
-  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2, HardDrive, Monitor 
+  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2, HardDrive, Monitor, Download 
 } from 'lucide-react';
 import { ALERTS } from '../../data';
 import { Meeting } from '../../types';
 import { usePerformanceDiagnostics } from '../../utils/performance';
 import { useWakeLock } from '../../hooks/useWakeLock';
+import { PWAInstallModal } from '../PWAInstallModal';
 
 function PerformanceControlModule() {
   const { isSupported: wakeLockSupported, isActive: wakeLockActive, enable: enableWakeLock, disable: disableWakeLock } = useWakeLock(true);
@@ -383,6 +384,7 @@ export function ControlsPanel({
   const notify = showToast || showAlert;
   const { setPerformanceMode } = usePerformanceDiagnostics();
   const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -603,13 +605,22 @@ export function ControlsPanel({
 
           {!isProjectionOpen ? (
             <div className="flex flex-col gap-2">
-              <button
-                onClick={handleOpenMonitor}
-                className="w-full p-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 animate-in fade-in duration-200"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Abrir Monitor 2ª Tela
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={handleOpenMonitor}
+                  className="w-full p-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-amber-500/10 animate-in fade-in duration-200"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Abrir Monitor 2ª Tela
+                </button>
+                <button
+                  onClick={() => setShowPwaModal(true)}
+                  className="w-full p-3 bg-zinc-950 hover:bg-zinc-850 border border-zinc-800 hover:border-amber-500/50 text-amber-400 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                  <Download className="w-4 h-4 text-amber-500" />
+                  Instalar App HolyLink
+                </button>
+              </div>
               <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
                 <span className="flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
@@ -1174,6 +1185,7 @@ export function ControlsPanel({
 
       </div>
 
+      <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
     </div>
   );
 }

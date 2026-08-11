@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Monitor, Tv, ExternalLink, X, SkipForward, Film, Image as ImageIcon, BookOpen, Calendar, Heart, Keyboard, Smartphone, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, Cpu, HardDrive, CheckCircle2 } from 'lucide-react';
+import { Monitor, Tv, ExternalLink, X, SkipForward, Film, Image as ImageIcon, BookOpen, Calendar, Heart, Keyboard, Smartphone, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, Cpu, HardDrive, CheckCircle2, Download } from 'lucide-react';
 import { ProjectionContent } from '../ProjectionContent';
 import { CHURCH_INFO, ALERTS } from '../../data';
 import { Meeting } from '../../types';
 import { HardwareBenchmarkModal } from '../HardwareBenchmarkModal';
 import { usePerformanceDiagnostics } from '../../utils/performance';
+import { PWAInstallModal } from '../PWAInstallModal';
 
 interface MonitorPanelProps {
   projectionWin: Window | null;
@@ -92,6 +93,7 @@ export function MonitorPanel({
   const [scale, setScale] = useState(0.15);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
+  const [showPwaModal, setShowPwaModal] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
 
   const [ramCleared, setRamCleared] = useState(false);
@@ -216,6 +218,14 @@ export function MonitorPanel({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPwaModal(true)}
+              className="bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px]"
+              title="Instalar App HolyLink (PWA)"
+            >
+              <Download className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Instalar App</span>
+            </button>
             <button
               onClick={() => setShowShortcutsModal(!showShortcutsModal)}
               className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm min-h-[36px]"
@@ -587,6 +597,7 @@ export function MonitorPanel({
         )}
       </div>
 
+      <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
     </div>
   );
 }
