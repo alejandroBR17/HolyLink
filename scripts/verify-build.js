@@ -11,7 +11,20 @@ const checkFile = (filePath, description) => {
   const fullPath = path.resolve(filePath);
   if (fs.existsSync(fullPath)) {
     const stats = fs.statSync(fullPath);
-    console.log(`  ✓ [ENCONTRADO] ${description}: ${filePath} (${(stats.size / 1024).toFixed(2)} KB)`);
+    let details = `(${(stats.size / 1024).toFixed(2)} KB)`;
+    if (filePath.endsWith('.png')) {
+      const buffer = Buffer.alloc(4);
+      const fd = fs.openSync(fullPath, 'r');
+      fs.readSync(fd, buffer, 0, 4, 0);
+      fs.closeSync(fd);
+      const isPng = buffer.toString('hex') === '89504e47';
+      if (!isPng) {
+        console.error(`  ❌ [CORRUPTO] ${description}: ${filePath} não é um PNG válido! (Header: ${buffer.toString('hex')})`);
+        return false;
+      }
+      details += ' [PNG VÁLIDO ✓]';
+    }
+    console.log(`  ✓ [ENCONTRADO] ${description}: ${filePath} ${details}`);
     return true;
   } else {
     console.error(`  ❌ [FALTANDO] ${description}: ${filePath}`);
