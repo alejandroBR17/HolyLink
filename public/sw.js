@@ -1,8 +1,12 @@
-const CACHE_NAME = 'holylink-pwa-v2';
+const CACHE_NAME = 'holylink-pwa-v3';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/favicon.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {

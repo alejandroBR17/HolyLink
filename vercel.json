@@ -1,5 +1,9 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "handle": "filesystem" },
+    {
+      "source": "/((?!assets/|.*\\.(?:png|jpg|jpeg|gif|svg|ico|json|js|css|webp|woff|woff2|ttf)).*)",
+      "destination": "/index.html"
+    }
   ]
 }
