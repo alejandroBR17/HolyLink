@@ -1,8 +1,7 @@
 {
   "rewrites": [
-    { "handle": "filesystem" },
     {
-      "source": "/((?!assets/|.*\\.(?:png|jpg|jpeg|gif|svg|ico|json|js|css|webp|woff|woff2|ttf)).*)",
+      "source": "/((?!.*\\.(?:png|jpg|jpeg|gif|svg|ico|json|js|css|webp|woff|woff2|ttf|wasm|mp3|mp4|webm|sw\\.js)).*)",
       "destination": "/index.html"
     }
   ]
