@@ -3,19 +3,22 @@
   "short_name": "HolyLink",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "description": "Sistema de projeção e gerenciamento de telas para igrejas",
+  "orientation": "any",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "description": "Sistema profissional de projeção e gerenciamento de telas para transmissão ao vivo",
   "icons": [
     {
-      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m22 8-6 4 6 4V8Z'/><rect width='14' height='12' x='2' y='6' rx='2' ry='2'/></svg>",
+      "src": "/icon-192.jpg",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m22 8-6 4 6 4V8Z'/><rect width='14' height='12' x='2' y='6' rx='2' ry='2'/></svg>",
+      "src": "/icon-512.jpg",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }
