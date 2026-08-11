@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen, 
-  CalendarDays, Settings, ExternalLink, Maximize, Minimize
+  CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download
 } from 'lucide-react';
 import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS } from './data';
 import { getNextMeeting, getSlideDuration } from './utils';
@@ -15,6 +15,7 @@ import { Meeting } from './types';
 import { ProjectionContent } from './components/ProjectionContent';
 import { SyncSection } from './components/SyncSection';
 import { CustomModal, CustomToast } from './components/Modal';
+import { PWAInstallModal } from './components/PWAInstallModal';
 
 // Redesigned modular Operator Panel components
 import { PlaylistPanel } from './components/operator/PlaylistPanel';
@@ -182,6 +183,7 @@ export default function App() {
   const showAlert = showToast;
 
   const [isSmartBooting, setIsSmartBooting] = useState<boolean>(true);
+  const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
 
   // Time ticker (updates currentTime every second)
   useEffect(() => {
@@ -645,6 +647,16 @@ export default function App() {
               <span className="whitespace-nowrap">Conectar Celular</span>
             </button>
 
+            <button
+              type="button"
+              aria-label="Instalar App HolyLink"
+              onClick={() => setShowPwaModal(true)}
+              className="flex-1 sm:flex-none min-h-[40px] bg-zinc-900 hover:bg-zinc-800 border border-amber-500/30 text-amber-400 hover:text-amber-300 text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 shadow-sm"
+            >
+              <Download className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="whitespace-nowrap">Instalar App</span>
+            </button>
+
             {!isProjectionOpen ? (
               <button
                 type="button"
@@ -1022,6 +1034,10 @@ export default function App() {
           message={toastConfig.message}
           type={toastConfig.type}
           onClose={() => setToastConfig(prev => ({ ...prev, isVisible: false }))}
+        />
+        <PWAInstallModal 
+          isOpen={showPwaModal} 
+          onClose={() => setShowPwaModal(false)} 
         />
       </div>
     );

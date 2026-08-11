@@ -1,4 +1,4 @@
-const CACHE_NAME = 'holylink-pwa-v3';
+const CACHE_NAME = 'holylink-pwa-v4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -12,8 +12,14 @@ const urlsToCache = [
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const url of urlsToCache) {
+        try {
+          await cache.add(url);
+        } catch (err) {
+          console.warn('SW cache.add skipped:', url, err);
+        }
+      }
     })
   );
 });
@@ -35,7 +41,6 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Network-First for HTML/navigation requests to ensure fresh index.html on new deployments
   const isNavigationRequest = event.request.mode === 'navigate' || 
     (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'));
 
@@ -58,18 +63,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-First with Cache Fallback for static assets
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response && response.status === 200 && response.type === 'basic') {
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((response) => {
+        if (response && response.status === 200 && (response.type === 'basic' || response.type === 'cors')) {
           const responseCopy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseCopy));
         }
         return response;
-      })
-      .catch(() => {
-        return caches.match(event.request);
-      })
+      });
+    })
   );
 });

@@ -105,7 +105,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 <div className="flex items-start gap-2.5">
                   <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                   <p className="text-xs leading-relaxed">
-                    <strong>Atenção ao Preview:</strong> Navegadores bloqueiam o botão automático de instalação dentro de quadros (iframes). Para instalar no seu dispositivo, abra a Vercel em uma aba separada.
+                    <strong>Atenção ao Preview:</strong> Navegadores bloqueiam a instalação automática dentro de quadros (iframes). Para instalar no seu dispositivo, abra a Vercel em uma aba separada.
                   </p>
                 </div>
                 <button
@@ -116,7 +116,20 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                   <span>Abrir HolyLink em Nova Aba</span>
                 </button>
               </div>
-            ) : null}
+            ) : (
+              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3">
+                <button
+                  onClick={handleInstallClick}
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Instalar App PWA no Dispositivo</span>
+                </button>
+                <p className="text-[11px] text-zinc-400 text-center leading-relaxed">
+                  Caso o atalho direto do navegador não apareça, veja o passo a passo de 2 cliques abaixo para o seu navegador.
+                </p>
+              </div>
+            )}
 
             {/* Platform Instructions Selector */}
             <div className="space-y-3">
