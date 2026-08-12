@@ -20,7 +20,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
     forceAppUpdate 
   } = usePWAInstall();
 
-  const { iconType, setIconType, iconTheme, setIconTheme } = usePWAIcons();
+  const { iconType, setIconType, iconTheme, setIconTheme, getIconUrl } = usePWAIcons();
   const [deviceType, setDeviceType] = useState<'android' | 'ios' | 'desktop'>('desktop');
   const [showSettings, setShowSettings] = useState(false);
 
@@ -103,9 +103,9 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 }}
               >
                 <img
-                  src={`/pwa/${iconType}-${iconTheme}-192.png?v=12`}
+                  src={getIconUrl()}
                   alt="HolyLink Logo"
-                  className="w-full h-full object-cover"
+                  className={`w-full h-full object-contain ${iconType === 'symbol' ? 'p-2' : 'p-1'}`}
                 />
               </div>
               <div>
