@@ -71,7 +71,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
                 <img
-                  src="/icon-192.png?v=8"
+                  src="/icon-192.png?v=9"
                   alt="HolyLink Logo"
                   className="w-16 h-16 rounded-2xl shadow-lg border border-amber-500/30 object-cover bg-zinc-900"
                   onLoad={() => setIcon192Loaded(true)}
@@ -315,7 +315,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                       {/* Icon 192 */}
                       <div className="flex items-center gap-2.5 p-2 rounded bg-zinc-950 border border-zinc-850">
                         <img
-                          src="/icon-192.png?v=8"
+                          src="/icon-192.png?v=9"
                           alt="192 Icon"
                           className="w-7 h-7 rounded border border-amber-500/30 object-cover shrink-0"
                           onLoad={() => setIcon192Loaded(true)}
@@ -333,7 +333,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                       {/* Logo Full */}
                       <div className="flex items-center gap-2.5 p-2 rounded bg-zinc-950 border border-zinc-850">
                         <img
-                          src="/logo-full.png?v=8"
+                          src="/logo-full.png?v=9"
                           alt="Logo Completo"
                           className="h-7 w-auto max-w-[120px] object-contain shrink-0"
                           onLoad={() => setLogoFullLoaded(true)}
@@ -351,9 +351,9 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                       {/* Logo Text */}
                       <div className="flex items-center gap-2.5 p-2 rounded bg-zinc-950 border border-zinc-850">
                         <img
-                          src="/logo-text.png?v=8"
+                          src="/logo-text.png?v=9"
                           alt="Tipografia Logo"
-                          className="h-6 w-[90px] object-cover object-center shrink-0"
+                          className="h-7 w-[100px] object-cover object-[center_35%] shrink-0"
                           onLoad={() => setLogoTextLoaded(true)}
                           onError={() => setLogoTextLoaded(false)}
                         />

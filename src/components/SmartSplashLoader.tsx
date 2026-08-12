@@ -123,7 +123,7 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
         {/* Logo / Header */}
         <div className="flex flex-col items-center justify-center mb-4">
           <div className="h-16 px-4 py-1.5 rounded-2xl bg-zinc-950/80 border border-amber-500/30 flex items-center justify-center shadow-xl overflow-hidden backdrop-blur-md">
-            <img src="/logo-full.png?v=8" alt="HolyLink Logo Completo" className="h-full w-auto object-contain" />
+            <img src="/logo-full.png?v=9" alt="HolyLink Logo Completo" className="h-full w-auto object-contain" />
           </div>
         </div>
 
