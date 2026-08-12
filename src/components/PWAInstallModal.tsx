@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Download, ExternalLink, X, Smartphone, Monitor, Share, CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Download, ExternalLink, X, Smartphone, Monitor, Share, CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, Palette, ImageIcon } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { usePWAIcons, PWAIconType, PWAIconTheme } from '../hooks/usePWAIcons';
 
 interface PWAInstallModalProps {
   isOpen: boolean;
@@ -19,7 +20,9 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
     forceAppUpdate 
   } = usePWAInstall();
 
+  const { iconType, setIconType, iconTheme, setIconTheme } = usePWAIcons();
   const [deviceType, setDeviceType] = useState<'android' | 'ios' | 'desktop'>('desktop');
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
@@ -45,6 +48,18 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
     }
   };
 
+  const iconOptions: { id: PWAIconType; label: string }[] = [
+    { id: 'symbol', label: 'Símbolo' },
+    { id: 'full', label: 'Logo Completo' },
+    { id: 'text', label: 'Tipografia' },
+  ];
+
+  const themeOptions: { id: PWAIconTheme; label: string; color: string }[] = [
+    { id: 'dark', label: 'Escuro', color: '#020617' },
+    { id: 'light', label: 'Claro', color: '#ffffff' },
+    { id: 'transparent', label: 'Invisível', color: 'transparent' },
+  ];
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
@@ -66,15 +81,33 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
             <X className="w-5 h-5" />
           </button>
 
+          {/* Settings Toggle */}
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`absolute top-4 left-4 p-2 rounded-full transition-colors z-10 cursor-pointer ${showSettings ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}
+            title="Personalizar Ícone"
+          >
+            <Palette className="w-5 h-5" />
+          </button>
+
           <div className="space-y-6">
             
             {/* Title & App Logo Header */}
-            <div className="flex flex-col items-center text-center gap-3 mt-4">
-              <img
-                src="/icon-192.png?v=11"
-                alt="HolyLink Logo"
-                className="w-20 h-20 rounded-2xl shadow-lg border border-amber-500/30 object-cover bg-zinc-900"
-              />
+            <div className="flex flex-col items-center text-center gap-3 mt-8">
+              <div 
+                className="w-20 h-20 rounded-2xl shadow-lg border border-amber-500/30 overflow-hidden relative flex items-center justify-center transition-colors duration-300"
+                style={{ 
+                  backgroundColor: iconTheme === 'light' ? '#ffffff' : iconTheme === 'dark' ? '#020617' : 'transparent',
+                  backgroundImage: iconTheme === 'transparent' ? 'repeating-conic-gradient(#3f3f46 0% 25%, #27272a 0% 50%)' : 'none',
+                  backgroundSize: iconTheme === 'transparent' ? '16px 16px' : 'auto'
+                }}
+              >
+                <img
+                  src={`/pwa/${iconType}-${iconTheme}-192.png?v=12`}
+                  alt="HolyLink Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <div>
                 <h3 className="text-xl font-bold text-white tracking-wide">HolyLink App</h3>
                 <p className="text-xs text-zinc-400 mt-1">
@@ -82,6 +115,65 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 </p>
               </div>
             </div>
+
+            {/* Icon Customizer (Collapsible) */}
+            <AnimatePresence>
+              {showSettings && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-4 text-sm">
+                    {isInstalled && (
+                      <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <p>Como o app já está instalado, qualquer mudança no ícone exigirá que você <strong>desinstale o aplicativo do celular</strong> e instale novamente para ver o novo ícone na tela inicial.</p>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> Estilo do Ícone</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {iconOptions.map((opt) => (
+                          <button
+                            key={opt.id}
+                            onClick={() => setIconType(opt.id)}
+                            className={`py-2 text-[10px] font-medium rounded-lg border transition-all cursor-pointer ${iconType === opt.id ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5"><Palette className="w-3.5 h-3.5" /> Cor de Fundo</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {themeOptions.map((opt) => (
+                          <button
+                            key={opt.id}
+                            onClick={() => setIconTheme(opt.id)}
+                            className={`py-2 px-1 text-[10px] font-medium rounded-lg border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${iconTheme === opt.id ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                          >
+                            <span 
+                              className="w-4 h-4 rounded-full border border-zinc-700 block" 
+                              style={{ 
+                                backgroundColor: opt.color,
+                                backgroundImage: opt.id === 'transparent' ? 'repeating-conic-gradient(#52525b 0% 25%, #3f3f46 0% 50%)' : 'none',
+                                backgroundSize: opt.id === 'transparent' ? '6px 6px' : 'auto'
+                              }}
+                            />
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* FORCE UPDATE BANNER */}
             {hasUpdateAvailable && (

@@ -27,6 +27,7 @@ import { MonitorPanel } from './components/operator/MonitorPanel';
 import { useProjectionState } from './hooks/useProjectionState';
 import { useCustomMedia } from './hooks/useCustomMedia';
 import { usePWAInstall } from './hooks/usePWAInstall';
+import { usePWAIcons } from './hooks/usePWAIcons';
 
 import { setupGlobalAudioUnlock } from './utils/permissions';
 
@@ -55,6 +56,9 @@ const DEFAULT_SLIDES: SlideType[] = [
 ];
 
 export default function App() {
+  // Init PWA icons logic to sync head tags dynamically
+  usePWAIcons();
+
   // Screen Wake Lock API - prevents browser sleep and keeps connection alive continuously
   useWakeLock(true);
 

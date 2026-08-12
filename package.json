@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "node scripts/generate-icons.js && node scripts/verify-build.js && vite build && node scripts/verify-build.js --post",
+    "build": "node scripts/generate-pwa-assets.js && node scripts/verify-build.js && vite build && node scripts/verify-build.js --post",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
