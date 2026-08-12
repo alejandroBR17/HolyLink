@@ -121,12 +121,12 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
         <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Logo / Header */}
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-zinc-900 border border-amber-500/30 flex items-center justify-center mb-4 shadow-inner">
-          <Sparkles className="w-7 h-7 text-amber-500 animate-pulse" />
+        <div className="w-16 h-16 rounded-2xl bg-zinc-950 border border-amber-500/30 flex items-center justify-center mb-4 shadow-xl overflow-hidden p-1">
+          <img src="/icon-512.png" alt="HolyLink Logo" className="w-full h-full object-contain rounded-xl" />
         </div>
 
         <h1 className="text-xl font-extrabold tracking-tight text-zinc-100 mb-0.5">
-          Holyrics Projection Pro
+          HolyLink
         </h1>
         <p className="text-[11px] text-zinc-500 font-medium mb-5">
           {stage === 'splash' && 'Painel de Transmissão Inteligente'}
