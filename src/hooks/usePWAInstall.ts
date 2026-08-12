@@ -21,6 +21,8 @@ export function usePWAInstall() {
   const [swStatus, setSwStatus] = useState<'checking' | 'active' | 'not_registered' | 'unsupported'>('checking');
   const [manifestStatus, setManifestStatus] = useState<'checking' | 'ok' | 'error'>('checking');
   const [isHttps, setIsHttps] = useState<boolean>(true);
+  const [hasUpdateAvailable, setHasUpdateAvailable] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
   const checkStatus = useCallback(async () => {
     // Check HTTPS
@@ -47,8 +49,27 @@ export function usePWAInstall() {
     if ('serviceWorker' in navigator) {
       try {
         const reg = await navigator.serviceWorker.getRegistration();
-        if (reg && (reg.active || reg.installing || reg.waiting)) {
+        if (reg) {
           setSwStatus('active');
+
+          // Check if there's a waiting SW (new version downloaded)
+          if (reg.waiting) {
+            setHasUpdateAvailable(true);
+          }
+
+          // Trigger background check for new SW version on server
+          reg.update().catch(() => {});
+
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  setHasUpdateAvailable(true);
+                }
+              });
+            }
+          });
         } else {
           // Attempt manual registration if missing
           const newReg = await navigator.serviceWorker.register('/sw.js');
@@ -79,6 +100,36 @@ export function usePWAInstall() {
     }
   }, []);
 
+  const forceAppUpdate = useCallback(async () => {
+    setIsUpdating(true);
+    try {
+      // 1. Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          await reg.unregister();
+        }
+      }
+
+      // 2. Clear all cache storages
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      }
+
+      // 3. Clear localStorage flags if needed, then hard reload with cache-busting timestamp
+      const url = new URL(window.location.href);
+      url.searchParams.set('v', Date.now().toString());
+      window.location.href = url.toString();
+    } catch (err) {
+      console.error('Erro ao forçar atualização:', err);
+      window.location.reload();
+    }
+  }, []);
+
   useEffect(() => {
     checkStatus();
 
@@ -98,12 +149,18 @@ export function usePWAInstall() {
       setDeferredPrompt(null);
     };
 
+    const handleFocus = () => {
+      checkStatus();
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('focus', handleFocus);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('focus', handleFocus);
     };
   }, [checkStatus]);
 
@@ -133,7 +190,10 @@ export function usePWAInstall() {
     swStatus,
     manifestStatus,
     isHttps,
+    hasUpdateAvailable,
+    isUpdating,
     triggerInstall,
     checkStatus,
+    forceAppUpdate,
   };
 }

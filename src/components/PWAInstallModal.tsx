@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Download, ExternalLink, X, Smartphone, Monitor, Share, CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, ChevronDown, ChevronUp, Image as ImageIcon } from 'lucide-react';
+import { Download, ExternalLink, X, Smartphone, Monitor, Share, CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, ChevronDown, ChevronUp, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface PWAInstallModalProps {
@@ -9,11 +9,26 @@ interface PWAInstallModalProps {
 }
 
 export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
-  const { isInstallable, isInstalled, isInIframe, swStatus, manifestStatus, isHttps, triggerInstall, checkStatus } = usePWAInstall();
+  const { 
+    isInstallable, 
+    isInstalled, 
+    isInIframe, 
+    swStatus, 
+    manifestStatus, 
+    isHttps, 
+    hasUpdateAvailable,
+    isUpdating,
+    triggerInstall, 
+    checkStatus,
+    forceAppUpdate 
+  } = usePWAInstall();
+
   const [activeTab, setActiveTab] = useState<'android' | 'ios' | 'desktop'>('android');
   const [showDiagnostics, setShowDiagnostics] = useState<boolean>(false);
   const [icon192Loaded, setIcon192Loaded] = useState<boolean | null>(null);
   const [icon512Loaded, setIcon512Loaded] = useState<boolean | null>(null);
+  const [logoFullLoaded, setLogoFullLoaded] = useState<boolean | null>(null);
+  const [logoTextLoaded, setLogoTextLoaded] = useState<boolean | null>(null);
 
   if (!isOpen) return null;
 
@@ -52,7 +67,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
           {/* Scrollable Content */}
           <div className="overflow-y-auto pr-1 space-y-5 custom-scrollbar">
             
-            {/* Title & App Icon Header */}
+            {/* Title & App Logo Header */}
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
                 <img
@@ -68,15 +83,41 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-bold text-white tracking-wide">Instalar HolyLink</h3>
+                  <h3 className="text-xl font-bold text-white tracking-wide">HolyLink App</h3>
                   <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full">
-                    App PWA
+                    PWA Nativo
                   </span>
                 </div>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  App nativo para Celular e Computador, sem barra de navegação e com acesso direto.
+                  Gerenciamento de PWA, sincronização local e atualização de versão.
                 </p>
               </div>
+            </div>
+
+            {/* FORCE UPDATE BANNER (Para resolver PWA que não atualiza) */}
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-200 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className={`w-4 h-4 text-amber-400 ${isUpdating ? 'animate-spin' : ''}`} />
+                  <span className="font-bold text-xs uppercase tracking-wider text-amber-300">
+                    {hasUpdateAvailable ? 'Nova Versão Encontrada!' : 'Atualização de Versão PWA'}
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-zinc-400">Cache Busting</span>
+              </div>
+
+              <p className="text-xs leading-relaxed text-zinc-300">
+                Se o seu PWA instalado ainda estiver mostrando uma versão antiga do site, clique no botão abaixo para limpar o cache local e carregar a última versão enviada para a Vercel.
+              </p>
+
+              <button
+                onClick={forceAppUpdate}
+                disabled={isUpdating}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} />
+                <span>{isUpdating ? 'Atualizando e Recarregando...' : '🔄 Forçar Atualização para Nova Versão'}</span>
+              </button>
             </div>
 
             {/* Main Status Actions */}
@@ -86,7 +127,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 <div>
                   <p className="font-bold text-sm">HolyLink já está instalado!</p>
                   <p className="text-xs text-emerald-400/80">
-                    Você já está executando o aplicativo em modo nativo Standalone.
+                    Você já está executando o aplicativo em modo nativo Standalone no seu dispositivo.
                   </p>
                 </div>
               </div>
@@ -208,7 +249,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
               </div>
             </div>
 
-            {/* Diagnostic Box for Vercel Verification */}
+            {/* Diagnostic Box for Vercel Verification & Brand Showcase */}
             <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 overflow-hidden text-xs">
               <button
                 onClick={() => setShowDiagnostics(!showDiagnostics)}
@@ -216,7 +257,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
               >
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>Diagnóstico PWA em Tempo Real</span>
+                  <span>Diagnóstico PWA & Logotipos Oficiais</span>
                 </div>
                 {showDiagnostics ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
@@ -255,12 +296,12 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                     </div>
                   </div>
 
-                  {/* Icon Image Live Loader Test */}
+                  {/* Complete 3 Logos Showcase */}
                   <div className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-zinc-400 font-semibold flex items-center gap-1">
                         <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
-                        Verificação de Ícones na Vercel:
+                        Logotipos Oficiais HolyLink no Sistema:
                       </span>
                       <button
                         onClick={() => checkStatus()}
@@ -270,37 +311,59 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-[10px]">
-                      <div className="flex items-center gap-2 p-1.5 rounded bg-zinc-950 border border-zinc-850">
+                    <div className="flex flex-col gap-2 text-[10px]">
+                      {/* Icon 192 */}
+                      <div className="flex items-center gap-2.5 p-2 rounded bg-zinc-950 border border-zinc-850">
                         <img
                           src="/icon-192.png"
                           alt="192 Icon"
-                          className="w-7 h-7 rounded border border-amber-500/30 object-cover"
+                          className="w-7 h-7 rounded border border-amber-500/30 object-cover shrink-0"
                           onLoad={() => setIcon192Loaded(true)}
                           onError={() => setIcon192Loaded(false)}
                         />
-                        <div>
-                          <p className="font-bold text-zinc-200">icon-192.png</p>
-                          <p className={icon192Loaded === true ? "text-emerald-400 font-semibold" : icon192Loaded === false ? "text-rose-400 font-semibold" : "text-zinc-400"}>
-                            {icon192Loaded === true ? "✓ Carregou 100%" : icon192Loaded === false ? "❌ Não encontrado" : "Carregando..."}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-zinc-200">Símbolo Principal (icon-192.png)</p>
+                          <p className="text-[9px] text-zinc-400 truncate">Usado no Favicon, PWA e Cabeçalho</p>
                         </div>
+                        <span className={icon192Loaded === true ? "text-emerald-400 font-bold" : "text-zinc-500"}>
+                          {icon192Loaded === true ? "✓ OK" : "Carregando..."}
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-2 p-1.5 rounded bg-zinc-950 border border-zinc-850">
+                      {/* Logo Full */}
+                      <div className="flex items-center gap-2.5 p-2 rounded bg-zinc-950 border border-zinc-850">
                         <img
-                          src="/icon-512.png"
-                          alt="512 Icon"
-                          className="w-7 h-7 rounded border border-amber-500/30 object-cover"
-                          onLoad={() => setIcon512Loaded(true)}
-                          onError={() => setIcon512Loaded(false)}
+                          src="/logo-full.png"
+                          alt="Logo Completo"
+                          className="h-7 w-auto max-w-[120px] object-contain shrink-0"
+                          onLoad={() => setLogoFullLoaded(true)}
+                          onError={() => setLogoFullLoaded(false)}
                         />
-                        <div>
-                          <p className="font-bold text-zinc-200">icon-512.png</p>
-                          <p className={icon512Loaded === true ? "text-emerald-400 font-semibold" : icon512Loaded === false ? "text-rose-400 font-semibold" : "text-zinc-400"}>
-                            {icon512Loaded === true ? "✓ Carregou 100%" : icon512Loaded === false ? "❌ Não encontrado" : "Carregando..."}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-zinc-200">Logotipo Completo (logo-full.png)</p>
+                          <p className="text-[9px] text-zinc-400 truncate">Usado na Tela de Splash e Telas Iniciais</p>
                         </div>
+                        <span className={logoFullLoaded === true ? "text-emerald-400 font-bold" : "text-zinc-500"}>
+                          {logoFullLoaded === true ? "✓ OK" : "Carregando..."}
+                        </span>
+                      </div>
+
+                      {/* Logo Text */}
+                      <div className="flex items-center gap-2.5 p-2 rounded bg-zinc-950 border border-zinc-850">
+                        <img
+                          src="/logo-text.png"
+                          alt="Tipografia Logo"
+                          className="h-6 w-auto max-w-[120px] object-contain shrink-0"
+                          onLoad={() => setLogoTextLoaded(true)}
+                          onError={() => setLogoTextLoaded(false)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-zinc-200">Tipografia Oficial (logo-text.png)</p>
+                          <p className="text-[9px] text-zinc-400 truncate">Usado na Barra Superior do Operador</p>
+                        </div>
+                        <span className={logoTextLoaded === true ? "text-emerald-400 font-bold" : "text-zinc-500"}>
+                          {logoTextLoaded === true ? "✓ OK" : "Carregando..."}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -314,7 +377,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
           {/* Footer note */}
           <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500 shrink-0">
             <span className="flex items-center gap-1 text-emerald-500/80 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5" /> PWA Nativo com Service Worker
+              <ShieldCheck className="w-3.5 h-3.5" /> PWA Nativo com Auto-Atualização
             </span>
             <button
               onClick={handleOpenNewTab}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'holylink-pwa-v4';
+const CACHE_NAME = 'holylink-pwa-v6';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -6,8 +6,16 @@ const urlsToCache = [
   '/favicon.png',
   '/icon-192.png',
   '/icon-512.png',
-  '/apple-touch-icon.png'
+  '/apple-touch-icon.png',
+  '/logo-full.png',
+  '/logo-text.png'
 ];
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -30,6 +38,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log('Removendo cache antigo:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -63,6 +72,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Network-First for JS and CSS assets to guarantee fresh updates
+  const isCodeAsset = event.request.url.includes('/assets/') || event.request.url.endsWith('.js') || event.request.url.endsWith('.css');
+
+  if (isCodeAsset) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseCopy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseCopy));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Cache-First for static images/icons
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;

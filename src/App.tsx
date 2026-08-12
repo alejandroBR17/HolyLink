@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen, 
-  CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download
+  CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download, Sparkles
 } from 'lucide-react';
 import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS } from './data';
 import { getNextMeeting, getSlideDuration } from './utils';
@@ -187,7 +187,7 @@ export default function App() {
 
   const [isSmartBooting, setIsSmartBooting] = useState<boolean>(true);
   const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
-  const { isInstalled } = usePWAInstall();
+  const { isInstalled, hasUpdateAvailable, forceAppUpdate, isUpdating } = usePWAInstall();
 
   // Time ticker (updates currentTime every second) & global audio unlock
   useEffect(() => {
@@ -565,17 +565,33 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        {/* PWA UPDATE NOTIFICATION BANNER */}
+        {hasUpdateAvailable && (
+          <div className="bg-amber-500 text-zinc-950 px-4 py-2 flex items-center justify-between text-xs font-bold shrink-0 z-50 shadow-md">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-zinc-950 animate-bounce" />
+              <span>Nova versão do HolyLink disponível! Atualize para ter acesso aos recursos mais recentes.</span>
+            </div>
+            <button
+              onClick={forceAppUpdate}
+              disabled={isUpdating}
+              className="bg-zinc-950 hover:bg-zinc-900 text-amber-400 px-3 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer shadow flex items-center gap-1.5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isUpdating ? 'animate-spin' : ''}`} />
+              <span>{isUpdating ? 'Atualizando...' : 'Atualizar PWA Agora'}</span>
+            </button>
+          </div>
+        )}
+
         {/* TOP BAR / NAVIGATION */}
         <header className="h-auto lg:h-16 px-4 lg:px-6 py-3 lg:py-0 bg-zinc-950 border-b border-zinc-900 flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-10 shrink-0">
           <div className="flex items-center justify-between w-full lg:w-auto gap-3">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl overflow-hidden border border-amber-500/30 shadow-sm shrink-0 bg-zinc-900 flex items-center justify-center p-0.5">
-                <img src="/icon-192.png" alt="HolyLink Logo" className="w-full h-full object-contain rounded-lg" />
+                <img src="/icon-192.png" alt="HolyLink Símbolo" className="w-full h-full object-contain rounded-lg" />
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2">
-                <h1 className="text-white font-black tracking-tight text-base flex items-center gap-1.5">
-                  HolyLink
-                </h1>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <img src="/logo-text.png" alt="HolyLink Tipografia" className="h-5 w-auto object-contain shrink-0" />
                 <span className="text-zinc-400 text-xs font-semibold sm:border-l sm:border-zinc-800 sm:pl-2">
                   Painel do Operador
                 </span>
