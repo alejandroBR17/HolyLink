@@ -821,14 +821,15 @@ export default function App() {
                       role="tab"
                       aria-selected={isActive}
                       onClick={() => setActiveMobileTab(item.id as any)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 overflow-hidden relative ${
                         isActive
-                          ? "bg-amber-500/10 text-amber-400 shadow-sm border border-amber-500/20 font-extrabold"
-                          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/80 border border-transparent"
+                          ? "bg-gradient-to-b from-zinc-800 to-zinc-900 border-t border-zinc-700 border-b-2 border-b-amber-500 text-amber-400 shadow-[inset_0_2px_6px_rgba(0,0,0,0.6),0_4px_10px_rgba(0,0,0,0.5)] font-extrabold translate-y-[1px]"
+                          : "bg-transparent hover:bg-gradient-to-b hover:from-zinc-800 hover:to-zinc-900 text-zinc-400 border-t border-transparent hover:border-t-zinc-700 hover:border-b-zinc-950 hover:shadow-[0_4px_6px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:-translate-y-[1px]"
                       }`}
                     >
-                      <IconComponent className={`w-4 h-4 shrink-0 ${isActive ? "text-amber-500" : "text-zinc-500"}`} />
-                      <span>{item.label}</span>
+                      {isActive && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-t-2xl" />}
+                      <IconComponent className={`w-4 h-4 shrink-0 relative z-10 ${isActive ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" : "text-zinc-500"}`} />
+                      <span className="relative z-10 drop-shadow-md">{item.label}</span>
                     </button>
                   );
                 })}

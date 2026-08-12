@@ -565,41 +565,45 @@ export function ControlsPanel({
       <div className="flex flex-col gap-6">
         
         {/* QUICK ACTION BUTTONS */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-          <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-            <Tv className="w-4.5 h-4.5 text-amber-500" />
+        <div className="bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-3xl p-6 shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.1)] border-b-4 border-zinc-950 flex flex-col gap-5">
+          <h3 className="text-zinc-300 font-extrabold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 drop-shadow-md">
+            <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8),inset_0_1px_1px_rgba(255,255,255,0.6)] animate-pulse" />
             Controle de Saída HDMI
           </h3>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}
-              className={`p-4 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+              className={`relative p-5 rounded-2xl text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer overflow-hidden ${
                 blackoutEnabled
-                  ? "bg-red-600/10 border-red-500/60 text-red-500 shadow-[0_0_15px_rgba(220,38,38,0.15)]"
-                  : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700"
+                  ? "bg-gradient-to-b from-red-900 to-red-950 border border-red-900/50 text-red-300 shadow-[inset_0_3px_10px_rgba(0,0,0,0.9),0_0_20px_rgba(220,38,38,0.4)] translate-y-[2px]"
+                  : "bg-gradient-to-b from-zinc-700 to-zinc-800 border-t border-zinc-600 border-b border-zinc-900 text-zinc-300 shadow-[0_6px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:from-zinc-600 hover:to-zinc-800 active:translate-y-[2px] active:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
               }`}
             >
-              <EyeOff className={`w-6 h-6 ${blackoutEnabled ? "animate-pulse" : "text-zinc-500"}`} />
-              <div className="text-center">
-                <p className="font-bold text-xs">{blackoutEnabled ? "Tela Preta Ativa" : "Tela Preta"}</p>
-                <p className="text-[9px] text-zinc-500 font-normal mt-0.5">Corta a transmissão</p>
+              <EyeOff className={`w-7 h-7 relative z-10 transition-colors ${blackoutEnabled ? "text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.8)] animate-pulse" : "text-zinc-400 drop-shadow-md"}`} />
+              <div className="text-center relative z-10">
+                <p className="font-extrabold text-xs tracking-wide drop-shadow-md">{blackoutEnabled ? "Tela Preta Ativa" : "Tela Preta"}</p>
+                <p className="text-[9px] font-semibold text-zinc-400 mt-0.5 opacity-80">Corta a transmissão</p>
               </div>
+              {/* Glass reflection overlay */}
+              {!blackoutEnabled && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-t-2xl" />}
             </button>
 
             <button
               onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}
-              className={`p-4 rounded-xl border text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+              className={`relative p-5 rounded-2xl text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer overflow-hidden ${
                 clearContentEnabled
-                  ? "bg-amber-500/10 border-amber-500/50 text-amber-500 shadow-[0_0_15px_rgba(234,179,8,0.1)]"
-                  : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-zinc-700"
+                  ? "bg-gradient-to-b from-amber-700 to-amber-900 border border-amber-900/50 text-amber-200 shadow-[inset_0_3px_10px_rgba(0,0,0,0.9),0_0_20px_rgba(245,158,11,0.3)] translate-y-[2px]"
+                  : "bg-gradient-to-b from-zinc-700 to-zinc-800 border-t border-zinc-600 border-b border-zinc-900 text-zinc-300 shadow-[0_6px_10px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:from-zinc-600 hover:to-zinc-800 active:translate-y-[2px] active:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
               }`}
             >
-              <Sparkles className={`w-6 h-6 ${clearContentEnabled ? "text-amber-500" : "text-zinc-500"}`} />
-              <div className="text-center">
-                <p className="font-bold text-xs">{clearContentEnabled ? "Texto Ocultado" : "Limpar Slide"}</p>
-                <p className="text-[9px] text-zinc-500 font-normal mt-0.5">Mantém apenas o fundo</p>
+              <Sparkles className={`w-7 h-7 relative z-10 transition-colors ${clearContentEnabled ? "text-amber-300 drop-shadow-[0_0_8px_rgba(252,211,77,0.8)]" : "text-zinc-400 drop-shadow-md"}`} />
+              <div className="text-center relative z-10">
+                <p className="font-extrabold text-xs tracking-wide drop-shadow-md">{clearContentEnabled ? "Texto Ocultado" : "Limpar Slide"}</p>
+                <p className="text-[9px] font-semibold text-zinc-400 mt-0.5 opacity-80">Mantém apenas o fundo</p>
               </div>
+              {/* Glass reflection overlay */}
+              {!clearContentEnabled && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-t-2xl" />}
             </button>
           </div>
 
@@ -1129,8 +1133,8 @@ export function ControlsPanel({
         <PerformanceControlModule />
 
         {/* AUDIO MIXER MODULE */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-          <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider border-b border-zinc-800/50 pb-3">
+        <div className="bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-3xl p-6 shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.1)] border-b-4 border-zinc-950 flex flex-col gap-4">
+          <h3 className="text-zinc-300 font-extrabold text-[10px] uppercase tracking-[0.2em] border-b border-zinc-800/80 pb-3 drop-shadow-md">
             Controle de Áudio Geral
           </h3>
 
@@ -1138,14 +1142,14 @@ export function ControlsPanel({
         </div>
 
         {/* TICKER MODULE */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-          <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
-            <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
-              <Megaphone className="w-4 h-4 text-amber-500" />
+        <div className="bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-3xl p-6 shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.1)] border-b-4 border-zinc-950 flex flex-col gap-5">
+          <div className="border-b border-zinc-800/80 pb-3 flex items-center justify-between drop-shadow-md">
+            <h3 className="text-zinc-300 font-extrabold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
+              <Megaphone className="w-4 h-4 text-amber-500 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
               Letreiro Digital (Ticker)
             </h3>
             {tickerText && (
-              <span className="text-[8px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Ativo</span>
+              <span className="text-[8px] bg-gradient-to-b from-emerald-600 to-emerald-800 border border-emerald-900 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] text-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse drop-shadow-md">Ativo</span>
             )}
           </div>
 
@@ -1156,25 +1160,25 @@ export function ControlsPanel({
                 placeholder="Ex: Reunião de obreiros hoje às 18h..."
                 value={tickerText || ''}
                 onChange={(e) => updateStateAndBroadcast('tickerText', e.target.value || null)}
-                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 font-sans"
+                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 shadow-[inset_0_3px_6px_rgba(0,0,0,0.6)] focus:outline-none focus:border-amber-500/50 font-sans transition-colors"
               />
               {tickerText && (
                 <button 
                   onClick={() => updateStateAndBroadcast('tickerText', null)}
-                  className="p-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg hover:bg-red-500/20 transition-all cursor-pointer"
+                  className="px-3 bg-gradient-to-b from-red-800 to-red-950 border-t border-red-700 border-b border-zinc-950 text-red-300 rounded-xl shadow-[0_4px_6px_rgba(0,0,0,0.4),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:from-red-700 hover:to-red-900 active:translate-y-[1px] active:shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)] transition-all cursor-pointer flex items-center justify-center"
                   title="Limpar Letreiro"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4 drop-shadow-md" />
                 </button>
               )}
             </div>
             
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5 mt-1">
               {tickerSuggestions.map((sug) => (
                 <button
                   key={sug}
                   onClick={() => updateStateAndBroadcast('tickerText', sug)}
-                  className="text-[9px] bg-zinc-950 border border-zinc-850 hover:border-zinc-700 px-2 py-1 rounded text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                  className="text-[9px] bg-gradient-to-b from-zinc-700 to-zinc-800 border-t border-zinc-600 border-b border-zinc-900 shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg text-zinc-300 hover:text-white active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] transition-all cursor-pointer font-medium"
                 >
                   {sug}
                 </button>
