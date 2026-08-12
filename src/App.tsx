@@ -588,10 +588,10 @@ export default function App() {
           <div className="flex items-center justify-between w-full lg:w-auto gap-3">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl overflow-hidden border border-amber-500/30 shadow-sm shrink-0 bg-zinc-900 flex items-center justify-center p-0.5">
-                <img src="/icon-192.png" alt="HolyLink Símbolo" className="w-full h-full object-contain rounded-lg" />
+                <img src="/icon-192.png?v=8" alt="HolyLink Símbolo" className="w-full h-full object-contain rounded-lg" />
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                <img src="/logo-text.png" alt="HolyLink Tipografia" className="h-5 w-auto object-contain shrink-0" />
+                <img src="/logo-text.png?v=8" alt="HolyLink Tipografia" className="h-5 w-[76px] object-cover object-center shrink-0" />
                 <span className="text-zinc-400 text-xs font-semibold sm:border-l sm:border-zinc-800 sm:pl-2">
                   Painel do Operador
                 </span>
