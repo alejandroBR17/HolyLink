@@ -1164,7 +1164,7 @@ export function ControlsPanel({
                 placeholder="Ex: Reunião de obreiros hoje às 18h..."
                 value={tickerText || ''}
                 onChange={(e) => updateStateAndBroadcast('tickerText', e.target.value || null)}
-                className="flex-1 bg-[#030303] border border-[#222] rounded-lg px-4 py-3 text-xs text-zinc-200 shadow-[inset_0_2px_10px_rgba(0,0,0,1)] focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 font-mono transition-all"
+                className="flex-1 bg-[#030303] border border-[#27272a] rounded-xl px-4 py-3 text-sm font-sans font-medium text-zinc-100 placeholder:text-zinc-600 shadow-[inset_0_2px_10px_rgba(0,0,0,1)] focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/40 transition-all"
               />
               {tickerText && (
                 <button 
@@ -1182,7 +1182,7 @@ export function ControlsPanel({
                 <button
                   key={sug}
                   onClick={() => updateStateAndBroadcast('tickerText', sug)}
-                  className="text-[9px] font-mono bg-[#111113] border border-[#222] hover:border-[#444] shadow-[0_2px_4px_rgba(0,0,0,0.3)] px-3 py-1.5 rounded text-zinc-400 hover:text-white active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] transition-all cursor-pointer uppercase"
+                  className="text-[10px] font-sans font-semibold bg-[#111113] border border-[#27272a] hover:border-[#444] shadow-[0_2px_4px_rgba(0,0,0,0.5)] px-3 py-1.5 rounded-lg text-zinc-300 hover:text-white hover:bg-[#1a1a1e] active:translate-y-[1px] transition-all cursor-pointer"
                 >
                   {sug}
                 </button>

@@ -314,19 +314,20 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
     <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
       
       {/* SEÇÃO DA FILA DE REPRODUÇÃO */}
-      <section aria-label="Playlists e Fila de Slides" className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col gap-4">
+      <section aria-label="Playlists e Fila de Slides" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
         
         {/* CABEÇALHO DA FILA */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-zinc-800/60 pb-4">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#333] pb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 shrink-0">
-              <Layers className="w-5 h-5" />
+            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <Layers className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider">Fila e Sequência de Projeção</h2>
-                <span className="bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
-                  {activeSlides.length} Ativos • {formatTotalTime(totalLoopDuration)}
+                <h2 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider font-sans">Fila e Sequência de Projeção</h2>
+                <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                  {activeSlides.length} ATIVOS • {formatTotalTime(totalLoopDuration)}
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Organize a sequência de exibição na projeção</p>
@@ -342,8 +343,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   handleReorderInterleaved();
                   showAlert("Fila intercalada dinamicamente (1 slide por categoria por vez)", "success");
                 }}
-                title="Intercalar dinamicamente: 1 de cada categoria por vez (Aviso -> Agenda -> Dízimo -> Campanha -> Mídia)"
-                className="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
+                title="Intercalar dinamicamente: 1 de cada categoria por vez"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-amber-400 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
                 <span className="hidden sm:inline">Intercalar Categoria</span>
@@ -357,8 +358,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   handleReorderGrouped();
                   showAlert("Fila reorganizada por categoria com sucesso", "info");
                 }}
-                title="Agrupar por categoria (Avisos -> Agendas -> Dízimos -> Campanhas -> Mídias)"
-                className="bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
+                title="Agrupar por categoria"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-300 hover:text-white text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span className="hidden sm:inline">Agrupar por Tipo</span>
@@ -379,7 +380,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   );
                 }}
                 title="Restaurar a sequência padrão de fábrica"
-                className="bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-400 hover:text-zinc-200 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Restaurar Padrão</span>
@@ -391,17 +392,17 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                 type="button"
                 onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
                 title="Clique para destravar e voltar ao carrossel automático"
-                className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 hover:bg-amber-500/20 transition-all font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px] shrink-0"
+                className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] active:translate-y-[1px] cursor-pointer min-h-[38px] shrink-0"
               >
-                <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400 shrink-0" />
+                <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0" />
                 <span className="hidden sm:inline">Desfixar Slide</span>
                 <span className="sm:hidden">Voltar</span>
               </button>
             ) : (
-              <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-2 min-h-[32px] shrink-0">
+              <span className="bg-emerald-950/80 border border-emerald-900/50 text-emerald-400 text-[10px] font-mono font-bold px-3 py-1.5 rounded uppercase tracking-wider flex items-center gap-2 min-h-[32px] shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
                 <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0" />
-                <span className="hidden sm:inline">Loop Automático Ativo</span>
-                <span className="sm:hidden">Loop Ativo</span>
+                <span className="hidden sm:inline">LOOP AUTOMÁTICO ATIVO</span>
+                <span className="sm:hidden">LOOP ATIVO</span>
               </span>
             )}
           </div>
@@ -440,7 +441,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         )}
 
         {/* FERRAMENTAS DE BUSCA E FILTROS DA FILA */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
+        <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#030303] p-2.5 rounded-xl border border-[#222] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
           
           {/* CAMPO DE BUSCA */}
           <div className="relative flex-1">
@@ -450,7 +451,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar slide na fila..."
-              className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-amber-500 placeholder-zinc-500 transition-all"
+              className="w-full bg-[#09090b] border border-[#27272a] text-zinc-100 text-xs font-sans font-medium pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/40 placeholder:text-zinc-600 transition-all"
             />
             {searchTerm && (
               <button
@@ -464,14 +465,14 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           </div>
 
           {/* BOTÕES DE FILTRO */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 shrink-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 shrink-0">
             <button
               type="button"
               onClick={() => setFilterMode('all')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
                 filterMode === 'all'
-                  ? "bg-amber-500 text-black shadow-md font-extrabold"
-                  : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
+                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
               }`}
             >
               Todos ({fullSlideList.length})
@@ -480,10 +481,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => setFilterMode('active')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
                 filterMode === 'active'
-                  ? "bg-amber-500 text-black shadow-md font-extrabold"
-                  : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
+                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
               }`}
             >
               Ativos ({activeSlides.length})
@@ -492,10 +493,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => setFilterMode('disabled')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
                 filterMode === 'disabled'
-                  ? "bg-amber-500 text-black shadow-md font-extrabold"
-                  : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
+                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
               }`}
             >
               Ocultos ({disabledSlides.length})
@@ -504,10 +505,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => setFilterMode('media')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
                 filterMode === 'media'
-                  ? "bg-amber-500 text-black shadow-md font-extrabold"
-                  : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
+                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
               }`}
             >
               Mídias ({customMediaList.length})
@@ -516,10 +517,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => setFilterMode('agenda')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
                 filterMode === 'agenda'
-                  ? "bg-amber-500 text-black shadow-md font-extrabold"
-                  : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
+                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
               }`}
             >
               Agendas
@@ -562,25 +563,27 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               return (
                 <div
                   key={slideId}
-                  className={`p-3.5 sm:p-4 rounded-xl border transition-all relative overflow-hidden flex flex-col justify-between min-h-[135px] ${
+                  className={`p-4 rounded-xl border transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px] ${
                     isDisabled
-                      ? "bg-zinc-950/40 border-zinc-800/50 opacity-60"
+                      ? "bg-[#050507] border-[#1f1f22] opacity-50"
                       : isCurrentOnAir
-                        ? "bg-amber-950/25 border-amber-500/90 shadow-[0_4px_25px_rgba(245,158,11,0.18)] ring-1 ring-amber-500/50"
-                        : "bg-zinc-950/70 border-zinc-800 hover:bg-zinc-850/80 hover:border-zinc-700"
+                        ? "bg-[#09090b] border-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.25)] ring-1 ring-amber-500/50"
+                        : "bg-[#030303] border-[#222] hover:border-[#333] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]"
                   }`}
                 >
+                  <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-zinc-700/30 to-transparent"></div>
+                  
                   {/* FLAG DE STATUS NO AR OU FIXADO */}
-                  <div className="flex items-center justify-between gap-2 border-b border-zinc-800/60 pb-2.5 mb-2.5">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#222] pb-2.5 mb-2.5">
                     <div className="flex items-center gap-2">
                       {/* POSIÇÃO NA FILA */}
                       {isActiveInLoop ? (
-                        <span className="font-mono text-[10px] font-black bg-amber-500/20 border border-amber-500/40 text-amber-400 px-2 py-0.5 rounded-md shrink-0">
-                          {activeIndexInQueue + 1}º na Fila
+                        <span className="font-mono text-[10px] font-bold bg-amber-950/80 border border-amber-900/50 text-amber-500 px-2 py-0.5 rounded shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                          #{activeIndexInQueue + 1} NA FILA
                         </span>
                       ) : (
-                        <span className="font-mono text-[10px] font-bold bg-zinc-900 border border-zinc-800 text-zinc-500 px-2 py-0.5 rounded-md shrink-0">
-                          Oculto do Loop
+                        <span className="font-mono text-[10px] font-bold bg-[#111113] border border-[#222] text-zinc-600 px-2 py-0.5 rounded shrink-0">
+                          OFF
                         </span>
                       )}
 
@@ -589,15 +592,15 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
                     <div className="flex items-center gap-2">
                       {isCurrentOnAir && (
-                        <span className="bg-amber-500 text-black text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-sm flex items-center gap-1 shrink-0">
+                        <span className="bg-amber-500 text-black text-[9px] font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.6)] flex items-center gap-1 shrink-0">
                           <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
                           NO AR
                         </span>
                       )}
                       
                       {isFixedOverride && (
-                        <span className="bg-amber-500/15 border border-amber-500/40 text-amber-400 text-[9px] font-black px-2 py-0.5 rounded uppercase shrink-0">
-                          Fixado
+                        <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase shrink-0">
+                          FIXADO
                         </span>
                       )}
                     </div>
@@ -605,16 +608,16 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
                   {/* INFO DO SLIDE */}
                   <div className="pr-2">
-                    <h3 className={`font-bold text-sm leading-snug ${isCurrentOnAir ? "text-amber-400" : isDisabled ? "text-zinc-500 line-through" : "text-zinc-100"}`}>
+                    <h3 className={`font-sans font-bold text-sm leading-snug ${isCurrentOnAir ? "text-amber-400 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" : isDisabled ? "text-zinc-600 line-through" : "text-zinc-100"}`}>
                       {name}
                     </h3>
                     <p className="text-xs text-zinc-400 mt-1 leading-normal font-sans line-clamp-1">{desc}</p>
                   </div>
 
                   {/* CONTROLES E BOTÕES DE REORDENAÇÃO */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-zinc-800/60">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-[#222]">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-800 text-zinc-300 text-[11px] font-semibold shrink-0">
+                      <span className="font-mono bg-[#111113] px-2.5 py-1 rounded border border-[#27272a] text-amber-400 text-[11px] font-bold shrink-0">
                         {getSlideDuration(slideId, customMediaList) / 1000}s
                       </span>
 
@@ -625,10 +628,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                           onClick={() => handleToggleDisableSlide(slideId)}
                           aria-label={isDisabled ? "Ativar slide na fila" : "Ocultar slide da fila"}
                           title={isDisabled ? "Ativar e incluir no loop" : "Ocultar e desativar do loop"}
-                          className={`p-1.5 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                          className={`p-1.5 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none ${
                             isDisabled
-                              ? "bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
-                              : "bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
+                              ? "bg-[#111113] border-[#222] text-zinc-600 hover:text-zinc-300"
+                              : "bg-[#111113] border-amber-900/50 text-amber-500 hover:bg-amber-950/50"
                           }`}
                         >
                           {isDisabled ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -644,10 +647,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         type="button"
                         onClick={() => updateStateAndBroadcast('manualSlideOverride', isFixedOverride ? null : slideId)}
                         title={isFixedOverride ? "Desafixar e voltar ao automático" : "Projetar este slide imediatamente"}
-                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold border transition-all flex items-center gap-1.5 cursor-pointer focus-visible:outline-none ${
                           isFixedOverride
-                            ? "bg-amber-500 border-amber-500 text-black hover:bg-amber-400 font-extrabold"
-                            : "bg-zinc-900 border-zinc-800 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/40"
+                            ? "bg-amber-500 border-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+                            : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-amber-500/50 text-amber-400 shadow-[0_2px_8px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
                         }`}
                       >
                         <Send className="w-3 h-3" />
@@ -659,7 +662,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         type="button"
                         onClick={() => handleMoveSlide(slideId, 'top')}
                         title="Subir para a 1ª Posição da Fila"
-                        className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center active:scale-95 cursor-pointer focus-visible:outline-none"
+                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
                       >
                         <ChevronsUp className="w-3.5 h-3.5" />
                       </button>
@@ -669,7 +672,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         type="button"
                         onClick={() => handleMoveSlide(slideId, 'up')}
                         title="Mover para Cima"
-                        className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center active:scale-95 cursor-pointer focus-visible:outline-none"
+                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
                       >
                         <ArrowUp className="w-3.5 h-3.5" />
                       </button>
@@ -679,7 +682,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         type="button"
                         onClick={() => handleMoveSlide(slideId, 'down')}
                         title="Mover para Baixo"
-                        className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center active:scale-95 cursor-pointer focus-visible:outline-none"
+                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
                       >
                         <ArrowDown className="w-3.5 h-3.5" />
                       </button>
@@ -689,7 +692,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         type="button"
                         onClick={() => handleMoveSlide(slideId, 'bottom')}
                         title="Enviar para o Fim da Fila"
-                        className="w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all flex items-center justify-center active:scale-95 cursor-pointer focus-visible:outline-none"
+                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
                       >
                         <ChevronsDown className="w-3.5 h-3.5" />
                       </button>
@@ -703,34 +706,36 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
       </section>
 
       {/* GERENCIADOR DE MÍDIAS CUSTOMIZADAS */}
-      <section aria-label="Gerenciador de Mídias Customizadas" className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col gap-4">
+      <section aria-label="Gerenciador de Mídias Customizadas" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+        
         {/* CABEÇALHO DA SEÇÃO DE MÍDIAS */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/60 pb-3.5">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#333] pb-3.5">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-500 shrink-0">
-              <Film className="w-5 h-5" />
+            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <Film className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
             </div>
             <div>
-              <h2 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Central de Mídias & Arquivos</h2>
+              <h2 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Central de Mídias & Arquivos</h2>
               <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Envio, enquadramento e gestão de vídeos e imagens</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {/* BADGE COM CONTAGEM */}
-            <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-extrabold px-3 py-1.5 rounded-full uppercase tracking-wider shrink-0">
-              {customMediaList.length} Mídias ({customMediaList.filter(m => m.type === 'image').length} Imagens • {customMediaList.filter(m => m.type === 'video').length} Vídeos)
+            <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-3 py-1.5 rounded uppercase tracking-wider shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              {customMediaList.length} MÍDIAS ({customMediaList.filter(m => m.type === 'image').length} IMG • {customMediaList.filter(m => m.type === 'video').length} VID)
             </span>
 
             {/* SELETOR DE MODO DE VISÃO (GRADE X LISTA) */}
-            <div className="bg-zinc-950 p-1 rounded-xl border border-zinc-800 flex items-center gap-1">
+            <div className="bg-[#030303] p-1 rounded-xl border border-[#222] flex items-center gap-1 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
               <button
                 type="button"
                 onClick={() => setMediaViewMode('list')}
                 title="Modo de exibição em Lista detalhada"
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   mediaViewMode === 'list'
-                    ? "bg-amber-500 text-black font-bold shadow"
+                    ? "bg-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]"
                     : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
@@ -742,7 +747,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                 title="Modo de exibição em Grade (Galeria)"
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   mediaViewMode === 'grid'
-                    ? "bg-amber-500 text-black font-bold shadow"
+                    ? "bg-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]"
                     : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
@@ -753,7 +758,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         </div>
 
         {/* CONTROLES DE DURAÇÃO PADRÃO & DROPZONE */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-3">
           
           {/* DROPZONE DE UPLOAD */}
           <div 
@@ -766,7 +771,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                 fileInputRef.current?.click();
               }
             }}
-            className="lg:col-span-2 relative border-2 border-dashed border-zinc-750 hover:border-amber-500/60 focus-visible:border-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-xl p-4 sm:p-5 transition-all bg-zinc-950/40 text-center group cursor-pointer flex flex-col items-center justify-center min-h-[110px]"
+            className="lg:col-span-2 relative border-2 border-dashed border-[#333] hover:border-amber-500/60 focus-visible:border-amber-500 focus-visible:outline-none rounded-2xl p-4 sm:p-5 transition-all bg-[#030303] text-center group cursor-pointer flex flex-col items-center justify-center min-h-[110px] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]"
           >
             <input
               ref={fileInputRef}
@@ -778,21 +783,21 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               aria-label="Upload de imagem ou vídeo"
             />
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-full group-hover:scale-110 transition-transform shrink-0">
-                <Plus className="w-5 h-5 text-amber-400" />
+              <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl group-hover:scale-105 transition-transform shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                <Plus className="w-5 h-5 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
               </div>
               <div className="text-left">
-                <p className="text-xs font-bold text-zinc-200">Clique ou arraste Imagens e Vídeos para adicionar</p>
+                <p className="text-xs font-sans font-bold text-zinc-100">Clique ou arraste Imagens e Vídeos para adicionar</p>
                 <p className="text-[11px] text-zinc-400 mt-0.5">PNG, JPG, WEBP, MP4, WEBM (salvo localmente e sincronizado via PeerJS)</p>
               </div>
             </div>
           </div>
 
           {/* DURAÇÃO PADRÃO NOVAS IMAGENS */}
-          <div className="bg-zinc-950/70 p-3.5 rounded-xl border border-zinc-800 flex flex-col justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-zinc-300 text-[11px] font-bold uppercase tracking-wider">
-              <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>Duração Padrão (Novas Imagens):</span>
+          <div className="bg-[#030303] p-3.5 rounded-2xl border border-[#222] flex flex-col justify-between gap-2 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+            <div className="flex items-center gap-1.5 text-zinc-300 text-[11px] font-sans font-bold uppercase tracking-wider">
+              <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Duração Padrão (Imagens):</span>
             </div>
 
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
@@ -801,10 +806,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   key={sec}
                   type="button"
                   onClick={() => handleDefaultImgDurationChange(sec)}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     defaultImgSeconds === sec
-                      ? "bg-amber-500 text-black shadow-md"
-                      : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-850"
+                      ? "bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.5)] font-black"
+                      : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-white"
                   }`}
                 >
                   {sec}s
