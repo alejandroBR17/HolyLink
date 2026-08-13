@@ -256,8 +256,9 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
               <strong className="font-mono text-amber-300">[{projectedToast.ref}]</strong>
             </div>
           </div>
-          <span className="text-[10px] bg-emerald-500 text-black font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 ml-2 shadow">
-            ✓ Ao Vivo
+          <span className="text-[10px] bg-emerald-500 text-black font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 ml-2 shadow flex items-center gap-1">
+            <Check className="w-3 h-3 text-black shrink-0" />
+            <span>Ao Vivo</span>
           </span>
         </div>
       )}
@@ -443,7 +444,7 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
                     {isCurrentlyProjected ? (
                       <>
                         <Check className="w-4 h-4 text-black" />
-                        <span>✓ Exibindo no Telão</span>
+                        <span>Exibindo no Telão</span>
                       </>
                     ) : (
                       <>
@@ -570,7 +571,7 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
                         {isVerseProjected ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-black" />
-                            <span>✓ No Telão</span>
+                            <span>No Telão</span>
                           </>
                         ) : (
                           <>

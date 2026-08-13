@@ -1,7 +1,8 @@
 import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { 
   Tv, ExternalLink, X, EyeOff, Sparkles, Plus, Minus, Play, Pause, RefreshCw, 
-  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2, HardDrive, Monitor, Download 
+  Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2, HardDrive, Monitor, Download,
+  Shield, Scale, Bot, Sunrise, ShieldAlert, Ban, Baby, Car, Key, CloudRain, Check
 } from 'lucide-react';
 import { ALERTS } from '../../data';
 import { Meeting } from '../../types';
@@ -45,18 +46,29 @@ function PerformanceControlModule() {
           <Gauge className="w-4 h-4 text-amber-500 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
           Desempenho & Anti-Travamento
         </h3>
-        <span className={`text-[8px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] ${
+        <span className={`text-[8px] font-mono px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider border shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] flex items-center gap-1 ${
           effectiveMode === 'light' 
             ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' 
             : effectiveMode === 'balanced'
             ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
             : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
         }`}>
-          {effectiveMode === 'light' 
-            ? (isDetectedLowPerf ? '⚡ Leve (Lag Detectado)' : '⚡ Modo Leve (Anti-Lag)') 
-            : effectiveMode === 'balanced'
-            ? '⚖️ Modo Equilibrado'
-            : '🟢 Alta Qualidade'}
+          {effectiveMode === 'light' ? (
+            <>
+              <Zap className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+              <span>{isDetectedLowPerf ? 'Leve (Lag Detectado)' : 'Modo Leve (Anti-Lag)'}</span>
+            </>
+          ) : effectiveMode === 'balanced' ? (
+            <>
+              <Scale className="w-2.5 h-2.5 text-blue-400 shrink-0" />
+              <span>Modo Equilibrado</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+              <span>Alta Qualidade</span>
+            </>
+          )}
         </span>
       </div>
 
@@ -107,7 +119,16 @@ function PerformanceControlModule() {
         >
           {!ramCleared && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none rounded-t-xl opacity-50" />}
           <HardDrive className={`w-3.5 h-3.5 relative z-10 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-blue-400 drop-shadow-[0_0_4px_rgba(96,165,250,0.5)]'}`} />
-          <span className="relative z-10">{ramCleared ? '✓ Memória Cache Liberada!' : 'Limpar Memória RAM'}</span>
+          <span className="relative z-10 flex items-center gap-1">
+            {ramCleared ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Memória Cache Liberada!</span>
+              </>
+            ) : (
+              <span>Limpar Memória RAM</span>
+            )}
+          </span>
         </button>
 
         <button
@@ -124,7 +145,18 @@ function PerformanceControlModule() {
         >
           {wakeLockSupported && !wakeLockActive && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none rounded-t-xl opacity-50" />}
           <Monitor className={`w-3.5 h-3.5 ${wakeLockActive ? 'text-emerald-400' : 'text-amber-500'}`} />
-          <span>{wakeLockActive ? '🟢 Tela Acesa (Wake Lock)' : wakeLockSupported ? 'Activar Tela Acesa' : 'Wake Lock Indisponível'}</span>
+          <span className="flex items-center gap-1">
+            {wakeLockActive ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse shrink-0" />
+                <span>Tela Acesa (Wake Lock)</span>
+              </>
+            ) : wakeLockSupported ? (
+              'Activar Tela Acesa'
+            ) : (
+              'Wake Lock Indisponível'
+            )}
+          </span>
         </button>
       </div>
 
@@ -487,27 +519,32 @@ export function ControlsPanel({
   const CHURCH_ALERT_PRESETS = [
     {
       id: 'baby',
-      title: '👶 Berçário (EBI)',
+      title: 'Berçário (EBI)',
+      icon: Baby,
       msg: 'Atenção pais: Compareçam ao berçário (EBI).'
     },
     {
       id: 'car',
-      title: '🚗 Estacionamento',
+      title: 'Estacionamento',
+      icon: Car,
       msg: 'Proprietário de veículo: Compareça ao estacionamento.'
     },
     {
       id: 'keys',
-      title: '🔑 Chave Achada',
+      title: 'Chave Achada',
+      icon: Key,
       msg: 'Uma chave foi encontrada. Procurar a recepção ao final.'
     },
     {
       id: 'rain',
-      title: '🌧️ Alerta de Chuva',
+      title: 'Alerta de Chuva',
+      icon: CloudRain,
       msg: 'Atenção condutores: Verificar janelas dos veículos.'
     },
     {
       id: 'workers',
-      title: '📢 Reunião Obreiros',
+      title: 'Reunião Obreiros',
+      icon: Megaphone,
       msg: 'Breve reunião com todos os obreiros e colaboradores após o cultivo.'
     }
   ];
@@ -701,7 +738,10 @@ export function ControlsPanel({
                 className="py-2.5 px-2 bg-[#111113] hover:bg-emerald-950/40 border border-[#333] hover:border-emerald-500/50 rounded-xl text-[10px] font-extrabold text-emerald-400 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
                 title="Ideal para computadores sem GPU dedicada"
               >
-                <span className="font-sans">🛡️ Anti-Lag</span>
+                <span className="font-sans flex items-center gap-1.5 justify-center">
+                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Anti-Lag</span>
+                </span>
                 <span className="text-[8px] text-zinc-500 group-hover:text-emerald-300 font-mono mt-0.5">30 FPS (Leve)</span>
               </button>
 
@@ -716,7 +756,10 @@ export function ControlsPanel({
                 className="py-2.5 px-2 bg-[#111113] hover:bg-amber-950/40 border border-[#333] hover:border-amber-500/50 rounded-xl text-[10px] font-extrabold text-amber-400 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
                 title="Equilíbrio ideal entre fluidez e visual"
               >
-                <span className="font-sans">⚖️ Equilibrado</span>
+                <span className="font-sans flex items-center gap-1.5 justify-center">
+                  <Scale className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Equilibrado</span>
+                </span>
                 <span className="text-[8px] text-zinc-500 group-hover:text-amber-300 font-mono mt-0.5">60 FPS (Auto)</span>
               </button>
 
@@ -731,7 +774,10 @@ export function ControlsPanel({
                 className="py-2.5 px-2 bg-[#111113] hover:bg-blue-950/40 border border-[#333] hover:border-blue-500/50 rounded-xl text-[10px] font-extrabold text-blue-400 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
                 title="Qualidade gráfica máxima"
               >
-                <span className="font-sans">✨ Alta Qualidade</span>
+                <span className="font-sans flex items-center gap-1.5 justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Alta Qualidade</span>
+                </span>
                 <span className="text-[8px] text-zinc-500 group-hover:text-blue-300 font-mono mt-0.5">60 FPS (3D)</span>
               </button>
             </div>
@@ -741,26 +787,30 @@ export function ControlsPanel({
             <span className="text-[10px] font-mono font-extrabold text-zinc-400 uppercase tracking-wider">Estilo de Ambiência 3D</span>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'auto', label: '🤖 Automático' },
-                { id: 'aurora', label: '🌅 Aurora 3D' },
-                { id: 'veil', label: '🕊️ Véu 3D' },
-                { id: 'fju_aura', label: '⚡ Aura 3D' },
-                { id: 'particles_2d', label: '✨ 2D' },
-                { id: 'off', label: '🚫 Desativado' },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => updateStateAndBroadcast('background3DStyle', item.id)}
-                  className={`py-2 px-2 rounded-xl text-[10px] font-extrabold uppercase transition-all cursor-pointer border truncate font-sans active:translate-y-[1px] ${
-                    background3DStyle === item.id
-                      ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-                      : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-300 hover:text-white'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
+                { id: 'auto', label: 'Automático', icon: Bot },
+                { id: 'aurora', label: 'Aurora 3D', icon: Sunrise },
+                { id: 'veil', label: 'Véu 3D', icon: ShieldAlert },
+                { id: 'fju_aura', label: 'Aura 3D', icon: Zap },
+                { id: 'particles_2d', label: '2D', icon: Sparkles },
+                { id: 'off', label: 'Desativado', icon: Ban },
+              ].map((item) => {
+                const ItemIcon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => updateStateAndBroadcast('background3DStyle', item.id)}
+                    className={`py-2 px-2 rounded-xl text-[10px] font-extrabold uppercase transition-all cursor-pointer border truncate font-sans flex items-center justify-center gap-1.5 active:translate-y-[1px] ${
+                      background3DStyle === item.id
+                        ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                        : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-300 hover:text-white'
+                    }`}
+                  >
+                    <ItemIcon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -800,7 +850,7 @@ export function ControlsPanel({
                 {[
                   { id: 'high', label: 'Alta' },
                   { id: 'medium', label: 'Média' },
-                  { id: 'low', label: '⚡ Leve' },
+                  { id: 'low', label: 'Leve' },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -1011,6 +1061,7 @@ export function ControlsPanel({
             <div className="grid grid-cols-2 gap-2">
               {CHURCH_ALERT_PRESETS.map((preset) => {
                 const isActive = activeAlert === preset.id || activeAlert === preset.msg;
+                const PresetIcon = preset.icon;
                 return (
                   <button
                     key={preset.id}
@@ -1022,7 +1073,10 @@ export function ControlsPanel({
                         : "bg-[#030303] border-[#222] text-zinc-300 hover:border-amber-500/50 hover:bg-[#111113] shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]"
                     }`}
                   >
-                    <span className="font-extrabold font-sans truncate">{preset.title}</span>
+                    <span className="font-extrabold font-sans truncate flex items-center gap-1.5">
+                      <PresetIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-black' : 'text-amber-500'}`} />
+                      <span>{preset.title}</span>
+                    </span>
                     <span className={`text-[8px] truncate mt-1 ${isActive ? 'text-black/80 font-semibold' : 'text-zinc-500 font-mono'}`}>
                       {preset.msg}
                     </span>
@@ -1040,23 +1094,25 @@ export function ControlsPanel({
                 <button
                   type="button"
                   onClick={() => setAlertType('custom')}
-                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${alertType === 'custom' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-white'}`}
+                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${alertType === 'custom' ? 'bg-amber-500 text-black font-extrabold' : 'text-zinc-400 hover:text-white'}`}
                 >
                   Livre
                 </button>
                 <button
                   type="button"
                   onClick={() => setAlertType('car_plate')}
-                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${alertType === 'car_plate' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-white'}`}
+                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 ${alertType === 'car_plate' ? 'bg-amber-500 text-black font-extrabold' : 'text-zinc-400 hover:text-white'}`}
                 >
-                  🚗 Carro
+                  <Car className="w-3 h-3 shrink-0" />
+                  <span>Carro</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setAlertType('ebi_child')}
-                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${alertType === 'ebi_child' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-white'}`}
+                  className={`px-2 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 ${alertType === 'ebi_child' ? 'bg-amber-500 text-black font-extrabold' : 'text-zinc-400 hover:text-white'}`}
                 >
-                  👶 Criança
+                  <Baby className="w-3 h-3 shrink-0" />
+                  <span>Criança</span>
                 </button>
               </div>
             </div>

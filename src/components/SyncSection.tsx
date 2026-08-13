@@ -1568,10 +1568,20 @@ export const SyncSection = React.memo(function SyncSection({
             <div className="flex items-center justify-between text-[11px] font-bold text-zinc-400 border-b border-zinc-800 pb-2">
               <span>Resultado da Simulação do Sistema:</span>
               {testSummary && (
-                <span className={`px-2 py-0.5 rounded font-black text-[10px] ${
+                <span className={`px-2 py-0.5 rounded font-black text-[10px] flex items-center gap-1 ${
                   testSummary.success ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
                 }`}>
-                  {testSummary.success ? '✓ 100% OPERACIONAL' : '✕ FALHA'}
+                  {testSummary.success ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span>100% OPERACIONAL</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-3 h-3 text-red-400 shrink-0" />
+                      <span>FALHA</span>
+                    </>
+                  )}
                 </span>
               )}
             </div>
@@ -1768,7 +1778,7 @@ export const SyncSection = React.memo(function SyncSection({
         {directSyncStatus === 'success' && (
           <div className="flex flex-col items-center gap-3.5 py-4 bg-emerald-950/20 border border-emerald-800/60 rounded-xl p-4 text-center">
             <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500 text-emerald-400 font-bold text-xl animate-bounce">
-              ✓
+              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
             </div>
             <div className="text-center">
               <span className="text-xs font-extrabold text-emerald-400 block uppercase tracking-wider">Dispositivos Conectados!</span>
@@ -1813,7 +1823,7 @@ export const SyncSection = React.memo(function SyncSection({
         {directSyncStatus === 'error' && (
           <div className="flex flex-col items-center gap-2.5 py-3.5 bg-red-950/20 border border-red-800/60 rounded-xl p-4 text-center">
             <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500 text-red-400 font-bold text-lg">
-              ✕
+              <XCircle className="w-5 h-5 text-red-400" />
             </div>
             <span className="text-xs font-bold text-red-400">Falha na Conexão</span>
             <p className="text-[11px] text-zinc-400 leading-snug">

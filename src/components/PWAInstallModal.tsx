@@ -247,7 +247,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
 
                 {deviceType === 'ios' && (
                   <ol className="list-decimal list-inside space-y-2 text-xs text-zinc-300">
-                    <li>No Safari, toque no ícone <strong>Compartilhar (⎋)</strong>.</li>
+                    <li>No Safari, toque no ícone <strong>Compartilhar <Share className="w-3 h-3 inline-block text-amber-500 mx-0.5" /></strong>.</li>
                     <li>Selecione <strong>"Adicionar à Tela de Início"</strong>.</li>
                   </ol>
                 )}
@@ -255,7 +255,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 {deviceType === 'desktop' && (
                   <ol className="list-decimal list-inside space-y-2 text-xs text-zinc-300">
                     <li>Acesse via <strong>Chrome</strong> ou <strong>Edge</strong>.</li>
-                    <li>Clique no ícone de <strong>instalar (🖥️)</strong> na barra de endereços (URL).</li>
+                    <li>Clique no ícone de <strong>instalar <Monitor className="w-3 h-3 inline-block text-amber-500 mx-0.5" /></strong> na barra de endereços (URL).</li>
                   </ol>
                 )}
               </div>

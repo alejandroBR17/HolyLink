@@ -107,10 +107,18 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                    {report?.isTouchDevice
-                      ? '📱 Dispositivo Móvel Detectado: Modo econômico ativado para preservar bateria e evitar aquecimento.'
-                      : '💻 Computador / Notebook de Operação: Analisado para transmissão em alta definição (1080p/4K).'}
+                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed flex items-center gap-1.5">
+                    {report?.isTouchDevice ? (
+                      <>
+                        <Smartphone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span>Dispositivo Móvel Detectado: Modo econômico ativado para preservar bateria e evitar aquecimento.</span>
+                      </>
+                    ) : (
+                      <>
+                        <Laptop className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span>Computador / Notebook de Operação: Analisado para transmissão em alta definição (1080p/4K).</span>
+                      </>
+                    )}
                   </p>
                 </div>
               </div>

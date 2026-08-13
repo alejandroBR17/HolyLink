@@ -1189,7 +1189,7 @@ export default function App() {
       {shouldRotate && (
         <div className="absolute top-6 left-6 z-50 bg-black/95 text-white border border-zinc-800 rounded-xl px-5 py-3 text-sm flex items-center gap-2 font-medium pointer-events-none tracking-wide shadow-xl backdrop-blur-md animate-pulse">
           <Tv className="w-5 h-5 text-amber-500" />
-          <span>📺 Modo Widescreen Bloqueado. Deite a tela.</span>
+          <span>Modo Widescreen Bloqueado. Deite a tela.</span>
         </div>
       )}
 
