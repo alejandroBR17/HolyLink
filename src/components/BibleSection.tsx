@@ -207,24 +207,24 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
   };
 
   return (
-    <div className="bg-[#121212] border border-stone-800 rounded-2xl p-4 sm:p-5 flex flex-col gap-4 relative">
+    <div className="bg-[#030303] border border-[#222] rounded-2xl p-4 sm:p-5 flex flex-col gap-4 relative shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
       
       {/* CABEÇALHO COM TABS DE MODO */}
-      <div className="flex items-center justify-between border-b border-stone-800 pb-3 flex-wrap gap-2">
-        <h2 className="text-stone-300 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-          <BookOpen className="w-4.5 h-4.5 text-amber-500" />
+      <div className="flex items-center justify-between border-b border-[#222] pb-3 flex-wrap gap-2">
+        <h2 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider flex items-center gap-2 font-sans">
+          <BookOpen className="w-4.5 h-4.5 text-amber-500 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
           <span>Bíblia Sagrada (Almeida)</span>
         </h2>
 
         {/* MODO DE NAVEGAÇÃO: PESQUISA ONLINE VS SALVOS */}
-        <div className="flex items-center gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800">
+        <div className="flex items-center gap-1 bg-[#09090b] p-1 rounded-xl border border-[#222]">
           <button
             type="button"
             onClick={() => setMainTab('search')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               mainTab === 'search'
-                ? 'bg-amber-500 text-black shadow-md font-extrabold'
-                : 'text-stone-400 hover:text-stone-200'
+                ? 'bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.5)] font-black'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <Search className="w-3.5 h-3.5" />
@@ -234,10 +234,10 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
           <button
             type="button"
             onClick={() => setMainTab('saved')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
               mainTab === 'saved'
-                ? 'bg-amber-500 text-black shadow-md font-extrabold'
-                : 'text-stone-400 hover:text-stone-200'
+                ? 'bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.5)] font-black'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <Bookmark className="w-3.5 h-3.5" />
