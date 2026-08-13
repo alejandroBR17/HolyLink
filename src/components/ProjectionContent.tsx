@@ -138,25 +138,25 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
     }
     if (effectiveMode === 'balanced') {
       return {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0 },
-        transition: { duration: 0.3, ease: "easeInOut" as const }
+        initial: { opacity: 0, scale: 0.99 },
+        animate: { opacity: 1, scale: 1 },
+        exit: { opacity: 0, scale: 1.01 },
+        transition: { duration: 0.35, ease: "easeInOut" as const }
       };
     }
     if (slideId.startsWith('verse_') || slideId === 'world_god') {
       return {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0 },
-        transition: { duration: 1.2, ease: "easeInOut" as const }
+        initial: { opacity: 0, scale: 0.97, filter: "blur(4px)" },
+        animate: { opacity: 1, scale: 1, filter: "blur(0px)" },
+        exit: { opacity: 0, scale: 1.03, filter: "blur(4px)" },
+        transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const }
       };
     }
     return {
-      initial: { opacity: 0, scale: 1.03 },
-      animate: { opacity: 1, scale: 1 },
-      exit: { opacity: 0, scale: 0.97 },
-      transition: { duration: 0.5, ease: "easeInOut" as const }
+      initial: { opacity: 0, scale: 1.03, y: 10 },
+      animate: { opacity: 1, scale: 1, y: 0 },
+      exit: { opacity: 0, scale: 0.97, y: -10 },
+      transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] as const }
     };
   };
 
@@ -328,7 +328,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           customVerseText={customVerseText}
           customVerseRef={customVerseRef}
           activeVerseIndex={activeVerseIndex}
-          
+          variant={isFJU ? 'fju' : undefined}
         />
       );
     }
@@ -462,6 +462,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               customVerseText={customVerseText} 
               customVerseRef={customVerseRef} 
               activeVerseIndex={activeVerseIndex} 
+              variant={isFJU ? 'fju' : undefined}
             />
           </motion.div>
         ) : isFinalMinute ? (
@@ -619,6 +620,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               customVerseText={customVerseText} 
               customVerseRef={customVerseRef} 
               activeVerseIndex={activeVerseIndex} 
+              variant={isFJU ? 'fju' : undefined}
             />
           </motion.div>
         ) : isLooping ? (
