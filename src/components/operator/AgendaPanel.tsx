@@ -254,7 +254,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
     <div className="flex flex-col lg:flex-row gap-6 w-full items-start animate-in fade-in duration-200">
       
       {/* MEETS COLUMN */}
-      <div className={`transition-all duration-300 bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl flex flex-col h-fit ${
+      <section aria-label="Agenda e Reuniões" className={`transition-all duration-300 bg-[#09090b] border border-[#27272a] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col h-fit ${
         isMeetingPanelOpen && !isCampaignPanelOpen 
           ? "w-full lg:flex-[3]" 
           : !isMeetingPanelOpen && isCampaignPanelOpen 
@@ -262,6 +262,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             : "flex-1 w-full"
       }`}>
         <button
+          type="button"
           onClick={() => {
             if (!isMeetingPanelOpen) {
               setIsMeetingPanelOpen(true);
@@ -270,28 +271,29 @@ export const AgendaPanel = React.memo(function AgendaPanel({
               setIsMeetingPanelOpen(false);
             }
           }}
-          className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-zinc-950/20 transition-colors"
+          className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#111113] transition-colors group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 animate-pulse">
-              <CalendarDays className="w-5 h-5" />
+            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <CalendarDays className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
             </div>
             <div>
-              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Agenda & Reuniões</h3>
-              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">{(customMeetings || []).length} reuniões registradas</p>
+              <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Agenda & Reuniões</h3>
+              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">{(customMeetings || []).length} reuniões registradas</p>
             </div>
           </div>
           <motion.div animate={{ rotate: isMeetingPanelOpen ? 180 : 0 }} transition={{ duration: 0.15 }}>
-            <ArrowDown className="w-4 h-4 text-zinc-500" />
+            <ArrowDown className="w-4 h-4 text-zinc-400 group-hover:text-amber-500 transition-colors" />
           </motion.div>
         </button>
 
         {isMeetingPanelOpen && (
-          <div className="p-5 border-t border-zinc-800/50 bg-zinc-950/20 flex flex-col gap-4">
+          <div className="p-5 border-t border-[#222] bg-[#030303] flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
             
             {!showAddMeetingForm ? (
               <div className="flex flex-col gap-3">
                 <button
+                  type="button"
                   onClick={() => {
                     setShowAddMeetingForm(true);
                     setEditingMeetId(null);
@@ -301,66 +303,68 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     setNewMeetDate(new Date().toISOString().split('T')[0]);
                     setNewMeetTime('19:30');
                   }}
-                  className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  className="w-full py-3 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-zinc-100 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px]"
                 >
-                  <Plus className="w-4 h-4 text-amber-500" /> Nova Reunião
+                  <Plus className="w-4 h-4 text-amber-500 drop-shadow-[0_0_4px_rgba(245,158,11,0.6)]" />
+                  <span className="font-sans">Nova Reunião</span>
                 </button>
 
                 {/* Modelos Prontos de Reuniões */}
-                <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-800/60">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-amber-500" /> Adicionar Rápido:
+                <div className="flex flex-col gap-2 pt-3 border-t border-[#222]">
+                  <span className="text-[10px] font-mono font-extrabold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Adicionar Rápido:
                   </span>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-2 gap-2">
                     {DEFAULT_MEETING_PRESETS.map((preset, pIdx) => (
                       <button
                         key={pIdx}
                         type="button"
                         onClick={() => handleAddMeetingPreset(preset)}
-                        className="bg-zinc-950 border border-zinc-850 hover:border-amber-500/40 text-left p-2 rounded-lg text-[10px] text-zinc-300 hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group"
+                        className="bg-[#09090b] border border-[#222] hover:border-amber-500/50 text-left p-2.5 rounded-xl text-[10px] text-zinc-300 hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
                       >
-                        <span className="font-bold text-amber-400 group-hover:text-amber-300 truncate">{preset.theme}</span>
-                        <span className="text-zinc-500 text-[9px] font-mono">{preset.dayName} às {preset.time}</span>
+                        <span className="font-bold text-amber-400 group-hover:text-amber-300 font-sans truncate">{preset.theme}</span>
+                        <span className="text-zinc-500 text-[9px] font-mono mt-1">{preset.dayName} às {preset.time}</span>
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex flex-col gap-3.5 shadow-inner">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                  <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">
+              <div className="bg-[#09090b] border border-[#27272a] p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
+                <div className="flex items-center justify-between border-b border-[#333] pb-2.5">
+                  <span className="text-xs font-extrabold text-amber-500 font-sans uppercase tracking-wider">
                     {editingMeetId ? "Editar Reunião" : "Nova Reunião / Evento"}
                   </span>
                   <button 
+                    type="button"
                     onClick={() => setShowAddMeetingForm(false)}
-                    className="text-zinc-500 hover:text-zinc-300 transition-colors p-1 cursor-pointer"
+                    className="text-zinc-400 hover:text-white transition-colors p-1 cursor-pointer bg-[#111113] border border-[#333] rounded-lg"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Tema do Culto / Evento</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Tema do Culto / Evento</label>
                   <input
                     type="text"
                     value={newMeetTheme}
                     onChange={(e) => setNewMeetTheme(e.target.value)}
                     placeholder="Ex: Noite da Salvação, Corrente da Vitória..."
-                    className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/10 font-sans"
+                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Frequência</label>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Frequência</label>
+                  <div className="grid grid-cols-2 gap-2 mt-0.5">
                     <button
                       type="button"
                       onClick={() => setNewMeetType('weekly')}
-                      className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                      className={`py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer font-sans active:translate-y-[1px] ${
                         newMeetType === 'weekly'
-                          ? "bg-amber-500 border-amber-500 text-black shadow"
-                          : "bg-zinc-950 border-zinc-800 text-zinc-400"
+                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
                       }`}
                     >
                       Semanal Fixo
@@ -368,10 +372,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     <button
                       type="button"
                       onClick={() => setNewMeetType('one_time')}
-                      className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                      className={`py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer font-sans active:translate-y-[1px] ${
                         newMeetType === 'one_time'
-                          ? "bg-amber-500 border-amber-500 text-black shadow"
-                          : "bg-zinc-950 border-zinc-800 text-zinc-400"
+                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
                       }`}
                     >
                       Evento Pontual
@@ -380,45 +384,45 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </div>
 
                 {newMeetType === 'weekly' ? (
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase">Dia da Semana</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Dia da Semana</label>
                     <select
                       value={newMeetWeeklyDay}
                       onChange={(e) => setNewMeetWeeklyDay(parseInt(e.target.value, 10))}
-                      className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 cursor-pointer font-sans"
+                      className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                     >
                       {daysMap.map((d, i) => (
-                        <option key={i} value={i}>{d}</option>
+                        <option key={i} value={i} className="bg-[#09090b] text-zinc-100">{d}</option>
                       ))}
                     </select>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase">Data Limite</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Data Limite</label>
                     <input
                       type="date"
                       value={newMeetDate}
                       onChange={(e) => setNewMeetDate(e.target.value)}
-                      className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 cursor-pointer font-sans"
+                      className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                     />
                   </div>
                 )}
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Horário</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Horário</label>
                   <input
                     type="time"
                     value={newMeetTime}
                     onChange={(e) => setNewMeetTime(e.target.value)}
-                    className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 cursor-pointer font-sans"
+                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
                 </div>
 
-                <div className="flex gap-2 mt-1">
+                <div className="flex gap-2.5 mt-1">
                   <button
                     type="button"
                     onClick={handleSaveMeeting}
-                    className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-black rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                    className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] active:translate-y-[1px]"
                   >
                     Confirmar Cadastro
                   </button>
@@ -428,7 +432,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       setShowAddMeetingForm(false);
                       setEditingMeetId(null);
                     }}
-                    className="px-4 py-2 bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                    className="px-4 py-2.5 bg-[#111113] border border-[#333] hover:border-[#444] text-zinc-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:translate-y-[1px]"
                   >
                     Cancelar
                   </button>
@@ -438,8 +442,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 
             {/* EXPIRED MEETINGS NOTIFICATION BANNER */}
             {expiredMeetings.length > 0 && (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between gap-3 text-xs shadow-inner">
-                <div className="flex items-center gap-2 text-amber-400 font-semibold min-w-0">
+              <div className="bg-amber-950/60 border border-amber-800/60 rounded-xl p-3 flex items-center justify-between gap-3 text-xs shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                <div className="flex items-center gap-2 text-amber-400 font-medium min-w-0">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 animate-pulse" />
                   <span className="truncate">
                     {expiredMeetings.length === 1
@@ -448,8 +452,9 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={handleClearExpiredMeetings}
-                  className="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg text-[11px] transition-colors cursor-pointer flex items-center gap-1 shadow"
+                  className="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-extrabold rounded-lg text-[11px] transition-all cursor-pointer flex items-center gap-1 shadow-sm active:translate-y-[1px]"
                   title="Remover eventos passados da agenda"
                 >
                   <Sparkles className="w-3.5 h-3.5" /> Limpar Passados
@@ -458,9 +463,9 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             )}
 
             {/* MEETS LIST */}
-            <div className="flex flex-col gap-2 pr-1">
+            <div className="flex flex-col gap-2.5 pr-1">
               {(customMeetings || []).length === 0 ? (
-                <div className="text-zinc-500 text-center py-6 text-xs italic bg-zinc-950/20 border border-dashed border-zinc-850 rounded-xl">
+                <div className="text-zinc-500 text-center py-6 text-xs italic bg-[#030303] border border-dashed border-[#222] rounded-xl font-medium">
                   Nenhuma reunião ou evento adicionado.
                 </div>
               ) : (
@@ -477,52 +482,54 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     return (
                       <div 
                         key={meet.id}
-                        className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
+                        className={`flex items-center justify-between p-3.5 rounded-xl border text-xs transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
                           isExpired 
-                            ? "bg-red-950/10 border-red-900/30 opacity-60" 
+                            ? "bg-red-950/20 border-red-900/40 opacity-60" 
                             : meet.date 
-                              ? "bg-amber-500/5 border-amber-500/20" 
+                              ? "bg-[#09090b] border-amber-900/40" 
                               : meet.day === now.getDay()
-                                ? "bg-amber-500/10 border-amber-500/40 shadow-sm"
-                                : "bg-zinc-950 border-zinc-850"
+                                ? "bg-[#111113] border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                                : "bg-[#09090b] border-[#222]"
                         }`}
                       >
                         <div className="flex flex-col gap-1 max-w-[70%] text-left">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {isExpired ? (
-                              <span className="text-[8px] px-1.5 py-0.5 rounded font-black uppercase bg-red-500/20 text-red-400 border border-red-500/30">
+                              <span className="text-[8px] px-1.5 py-0.5 rounded font-black uppercase bg-red-950 border border-red-800 text-red-400">
                                 Passou
                               </span>
                             ) : (
                               <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase ${
-                                meet.date ? "bg-amber-500 text-black" : "bg-zinc-900 text-zinc-500 border border-zinc-800"
+                                meet.date ? "bg-amber-500 text-black font-extrabold" : "bg-[#111113] text-zinc-400 border border-[#333]"
                               }`}>
                                 {meet.date ? "Único" : "Semanal"}
                               </span>
                             )}
                             {meet.day === now.getDay() && !isExpired && (
-                              <span className="text-[8px] px-1.5 py-0.5 rounded font-black uppercase bg-emerald-500 text-black animate-pulse">
+                              <span className="text-[8px] px-1.5 py-0.5 rounded font-black uppercase bg-emerald-500 text-black animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]">
                                 Hoje!
                               </span>
                             )}
-                            <span className="text-zinc-200 font-bold">{meet.dayName}</span>
+                            <span className="text-zinc-200 font-bold font-sans">{meet.dayName}</span>
                             <span className="text-amber-500 font-mono font-bold">às {meet.time}</span>
                           </div>
-                          <span className="text-zinc-400 truncate font-semibold">{meet.theme}</span>
+                          <span className="text-zinc-300 truncate font-semibold font-sans">{meet.theme}</span>
                           {isExpired && (
                             <span className="text-[9px] text-zinc-500 italic">Encerrado (removido do telão)</span>
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
+                            type="button"
                             onClick={() => handleDuplicateMeeting(meet)}
-                            className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
+                            className="p-2 bg-[#111113] border border-[#333] hover:border-amber-500/50 hover:bg-[#1a1a1d] rounded-lg text-zinc-400 hover:text-amber-400 transition-all cursor-pointer active:translate-y-[1px]"
                             title="Duplicar Reunião"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
                               setEditingMeetId(meet.id);
                               setNewMeetTheme(meet.theme);
@@ -532,14 +539,15 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                               if (meet.day !== undefined) setNewMeetWeeklyDay(meet.day);
                               setShowAddMeetingForm(true);
                             }}
-                            className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                            className="p-2 bg-[#111113] border border-[#333] hover:border-[#444] hover:bg-[#1a1a1d] rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer active:translate-y-[1px]"
                             title="Editar Reunião"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleDeleteMeeting(meet.id)}
-                            className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-900 hover:bg-red-950/20 rounded-lg text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
+                            className="p-2 bg-[#111113] border border-[#333] hover:border-red-800 hover:bg-red-950/40 rounded-lg text-zinc-500 hover:text-red-400 transition-all cursor-pointer active:translate-y-[1px]"
                             title="Excluir Reunião"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -552,10 +560,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* CAMPAIGNS COLUMN */}
-      <div className={`transition-all duration-300 bg-zinc-900 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl flex flex-col h-fit ${
+      <section aria-label="Campanhas e Propósitos" className={`transition-all duration-300 bg-[#09090b] border border-[#27272a] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col h-fit ${
         isCampaignPanelOpen && !isMeetingPanelOpen 
           ? "w-full lg:flex-[3]" 
           : !isCampaignPanelOpen && isMeetingPanelOpen 
@@ -563,6 +571,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             : "flex-1 w-full"
       }`}>
         <button
+          type="button"
           onClick={() => {
             if (!isCampaignPanelOpen) {
               setIsCampaignPanelOpen(true);
@@ -571,28 +580,29 @@ export const AgendaPanel = React.memo(function AgendaPanel({
               setIsCampaignPanelOpen(false);
             }
           }}
-          className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-zinc-950/20 transition-colors"
+          className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#111113] transition-colors group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 animate-pulse">
-              <Flame className="w-5 h-5" />
+            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <Flame className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
             </div>
             <div>
-              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Campanhas & Propósitos</h3>
-              <p className="text-[10px] text-zinc-500 font-normal mt-0.5">{(customCampaigns || []).length} campanhas registradas</p>
+              <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Campanhas & Propósitos</h3>
+              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">{(customCampaigns || []).length} campanhas registradas</p>
             </div>
           </div>
           <motion.div animate={{ rotate: isCampaignPanelOpen ? 180 : 0 }} transition={{ duration: 0.15 }}>
-            <ArrowDown className="w-4 h-4 text-zinc-500" />
+            <ArrowDown className="w-4 h-4 text-zinc-400 group-hover:text-amber-500 transition-colors" />
           </motion.div>
         </button>
 
         {isCampaignPanelOpen && (
-          <div className="p-5 border-t border-zinc-800/50 bg-zinc-950/20 flex flex-col gap-4">
+          <div className="p-5 border-t border-[#222] bg-[#030303] flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
             
             {!showAddCampaignForm ? (
               <div className="flex flex-col gap-3 w-full">
                 <button
+                  type="button"
                   onClick={() => {
                     setEditingCampId(null);
                     setShowAddCampaignForm(true);
@@ -601,26 +611,27 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     setNewCampType('flame');
                     setNewCampEndDate('');
                   }}
-                  className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-900 text-zinc-200 border border-zinc-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  className="w-full py-3 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-zinc-100 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px]"
                 >
-                  <Plus className="w-4 h-4 text-amber-500" /> Nova Campanha
+                  <Plus className="w-4 h-4 text-amber-500 drop-shadow-[0_0_4px_rgba(245,158,11,0.6)]" />
+                  <span className="font-sans">Nova Campanha</span>
                 </button>
 
                 {/* Modelos Prontos de Campanhas */}
-                <div className="flex flex-col gap-1.5 pt-2 border-t border-zinc-800/60">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-amber-500" /> Modelos Rápidos:
+                <div className="flex flex-col gap-2 pt-3 border-t border-[#222]">
+                  <span className="text-[10px] font-mono font-extrabold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Modelos Rápidos:
                   </span>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-2 gap-2">
                     {DEFAULT_CAMPAIGN_PRESETS.map((preset, pIdx) => (
                       <button
                         key={pIdx}
                         type="button"
                         onClick={() => handleAddCampaignPreset(preset)}
-                        className="bg-zinc-950 border border-zinc-850 hover:border-amber-500/40 text-left p-2 rounded-lg text-[10px] text-zinc-300 hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group"
+                        className="bg-[#09090b] border border-[#222] hover:border-amber-500/50 text-left p-2.5 rounded-xl text-[10px] text-zinc-300 hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
                       >
-                        <span className="font-bold text-amber-400 group-hover:text-amber-300 truncate">{preset.title}</span>
-                        <span className="text-zinc-500 text-[9px] truncate">{preset.duration}</span>
+                        <span className="font-bold text-amber-400 group-hover:text-amber-300 font-sans truncate">{preset.title}</span>
+                        <span className="text-zinc-500 text-[9px] font-mono mt-1 truncate">{preset.duration}</span>
                       </button>
                     ))}
                   </div>
@@ -630,85 +641,86 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   <button
                     type="button"
                     onClick={onResetCampaigns}
-                    className="w-full py-2 bg-zinc-950/40 hover:bg-zinc-900/40 text-zinc-400 hover:text-amber-500 border border-zinc-800/50 hover:border-amber-500/30 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-1"
+                    className="w-full py-2.5 bg-[#111113] hover:bg-[#1a1a1d] text-zinc-400 hover:text-amber-400 border border-[#222] hover:border-amber-500/40 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer mt-1 active:translate-y-[1px]"
                   >
-                    <RefreshCw className="w-3.5 h-3.5 shrink-0" /> Restaurar Propósitos Padrão
+                    <RefreshCw className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Restaurar Propósitos Padrão
                   </button>
                 )}
               </div>
             ) : (
-              <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex flex-col gap-3.5 shadow-inner">
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                  <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">
+              <div className="bg-[#09090b] border border-[#27272a] p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
+                <div className="flex items-center justify-between border-b border-[#333] pb-2.5">
+                  <span className="text-xs font-extrabold text-amber-500 font-sans uppercase tracking-wider">
                     {editingCampId ? "Editar Propósito" : "Novo Propósito"}
                   </span>
                   <button 
+                    type="button"
                     onClick={() => {
                       setShowAddCampaignForm(false);
                       setEditingCampId(null);
                     }}
-                    className="text-zinc-500 hover:text-zinc-300 transition-colors p-1 cursor-pointer"
+                    className="text-zinc-400 hover:text-white transition-colors p-1 cursor-pointer bg-[#111113] border border-[#333] rounded-lg"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Nome da Campanha</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Nome da Campanha</label>
                   <input
                     type="text"
                     value={newCampTitle}
                     onChange={(e) => setNewCampTitle(e.target.value)}
                     placeholder="Ex: Jejum de Daniel, Fogueira Santa..."
-                    className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/10 font-sans"
+                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Duração (Exibição)</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Duração (Exibição)</label>
                   <input
                     type="text"
                     value={newCampDuration}
                     onChange={(e) => setNewCampDuration(e.target.value)}
                     placeholder="Ex: De 11 a 31 de Outubro, 21 Dias..."
-                    className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/10 font-sans"
+                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Estilo Visual</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Estilo Visual</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-0.5">
                     <button
                       type="button"
                       onClick={() => setNewCampType('wifi_off')}
-                      className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      className={`py-2 px-2 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1.5 active:translate-y-[1px] ${
                         newCampType === 'wifi_off'
-                          ? "bg-amber-500 border-amber-500 text-black shadow"
-                          : "bg-zinc-950 border-zinc-800 text-zinc-400"
+                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
                       }`}
                     >
                       <WifiOff className="w-4 h-4" />
-                      Sem Wi-Fi (Daniel)
+                      Sem Wi-Fi
                     </button>
                     <button
                       type="button"
                       onClick={() => setNewCampType('flame')}
-                      className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      className={`py-2 px-2 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1.5 active:translate-y-[1px] ${
                         newCampType === 'flame'
-                          ? "bg-amber-500 border-amber-500 text-black shadow"
-                          : "bg-zinc-950 border-zinc-800 text-zinc-400"
+                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
                       }`}
                     >
                       <Flame className="w-4 h-4" />
-                      Fogueira / Fogo
+                      Fogueira
                     </button>
                     <button
                       type="button"
                       onClick={() => setNewCampType('globe')}
-                      className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      className={`py-2 px-2 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1.5 active:translate-y-[1px] ${
                         newCampType === 'globe'
-                          ? "bg-amber-500 border-amber-500 text-black shadow"
-                          : "bg-zinc-950 border-zinc-800 text-zinc-400"
+                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
                       }`}
                     >
                       <Globe className="w-4 h-4" />
@@ -717,34 +729,34 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     <button
                       type="button"
                       onClick={() => setNewCampType('faith')}
-                      className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      className={`py-2 px-2 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1.5 active:translate-y-[1px] ${
                         newCampType === 'faith'
-                          ? "bg-amber-500 border-amber-500 text-black shadow"
-                          : "bg-zinc-950 border-zinc-800 text-zinc-400"
+                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
+                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
                       }`}
                     >
                       <CalendarDays className="w-4 h-4" />
-                      Geral / Outros
+                      Geral
                     </button>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Data Limite (Opcional)</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Data Limite (Opcional)</label>
                   <input
                     type="date"
                     value={newCampEndDate}
                     onChange={(e) => setNewCampEndDate(e.target.value)}
-                    className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500/50 cursor-pointer font-sans"
+                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
-                  <span className="text-[9px] text-zinc-500 mt-1">Sumiço automático dos slides ao passar da data</span>
+                  <span className="text-[9px] text-zinc-500 font-mono mt-0.5">Sumiço automático dos slides ao passar da data</span>
                 </div>
 
-                <div className="flex gap-2 mt-1">
+                <div className="flex gap-2.5 mt-1">
                   <button
                     type="button"
                     onClick={handleSaveCampaign}
-                    className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-black rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                    className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] active:translate-y-[1px]"
                   >
                     Confirmar Cadastro
                   </button>
@@ -754,7 +766,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       setShowAddCampaignForm(false);
                       setEditingCampId(null);
                     }}
-                    className="px-4 py-2 bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                    className="px-4 py-2.5 bg-[#111113] border border-[#333] hover:border-[#444] text-zinc-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:translate-y-[1px]"
                   >
                     Cancelar
                   </button>
@@ -763,9 +775,9 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             )}
 
             {/* CAMPAIGNS LIST */}
-            <div className="flex flex-col gap-2 pr-1">
+            <div className="flex flex-col gap-2.5 pr-1">
               {(customCampaigns || []).length === 0 ? (
-                <div className="text-zinc-500 text-center py-6 text-xs italic bg-zinc-950/20 border border-dashed border-zinc-850 rounded-xl">
+                <div className="text-zinc-500 text-center py-6 text-xs italic bg-[#030303] border border-dashed border-[#222] rounded-xl font-medium">
                   Nenhuma campanha cadastrada.
                 </div>
               ) : (
@@ -780,12 +792,12 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   return (
                     <div 
                       key={camp.id || `camp_${index}`}
-                      className={`flex items-center justify-between p-3 rounded-xl border text-xs bg-zinc-950 border-zinc-850 transition-all ${
+                      className={`flex items-center justify-between p-3.5 rounded-xl border text-xs bg-[#09090b] border-[#222] transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
                         isExpired ? "opacity-45" : ""
                       }`}
                     >
                       <div className="flex items-center gap-3 max-w-[65%] text-left">
-                        <div className="p-1.5 bg-zinc-900 border border-zinc-800 text-amber-500 rounded-lg shrink-0">
+                        <div className="p-2 bg-[#111113] border border-amber-900/40 text-amber-500 rounded-lg shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
                           {camp.iconType === 'wifi_off' ? (
                             <WifiOff className="w-4 h-4" />
                           ) : camp.iconType === 'globe' ? (
@@ -797,28 +809,30 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                           )}
                         </div>
                         <div className="flex flex-col gap-0.5 min-w-0">
-                          <span className="text-zinc-200 font-bold truncate leading-snug">{camp.title}</span>
-                          <span className="text-zinc-500 text-[10px] truncate">{camp.duration}</span>
+                          <span className="text-zinc-200 font-bold font-sans truncate leading-snug">{camp.title}</span>
+                          <span className="text-zinc-400 text-[10px] truncate font-mono">{camp.duration}</span>
                           {camp.endDate && (
-                            <span className="text-[9px] text-zinc-600 font-medium">Oculta após: {camp.endDate.split('-').reverse().join('/')}</span>
+                            <span className="text-[9px] text-zinc-500 font-mono">Oculta após: {camp.endDate.split('-').reverse().join('/')}</span>
                           )}
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-1.5 shrink-0">
                         {isExpired ? (
-                          <span className="text-[9px] bg-red-500/10 border border-red-500/25 text-red-500 px-2 py-0.5 rounded font-bold">Expirado</span>
+                          <span className="text-[9px] bg-red-950 border border-red-800 text-red-400 px-2 py-0.5 rounded font-extrabold uppercase">Expirado</span>
                         ) : (
-                          <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 px-2 py-0.5 rounded font-bold">Ativo</span>
+                          <span className="text-[9px] bg-emerald-950 border border-emerald-800 text-emerald-400 px-2 py-0.5 rounded font-extrabold uppercase shadow-[0_0_6px_rgba(16,185,129,0.3)]">Ativo</span>
                         )}
                         <button
+                          type="button"
                           onClick={() => handleDuplicateCampaign(camp)}
-                          className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
+                          className="p-2 bg-[#111113] border border-[#333] hover:border-amber-500/50 hover:bg-[#1a1a1d] rounded-lg text-zinc-400 hover:text-amber-400 transition-all cursor-pointer active:translate-y-[1px]"
                           title="Duplicar Propósito"
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => {
                             setEditingCampId(camp.id);
                             setNewCampTitle(camp.title);
@@ -827,14 +841,15 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                             setNewCampEndDate(camp.endDate || '');
                             setShowAddCampaignForm(true);
                           }}
-                          className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          className="p-2 bg-[#111113] border border-[#333] hover:border-[#444] hover:bg-[#1a1a1d] rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer active:translate-y-[1px]"
                           title="Editar Propósito"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDeleteCampaign(camp.id)}
-                          className="p-1.5 bg-zinc-900 border border-zinc-800 hover:border-red-900 hover:bg-red-950/20 rounded-lg text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
+                          className="p-2 bg-[#111113] border border-[#333] hover:border-red-800 hover:bg-red-950/40 rounded-lg text-zinc-500 hover:text-red-400 transition-all cursor-pointer active:translate-y-[1px]"
                           title="Excluir Propósito"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -847,7 +862,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             </div>
           </div>
         )}
-      </div>
+      </section>
 
     </div>
   );

@@ -207,156 +207,203 @@ export function MonitorPanel({
   return (
     <div className="flex flex-col gap-5 w-full h-full animate-in fade-in duration-200 text-left">
       
-      {/* MONITOR CANVAS CONTAINER */}
-      <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-        <div className="flex items-center justify-between border-b border-zinc-800/50 pb-3 gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 animate-pulse shrink-0">
-              <Monitor className="w-5 h-5" />
+      {/* MONITOR CANVAS CONTAINER - COMPLEX SKEUOMORPHIC MONITOR FRAME */}
+      <section aria-label="Monitor de Transmissão" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 sm:p-6 shadow-[0_12px_40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden flex flex-col gap-5 group">
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+        {/* CABEÇALHO DO MONITOR */}
+        <div className="relative z-10 flex items-center justify-between border-b border-[#333] pb-3.5 gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] relative">
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-black" />
+              <Monitor className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider truncate">Monitor de Transmissão</h3>
-              <p className="text-[10px] text-zinc-500 font-normal mt-0.5 truncate">Visualização em tempo real da 2ª tela</p>
+              <div className="flex items-center gap-2">
+                <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans truncate">Monitor de Transmissão Ao Vivo</h3>
+                <span className="hidden sm:inline-block bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                  1920x1080 FHD
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400 font-medium mt-0.5 truncate">Visualização física e controle do telão em tempo real</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {!isInstalled && (
               <button
+                type="button"
                 onClick={() => setShowPwaModal(true)}
-                className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 rounded-lg text-xs font-bold flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0 cursor-pointer"
+                className="p-2 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-amber-400 rounded-xl text-xs font-bold flex items-center justify-center transition-all active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] cursor-pointer"
                 title="Instalar App HolyLink (PWA)"
               >
                 <Download className="w-4 h-4 text-amber-500 shrink-0" />
               </button>
             )}
             <button
+              type="button"
               onClick={() => setShowShortcutsModal(!showShortcutsModal)}
-              className="px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-sm shrink-0"
+              className="px-3 py-2 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]"
               title="Atalhos e Comandos"
             >
               <Keyboard className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="hidden sm:inline">Atalhos</span>
+              <span className="hidden sm:inline font-sans">Atalhos</span>
             </button>
-            <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-1.5 rounded-lg uppercase tracking-wider animate-pulse flex items-center gap-1 shrink-0">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-              Live
+            <span className="bg-emerald-950/80 border border-emerald-900/60 text-emerald-400 text-[10px] font-mono font-bold px-2.5 py-1.5 rounded uppercase tracking-wider flex items-center gap-1.5 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0" />
+              LIVE
             </span>
           </div>
         </div>
 
-        {/* Scaled Preview Frame */}
-        <div 
-          ref={containerRef}
-          className="w-full aspect-video bg-black border border-zinc-800 rounded-xl overflow-hidden relative shadow-2xl"
-        >
+        {/* PHYSICAL MONITOR FRAME WITH BEZEL, REFLECTION AND LED STATUS */}
+        <div className="relative z-10 bg-[#050507] p-3 sm:p-4 rounded-2xl border-2 border-[#1f1f22] shadow-[0_20px_50px_rgba(0,0,0,1),inset_0_2px_8px_rgba(255,255,255,0.04)]">
+          
+          {/* BEZEL TOP BAR WITH PHYSICAL LOGO & POWER LED */}
+          <div className="flex items-center justify-between px-2 pb-2.5 mb-1 text-[10px] text-zinc-500 font-mono border-b border-[#18181b]">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
+              <span className="font-extrabold text-zinc-400 tracking-widest">PROJECTION DISPLAY UNIT // MAIN OUTPUT</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline text-zinc-600">60 FPS • SIGNAL: STABLE</span>
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              </div>
+            </div>
+          </div>
+
+          {/* Scaled Preview Frame with TV Bezel */}
           <div 
-            className="absolute origin-top-left pointer-events-none"
-            style={{
-              width: '1920px',
-              height: '1080px',
-              transform: `scale(${scale})`
-            }}
+            ref={containerRef}
+            className="w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] border border-[#222]"
           >
-            <ProjectionContent
-              currentTime={currentTime}
-              isLooping={isLooping}
-              isFinalFiveMinutes={isFinalFiveMinutes}
-              isFinalMinute={isFinalMinute}
-              isJustStarted={isJustStarted}
-              activeAlert={activeAlert}
-              blackoutEnabled={blackoutEnabled}
-              clearContentEnabled={clearContentEnabled}
-              currentSlideId={currentSlideId}
-              hoursStr={hoursStr}
-              minutesStr={minutesStr}
-              diffSeconds={diffSeconds}
-              formatMinutesPart={formatMinutesPart}
-              formatSecondsPart={formatSecondsPart}
-              customVerseText={customVerseText}
-              customVerseRef={customVerseRef}
-              activeVerseIndex={activeVerseIndex}
-              churchInfo={CHURCH_INFO}
-              alerts={ALERTS}
-              customMediaList={customMediaList}
-              videoPinBehavior={videoPinBehavior}
-              finalMinuteDisplayMode={finalMinuteDisplayMode}
-              verseDisplayPriority={verseDisplayPriority}
-              loopIteration={loopIteration}
-              onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
-              isMiniature={true}
-              customMeetings={customMeetings}
-              customCampaigns={customCampaigns}
-              nextMeeting={nextMeeting}
-              nextMeetingDate={nextMeetingDate}
-              ongoingMeeting={ongoingMeeting}
-              volume={volume}
-              tickerText={tickerText}
-              background3DStyle={background3DStyle}
-              background3DFps={background3DFps}
-              background3DIntensity={background3DIntensity}
-              syncStatus={syncStatus}
-            />
+            {/* Screen Glass Surface Reflection */}
+            <div className="absolute inset-0 pointer-events-none z-30 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.06]" />
+
+            <div 
+              className="absolute origin-top-left pointer-events-none"
+              style={{
+                width: '1920px',
+                height: '1080px',
+                transform: `scale(${scale})`
+              }}
+            >
+              <ProjectionContent
+                currentTime={currentTime}
+                isLooping={isLooping}
+                isFinalFiveMinutes={isFinalFiveMinutes}
+                isFinalMinute={isFinalMinute}
+                isJustStarted={isJustStarted}
+                activeAlert={activeAlert}
+                blackoutEnabled={blackoutEnabled}
+                clearContentEnabled={clearContentEnabled}
+                currentSlideId={currentSlideId}
+                hoursStr={hoursStr}
+                minutesStr={minutesStr}
+                diffSeconds={diffSeconds}
+                formatMinutesPart={formatMinutesPart}
+                formatSecondsPart={formatSecondsPart}
+                customVerseText={customVerseText}
+                customVerseRef={customVerseRef}
+                activeVerseIndex={activeVerseIndex}
+                churchInfo={CHURCH_INFO}
+                alerts={ALERTS}
+                customMediaList={customMediaList}
+                videoPinBehavior={videoPinBehavior}
+                finalMinuteDisplayMode={finalMinuteDisplayMode}
+                verseDisplayPriority={verseDisplayPriority}
+                loopIteration={loopIteration}
+                onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
+                isMiniature={true}
+                customMeetings={customMeetings}
+                customCampaigns={customCampaigns}
+                nextMeeting={nextMeeting}
+                nextMeetingDate={nextMeetingDate}
+                ongoingMeeting={ongoingMeeting}
+                volume={volume}
+                tickerText={tickerText}
+                background3DStyle={background3DStyle}
+                background3DFps={background3DFps}
+                background3DIntensity={background3DIntensity}
+                syncStatus={syncStatus}
+              />
+            </div>
           </div>
         </div>
 
-        {/* QUICK TOUCH CONTROL BAR FOR MOBILE / TABLET OPERATORS */}
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <button
-            onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}
-            className={`p-3 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md min-h-[44px] ${
-              blackoutEnabled
-                ? 'bg-red-600 border-red-500 text-white shadow-red-900/30 animate-pulse'
-                : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-300'
-            }`}
-          >
-            <EyeOff className={`w-4 h-4 shrink-0 ${blackoutEnabled ? 'text-white' : 'text-amber-500'}`} />
-            <span>{blackoutEnabled ? 'RESTAURAR TELA' : 'BLACKOUT (B)'}</span>
-          </button>
+        {/* TACTILE PHYSICAL CONTROL CONSOLE BAR FOR OPERATORS */}
+        <div className="relative z-10 bg-[#030303] p-3 rounded-2xl border border-[#222] shadow-[inset_0_2px_10px_rgba(0,0,0,1)] flex flex-col gap-3">
+          <div className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-widest px-1 flex items-center justify-between">
+            <span>PAINEL DE COMANDOS TÁTICOS</span>
+            <span>HARDWARE OVERRIDE</span>
+          </div>
 
-          <button
-            onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}
-            className={`p-3 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md min-h-[44px] ${
-              clearContentEnabled
-                ? 'bg-amber-500 border-amber-400 text-black shadow-amber-500/20'
-                : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-300'
-            }`}
-          >
-            <Eye className={`w-4 h-4 shrink-0 ${clearContentEnabled ? 'text-black' : 'text-amber-500'}`} />
-            <span>{clearContentEnabled ? 'MOSTRAR TEXTO' : 'LIMPAR TEXTO (C)'}</span>
-          </button>
-        </div>
-
-        {/* HDMI quick buttons */}
-        <div className="flex gap-3 mt-1">
-          {!isProjectionOpen ? (
+          <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={handleOpenMonitor}
-              className="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 min-h-[42px]"
+              type="button"
+              onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}
+              className={`p-3.5 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[46px] ${
+                blackoutEnabled
+                  ? 'bg-red-600 border-red-400 text-white shadow-[0_0_25px_rgba(220,38,38,0.6)] animate-pulse'
+                  : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-amber-500/50 text-zinc-200 shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px]'
+              }`}
             >
-              <ExternalLink className="w-4 h-4 text-amber-500 shrink-0" />
-              <span>Projetar na 2ª Tela (HDMI)</span>
+              <EyeOff className={`w-4 h-4 shrink-0 ${blackoutEnabled ? 'text-white' : 'text-amber-500'}`} />
+              <span className="font-sans">{blackoutEnabled ? 'RESTAURAR TELA' : 'BLACKOUT (B)'}</span>
             </button>
-          ) : (
-            <button
-              onClick={handleCloseMonitor}
-              className="flex-1 p-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all min-h-[42px]"
-            >
-              <X className="w-4 h-4 shrink-0" />
-              <span>Fechar 2ª Tela</span>
-            </button>
-          )}
-        </div>
-      </div>
 
-      {/* PRÓXIMA MÍDIA / A SEGUIR CARD - DESIGN FLUIDO E LIMPO PARA CELULAR E PC */}
-      <div className="bg-zinc-900 border border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col gap-3.5 relative">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800/80 pb-3 gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shrink-0 border border-amber-500/20">
-              <SkipForward className="w-5 h-5" />
+            <button
+              type="button"
+              onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}
+              className={`p-3.5 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[46px] ${
+                clearContentEnabled
+                  ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_25px_rgba(245,158,11,0.6)]'
+                  : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-amber-500/50 text-zinc-200 shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px]'
+              }`}
+            >
+              <Eye className={`w-4 h-4 shrink-0 ${clearContentEnabled ? 'text-black' : 'text-amber-500'}`} />
+              <span className="font-sans">{clearContentEnabled ? 'MOSTRAR TEXTO' : 'LIMPAR TEXTO (C)'}</span>
+            </button>
+          </div>
+
+          {/* HDMI OUT BUTTON */}
+          <div className="flex gap-3">
+            {!isProjectionOpen ? (
+              <button
+                type="button"
+                onClick={handleOpenMonitor}
+                className="flex-1 p-3 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-zinc-100 text-xs font-extrabold rounded-xl flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] min-h-[44px]"
+              >
+                <ExternalLink className="w-4 h-4 text-amber-500 shrink-0 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+                <span className="font-sans">Projetar na 2ª Tela (HDMI)</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleCloseMonitor}
+                className="flex-1 p-3 bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold rounded-xl flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] active:translate-y-[2px] min-h-[44px]"
+              >
+                <X className="w-4 h-4 shrink-0" />
+                <span className="font-sans">Fechar 2ª Tela</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* PRÓXIMA MÍDIA / A SEGUIR CARD - DESIGN SKEUOMÓRFICO TÁTICO */}
+      <section aria-label="A Seguir na Fila" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-4 group">
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#333] pb-3.5 gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <SkipForward className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="text-zinc-100 font-black text-xs sm:text-sm uppercase tracking-wider leading-snug">Fila de Transmissão: A Seguir</h4>
+              <h4 className="text-zinc-100 font-extrabold text-xs sm:text-sm uppercase tracking-wider font-sans leading-snug">Fila de Transmissão: A Seguir</h4>
               <p className="text-[11px] text-zinc-400 font-medium leading-tight mt-0.5">
                 {activeSlides.length > 0
                   ? `Posição ${(activeSlides.indexOf(currentSlideId) + 2) > activeSlides.length ? 1 : activeSlides.indexOf(currentSlideId) + 2} de ${activeSlides.length} do Carrossel`
@@ -364,19 +411,19 @@ export function MonitorPanel({
               </p>
             </div>
           </div>
-          <span className="self-start sm:self-center bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] sm:text-xs font-mono px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold shrink-0">
+          <span className="self-start sm:self-center bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-3 py-1 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
             {nextMedia.typeLabel}
           </span>
         </div>
 
-        <div className="bg-zinc-950 border border-zinc-800/90 rounded-xl p-3.5 sm:p-4 flex flex-col gap-3.5 shadow-inner">
+        <div className="relative z-10 bg-[#030303] border border-[#222] rounded-xl p-4 flex flex-col gap-3.5 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
           <div className="flex items-start gap-3 min-w-0 w-full">
-            <div className="p-2.5 bg-zinc-900 rounded-xl border border-zinc-800 shrink-0 text-amber-500 flex items-center justify-center shadow-md">
+            <div className="p-3 bg-[#111113] rounded-xl border border-[#27272a] shrink-0 text-amber-500 flex items-center justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
               {nextMedia.icon}
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-widest block mb-0.5">Próximo Conteúdo</span>
-              <p className="text-sm sm:text-base font-black text-white leading-snug break-words">{nextMedia.title}</p>
+              <span className="text-[10px] font-mono font-extrabold text-amber-500 uppercase tracking-widest block mb-0.5">PRÓXIMO CONTEÚDO</span>
+              <p className="text-sm sm:text-base font-sans font-extrabold text-zinc-100 leading-snug break-words">{nextMedia.title}</p>
               <p className="text-xs text-zinc-400 font-medium leading-relaxed mt-1 break-words">
                 {customVerseText ? 'Aguardando encerramento do versículo ativo' : 'Pronto na fila do projetor'}
               </p>
@@ -385,67 +432,72 @@ export function MonitorPanel({
 
           {nextMedia.id && (
             <button
+              type="button"
               onClick={() => updateStateAndBroadcast('advanceToSlide', nextMedia.id)}
-              className="bg-amber-500 hover:bg-amber-400 text-black text-xs sm:text-sm font-extrabold px-4 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 active:scale-95 w-full min-h-[44px]"
+              className="bg-amber-500 hover:bg-amber-400 text-black text-xs sm:text-sm font-black px-4 py-3 rounded-xl transition-all cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.4)] flex items-center justify-center gap-2 active:translate-y-[1px] w-full min-h-[44px]"
             >
               <SkipForward className="w-4 h-4 shrink-0" />
               <span>Avançar Slide</span>
             </button>
           )}
         </div>
-      </div>
+      </section>
 
       {/* HARDWARE DIAGNOSTIC & AUTOMATIC OPTIMIZATION BANNER */}
-      <div className="bg-zinc-900/90 border border-zinc-800/90 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 text-left">
-        <div className="flex items-center gap-3.5 min-w-0 w-full lg:w-auto">
-          <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-400 shrink-0 shadow-md">
-            <Gauge className="w-5 h-5" />
+      <section aria-label="Desempenho e Memória" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 text-left group">
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+        <div className="relative z-10 flex items-center gap-3.5 min-w-0 w-full lg:w-auto">
+          <div className="p-3 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+            <Gauge className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider">Desempenho & Memória</h4>
-              <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-extrabold border ${
+              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Desempenho & Memória</h4>
+              <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded font-bold border shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] ${
                 effectiveMode === 'light'
-                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  ? 'bg-amber-950/80 border-amber-900/50 text-amber-400'
                   : effectiveMode === 'balanced'
-                  ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  ? 'bg-blue-950/80 border-blue-900/50 text-blue-400'
+                  : 'bg-emerald-950/80 border-emerald-900/50 text-emerald-400'
               }`}>
-                {fps} FPS ({effectiveMode === 'light' ? 'Anti-Lag Ativo' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Máxima Qualidade'})
+                {fps} FPS ({effectiveMode === 'light' ? 'Anti-Lag' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Máxima Qualidade'})
               </span>
-              <span className="text-[10px] font-mono bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800 text-blue-400 font-bold">
+              <span className="text-[10px] font-mono bg-[#030303] px-2 py-0.5 rounded border border-[#222] text-amber-400 font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
                 RAM: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
               </span>
             </div>
-            <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
-              Otimização contínua de GPU, CPU ({report?.cpuCores || 4} cores) e memória.
+            <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed font-medium">
+              Otimização contínua de GPU, CPU ({report?.cpuCores || 4} cores) e memória de vídeo.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 flex-wrap sm:flex-nowrap">
+        <div className="relative z-10 flex items-center gap-2.5 w-full lg:w-auto shrink-0 flex-wrap sm:flex-nowrap">
           <button
+            type="button"
             onClick={handleClearRam}
-            className={`flex-1 sm:flex-initial text-xs font-bold px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[40px] ${
+            className={`flex-1 sm:flex-initial text-xs font-bold px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[40px] shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px] ${
               ramCleared
-                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                : 'bg-zinc-950 hover:bg-zinc-850 border-zinc-800 hover:border-zinc-700 text-zinc-300'
+                ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300'
+                : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-[#444] text-zinc-200'
             }`}
             title="Limpa cache de vídeos e imagens armazenados na RAM"
           >
-            <HardDrive className={`w-4 h-4 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-blue-400'}`} />
+            <HardDrive className={`w-4 h-4 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-amber-500'}`} />
             <span>{ramCleared ? 'RAM Liberada!' : 'Limpar RAM'}</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setShowBenchmarkModal(true)}
-            className="flex-1 sm:flex-initial bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold px-4 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-500/10 min-h-[40px] active:scale-95"
+            className="flex-1 sm:flex-initial bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-4 py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.3)] min-h-[40px] active:translate-y-[1px]"
           >
             <Zap className="w-4 h-4 shrink-0 fill-current" />
             <span>Testar e Otimizar</span>
           </button>
         </div>
-      </div>
+      </section>
 
       {/* HARDWARE BENCHMARK MODAL */}
       <HardwareBenchmarkModal
@@ -455,41 +507,45 @@ export function MonitorPanel({
 
       {/* SHORTCUTS & INTERACTIVE COMMANDS MODAL OVERLAY */}
       {showShortcutsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-amber-500/40 rounded-2xl p-5 shadow-2xl max-w-lg w-full flex flex-col gap-4 relative">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h4 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider flex items-center gap-2">
-                <Keyboard className="w-5 h-5 text-amber-500 shrink-0" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.95)] max-w-lg w-full flex flex-col gap-4 relative">
+            <div className="flex items-center justify-between border-b border-[#333] pb-3.5">
+              <h4 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider font-sans flex items-center gap-2">
+                <Keyboard className="w-5 h-5 text-amber-500 shrink-0 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
                 Atalhos de Teclado & Comandos
               </h4>
               <button
+                type="button"
                 onClick={() => setShowShortcutsModal(false)}
-                className="p-1.5 text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 rounded-lg cursor-pointer transition-all"
+                className="p-1.5 text-zinc-400 hover:text-white bg-[#111113] hover:bg-[#1f1f22] border border-[#333] rounded-lg cursor-pointer transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-zinc-400 leading-relaxed">
+            <p className="text-xs text-zinc-400 leading-relaxed font-medium">
               No computador, você pode pressionar as teclas diretamente. No celular ou tablet, pode tocar em qualquer comando abaixo:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
               <button
+                type="button"
                 onClick={() => { updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled); setShowShortcutsModal(false); }}
-                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200">Blackout (Ocultar Tela)</span>
-                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">B</kbd>
+                <span className="font-bold text-zinc-200 font-sans">Blackout (Ocultar Tela)</span>
+                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">B</kbd>
               </button>
 
               <button
+                type="button"
                 onClick={() => { updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled); setShowShortcutsModal(false); }}
-                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200">Limpar Texto/Versículo</span>
-                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">C</kbd>
+                <span className="font-bold text-zinc-200 font-sans">Limpar Texto/Versículo</span>
+                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">C</kbd>
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   if (activeSlides.length > 0) {
                     const currentIndex = activeSlides.indexOf(currentSlideId);
@@ -498,13 +554,14 @@ export function MonitorPanel({
                   }
                   setShowShortcutsModal(false);
                 }}
-                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200">Próximo Slide da Fila</span>
-                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">Espaço / →</kbd>
+                <span className="font-bold text-zinc-200 font-sans">Próximo Slide da Fila</span>
+                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">Espaço / →</kbd>
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   if (activeSlides.length > 0) {
                     const currentIndex = activeSlides.indexOf(currentSlideId);
@@ -513,13 +570,14 @@ export function MonitorPanel({
                   }
                   setShowShortcutsModal(false);
                 }}
-                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200">Slide Anterior</span>
-                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">←</kbd>
+                <span className="font-bold text-zinc-200 font-sans">Slide Anterior</span>
+                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">←</kbd>
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   updateStateAndBroadcast('manualSlideOverride', null);
                   if (customVerseText) {
@@ -530,21 +588,22 @@ export function MonitorPanel({
                   if (activeAlert) updateStateAndBroadcast('activeAlert', null);
                   setShowShortcutsModal(false);
                 }}
-                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200">Resetar / Seguir Fila</span>
-                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">Esc</kbd>
+                <span className="font-bold text-zinc-200 font-sans">Resetar / Seguir Fila</span>
+                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">Esc</kbd>
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   updateStateAndBroadcast('volume', volume > 0 ? 0 : 0.5);
                   setShowShortcutsModal(false);
                 }}
-                className="bg-zinc-950 hover:bg-zinc-800 p-3 rounded-xl border border-zinc-800 flex items-center justify-between text-left cursor-pointer transition-all active:scale-95"
+                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200">Mudo / Ativar Som</span>
-                <kbd className="bg-zinc-800 px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">M</kbd>
+                <span className="font-bold text-zinc-200 font-sans">Mudo / Ativar Som</span>
+                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">M</kbd>
               </button>
             </div>
           </div>
@@ -552,9 +611,11 @@ export function MonitorPanel({
       )}
 
       {/* SMART DEVICE GUIDANCE CARD */}
-      <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-4 sm:p-5 shadow-xl text-left">
-        <div className="flex items-center justify-between mb-2.5 gap-2">
-          <h4 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-2 min-w-0">
+      <section aria-label="Modo de Dispositivo" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden text-left group">
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+        <div className="relative z-10 flex items-center justify-between mb-3 gap-2 border-b border-[#333] pb-3">
+          <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans flex items-center gap-2 min-w-0">
             {isMobileDevice ? (
               <Smartphone className="w-4 h-4 text-amber-500 animate-pulse shrink-0" />
             ) : (
@@ -562,43 +623,43 @@ export function MonitorPanel({
             )}
             <span className="truncate">Modo: {isMobileDevice ? 'Celular / Tablet' : 'Computador / Mesa'}</span>
           </h4>
-          <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[9px] font-mono px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shrink-0">
+          <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[9px] font-mono px-2.5 py-1 rounded uppercase tracking-wider font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
             {isMobileDevice ? 'Controle Remoto' : 'HDMI + Teclado'}
           </span>
         </div>
 
         {isMobileDevice ? (
-          <div className="text-[11px] text-zinc-400 space-y-1.5 leading-relaxed">
-            <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">1</span>
+          <div className="relative z-10 text-[11px] text-zinc-400 space-y-2 leading-relaxed">
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
               <span>Seu celular opera como <strong>Controle Remoto Sem Fio</strong> do projetor.</span>
             </p>
-            <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">2</span>
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
               <span>Abra este mesmo link no PC da igreja conectado à TV/HDMI.</span>
             </p>
-            <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">3</span>
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
               <span>Use os botões <strong>BLACKOUT</strong>, <strong>LIMPAR TEXTO</strong> e a <strong>FILA DE TRANSMISSÃO</strong> para controlar tudo em tempo real!</span>
             </p>
           </div>
         ) : (
-          <div className="text-[11px] text-zinc-400 space-y-1.5 leading-relaxed">
-            <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">1</span>
+          <div className="relative z-10 text-[11px] text-zinc-400 space-y-2 leading-relaxed">
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
               <span>Conecte a TV ou Projetor na saída HDMI do computador.</span>
             </p>
-            <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">2</span>
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
               <span>Clique em <strong>"Projetar na 2ª Tela (HDMI)"</strong>.</span>
             </p>
-            <p className="flex items-start gap-1.5">
-              <span className="font-mono bg-zinc-950 border border-zinc-800 px-1.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5">3</span>
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
               <span>Atalhos: <strong>B</strong> (Blackout), <strong>C</strong> (Limpar), <strong>Espaço</strong> (Próximo) e <strong>ESC</strong> (Resetar).</span>
             </p>
           </div>
         )}
-      </div>
+      </section>
 
       <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
     </div>

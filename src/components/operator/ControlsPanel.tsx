@@ -673,23 +673,23 @@ export function ControlsPanel({
         </div>
 
         {/* 3D VOLUMETRIC BACKGROUND CARD */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-          <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
-            <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-500" />
+        <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-4 group">
+          <div className="border-b border-[#222] pb-3 flex items-center justify-between">
+            <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider flex items-center gap-2 font-sans">
+              <Sparkles className="w-4 h-4 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
               Fundo 3D & Efeitos Visuais
             </h3>
-            <span className="text-[9px] bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono px-2 py-0.5 rounded-md font-bold">
+            <span className="text-[9px] bg-[#111113] border border-amber-900/50 text-amber-400 font-mono px-2 py-0.5 rounded-md font-extrabold shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
               100% Offline
             </span>
           </div>
 
           {/* 1-CLICK PRESET MODES FOR QUICK OPERATOR SETUP */}
-          <div className="flex flex-col gap-1.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-850">
-            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-              <Zap className="w-3 h-3 text-amber-500" /> Otimização Rápida:
+          <div className="flex flex-col gap-1.5 bg-[#030303] p-3 rounded-xl border border-[#222] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+            <span className="text-[10px] font-mono font-extrabold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Otimização Rápida:
             </span>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-3 gap-2 mt-1">
               <button
                 type="button"
                 onClick={() => {
@@ -698,11 +698,11 @@ export function ControlsPanel({
                   updateStateAndBroadcast('background3DIntensity', 'low');
                   setPerformanceMode('light');
                 }}
-                className="py-2 px-1.5 bg-zinc-900 hover:bg-emerald-950/40 border border-zinc-800 hover:border-emerald-500/50 rounded-lg text-[10px] font-bold text-emerald-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
+                className="py-2.5 px-2 bg-[#111113] hover:bg-emerald-950/40 border border-[#333] hover:border-emerald-500/50 rounded-xl text-[10px] font-extrabold text-emerald-400 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
                 title="Ideal para computadores sem GPU dedicada"
               >
-                <span>🛡️ Anti-Lag</span>
-                <span className="text-[8px] text-zinc-500 group-hover:text-emerald-300 font-normal">30 FPS (Leve)</span>
+                <span className="font-sans">🛡️ Anti-Lag</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-emerald-300 font-mono mt-0.5">30 FPS (Leve)</span>
               </button>
 
               <button
@@ -713,11 +713,11 @@ export function ControlsPanel({
                   updateStateAndBroadcast('background3DIntensity', 'medium');
                   setPerformanceMode('auto');
                 }}
-                className="py-2 px-1.5 bg-zinc-900 hover:bg-amber-950/40 border border-zinc-800 hover:border-amber-500/50 rounded-lg text-[10px] font-bold text-amber-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
+                className="py-2.5 px-2 bg-[#111113] hover:bg-amber-950/40 border border-[#333] hover:border-amber-500/50 rounded-xl text-[10px] font-extrabold text-amber-400 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
                 title="Equilíbrio ideal entre fluidez e visual"
               >
-                <span>⚖️ Equilibrado</span>
-                <span className="text-[8px] text-zinc-500 group-hover:text-amber-300 font-normal">60 FPS (Auto)</span>
+                <span className="font-sans">⚖️ Equilibrado</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-amber-300 font-mono mt-0.5">60 FPS (Auto)</span>
               </button>
 
               <button
@@ -728,18 +728,18 @@ export function ControlsPanel({
                   updateStateAndBroadcast('background3DIntensity', 'high');
                   setPerformanceMode('high');
                 }}
-                className="py-2 px-1.5 bg-zinc-900 hover:bg-blue-950/40 border border-zinc-800 hover:border-blue-500/50 rounded-lg text-[10px] font-bold text-blue-400 flex flex-col items-center justify-center transition-all cursor-pointer group"
+                className="py-2.5 px-2 bg-[#111113] hover:bg-blue-950/40 border border-[#333] hover:border-blue-500/50 rounded-xl text-[10px] font-extrabold text-blue-400 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
                 title="Qualidade gráfica máxima"
               >
-                <span>✨ Alta Qualidade</span>
-                <span className="text-[8px] text-zinc-500 group-hover:text-blue-300 font-normal">60 FPS (3D)</span>
+                <span className="font-sans">✨ Alta Qualidade</span>
+                <span className="text-[8px] text-zinc-500 group-hover:text-blue-300 font-mono mt-0.5">60 FPS (3D)</span>
               </button>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Estilo de Ambiência 3D</span>
-            <div className="grid grid-cols-3 gap-1.5">
+            <span className="text-[10px] font-mono font-extrabold text-zinc-400 uppercase tracking-wider">Estilo de Ambiência 3D</span>
+            <div className="grid grid-cols-3 gap-2">
               {[
                 { id: 'auto', label: '🤖 Automático' },
                 { id: 'aurora', label: '🌅 Aurora 3D' },
@@ -750,11 +750,12 @@ export function ControlsPanel({
               ].map((item) => (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => updateStateAndBroadcast('background3DStyle', item.id)}
-                  className={`py-2 px-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer border truncate ${
+                  className={`py-2 px-2 rounded-xl text-[10px] font-extrabold uppercase transition-all cursor-pointer border truncate font-sans active:translate-y-[1px] ${
                     background3DStyle === item.id
-                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
-                      : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-zinc-400'
+                      ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                      : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-300 hover:text-white'
                   }`}
                 >
                   {item.label}
@@ -763,36 +764,38 @@ export function ControlsPanel({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-800/50">
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#222]">
             <div className="flex flex-col gap-1.5">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Modo Desempenho / FPS</span>
+              <span className="text-[10px] font-mono font-extrabold text-zinc-400 uppercase tracking-wider">Modo Desempenho / FPS</span>
               <div className="grid grid-cols-2 gap-1.5">
                 <button
+                  type="button"
                   onClick={() => updateStateAndBroadcast('background3DFps', 60)}
-                  className={`py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+                  className={`py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all cursor-pointer border font-sans active:translate-y-[1px] ${
                     background3DFps === 60
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                      : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                      ? 'bg-emerald-500 border-emerald-400 text-black shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                      : 'bg-[#111113] border-[#333] text-zinc-400 hover:text-white'
                   }`}
                 >
                   60 FPS
                 </button>
                 <button
+                  type="button"
                   onClick={() => updateStateAndBroadcast('background3DFps', 30)}
-                  className={`py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+                  className={`py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all cursor-pointer border font-sans active:translate-y-[1px] ${
                     background3DFps === 30
-                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
-                      : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                      ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                      : 'bg-[#111113] border-[#333] text-zinc-400 hover:text-white'
                   }`}
                   title="Economiza processamento no computador"
                 >
-                  30 FPS (Leve)
+                  30 FPS
                 </button>
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Carga Gráfica 3D</span>
+              <span className="text-[10px] font-mono font-extrabold text-zinc-400 uppercase tracking-wider">Carga Gráfica 3D</span>
               <div className="grid grid-cols-3 gap-1">
                 {[
                   { id: 'high', label: 'Alta' },
@@ -801,13 +804,14 @@ export function ControlsPanel({
                 ].map((item) => (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => updateStateAndBroadcast('background3DIntensity', item.id)}
-                    className={`py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all cursor-pointer border ${
+                    className={`py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all cursor-pointer border font-sans active:translate-y-[1px] ${
                       background3DIntensity === item.id
                         ? item.id === 'low'
-                          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-extrabold'
-                          : 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-                        : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                          ? 'bg-emerald-500 border-emerald-400 text-black'
+                          : 'bg-amber-500 border-amber-400 text-black'
+                        : 'bg-[#111113] border-[#333] text-zinc-400 hover:text-white'
                     }`}
                     title={item.id === 'low' ? 'Modo Anti-Lag ultra otimizado para computadores fracos' : undefined}
                   >
@@ -820,26 +824,26 @@ export function ControlsPanel({
         </div>
 
         {/* TIMER COUNTDOWN CARD */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-          <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
-            <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider">Cronômetro de Reunião</h3>
-            <span className="text-[9px] bg-zinc-950 border border-zinc-800 text-zinc-500 font-mono px-2 py-0.5 rounded-md">
+        <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col gap-4">
+          <div className="border-b border-[#222] pb-3 flex items-center justify-between">
+            <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Cronômetro de Reunião</h3>
+            <span className="text-[9px] bg-[#111113] border border-[#333] text-zinc-400 font-mono px-2 py-0.5 rounded-md font-bold">
               Ajustável
             </span>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-950/40 p-4 rounded-xl border border-zinc-850">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[#030303] p-4 rounded-2xl border border-[#222] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
             <div className="text-left w-full sm:w-auto">
-              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Próxima Reunião</span>
-              <p className="text-sm font-bold text-zinc-100 mt-1">
+              <span className="text-[10px] text-zinc-400 font-mono font-extrabold uppercase tracking-wider block">Próxima Reunião</span>
+              <p className="text-sm font-extrabold text-zinc-100 mt-1 font-sans">
                 <span className="text-amber-500">{nextMeeting.dayName}</span> às {nextMeeting.time}
               </p>
-              <p className="text-xs text-zinc-400 font-medium leading-relaxed truncate max-w-[180px] mt-0.5">{nextMeeting.theme}</p>
+              <p className="text-xs text-zinc-400 font-semibold leading-relaxed truncate max-w-[180px] mt-0.5 font-sans">{nextMeeting.theme}</p>
             </div>
             
-            <div className="text-center bg-zinc-950 border border-zinc-800 px-5 py-2.5 rounded-xl w-full sm:w-auto min-w-[130px] shadow-inner">
-              <span className="text-[9px] font-black text-zinc-600 uppercase tracking-wider block">Regressiva</span>
-              <p className="text-3xl font-mono font-black text-amber-500 tracking-widest mt-0.5 animate-pulse">
+            <div className="text-center bg-[#111113] border border-[#333] px-6 py-3 rounded-2xl w-full sm:w-auto min-w-[140px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <span className="text-[9px] font-mono font-extrabold text-zinc-400 uppercase tracking-widest block">Regressiva</span>
+              <p className="text-3xl font-mono font-black text-amber-500 tracking-widest mt-0.5 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)] animate-pulse">
                 {hoursStr}:{minutesStr}
               </p>
             </div>
@@ -849,109 +853,117 @@ export function ControlsPanel({
           <div className="flex flex-col gap-2">
             <div className="grid grid-cols-3 gap-2">
               <button
+                type="button"
                 onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset + 60 * 1000)}
-                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-emerald-500/50 text-zinc-200 text-[10px] font-extrabold py-2 rounded-xl cursor-pointer flex items-center justify-center gap-1 transition-all active:translate-y-[1px]"
                 title="Avançar 1 minuto"
               >
-                <Plus className="w-3 h-3 text-emerald-500" /> 1m
+                <Plus className="w-3.5 h-3.5 text-emerald-400" /> 1m
               </button>
               <button
+                type="button"
                 onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset + 5 * 60 * 1000)}
-                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-emerald-500/50 text-zinc-200 text-[10px] font-extrabold py-2 rounded-xl cursor-pointer flex items-center justify-center gap-1 transition-all active:translate-y-[1px]"
                 title="Avançar 5 minutos"
               >
-                <Plus className="w-3 h-3 text-emerald-500" /> 5m
+                <Plus className="w-3.5 h-3.5 text-emerald-400" /> 5m
               </button>
               <button
+                type="button"
                 onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset + 30 * 60 * 1000)}
-                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-emerald-500/50 text-zinc-200 text-[10px] font-extrabold py-2 rounded-xl cursor-pointer flex items-center justify-center gap-1 transition-all active:translate-y-[1px]"
                 title="Avançar 30 minutos"
               >
-                <Plus className="w-3 h-3 text-emerald-400" /> 30m
+                <Plus className="w-3.5 h-3.5 text-emerald-400" /> 30m
               </button>
             </div>
             <div className="grid grid-cols-3 gap-2">
               <button
+                type="button"
                 onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset - 60 * 1000)}
-                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-red-500/50 text-zinc-200 text-[10px] font-extrabold py-2 rounded-xl cursor-pointer flex items-center justify-center gap-1 transition-all active:translate-y-[1px]"
                 title="Voltar 1 minuto"
               >
-                <Minus className="w-3 h-3 text-red-500" /> 1m
+                <Minus className="w-3.5 h-3.5 text-red-400" /> 1m
               </button>
               <button
+                type="button"
                 onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset - 5 * 60 * 1000)}
-                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-red-500/50 text-zinc-200 text-[10px] font-extrabold py-2 rounded-xl cursor-pointer flex items-center justify-center gap-1 transition-all active:translate-y-[1px]"
                 title="Voltar 5 minutos"
               >
-                <Minus className="w-3 h-3 text-red-500" /> 5m
+                <Minus className="w-3.5 h-3.5 text-red-400" /> 5m
               </button>
               <button
+                type="button"
                 onClick={() => updateStateAndBroadcast('countdownOffset', countdownOffset - 30 * 60 * 1000)}
-                className="bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 text-[10px] font-bold py-2 rounded-lg cursor-pointer flex items-center justify-center gap-1 transition-colors"
+                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-red-500/50 text-zinc-200 text-[10px] font-extrabold py-2 rounded-xl cursor-pointer flex items-center justify-center gap-1 transition-all active:translate-y-[1px]"
                 title="Voltar 30 minutos"
               >
-                <Minus className="w-3 h-3 text-red-400" /> 30m
+                <Minus className="w-3.5 h-3.5 text-red-400" /> 30m
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-3 mt-1">
             <button
+              type="button"
               onClick={handleToggleTimerPlayPause}
-              className={`text-xs font-bold py-2.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 transition-all ${
+              className={`text-xs font-black py-3 rounded-xl cursor-pointer flex items-center justify-center gap-2 transition-all font-sans active:translate-y-[1px] ${
                 countdownPaused 
-                  ? "bg-emerald-500 text-black hover:bg-emerald-600 shadow-lg shadow-emerald-500/10" 
-                  : "bg-zinc-950 text-red-400 border border-zinc-800 hover:border-red-900/30 hover:bg-red-950/10"
+                  ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
+                  : "bg-[#111113] text-red-400 border border-red-900/50 hover:bg-red-950/30"
               }`}
             >
-              {countdownPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+              {countdownPaused ? <Play className="w-4 h-4 fill-current" /> : <Pause className="w-4 h-4 fill-current" />}
               {countdownPaused ? "Retomar" : "Pausar"}
             </button>
             
             <button
+              type="button"
               onClick={handleResetTimer}
-              className="bg-zinc-950 hover:bg-zinc-900 text-zinc-300 text-xs font-bold py-2.5 rounded-xl cursor-pointer flex items-center justify-center gap-1.5 border border-zinc-800 transition-colors"
+              className="bg-[#111113] hover:bg-[#1a1a1d] text-zinc-200 text-xs font-extrabold py-3 rounded-xl cursor-pointer flex items-center justify-center gap-2 border border-[#333] hover:border-[#444] transition-all font-sans active:translate-y-[1px]"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-zinc-500" /> Resetar
+              <RefreshCw className="w-3.5 h-3.5 text-amber-500" /> Resetar
             </button>
           </div>
         </div>
 
         {/* KEYBOARD SHORTCUTS CHEAT SHEET */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
-          <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider border-b border-zinc-800/50 pb-3 flex items-center justify-between">
+        <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col gap-4">
+          <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider border-b border-[#222] pb-3 flex items-center justify-between font-sans">
             <span>Atalhos Rápidos de Teclado</span>
-            <span className="text-[9px] text-amber-500/80 font-mono">Teclas Ativas</span>
+            <span className="text-[9px] text-amber-500 font-mono font-bold">Teclas Ativas</span>
           </h3>
           
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
-              <span className="text-[10px] text-zinc-400 font-semibold">Blackout (Black)</span>
-              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">B</kbd>
+            <div className="bg-[#030303] border border-[#222] p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+              <span className="text-[10px] text-zinc-300 font-bold font-sans">Blackout (Black)</span>
+              <kbd className="bg-[#111113] text-amber-400 font-mono text-[10px] font-black px-2 py-0.5 rounded border border-[#333]">B</kbd>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
-              <span className="text-[10px] text-zinc-400 font-semibold">Limpar Texto (Clear)</span>
-              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">C</kbd>
+            <div className="bg-[#030303] border border-[#222] p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+              <span className="text-[10px] text-zinc-300 font-bold font-sans">Limpar Texto (Clear)</span>
+              <kbd className="bg-[#111113] text-amber-400 font-mono text-[10px] font-black px-2 py-0.5 rounded border border-[#333]">C</kbd>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
-              <span className="text-[10px] text-zinc-400 font-semibold">Próximo Slide</span>
-              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">Espaço / →</kbd>
+            <div className="bg-[#030303] border border-[#222] p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+              <span className="text-[10px] text-zinc-300 font-bold font-sans">Próximo Slide</span>
+              <kbd className="bg-[#111113] text-amber-400 font-mono text-[10px] font-black px-2 py-0.5 rounded border border-[#333]">Espaço / →</kbd>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
-              <span className="text-[10px] text-zinc-400 font-semibold">Slide Anterior</span>
-              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">←</kbd>
+            <div className="bg-[#030303] border border-[#222] p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+              <span className="text-[10px] text-zinc-300 font-bold font-sans">Slide Anterior</span>
+              <kbd className="bg-[#111113] text-amber-400 font-mono text-[10px] font-black px-2 py-0.5 rounded border border-[#333]">←</kbd>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
-              <span className="text-[10px] text-zinc-400 font-semibold">Mute / Desmutar</span>
-              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">M</kbd>
+            <div className="bg-[#030303] border border-[#222] p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+              <span className="text-[10px] text-zinc-300 font-bold font-sans">Mute / Desmutar</span>
+              <kbd className="bg-[#111113] text-amber-400 font-mono text-[10px] font-black px-2 py-0.5 rounded border border-[#333]">M</kbd>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between">
-              <span className="text-[10px] text-zinc-400 font-semibold">Tela Cheia</span>
-              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">F</kbd>
+            <div className="bg-[#030303] border border-[#222] p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+              <span className="text-[10px] text-zinc-300 font-bold font-sans">Tela Cheia</span>
+              <kbd className="bg-[#111113] text-amber-400 font-mono text-[10px] font-black px-2 py-0.5 rounded border border-[#333]">F</kbd>
             </div>
-            <div className="bg-zinc-950 border border-zinc-800/60 p-2 rounded-xl flex items-center justify-between col-span-2">
-              <span className="text-[10px] text-zinc-400 font-semibold">Resetar Versículo / Alertas / Modos</span>
-              <kbd className="bg-zinc-800 text-zinc-200 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-zinc-700">Esc</kbd>
+            <div className="bg-[#030303] border border-[#222] p-2.5 rounded-xl flex items-center justify-between col-span-2 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+              <span className="text-[10px] text-zinc-300 font-bold font-sans">Resetar Versículo / Alertas</span>
+              <kbd className="bg-[#111113] text-amber-400 font-mono text-[10px] font-black px-2 py-0.5 rounded border border-[#333]">Esc</kbd>
             </div>
           </div>
         </div>
@@ -961,10 +973,10 @@ export function ControlsPanel({
       <div className="flex flex-col gap-6">
         
         {/* ALERTS MODULE */}
-        <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-          <div className="border-b border-zinc-800/50 pb-3 flex items-center justify-between">
-            <h3 className="text-zinc-200 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
-              <Bell className="w-4 h-4 text-amber-500" />
+        <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col gap-4">
+          <div className="border-b border-[#222] pb-3 flex items-center justify-between">
+            <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider flex items-center gap-2 font-sans">
+              <Bell className="w-4 h-4 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
               Disparador de Alertas
             </h3>
             {activeAlert && (
@@ -976,16 +988,17 @@ export function ControlsPanel({
 
           {/* ACTIVE ALERT CARD IF ANY */}
           {activeAlert && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between text-amber-400 text-xs shadow-inner">
+            <div className="bg-amber-950/60 border border-amber-800/60 rounded-xl p-3 flex items-center justify-between text-amber-400 text-xs shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
               <div className="flex items-center gap-2.5 text-left">
                 <AlertTriangle className="w-4 h-4 flex-shrink-0 animate-bounce text-amber-400" />
-                <span className="leading-snug truncate max-w-[210px] font-medium">
+                <span className="leading-snug truncate max-w-[210px] font-medium font-sans">
                   <strong className="text-amber-300">Exibindo:</strong> {activeAlert === 'baby' ? ALERTS.baby.message : activeAlert === 'car' ? ALERTS.car.message : activeAlert}
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() => updateStateAndBroadcast('activeAlert', null)}
-                className="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                className="bg-amber-500 hover:bg-amber-400 text-black px-2.5 py-1 rounded-lg text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shrink-0 shadow active:translate-y-[1px]"
               >
                 <X className="w-3.5 h-3.5" /> Remover
               </button>
@@ -993,23 +1006,24 @@ export function ControlsPanel({
           )}
 
           {/* PRESET CHURCH ALERTS BUTTONS */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Alertas Rápidos de Igreja</span>
-            <div className="grid grid-cols-2 gap-1.5">
+          <div className="flex flex-col gap-2">
+            <span className="text-[10px] font-mono font-extrabold text-zinc-400 uppercase tracking-wider">Alertas Rápidos de Igreja</span>
+            <div className="grid grid-cols-2 gap-2">
               {CHURCH_ALERT_PRESETS.map((preset) => {
                 const isActive = activeAlert === preset.id || activeAlert === preset.msg;
                 return (
                   <button
                     key={preset.id}
+                    type="button"
                     onClick={() => updateStateAndBroadcast('activeAlert', isActive ? null : preset.msg)}
-                    className={`p-2.5 rounded-xl border text-[10px] font-bold transition-all text-left flex flex-col justify-between cursor-pointer ${
+                    className={`p-3 rounded-xl border text-[10px] font-extrabold transition-all text-left flex flex-col justify-between cursor-pointer active:translate-y-[1px] ${
                       isActive
-                        ? "bg-amber-500 border-amber-500 text-black shadow-lg shadow-amber-500/20"
-                        : "bg-zinc-950 border-zinc-800 text-zinc-300 hover:border-amber-500/40 hover:bg-zinc-900"
+                        ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                        : "bg-[#030303] border-[#222] text-zinc-300 hover:border-amber-500/50 hover:bg-[#111113] shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]"
                     }`}
                   >
-                    <span className="font-extrabold truncate">{preset.title}</span>
-                    <span className={`text-[8px] truncate mt-0.5 ${isActive ? 'text-black/80 font-medium' : 'text-zinc-500'}`}>
+                    <span className="font-extrabold font-sans truncate">{preset.title}</span>
+                    <span className={`text-[8px] truncate mt-1 ${isActive ? 'text-black/80 font-semibold' : 'text-zinc-500 font-mono'}`}>
                       {preset.msg}
                     </span>
                   </button>
