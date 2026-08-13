@@ -598,8 +598,8 @@ export default function App() {
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
                 <img src="/logo-text.png?v=11" alt="HolyLink Tipografia" className="h-6 w-[80px] object-cover object-center shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
-                <span className="text-zinc-400 text-xs font-bold sm:border-l sm:border-[#333] sm:pl-2.5 font-sans">
-                  Console do Operador
+                <span className="text-zinc-300 text-xs font-black sm:border-l sm:border-[#333] sm:pl-2.5 font-sans uppercase tracking-wider">
+                  Painel do Operador
                 </span>
               </div>
             </div>

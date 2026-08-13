@@ -40,18 +40,26 @@ function PerformanceControlModule() {
   };
 
   return (
-    <div className="bg-zinc-900/80 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] border border-white/10 flex flex-col gap-5">
-      <div className="border-b border-zinc-800/80 pb-3 flex items-center justify-between flex-wrap gap-2 drop-shadow-md">
-        <h3 className="text-zinc-300 font-extrabold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
-          <Gauge className="w-4 h-4 text-amber-500 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
+    <div className="bg-[#0a0a0d] border border-[#27272a] rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] flex flex-col gap-5 relative overflow-hidden">
+      {/* Corner screws */}
+      <div className="absolute top-3 left-3 w-2.5 h-2.5 rounded-full bg-gradient-to-br from-zinc-600 via-zinc-800 to-zinc-950 border border-zinc-600/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.8)] flex items-center justify-center pointer-events-none opacity-80">
+        <div className="w-1.5 h-[1px] bg-zinc-400 rotate-45" />
+      </div>
+      <div className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-gradient-to-br from-zinc-600 via-zinc-800 to-zinc-950 border border-zinc-600/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.8)] flex items-center justify-center pointer-events-none opacity-80">
+        <div className="w-1.5 h-[1px] bg-zinc-400 -rotate-45" />
+      </div>
+
+      <div className="border-b border-[#222] pb-3 flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-zinc-300 font-black text-[10px] uppercase tracking-[0.2em] font-sans flex items-center gap-2">
+          <Gauge className="w-4 h-4 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
           Desempenho & Anti-Travamento
         </h3>
-        <span className={`text-[8px] font-mono px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider border shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] flex items-center gap-1 ${
+        <span className={`text-[8px] font-mono px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider border shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] flex items-center gap-1 ${
           effectiveMode === 'light' 
-            ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' 
+            ? 'bg-amber-950/80 border-amber-800/80 text-amber-400' 
             : effectiveMode === 'balanced'
-            ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
-            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+            ? 'bg-blue-950/80 border-blue-800/80 text-blue-400'
+            : 'bg-emerald-950/80 border-emerald-800/80 text-emerald-400'
         }`}>
           {effectiveMode === 'light' ? (
             <>
@@ -73,23 +81,23 @@ function PerformanceControlModule() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div className="bg-zinc-950/80 border border-zinc-800/80 p-3 rounded-xl flex flex-col justify-between shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]">
-          <span className="text-[9px] text-zinc-500 font-bold uppercase">Taxa FPS</span>
-          <span className={`font-mono font-bold text-xs mt-0.5 ${fps < 38 ? 'text-amber-400' : 'text-emerald-400'}`}>{fps} FPS</span>
+        <div className="bg-[#030304] border border-[#222] p-3 rounded-2xl flex flex-col justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+          <span className="text-[9px] text-zinc-500 font-black uppercase font-mono">Taxa FPS</span>
+          <span className={`font-mono font-black text-xs mt-0.5 ${fps < 38 ? 'text-amber-400' : 'text-emerald-400'}`}>{fps} FPS</span>
         </div>
-        <div className="bg-zinc-950/80 border border-zinc-800/80 p-3 rounded-xl flex flex-col justify-between shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]">
-          <span className="text-[9px] text-zinc-500 font-bold uppercase">CPU Cores</span>
-          <span className="font-mono font-bold text-xs text-zinc-300 mt-0.5">{hardwareConcurrency} Cores</span>
+        <div className="bg-[#030304] border border-[#222] p-3 rounded-2xl flex flex-col justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+          <span className="text-[9px] text-zinc-500 font-black uppercase font-mono">CPU Cores</span>
+          <span className="font-mono font-black text-xs text-zinc-300 mt-0.5">{hardwareConcurrency} Cores</span>
         </div>
-        <div className="bg-zinc-950/80 border border-zinc-800/80 p-3 rounded-xl flex flex-col justify-between shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]">
-          <span className="text-[9px] text-zinc-500 font-bold uppercase">Memória RAM</span>
-          <span className="font-mono font-bold text-xs text-blue-400 mt-0.5 truncate" title={report?.ramDisplay || 'RAM Identificada'}>
+        <div className="bg-[#030304] border border-[#222] p-3 rounded-2xl flex flex-col justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+          <span className="text-[9px] text-zinc-500 font-black uppercase font-mono">Memória RAM</span>
+          <span className="font-mono font-black text-xs text-blue-400 mt-0.5 truncate" title={report?.ramDisplay || 'RAM Identificada'}>
             {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
           </span>
         </div>
-        <div className="bg-zinc-950/80 border border-zinc-800/80 p-3 rounded-xl flex flex-col justify-between shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]">
-          <span className="text-[9px] text-zinc-500 font-bold uppercase">Heap JS</span>
-          <span className="font-mono font-bold text-xs text-purple-400 mt-0.5 truncate">
+        <div className="bg-[#030304] border border-[#222] p-3 rounded-2xl flex flex-col justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+          <span className="text-[9px] text-zinc-500 font-black uppercase font-mono">Heap JS</span>
+          <span className="font-mono font-black text-xs text-purple-400 mt-0.5 truncate">
             {report?.jsHeapUsedMB ? `${report.jsHeapUsedMB} MB` : 'Ativo'}
           </span>
         </div>

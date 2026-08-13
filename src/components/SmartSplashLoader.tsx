@@ -113,13 +113,27 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#050507] text-white flex flex-col items-center justify-center p-6 select-none font-sans relative overflow-hidden">
+    <div className="fixed inset-0 h-[100dvh] w-full z-[9999] bg-[#050507] text-white flex items-center justify-center p-4 sm:p-6 overflow-y-auto select-none font-sans relative">
       {/* Background static rack texture */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
       {/* Main Console Rack Chassis */}
-      <div className="max-w-md w-full bg-[#0a0a0d] border border-[#27272a] rounded-3xl p-7 shadow-[0_20px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] flex flex-col items-center text-center relative overflow-hidden">
+      <div className="max-w-md w-full m-auto bg-[#0a0a0d] border border-[#27272a] rounded-3xl p-7 shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] flex flex-col items-center text-center relative overflow-hidden">
         
+        {/* Rack Mount Screws (4 corners for physical rack unit feel) */}
+        <div className="absolute top-3 left-3 w-3 h-3 rounded-full bg-gradient-to-br from-zinc-600 via-zinc-800 to-zinc-950 border border-zinc-600/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.8)] flex items-center justify-center pointer-events-none opacity-80">
+          <div className="w-1.5 h-[1px] bg-zinc-400 rotate-45" />
+        </div>
+        <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-gradient-to-br from-zinc-600 via-zinc-800 to-zinc-950 border border-zinc-600/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.8)] flex items-center justify-center pointer-events-none opacity-80">
+          <div className="w-1.5 h-[1px] bg-zinc-400 -rotate-45" />
+        </div>
+        <div className="absolute bottom-3 left-3 w-3 h-3 rounded-full bg-gradient-to-br from-zinc-600 via-zinc-800 to-zinc-950 border border-zinc-600/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.8)] flex items-center justify-center pointer-events-none opacity-80">
+          <div className="w-1.5 h-[1px] bg-zinc-400 -rotate-45" />
+        </div>
+        <div className="absolute bottom-3 right-3 w-3 h-3 rounded-full bg-gradient-to-br from-zinc-600 via-zinc-800 to-zinc-950 border border-zinc-600/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_1px_2px_rgba(0,0,0,0.8)] flex items-center justify-center pointer-events-none opacity-80">
+          <div className="w-1.5 h-[1px] bg-zinc-400 rotate-45" />
+        </div>
+
         {/* Glow effect */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -133,8 +147,8 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
 
         <div className="relative z-10 flex items-center gap-2 mb-0.5">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
-          <h1 className="text-xl font-extrabold tracking-tight text-zinc-100 font-sans uppercase">
-            Console HolyLink
+          <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-zinc-100 font-sans uppercase">
+            Painel do Operador - HolyLink
           </h1>
         </div>
         <p className="text-[11px] text-zinc-400 font-medium mb-5 font-sans relative z-10">
