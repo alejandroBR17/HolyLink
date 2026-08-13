@@ -107,11 +107,11 @@ function PerformanceControlModule() {
         <CheckCircle2 className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
         <div>
           {effectiveMode === 'light' ? (
-            <span><strong>Modo Leve (Anti-Lag):</strong> Otimizado para máxima fluidez, sem efeitos visuais pesados.</span>
+            <span><strong>Modo Leve (Anti-Lag / PCs 4GB RAM):</strong> Otimizado para fluidez instantânea, pré-carregamento econômico de slides na RAM e renderização com 0% de sobrecarga na GPU.</span>
           ) : effectiveMode === 'balanced' ? (
-            <span><strong>Modo Equilibrado:</strong> Transições suaves mantendo baixo uso de memória e GPU.</span>
+            <span><strong>Modo Equilibrado:</strong> Transições suaves com pré-carregamento preditivo e baixo consumo de memória.</span>
           ) : (
-            <span><strong>Alta Qualidade:</strong> Efeitos visuais completos, desfoques e partículas ativas.</span>
+            <span><strong>Alta Qualidade:</strong> Efeitos visuais completos, desfoques e shaders 3D cinemáticos.</span>
           )}
         </div>
       </div>

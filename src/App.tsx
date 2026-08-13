@@ -341,13 +341,17 @@ export default function App() {
     baseUpdateStateAndBroadcast(key, value);
   }, [activeSlides, customMediaList, baseUpdateStateAndBroadcast]);
 
-  // Preload upcoming slides into memory
+  // Preload static assets on boot
   useEffect(() => {
-    if (customMediaList.length > 0) {
-      const activeSlideId = manualSlideOverride || slidesOrder[0] || 'agenda_day_0';
-      mediaPreloader.preloadSlideSequence(activeSlideId, slidesOrder, customMediaList);
+    mediaPreloader.preloadStaticAssets();
+  }, []);
+
+  // Preload upcoming slides into memory based on current playing slide
+  useEffect(() => {
+    if (customMediaList.length > 0 && activeSlides.length > 0) {
+      mediaPreloader.preloadSlideSequence(currentSlideId, activeSlides, customMediaList);
     }
-  }, [manualSlideOverride, slidesOrder, customMediaList]);
+  }, [currentSlideId, activeSlides, customMediaList]);
 
   const {
     handleToggleDisableSlide,

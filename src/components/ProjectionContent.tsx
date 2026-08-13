@@ -329,6 +329,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           customVerseRef={customVerseRef}
           activeVerseIndex={activeVerseIndex}
           variant={isFJU ? 'fju' : undefined}
+          effectiveMode={effectiveMode}
+          isLightModeActive={isLightModeActive}
         />
       );
     }
@@ -454,8 +456,10 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 w-full h-full z-40 flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+            transition={{ duration: isLightModeActive ? 0.2 : 0.4 }}
+            className={`absolute inset-0 w-full h-full z-40 flex items-center justify-center ${
+              isLightModeActive ? 'bg-black/50' : 'bg-black/20 backdrop-blur-[2px]'
+            }`}
           >
             <VerseSlide 
               currentTime={currentTime} 
@@ -463,6 +467,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               customVerseRef={customVerseRef} 
               activeVerseIndex={activeVerseIndex} 
               variant={isFJU ? 'fju' : undefined}
+              effectiveMode={effectiveMode}
+              isLightModeActive={isLightModeActive}
             />
           </motion.div>
         ) : isFinalMinute ? (
@@ -621,6 +627,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               customVerseRef={customVerseRef} 
               activeVerseIndex={activeVerseIndex} 
               variant={isFJU ? 'fju' : undefined}
+              effectiveMode={effectiveMode}
+              isLightModeActive={isLightModeActive}
             />
           </motion.div>
         ) : isLooping ? (

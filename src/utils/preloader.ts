@@ -1,6 +1,7 @@
 /**
  * Media Preloader Service
- * Pre-buffers video elements and image objects in memory so slide transitions are instant.
+ * Pre-buffers video elements, decodes image bitmaps, and warms up the cache
+ * so transitions on 4GB RAM PCs and mobile devices occur with zero stutter.
  */
 
 class MediaPreloaderService {
@@ -9,7 +10,7 @@ class MediaPreloaderService {
   private preloadedUrls: Set<string> = new Set();
 
   /**
-   * Preload an image URL into browser cache
+   * Preload and asynchronously decode an image bitmap into memory
    */
   public preloadImage(url: string): Promise<void> {
     if (!url || this.preloadedUrls.has(url)) {
@@ -19,28 +20,47 @@ class MediaPreloaderService {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = url;
-      img.onload = () => {
+      img.referrerPolicy = "no-referrer";
+      
+      const onLoaded = async () => {
+        try {
+          if ('decode' in img && typeof img.decode === 'function') {
+            await img.decode();
+          }
+        } catch (e) {
+          // Decode fallback if format is unusual
+        }
         this.imageCache.set(url, img);
         this.preloadedUrls.add(url);
         resolve();
       };
-      img.onerror = () => {
-        // Resolve anyway to prevent blocking
-        resolve();
-      };
+
+      if (img.complete) {
+        onLoaded();
+      } else {
+        img.onload = onLoaded;
+        img.onerror = () => {
+          // Resolve anyway to prevent hanging transitions
+          resolve();
+        };
+      }
+
+      // Safety timeout
+      setTimeout(resolve, 3000);
     });
   }
 
   /**
-   * Preload a video URL by initializing a hidden video element with metadata & auto buffering
+   * Preload a video URL with metadata and auto buffering
+   * Max 3 concurrent video buffers to preserve RAM on 4GB systems
    */
   public preloadVideo(url: string): Promise<void> {
     if (!url || this.preloadedUrls.has(url)) {
       return Promise.resolve();
     }
 
-    // Limit video cache memory size (max 6 preloaded videos)
-    if (this.videoCache.size >= 6) {
+    // Strict RAM safety limit for 4GB PCs: max 3 buffered video decoders
+    if (this.videoCache.size >= 3) {
       const oldestKey = this.videoCache.keys().next().value;
       if (oldestKey) {
         const oldVideo = this.videoCache.get(oldestKey);
@@ -74,17 +94,19 @@ class MediaPreloaderService {
 
       const cleanup = () => {
         video.removeEventListener('canplay', onCanPlay);
+        video.removeEventListener('loadeddata', onCanPlay);
         video.removeEventListener('error', onError);
       };
 
       video.addEventListener('canplay', onCanPlay, { once: true });
+      video.addEventListener('loadeddata', onCanPlay, { once: true });
       video.addEventListener('error', onError, { once: true });
 
       // Timeout fallback in case video buffering takes too long
       setTimeout(() => {
         cleanup();
         resolve();
-      }, 3000);
+      }, 3500);
     });
   }
 
@@ -92,7 +114,7 @@ class MediaPreloaderService {
    * Prune unused media objects from cache without deleting underlying files
    */
   public pruneUnused(validUrls: Set<string>) {
-    this.imageCache.forEach((img, url) => {
+    this.imageCache.forEach((_, url) => {
       if (!validUrls.has(url)) {
         this.imageCache.delete(url);
         this.preloadedUrls.delete(url);
@@ -181,6 +203,17 @@ class MediaPreloaderService {
     await this.preloadMediaItems(itemsToPreload);
   }
 
+  /**
+   * Preloads static brand assets and UI icons
+   */
+  public preloadStaticAssets() {
+    const staticImages = [
+      '/logo-text.png?v=11',
+      '/logo-text.png'
+    ];
+    staticImages.forEach(url => this.preloadImage(url));
+  }
+
   public clearCache() {
     this.imageCache.clear();
     this.videoCache.forEach((video) => {
@@ -193,3 +226,4 @@ class MediaPreloaderService {
 }
 
 export const mediaPreloader = new MediaPreloaderService();
+

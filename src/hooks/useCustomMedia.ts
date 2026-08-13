@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { saveMediaItem, getAllMediaItems, deleteMediaItem } from '../utils';
 import { broadcastToPeers } from '../components/SyncSection';
 import { sendMediaInChunks } from '../utils/webrtcChunking';
+import { mediaPreloader } from '../utils/preloader';
 
 export interface CustomMedia {
   id: string;
@@ -60,7 +61,7 @@ export function useCustomMedia(
             return a.id.localeCompare(b.id);
           });
 
-          return sortedItems.map((item) => {
+          const finalMediaList = sortedItems.map((item) => {
             const existing = prevMap.get(item.id);
             let itemUrl = '';
 
@@ -100,6 +101,11 @@ export function useCustomMedia(
               fit: item.fit
             };
           });
+
+          // Preload media in background so transitions on low-memory PCs are instant
+          mediaPreloader.preloadMediaItems(finalMediaList);
+
+          return finalMediaList;
         });
 
         // Revoke replaced URLs asynchronously after DOM update
