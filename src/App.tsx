@@ -764,7 +764,7 @@ export default function App() {
         )}
 
         {/* MOBILE NAVIGATION TABS (Visible on mobile/tablet) */}
-        <nav aria-label="Navegação Principal do Operador" className="lg:hidden flex overflow-x-auto no-scrollbar bg-zinc-900/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20 shrink-0 p-2 gap-1.5 shadow-md">
+        <nav aria-label="Navegação Principal do Operador" className="lg:hidden flex overflow-x-auto no-scrollbar bg-[#050505] border-b border-[#222] sticky top-0 z-20 shrink-0 p-2 gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
           {[
             { id: 'slides', label: 'Mídias', icon: Layout },
             { id: 'texts', label: 'Bíblia', icon: BookOpen },
@@ -785,12 +785,12 @@ export default function App() {
                 onClick={() => setActiveMobileTab(tab.id as any)}
                 className={`flex-none min-w-[72px] py-2 px-1 text-[10px] font-bold uppercase tracking-wider flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer rounded-xl relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                   isActive
-                    ? "bg-zinc-950/60 border border-zinc-900 text-amber-400 shadow-[inset_0_2px_8px_rgba(0,0,0,0.6)] font-black"
-                    : "bg-transparent text-zinc-400 border border-transparent hover:bg-white/5 hover:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.0)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.05)]"
+                    ? "bg-[#0f0f12] border border-[#333] border-b-2 border-b-amber-500 text-amber-400 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] font-black"
+                    : "bg-transparent text-zinc-500 border border-transparent hover:bg-[#111] hover:text-zinc-300 hover:border-[#222] shadow-[0_2px_8px_rgba(0,0,0,0.0)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
                 }`}
               >
-                {!isActive && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-t-xl opacity-0 hover:opacity-100 transition-opacity" />}
-                <Icon className={`w-4 h-4 shrink-0 relative z-10 ${isActive ? 'text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]' : 'text-zinc-400'}`} />
+                {isActive && <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />}
+                <Icon className={`w-4 h-4 shrink-0 relative z-10 transition-colors ${isActive ? 'text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]' : 'text-zinc-500'}`} />
                 <span className="truncate max-w-full relative z-10">{tab.label}</span>
               </button>
             );
@@ -822,14 +822,14 @@ export default function App() {
                       role="tab"
                       aria-selected={isActive}
                       onClick={() => setActiveMobileTab(item.id as any)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 overflow-hidden relative ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 overflow-hidden relative group ${
                         isActive
-                          ? "bg-zinc-950/60 border border-zinc-900 text-amber-400 shadow-[inset_0_2px_8px_rgba(0,0,0,0.6)] font-extrabold translate-y-[1px]"
-                          : "bg-transparent text-zinc-400 border border-transparent hover:bg-white/5 hover:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.0)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_1px_rgba(255,255,255,0.05)] hover:-translate-y-[1px]"
+                          ? "bg-[#0a0a0c] border border-amber-900/30 border-l-2 border-l-amber-500 text-amber-400 shadow-[inset_0_2px_15px_rgba(0,0,0,0.8)] font-extrabold"
+                          : "bg-transparent text-zinc-500 border border-transparent hover:bg-[#111113] hover:border-[#222] hover:text-zinc-300 shadow-[0_2px_8px_rgba(0,0,0,0.0)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
                       }`}
                     >
-                      {!isActive && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-t-xl opacity-0 hover:opacity-100 transition-opacity" />}
-                      <IconComponent className={`w-4 h-4 shrink-0 relative z-10 ${isActive ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" : "text-zinc-500"}`} />
+                      {isActive && <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '8px 8px' }} />}
+                      <IconComponent className={`w-4 h-4 shrink-0 relative z-10 transition-colors ${isActive ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" : "text-zinc-500 group-hover:text-zinc-400"}`} />
                       <span className="relative z-10 drop-shadow-md">{item.label}</span>
                     </button>
                   );

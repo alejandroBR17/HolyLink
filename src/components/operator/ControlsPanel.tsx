@@ -567,45 +567,42 @@ export function ControlsPanel({
       <div className="flex flex-col gap-6">
         
         {/* QUICK ACTION BUTTONS */}
-        <div className="bg-zinc-900/80 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] border border-white/10 flex flex-col gap-5">
-          <h3 className="text-zinc-300 font-extrabold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 drop-shadow-md">
-            <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8),inset_0_1px_1px_rgba(255,255,255,0.6)] animate-pulse" />
+        <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
+          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+          <h3 className="relative z-10 text-zinc-400 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
             Controle de Saída HDMI
           </h3>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="relative z-10 grid grid-cols-2 gap-4">
             <button
               onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}
-              className={`relative p-5 rounded-2xl text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
+              className={`relative p-5 rounded-xl text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 ${
                 blackoutEnabled
-                  ? "bg-zinc-950/80 border border-red-500/30 text-red-400 shadow-[inset_0_2px_12px_rgba(220,38,38,0.15)] translate-y-[1px]"
-                  : "bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.05)] active:translate-y-[1px] active:shadow-[inset_0_2px_8px_rgba(0,0,0,0.2)]"
+                  ? "bg-gradient-to-b from-[#111113] to-[#0a0a0c] border border-red-900/50 text-red-500 shadow-[inset_0_3px_8px_rgba(0,0,0,0.8),0_0_15px_rgba(220,38,38,0.2)] translate-y-[2px]"
+                  : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-300 shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] active:shadow-[inset_0_3px_8px_rgba(0,0,0,0.8)]"
               }`}
             >
-              <EyeOff className={`w-7 h-7 relative z-10 transition-colors ${blackoutEnabled ? "text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)] animate-pulse" : "text-zinc-400"}`} />
+              <EyeOff className={`w-7 h-7 relative z-10 transition-colors ${blackoutEnabled ? "text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-pulse" : "text-zinc-500"}`} />
               <div className="text-center relative z-10">
-                <p className="font-extrabold text-xs tracking-wide">{blackoutEnabled ? "Tela Preta Ativa" : "Tela Preta"}</p>
-                <p className="text-[9px] font-semibold text-zinc-400 mt-0.5 opacity-80">Corta a transmissão</p>
+                <p className="font-bold text-xs tracking-wide">{blackoutEnabled ? "Tela Preta Ativa" : "Tela Preta"}</p>
+                <p className="text-[9px] font-mono text-zinc-500 mt-1 uppercase">Corta Sinal</p>
               </div>
-              {/* Soft Glass reflection overlay */}
-              {!blackoutEnabled && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none rounded-t-2xl opacity-50" />}
             </button>
 
             <button
               onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}
-              className={`relative p-5 rounded-2xl text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+              className={`relative p-5 rounded-xl text-sm font-bold flex flex-col items-center justify-center gap-2 transition-all cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                 clearContentEnabled
-                  ? "bg-zinc-950/80 border border-amber-500/30 text-amber-400 shadow-[inset_0_2px_12px_rgba(245,158,11,0.15)] translate-y-[1px]"
-                  : "bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.05)] active:translate-y-[1px] active:shadow-[inset_0_2px_8px_rgba(0,0,0,0.2)]"
+                  ? "bg-gradient-to-b from-[#111113] to-[#0a0a0c] border border-amber-900/50 text-amber-500 shadow-[inset_0_3px_8px_rgba(0,0,0,0.8),0_0_15px_rgba(245,158,11,0.2)] translate-y-[2px]"
+                  : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-300 shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] active:shadow-[inset_0_3px_8px_rgba(0,0,0,0.8)]"
               }`}
             >
-              <Sparkles className={`w-7 h-7 relative z-10 transition-colors ${clearContentEnabled ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" : "text-zinc-400"}`} />
+              <Sparkles className={`w-7 h-7 relative z-10 transition-colors ${clearContentEnabled ? "text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]" : "text-zinc-500"}`} />
               <div className="text-center relative z-10">
-                <p className="font-extrabold text-xs tracking-wide">{clearContentEnabled ? "Texto Ocultado" : "Limpar Slide"}</p>
-                <p className="text-[9px] font-semibold text-zinc-400 mt-0.5 opacity-80">Mantém apenas o fundo</p>
+                <p className="font-bold text-xs tracking-wide">{clearContentEnabled ? "Texto Ocultado" : "Limpar Slide"}</p>
+                <p className="text-[9px] font-mono text-zinc-500 mt-1 uppercase">Mantém Fundo</p>
               </div>
-              {/* Soft Glass reflection overlay */}
-              {!clearContentEnabled && <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none rounded-t-2xl opacity-50" />}
             </button>
           </div>
 
@@ -1135,42 +1132,47 @@ export function ControlsPanel({
         <PerformanceControlModule />
 
         {/* AUDIO MIXER MODULE */}
-        <div className="bg-zinc-900/80 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] border border-white/10 flex flex-col gap-4">
-          <h3 className="text-zinc-300 font-extrabold text-[10px] uppercase tracking-[0.2em] border-b border-zinc-800/80 pb-3 drop-shadow-md">
-            Controle de Áudio Geral
+        <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-4 group">
+          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+          <h3 className="relative z-10 text-zinc-400 font-bold text-[10px] uppercase tracking-[0.2em] border-b border-[#333] pb-3 flex items-center gap-2">
+             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+            Mixer de Áudio Geral
           </h3>
 
-          <AudioVolumeControl volume={volume} updateStateAndBroadcast={updateStateAndBroadcast} />
+          <div className="relative z-10">
+            <AudioVolumeControl volume={volume} updateStateAndBroadcast={updateStateAndBroadcast} />
+          </div>
         </div>
 
         {/* TICKER MODULE */}
-        <div className="bg-zinc-900/80 backdrop-blur-xl rounded-3xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] border border-white/10 flex flex-col gap-5">
-          <div className="border-b border-zinc-800/80 pb-3 flex items-center justify-between drop-shadow-md">
-            <h3 className="text-zinc-300 font-extrabold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
-              <Megaphone className="w-4 h-4 text-amber-500 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
-              Letreiro Digital (Ticker)
+        <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
+          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+          <div className="relative z-10 border-b border-[#333] pb-3 flex items-center justify-between">
+            <h3 className="text-zinc-400 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
+              <Megaphone className="w-3.5 h-3.5 text-emerald-500" />
+              Letreiro (Ticker)
             </h3>
             {tickerText && (
-              <span className="text-[8px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]">Ativo</span>
+              <span className="text-[8px] bg-[#111113] border border-emerald-900/50 text-emerald-500 px-2 py-0.5 rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] font-bold uppercase tracking-wider animate-pulse">Ativo</span>
             )}
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="relative z-10 flex flex-col gap-3">
             <div className="flex gap-2">
               <input 
                 type="text" 
                 placeholder="Ex: Reunião de obreiros hoje às 18h..."
                 value={tickerText || ''}
                 onChange={(e) => updateStateAndBroadcast('tickerText', e.target.value || null)}
-                className="flex-1 bg-zinc-950/80 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-200 shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)] focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 font-sans transition-all"
+                className="flex-1 bg-[#030303] border border-[#222] rounded-lg px-4 py-3 text-xs text-zinc-200 shadow-[inset_0_2px_10px_rgba(0,0,0,1)] focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 font-mono transition-all"
               />
               {tickerText && (
                 <button 
                   onClick={() => updateStateAndBroadcast('tickerText', null)}
-                  className="px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-red-400 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.05)] active:translate-y-[1px] active:shadow-[inset_0_2px_8px_rgba(0,0,0,0.2)] transition-all cursor-pointer flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  className="px-4 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-red-900/50 text-red-500 rounded-lg shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] active:shadow-[inset_0_3px_8px_rgba(0,0,0,0.8)] transition-all cursor-pointer flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                   title="Limpar Letreiro"
                 >
-                  <X className="w-4 h-4 drop-shadow-md" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -1180,7 +1182,7 @@ export function ControlsPanel({
                 <button
                   key={sug}
                   onClick={() => updateStateAndBroadcast('tickerText', sug)}
-                  className="text-[9px] bg-gradient-to-b from-zinc-700 to-zinc-800 border-t border-zinc-600 border-b border-zinc-900 shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] px-3 py-1.5 rounded-lg text-zinc-300 hover:text-white active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] transition-all cursor-pointer font-medium"
+                  className="text-[9px] font-mono bg-[#111113] border border-[#222] hover:border-[#444] shadow-[0_2px_4px_rgba(0,0,0,0.3)] px-3 py-1.5 rounded text-zinc-400 hover:text-white active:translate-y-[1px] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] transition-all cursor-pointer uppercase"
                 >
                   {sug}
                 </button>
