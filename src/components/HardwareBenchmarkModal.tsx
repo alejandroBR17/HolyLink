@@ -61,48 +61,48 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
 
   return (
     <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-left">
+      <div className="bg-[#08080a] border border-[#27272a] rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] overflow-hidden text-left relative">
         
         {/* HEADER */}
-        <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/80">
+        <div className="p-5 border-b border-[#222] flex items-center justify-between bg-[#040405] relative z-10">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-500 border border-amber-500/20">
-              <Gauge className="w-5 h-5" />
+            <div className="p-2.5 bg-[#0f0f12] rounded-2xl text-amber-500 border border-amber-900/40 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+              <Gauge className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <h3 className="text-zinc-100 font-extrabold text-base uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-zinc-100 font-extrabold text-base uppercase tracking-wider font-sans flex items-center gap-2">
                 Otimização Inteligente de Hardware
               </h3>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Diagnóstico de CPU, RAM, Placa de Vídeo e Ajuste Automático de Performance
+                Análise de CPU, RAM, GPU e Prevenção Ativa Anti-Lag
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white rounded-lg bg-zinc-900 hover:bg-zinc-800 transition-colors"
+            className="p-2 text-zinc-400 hover:text-white rounded-xl bg-[#111114] border border-[#27272a] hover:border-[#333] transition-all cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* BODY CONTENT */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-zinc-200">
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-zinc-200 relative z-10">
           
           {/* DIAGNOSTIC RUNNER BANNER */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 shadow-inner relative overflow-hidden">
+          <div className="bg-[#030304] border border-[#222] rounded-2xl p-5 shadow-[inset_0_2px_10px_rgba(0,0,0,1)] relative overflow-hidden">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3.5">
-                <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-amber-500 shrink-0 shadow-md">
+                <div className="p-3 bg-[#111114] border border-[#27272a] rounded-xl text-amber-500 shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
                   <Activity className={`w-6 h-6 ${isDiagnosticRunning ? 'animate-spin text-amber-400' : ''}`} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-black text-white uppercase tracking-wider">
+                    <span className="text-sm font-black text-white uppercase tracking-wider font-mono">
                       Pontuação do Hardware: {report ? `${report.score} / 100` : 'Calculando...'}
                     </span>
                     {report && (
-                      <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border uppercase tracking-wider font-extrabold ${getTierColor(report.recommendedMode)}`}>
+                      <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border uppercase tracking-wider font-black shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] ${getTierColor(report.recommendedMode)}`}>
                         {getTierBadgeText(report.recommendedMode)}
                       </span>
                     )}
@@ -111,12 +111,12 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                     {report?.isTouchDevice ? (
                       <>
                         <Smartphone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                        <span>Dispositivo Móvel Detectado: Modo econômico ativado para preservar bateria e evitar aquecimento.</span>
+                        <span>Dispositivo Móvel Detectado: Modo de economia ativado para preservar energia e estabilizar taxa de quadros.</span>
                       </>
                     ) : (
                       <>
                         <Laptop className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                        <span>Computador / Notebook de Operação: Analisado para transmissão em alta definição (1080p/4K).</span>
+                        <span>Computador / Notebook de Operação: Analisado para projeção fluida em alta resolução.</span>
                       </>
                     )}
                   </p>
@@ -126,21 +126,21 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               <button
                 onClick={runBenchmark}
                 disabled={isDiagnosticRunning}
-                className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black text-xs font-black px-4 py-2.5 rounded-xl shadow-md shadow-amber-500/10 transition-all cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 active:scale-95"
+                className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black text-xs font-black px-4 py-2.5 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 active:translate-y-[1px]"
               >
                 <RefreshCw className={`w-4 h-4 ${isDiagnosticRunning ? 'animate-spin' : ''}`} />
-                <span>{isDiagnosticRunning ? 'Analisando Sistema...' : 'Executar Teste de Estresse'}</span>
+                <span>{isDiagnosticRunning ? 'Analisando...' : 'Executar Teste de Estresse'}</span>
               </button>
             </div>
 
             {/* PROGRESS BAR ANIMATION */}
             {isDiagnosticRunning && (
-              <div className="mt-4 pt-3 border-t border-zinc-800/80 space-y-2">
+              <div className="mt-4 pt-3 border-t border-[#222] space-y-2">
                 <div className="flex justify-between text-xs text-zinc-400 font-mono">
                   <span>{diagnosticStep}</span>
                   <span className="text-amber-400 font-bold">{diagnosticProgress}%</span>
                 </div>
-                <div className="w-full bg-zinc-900 h-2.5 rounded-full overflow-hidden border border-zinc-800">
+                <div className="w-full bg-[#0d0d0f] h-3 rounded-full overflow-hidden border border-[#27272a] shadow-[inset_0_2px_4px_rgba(0,0,0,1)]">
                   <div
                     className="bg-gradient-to-r from-amber-500 to-emerald-400 h-full transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
                     style={{ width: `${diagnosticProgress}%` }}
@@ -152,7 +152,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
 
           {/* DETAILED SPECS GRID */}
           <div>
-            <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <h4 className="text-xs font-black text-amber-500 uppercase tracking-widest font-mono mb-3 flex items-center gap-2">
               <Cpu className="w-4 h-4 text-amber-500" />
               Recursos de Hardware Identificados
             </h4>
@@ -160,12 +160,12 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               
               {/* CPU CARD */}
-              <div className="bg-zinc-950 border border-zinc-800/90 rounded-xl p-3.5 flex items-start gap-3">
-                <div className="p-2 bg-zinc-900 rounded-lg border border-zinc-800 text-amber-500 shrink-0">
+              <div className="bg-[#030304] border border-[#222] rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+                <div className="p-2 bg-[#111114] rounded-xl border border-[#27272a] text-amber-500 shrink-0">
                   <Cpu className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Processador (CPU)</span>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider block font-mono">Processador (CPU)</span>
                   <p className="text-xs font-extrabold text-white truncate">
                     {report?.cpuCores ? `${report.cpuCores} Núcleos Lógicos` : '4 Núcleos'}
                   </p>
@@ -176,17 +176,17 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               </div>
 
               {/* RAM & HEAP CARD */}
-              <div className="bg-zinc-950 border border-zinc-800/90 rounded-xl p-3.5 flex items-start gap-3">
-                <div className="p-2 bg-zinc-900 rounded-lg border border-zinc-800 text-blue-400 shrink-0">
+              <div className="bg-[#030304] border border-[#222] rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+                <div className="p-2 bg-[#111114] rounded-xl border border-[#27272a] text-blue-400 shrink-0">
                   <HardDrive className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Memória RAM do Dispositivo & App</span>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider block font-mono">Memória RAM & App Heap</span>
                   <p className="text-xs font-extrabold text-white truncate" title={report?.ramDisplay || 'RAM Identificada'}>
-                    RAM Total do Dispositivo: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
+                    RAM Total: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
                   </p>
                   <div className="mt-1 flex items-center gap-2">
-                    <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden border border-zinc-800 flex-1">
+                    <div className="w-full bg-[#0d0d0f] h-2 rounded-full overflow-hidden border border-[#222] flex-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
                       <div
                         className="bg-blue-500 h-full rounded-full"
                         style={{
@@ -198,20 +198,20 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                         }}
                       />
                     </div>
-                    <span className="text-[9px] font-mono text-blue-400 font-bold shrink-0" title="Memória RAM consumida no momento por este sistema de projeção">
-                      App usando: {report?.jsHeapUsedMB ? `${report.jsHeapUsedMB} MB` : '10 MB'}
+                    <span className="text-[9px] font-mono text-blue-400 font-bold shrink-0">
+                      App: {report?.jsHeapUsedMB ? `${report.jsHeapUsedMB} MB` : '10 MB'}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* GPU CARD */}
-              <div className="bg-zinc-950 border border-zinc-800/90 rounded-xl p-3.5 flex items-start gap-3">
-                <div className="p-2 bg-zinc-900 rounded-lg border border-zinc-800 text-purple-400 shrink-0">
+              <div className="bg-[#030304] border border-[#222] rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+                <div className="p-2 bg-[#111114] rounded-xl border border-[#27272a] text-purple-400 shrink-0">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Placa de Vídeo (GPU / WebGL)</span>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider block font-mono">Placa de Vídeo (GPU / WebGL)</span>
                   <p className="text-xs font-extrabold text-white truncate" title={report?.gpuRenderer}>
                     {report?.gpuRenderer || 'Aceleração de Hardware Ativa'}
                   </p>
@@ -222,14 +222,14 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               </div>
 
               {/* FPS & DISPLAY CARD */}
-              <div className="bg-zinc-950 border border-zinc-800/90 rounded-xl p-3.5 flex items-start gap-3">
-                <div className="p-2 bg-zinc-900 rounded-lg border border-zinc-800 text-emerald-400 shrink-0">
+              <div className="bg-[#030304] border border-[#222] rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+                <div className="p-2 bg-[#111114] rounded-xl border border-[#27272a] text-emerald-400 shrink-0">
                   <Monitor className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Taxa de Quadros (FPS Real)</span>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-wider block font-mono">Taxa de Quadros (FPS Real)</span>
                   <p className="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
-                    <span className={fps < 38 ? 'text-amber-400' : 'text-emerald-400'}>{fps} FPS</span>
+                    <span className={fps < 38 ? 'text-amber-400 font-mono font-black' : 'text-emerald-400 font-mono font-black'}>{fps} FPS</span>
                     <span className="text-[10px] font-normal text-zinc-400">({fps >= 50 ? 'Estável 60Hz' : fps >= 35 ? 'Fluido' : 'Economia'})</span>
                   </p>
                   <p className="text-[10px] text-zinc-400 mt-0.5 truncate" title={`Resolução: ${report?.physicalWidth || report?.screenWidth}x${report?.physicalHeight || report?.screenHeight} px`}>
@@ -243,7 +243,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
 
           {/* PERFORMANCE MODE SELECTION */}
           <div>
-            <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <h4 className="text-xs font-black text-amber-500 uppercase tracking-widest font-mono mb-3 flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-500" />
               Seleção de Perfil de Desempenho
             </h4>
@@ -253,19 +253,19 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               {/* AUTO MODE */}
               <button
                 onClick={() => setPerformanceMode('auto')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:translate-y-[1px] ${
                   mode === 'auto'
-                    ? 'bg-amber-500/10 border-amber-500 text-white shadow-md shadow-amber-500/10'
-                    : 'bg-zinc-950 border-zinc-850 hover:border-zinc-750 text-zinc-400'
+                    ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.35)] font-black'
+                    : 'bg-[#030304] border-[#222] text-zinc-400 hover:border-[#333]'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase tracking-wider text-amber-400">Automático</span>
-                    {mode === 'auto' && <Check className="w-4 h-4 text-amber-400" />}
+                    <span className={`font-black text-xs uppercase tracking-wider ${mode === 'auto' ? 'text-black' : 'text-amber-400'}`}>Automático</span>
+                    {mode === 'auto' && <Check className="w-4 h-4 text-black stroke-[3]" />}
                   </div>
-                  <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
-                    Ajusta os gráficos com base no teste do aparelho.
+                  <p className={`text-[10px] mt-1 leading-snug ${mode === 'auto' ? 'text-black/80 font-medium' : 'text-zinc-400'}`}>
+                    Ajusta os gráficos dinamicamente.
                   </p>
                 </div>
               </button>
@@ -273,19 +273,19 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               {/* HIGH MODE */}
               <button
                 onClick={() => setPerformanceMode('high')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:translate-y-[1px] ${
                   mode === 'high'
-                    ? 'bg-emerald-500/10 border-emerald-500 text-white shadow-md shadow-emerald-500/10'
-                    : 'bg-zinc-950 border-zinc-850 hover:border-zinc-750 text-zinc-400'
+                    ? 'bg-emerald-500 border-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.35)] font-black'
+                    : 'bg-[#030304] border-[#222] text-zinc-400 hover:border-[#333]'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase tracking-wider text-emerald-400">Alto Desempenho</span>
-                    {mode === 'high' && <Check className="w-4 h-4 text-emerald-400" />}
+                    <span className={`font-black text-xs uppercase tracking-wider ${mode === 'high' ? 'text-black' : 'text-emerald-400'}`}>Alto Desempenho</span>
+                    {mode === 'high' && <Check className="w-4 h-4 text-black stroke-[3]" />}
                   </div>
-                  <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
-                    Mantém todos os efeitos visuais, blurs e transições.
+                  <p className={`text-[10px] mt-1 leading-snug ${mode === 'high' ? 'text-black/80 font-medium' : 'text-zinc-400'}`}>
+                    Mantém todos os efeitos visuais e blurs.
                   </p>
                 </div>
               </button>
@@ -293,19 +293,19 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               {/* BALANCED MODE */}
               <button
                 onClick={() => setPerformanceMode('balanced')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:translate-y-[1px] ${
                   mode === 'balanced'
-                    ? 'bg-blue-500/10 border-blue-500 text-white shadow-md shadow-blue-500/10'
-                    : 'bg-zinc-950 border-zinc-850 hover:border-zinc-750 text-zinc-400'
+                    ? 'bg-blue-500 border-blue-400 text-black shadow-[0_0_12px_rgba(59,130,246,0.35)] font-black'
+                    : 'bg-[#030304] border-[#222] text-zinc-400 hover:border-[#333]'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase tracking-wider text-blue-400">Modo Equilibrado</span>
-                    {mode === 'balanced' && <Check className="w-4 h-4 text-blue-400" />}
+                    <span className={`font-black text-xs uppercase tracking-wider ${mode === 'balanced' ? 'text-black' : 'text-blue-400'}`}>Equilibrado</span>
+                    {mode === 'balanced' && <Check className="w-4 h-4 text-black stroke-[3]" />}
                   </div>
-                  <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
-                    Equilíbrio ideal entre fluidez de slides e efeitos visuais.
+                  <p className={`text-[10px] mt-1 leading-snug ${mode === 'balanced' ? 'text-black/80 font-medium' : 'text-zinc-400'}`}>
+                    Equilíbrio ideal para apresentações.
                   </p>
                 </div>
               </button>
@@ -313,18 +313,18 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               {/* LIGHT MODE */}
               <button
                 onClick={() => setPerformanceMode('light')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:translate-y-[1px] ${
                   mode === 'light'
-                    ? 'bg-amber-500/10 border-amber-500 text-white shadow-md shadow-amber-500/10'
-                    : 'bg-zinc-950 border-zinc-850 hover:border-zinc-750 text-zinc-400'
+                    ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.35)] font-black'
+                    : 'bg-[#030304] border-[#222] text-zinc-400 hover:border-[#333]'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-xs uppercase tracking-wider text-amber-400">Modo Leve</span>
-                    {mode === 'light' && <Check className="w-4 h-4 text-amber-400" />}
+                    <span className={`font-black text-xs uppercase tracking-wider ${mode === 'light' ? 'text-black' : 'text-amber-400'}`}>Modo Leve</span>
+                    {mode === 'light' && <Check className="w-4 h-4 text-black stroke-[3]" />}
                   </div>
-                  <p className="text-[10px] text-zinc-400 mt-1 leading-snug">
+                  <p className={`text-[10px] mt-1 leading-snug ${mode === 'light' ? 'text-black/80 font-medium' : 'text-zinc-400'}`}>
                     Zero lag para computadores básicos.
                   </p>
                 </div>
@@ -334,38 +334,38 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
           </div>
 
           {/* CACHE PURGE & MEMORY CLEANUP ACTION */}
-          <div className="bg-zinc-950 border border-zinc-800/90 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-[#030304] border border-[#222] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-500 shrink-0">
+              <div className="p-2.5 bg-[#111114] rounded-xl border border-[#27272a] text-amber-500 shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h5 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                  Limpeza de Memória RAM
+                <h5 className="text-xs font-extrabold text-white uppercase tracking-wider font-sans">
+                  Desobstrução de Memória RAM
                 </h5>
                 <p className="text-[11px] text-zinc-400 mt-0.5">
-                  Libera recursos temporários de mídias na RAM sem apagar arquivos salvos.
+                  Libera buffers temporários de mídias na RAM sem apagar arquivos do culto.
                 </p>
               </div>
             </div>
 
             <button
               onClick={handleClearCache}
-              className={`text-xs font-bold px-4 py-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto active:scale-95 ${
+              className={`text-xs font-black px-4 py-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto active:translate-y-[1px] ${
                 cacheCleared
-                  ? 'bg-emerald-500 border-emerald-400 text-black font-extrabold'
-                  : 'bg-zinc-900 border-zinc-700 hover:border-zinc-600 text-zinc-200 hover:text-white'
+                  ? 'bg-emerald-500 border-emerald-400 text-black font-black shadow-[0_0_12px_rgba(52,211,153,0.35)]'
+                  : 'bg-[#111114] border-[#27272a] hover:border-[#333] text-zinc-200 hover:text-white'
               }`}
             >
               {cacheCleared ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-black" />
-                  <span>Memória RAM Liberada!</span>
+                  <span>Memória RAM Desobstruída!</span>
                 </>
               ) : (
                 <>
                   <Trash2 className="w-4 h-4 text-amber-500" />
-                  <span>Limpar Memória RAM</span>
+                  <span>Limpar RAM Agora</span>
                 </>
               )}
             </button>
@@ -374,13 +374,13 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
         </div>
 
         {/* FOOTER */}
-        <div className="p-4 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between">
-          <span className="text-[10px] text-zinc-500 font-mono">
-            ProjecaoFJU Hardware Engine v2.4
+        <div className="p-4 border-t border-[#222] bg-[#040405] flex items-center justify-between relative z-10">
+          <span className="text-[10px] text-zinc-500 font-mono font-bold">
+            HolyLink Engine v2.4 — Aceleração Anti-Lag Ativa
           </span>
           <button
             onClick={onClose}
-            className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold px-5 py-2 rounded-xl transition-all cursor-pointer shadow-md"
+            className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-5 py-2 rounded-xl transition-all cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.35)] active:translate-y-[1px]"
           >
             Concluído
           </button>

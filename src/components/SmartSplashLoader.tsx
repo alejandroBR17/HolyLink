@@ -113,54 +113,63 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-zinc-950 text-white flex flex-col items-center justify-center p-6 select-none font-sans">
-      <div className="max-w-md w-full bg-zinc-900/90 border border-zinc-800/80 rounded-3xl p-7 shadow-2xl flex flex-col items-center text-center relative overflow-hidden backdrop-blur-xl">
+    <div className="fixed inset-0 z-[9999] bg-[#050507] text-white flex flex-col items-center justify-center p-6 select-none font-sans relative overflow-hidden">
+      {/* Background static rack texture */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+
+      {/* Main Console Rack Chassis */}
+      <div className="max-w-md w-full bg-[#0a0a0d] border border-[#27272a] rounded-3xl p-7 shadow-[0_20px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] flex flex-col items-center text-center relative overflow-hidden">
         
         {/* Glow effect */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Logo / Header */}
-        <div className="flex flex-col items-center justify-center mb-4">
-          <div className="h-16 px-4 py-1.5 rounded-2xl bg-zinc-950/80 border border-amber-500/30 flex items-center justify-center shadow-xl overflow-hidden backdrop-blur-md">
-            <img src="/logo-full.png?v=11" alt="HolyLink Logo Completo" className="h-full w-auto object-contain" />
+        <div className="flex flex-col items-center justify-center mb-4 relative z-10">
+          <div className="h-16 px-5 py-2 rounded-2xl bg-[#030304] border border-[#333] flex items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,1)] overflow-hidden">
+            <img src="/logo-full.png?v=11" alt="HolyLink Logo Completo" className="h-full w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" />
           </div>
         </div>
 
-        <h1 className="text-xl font-extrabold tracking-tight text-zinc-100 mb-0.5">
-          HolyLink
-        </h1>
-        <p className="text-[11px] text-zinc-500 font-medium mb-5">
-          {stage === 'splash' && 'Painel de Transmissão Inteligente'}
-          {stage === 'loader' && 'Pré-carregamento e Verificação de Recursos'}
-          {stage === 'permissions' && 'Verificação de Permissões do Navegador'}
-          {stage === 'ready' && 'Sistema Pronto'}
+        <div className="relative z-10 flex items-center gap-2 mb-0.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
+          <h1 className="text-xl font-extrabold tracking-tight text-zinc-100 font-sans uppercase">
+            Console HolyLink
+          </h1>
+        </div>
+        <p className="text-[11px] text-zinc-400 font-medium mb-5 font-sans relative z-10">
+          {stage === 'splash' && 'Inicializando Sistema de Transmissão'}
+          {stage === 'loader' && 'Sincronização e Leitura de Hardware'}
+          {stage === 'permissions' && 'Verificação de Permissões de Áudio e Mídia'}
+          {stage === 'ready' && 'Sistema Pronto para Operação'}
         </p>
 
         {/* STAGE 1 & 2: SPLASH / LOADER PROGRESS BAR */}
         {(stage === 'splash' || stage === 'loader') && (
-          <div className="w-full bg-zinc-950 border border-zinc-800/80 rounded-2xl p-3.5 mb-4 flex flex-col gap-2.5">
+          <div className="w-full bg-[#030304] border border-[#222] rounded-2xl p-4 mb-4 flex flex-col gap-3 shadow-[inset_0_2px_10px_rgba(0,0,0,1)] relative z-10">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-zinc-400 font-mono text-[11px] font-semibold truncate max-w-[280px]">{statusText}</span>
-              <span className="font-mono font-bold text-amber-500">{progress}%</span>
+              <span className="text-zinc-300 font-mono text-[11px] font-bold truncate max-w-[280px] text-left">{statusText}</span>
+              <span className="font-mono font-black text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-900/50 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">{progress}%</span>
             </div>
 
-            <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50 p-0.5 relative">
+            <div className="w-full h-3 bg-[#0d0d0f] rounded-full overflow-hidden border border-[#27272a] p-0.5 relative shadow-[inset_0_2px_4px_rgba(0,0,0,1)]">
               <div 
-                className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.5)]"
+                className="h-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-300 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] relative"
                 style={{ width: `${progress}%` }}
-              />
+              >
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.3)_50%,transparent_100%)] animate-pulse" />
+              </div>
             </div>
           </div>
         )}
 
         {/* STAGE 3: PERMISSIONS INTERACTIVE LIST */}
         {stage === 'permissions' && (
-          <div className="w-full bg-zinc-950/80 border border-amber-500/30 rounded-2xl p-4 mb-4 flex flex-col gap-3 text-left animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-zinc-850 pb-2">
+          <div className="w-full bg-[#030304] border border-amber-900/50 rounded-2xl p-4 mb-4 flex flex-col gap-3 text-left relative z-10 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+            <div className="flex items-center justify-between border-b border-[#222] pb-2">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Permissões Recomendadas</span>
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider font-mono">Permissões de Sistema</span>
               </div>
               <span className="text-[10px] text-zinc-500 font-mono">Status</span>
             </div>
@@ -169,24 +178,24 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
               {permissions.map((item) => (
                 <div 
                   key={item.id} 
-                  className={`p-2.5 rounded-xl border flex items-center justify-between gap-2.5 transition-all ${
+                  className={`p-2.5 rounded-xl border flex items-center justify-between gap-2.5 transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
                     item.status === 'granted'
-                      ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
+                      ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300'
                       : item.status === 'prompt'
-                      ? 'bg-amber-500/10 border-amber-500/40 text-zinc-200'
-                      : 'bg-zinc-900/50 border-zinc-800 text-zinc-500'
+                      ? 'bg-amber-950/40 border-amber-800/60 text-zinc-200'
+                      : 'bg-[#0d0d0f] border-[#222] text-zinc-500'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <div className="shrink-0">{getPermIcon(item.id)}</div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-bold truncate">{item.title}</span>
+                      <span className="text-xs font-extrabold truncate">{item.title}</span>
                       <span className="text-[10px] text-zinc-400 truncate leading-tight">{item.description}</span>
                     </div>
                   </div>
 
                   {item.status === 'granted' && (
-                    <span className="shrink-0 text-[10px] font-bold text-emerald-400 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                    <span className="shrink-0 text-[10px] font-mono font-bold text-emerald-400 flex items-center gap-1 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
                       <CheckCircle2 className="w-3 h-3" /> OK
                     </span>
                   )}
@@ -195,7 +204,7 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
                     <button
                       onClick={() => handleGrantPermission(item.id)}
                       disabled={isGranting}
-                      className="shrink-0 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black text-[10px] font-black px-2.5 py-1 rounded-lg transition-all cursor-pointer shadow disabled:opacity-50"
+                      className="shrink-0 bg-amber-500 hover:bg-amber-400 active:translate-y-[1px] text-black text-[10px] font-black px-3 py-1 rounded-lg transition-all cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.3)] disabled:opacity-50"
                     >
                       Permitir
                     </button>
@@ -206,7 +215,7 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
 
             <button
               onClick={handleAdvance}
-              className="w-full mt-1 bg-amber-500 hover:bg-amber-400 text-black text-xs font-black py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-amber-500/20"
+              className="w-full mt-1 bg-amber-500 hover:bg-amber-400 text-black text-xs font-black py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.35)] active:translate-y-[1px]"
             >
               <span>Entrar na Aplicação</span>
               <ArrowRight className="w-4 h-4" />
@@ -215,16 +224,16 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
         )}
 
         {/* System Diagnostic Badge */}
-        <div className="w-full grid grid-cols-2 gap-2 text-left">
-          <div className="bg-zinc-950/60 border border-zinc-800/60 p-3 rounded-xl flex items-center gap-2.5">
-            <Cpu className="w-4 h-4 text-amber-500/80 shrink-0" />
+        <div className="w-full grid grid-cols-2 gap-2 text-left relative z-10">
+          <div className="bg-[#030304] border border-[#222] p-3 rounded-xl flex items-center gap-2.5 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+            <Cpu className="w-4 h-4 text-amber-500 shrink-0" />
             <div className="flex flex-col">
-              <span className="text-[9px] text-zinc-500 font-bold uppercase">Processador</span>
-              <span className="text-[11px] font-mono font-semibold text-zinc-300">{hardwareConcurrency} Cores CPU</span>
+              <span className="text-[9px] text-zinc-500 font-black uppercase font-mono">Processador</span>
+              <span className="text-[11px] font-mono font-bold text-zinc-300">{hardwareConcurrency} Cores CPU</span>
             </div>
           </div>
 
-          <div className="bg-zinc-950/60 border border-zinc-800/60 p-3 rounded-xl flex items-center gap-2.5">
+          <div className="bg-[#030304] border border-[#222] p-3 rounded-xl flex items-center gap-2.5 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
             {effectiveMode === 'light' ? (
               <Zap className="w-4 h-4 text-amber-400 shrink-0" />
             ) : effectiveMode === 'balanced' ? (
@@ -233,17 +242,17 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             )}
             <div className="flex flex-col">
-              <span className="text-[9px] text-zinc-500 font-bold uppercase">Motor</span>
-              <span className="text-[11px] font-mono font-semibold text-zinc-300">
-                {effectiveMode === 'light' ? 'Modo Anti-Lag' : effectiveMode === 'balanced' ? 'Modo Equilibrado' : 'Alta Performance'}
+              <span className="text-[9px] text-zinc-500 font-black uppercase font-mono">Motor GPU</span>
+              <span className="text-[11px] font-mono font-bold text-zinc-300">
+                {effectiveMode === 'light' ? 'Anti-Lag' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Alta Performance'}
               </span>
             </div>
           </div>
         </div>
 
         {/* Footer Note */}
-        <p className="text-[10px] text-zinc-600 mt-5 font-medium">
-          Sincronização em memória e armazenamento persistente salvos.
+        <p className="text-[10px] text-zinc-500 mt-5 font-medium relative z-10 font-mono">
+          Hardware acelerado por GPU & Banco de Dados em Memória.
         </p>
       </div>
     </div>

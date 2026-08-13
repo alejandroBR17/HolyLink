@@ -67,15 +67,15 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-zinc-100 overflow-hidden my-auto"
+          className="relative w-full max-w-sm bg-[#08080a] border border-[#27272a] rounded-3xl p-6 shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] text-zinc-100 overflow-hidden my-auto"
         >
           {/* Header Accent Glow */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-gradient-to-b from-amber-500/20 to-transparent blur-2xl pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-gradient-to-b from-amber-500/15 to-transparent blur-2xl pointer-events-none" />
 
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors z-10 cursor-pointer"
+            className="absolute top-4 right-4 p-2 rounded-xl bg-[#111114] border border-[#27272a] text-zinc-400 hover:text-white hover:border-[#333] transition-all z-10 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
             title="Fechar"
           >
             <X className="w-5 h-5" />
@@ -84,7 +84,11 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
           {/* Settings Toggle */}
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`absolute top-4 left-4 p-2 rounded-full transition-colors z-10 cursor-pointer ${showSettings ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white'}`}
+            className={`absolute top-4 left-4 p-2 rounded-xl transition-all z-10 cursor-pointer border shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px] ${
+              showSettings 
+                ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black' 
+                : 'bg-[#111114] border-[#27272a] text-zinc-400 hover:text-white hover:border-[#333]'
+            }`}
             title="Personalizar Ícone"
           >
             <Palette className="w-5 h-5" />
@@ -95,7 +99,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
             {/* Title & App Logo Header */}
             <div className="flex flex-col items-center text-center gap-3 mt-8">
               <div 
-                className="w-20 h-20 rounded-2xl shadow-lg border border-amber-500/30 overflow-hidden relative flex items-center justify-center transition-colors duration-300"
+                className="w-20 h-20 rounded-2xl shadow-[0_8px_20px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.15)] border border-amber-500/40 overflow-hidden relative flex items-center justify-center transition-colors duration-300"
                 style={{ 
                   backgroundColor: iconTheme === 'light' ? '#ffffff' : iconTheme === 'dark' ? '#020617' : 'transparent',
                   backgroundImage: iconTheme === 'transparent' ? 'repeating-conic-gradient(#3f3f46 0% 25%, #27272a 0% 50%)' : 'none',
@@ -105,13 +109,13 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 <img
                   src={getIconUrl()}
                   alt="HolyLink Logo"
-                  className={`w-full h-full object-contain ${iconType === 'symbol' ? 'p-2' : 'p-1'}`}
+                  className={`w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] ${iconType === 'symbol' ? 'p-2' : 'p-1'}`}
                 />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white tracking-wide">HolyLink App</h3>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Instale para ter acesso rápido, modo tela cheia e offline.
+                <h3 className="text-xl font-extrabold text-white tracking-wide font-sans">Aplicativo HolyLink</h3>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  Instale no celular ou computador para acesso instantâneo, modo tela cheia e operação offline.
                 </p>
               </div>
             </div>
@@ -125,22 +129,26 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-4 text-sm">
+                  <div className="p-4 rounded-2xl bg-[#030304] border border-[#27272a] shadow-[inset_0_2px_8px_rgba(0,0,0,1)] space-y-4 text-sm">
                     {isInstalled && (
-                      <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2">
-                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <p>Como o app já está instalado, qualquer mudança no ícone exigirá que você <strong>desinstale o aplicativo do celular</strong> e instale novamente para ver o novo ícone na tela inicial.</p>
+                      <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-800/60 text-amber-200 text-xs flex items-start gap-2 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <p>Como o app já está instalado, qualquer mudança exigirá que você <strong>desinstale o aplicativo</strong> e instale novamente para atualizar o ícone na tela inicial.</p>
                       </div>
                     )}
                     
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> Estilo do Ícone</label>
+                      <label className="text-xs font-black text-amber-500 uppercase tracking-wider font-mono flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> Estilo do Ícone</label>
                       <div className="grid grid-cols-3 gap-2">
                         {iconOptions.map((opt) => (
                           <button
                             key={opt.id}
                             onClick={() => setIconType(opt.id)}
-                            className={`py-2 text-[10px] font-medium rounded-lg border transition-all cursor-pointer ${iconType === opt.id ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                            className={`py-2 text-[10px] font-extrabold rounded-xl border transition-all cursor-pointer active:translate-y-[1px] ${
+                              iconType === opt.id 
+                                ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_10px_rgba(245,158,11,0.3)] font-black' 
+                                : 'bg-[#111114] border-[#222] text-zinc-400 hover:border-[#333]'
+                            }`}
                           >
                             {opt.label}
                           </button>
@@ -149,16 +157,20 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5"><Palette className="w-3.5 h-3.5" /> Cor de Fundo</label>
+                      <label className="text-xs font-black text-amber-500 uppercase tracking-wider font-mono flex items-center gap-1.5"><Palette className="w-3.5 h-3.5" /> Cor de Fundo</label>
                       <div className="grid grid-cols-3 gap-2">
                         {themeOptions.map((opt) => (
                           <button
                             key={opt.id}
                             onClick={() => setIconTheme(opt.id)}
-                            className={`py-2 px-1 text-[10px] font-medium rounded-lg border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${iconTheme === opt.id ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                            className={`py-2 px-1 text-[10px] font-extrabold rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] ${
+                              iconTheme === opt.id 
+                                ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_10px_rgba(245,158,11,0.3)] font-black' 
+                                : 'bg-[#111114] border-[#222] text-zinc-400 hover:border-[#333]'
+                            }`}
                           >
                             <span 
-                              className="w-4 h-4 rounded-full border border-zinc-700 block" 
+                              className="w-4 h-4 rounded-full border border-zinc-700 block shadow-inner" 
                               style={{ 
                                 backgroundColor: opt.color,
                                 backgroundImage: opt.id === 'transparent' ? 'repeating-conic-gradient(#52525b 0% 25%, #3f3f46 0% 50%)' : 'none',
@@ -177,18 +189,18 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
 
             {/* FORCE UPDATE BANNER */}
             {hasUpdateAvailable && (
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-200 space-y-3">
+              <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-amber-200 space-y-3 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
                 <div className="flex items-center gap-2">
                   <RefreshCw className={`w-4 h-4 text-amber-400 ${isUpdating ? 'animate-spin' : ''}`} />
-                  <span className="font-bold text-sm">Nova Versão!</span>
+                  <span className="font-extrabold text-sm uppercase font-mono tracking-wider">Nova Versão Disponível!</span>
                 </div>
-                <p className="text-xs text-zinc-300">
-                  Uma atualização está disponível. Clique para recarregar o sistema.
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  Uma atualização do sistema está pronta. Clique para reiniciar e aplicar.
                 </p>
                 <button
                   onClick={forceAppUpdate}
                   disabled={isUpdating}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
+                  className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all cursor-pointer active:translate-y-[1px] disabled:opacity-50"
                 >
                   <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} />
                   <span>{isUpdating ? 'Atualizando...' : 'Atualizar Agora'}</span>
@@ -198,44 +210,44 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
 
             {/* Main Status Actions */}
             {isInstalled ? (
-              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3">
+              <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-800/60 flex items-center gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
                 <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
                 <div>
-                  <p className="font-bold text-sm text-emerald-300">App Instalado</p>
+                  <p className="font-extrabold text-sm text-emerald-300 font-mono uppercase">App Instalado</p>
                   <p className="text-xs text-emerald-400/80">
-                    Você já está no aplicativo nativo.
+                    Você já está executando no aplicativo nativo.
                   </p>
                 </div>
               </div>
             ) : isInstallable ? (
               <button
                 onClick={handleInstallClick}
-                className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-98"
+                className="w-full py-3.5 px-5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-sm flex items-center justify-center gap-2.5 shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all cursor-pointer active:translate-y-[1px]"
               >
-                <Download className="w-5 h-5" />
-                <span>Instalar Aplicativo</span>
+                <Download className="w-5 h-5 stroke-[2.5]" />
+                <span>Instalar Aplicativo Nativo</span>
               </button>
             ) : isInIframe ? (
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 space-y-3">
+              <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-amber-200 space-y-3 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
                 <div className="flex items-start gap-2.5">
                   <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                   <p className="text-xs leading-relaxed">
-                    Navegadores bloqueiam a instalação dentro de prévias. Abra em uma aba separada.
+                    Navegadores bloqueiam a instalação dentro de prévias do iFrame. Abra em uma guia externa.
                   </p>
                 </div>
                 <button
                   onClick={handleOpenNewTab}
-                  className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                  className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.3)] active:translate-y-[1px]"
                 >
                   <ExternalLink className="w-4 h-4" />
-                  <span>Abrir em Nova Aba</span>
+                  <span>Abrir em Guia Externa</span>
                 </button>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-3">
-                <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs uppercase tracking-wider mb-1">
+              <div className="p-4 rounded-2xl bg-[#030304] border border-[#27272a] shadow-[inset_0_2px_8px_rgba(0,0,0,1)] space-y-3">
+                <div className="flex items-center gap-2 text-amber-400 font-black text-xs uppercase tracking-wider font-mono mb-1">
                   {deviceType === 'ios' ? <Share className="w-4 h-4" /> : deviceType === 'android' ? <Smartphone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
-                  <span>Como instalar no {deviceType === 'ios' ? 'iPhone/iPad' : deviceType === 'android' ? 'Android' : 'Computador'}</span>
+                  <span>Instalação no {deviceType === 'ios' ? 'iPhone/iPad' : deviceType === 'android' ? 'Android' : 'Computador'}</span>
                 </div>
                 
                 {deviceType === 'android' && (
