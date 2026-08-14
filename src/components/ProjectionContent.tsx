@@ -304,7 +304,14 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       const meetId = slideId.replace("meeting_event_", "");
       const meeting = (customMeetings || []).find(m => m.id === meetId);
       if (meeting) {
-        return <MeetingEventSlide meeting={meeting} variant={isFJU ? 'fju' : undefined} />;
+        return (
+          <MeetingEventSlide 
+            meeting={meeting} 
+            variant={isFJU ? 'fju' : undefined} 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       }
     }
     if (slideId.startsWith("agenda_day_")) {
@@ -316,7 +323,17 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       } else if (cleanId.includes("fju")) {
         subType = 'fju';
       }
-      return <AgendaDaySlide dayIndex={dayIndex} subType={subType} currentTime={currentTime} meetings={customMeetings} variant={isFJU ? 'fju' : undefined} />;
+      return (
+        <AgendaDaySlide 
+          dayIndex={dayIndex} 
+          subType={subType} 
+          currentTime={currentTime} 
+          meetings={customMeetings} 
+          variant={isFJU ? 'fju' : undefined} 
+          effectiveMode={effectiveMode}
+          isLightModeActive={isLightModeActive}
+        />
+      );
     }
     if (slideId.startsWith("verse_")) {
       const verseIndexOffset = parseInt(slideId.replace("verse_", ""), 10) || 0;
@@ -338,24 +355,100 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
     switch (slideId) {
       case 'seat':
         if (isFJU) {
-          return <IconSlide icon={Armchair} title="Cola aí!" subtitle="Encontre seu lugar e chega mais, o Encontro Jovem vai começar!" layout="split-left" variant="fju" />;
+          return (
+            <IconSlide 
+              icon={Armchair} 
+              title="Cola aí!" 
+              subtitle="Encontre seu lugar e chega mais, o Encontro Jovem vai começar!" 
+              layout="split-left" 
+              variant="fju" 
+              effectiveMode={effectiveMode}
+              isLightModeActive={isLightModeActive}
+            />
+          );
         }
-        return <IconSlide icon={Armchair} title="Fique à vontade" subtitle="Procure um assento e acomode-se para o início da reunião." layout="split-left" />;
+        return (
+          <IconSlide 
+            icon={Armchair} 
+            title="Fique à vontade" 
+            subtitle="Procure um assento e acomode-se para o início da reunião." 
+            layout="split-left" 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       case 'bathroom':
         if (isFJU) {
-          return <IconSlide icon={DoorOpen} title="Pit Stop" subtitle="Aproveite agora para ir ao banheiro. Depois que começar, ninguém quer sair!" layout="split-right" variant="fju" />;
+          return (
+            <IconSlide 
+              icon={DoorOpen} 
+              title="Pit Stop" 
+              subtitle="Aproveite agora para ir ao banheiro. Depois que começar, ninguém quer sair!" 
+              layout="split-right" 
+              variant="fju" 
+              effectiveMode={effectiveMode}
+              isLightModeActive={isLightModeActive}
+            />
+          );
         }
-        return <IconSlide icon={DoorOpen} title="Vá ao banheiro" subtitle="Aproveite para ir antes da reunião começar." layout="split-right" />;
+        return (
+          <IconSlide 
+            icon={DoorOpen} 
+            title="Vá ao banheiro" 
+            subtitle="Aproveite para ir antes da reunião começar." 
+            layout="split-right" 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       case 'phone':
         if (isFJU) {
-          return <IconSlide icon={Smartphone} title="Foco Total" subtitle="Desliga as notificações aí! Vamos focar 100% no que vai rolar no Encontro Jovem." layout="center" variant="fju" />;
+          return (
+            <IconSlide 
+              icon={Smartphone} 
+              title="Foco Total" 
+              subtitle="Desliga as notificações aí! Vamos focar 100% no que vai rolar no Encontro Jovem." 
+              layout="center" 
+              variant="fju" 
+              effectiveMode={effectiveMode}
+              isLightModeActive={isLightModeActive}
+            />
+          );
         }
-        return <IconSlide icon={Smartphone} title="Celular no Silencioso" subtitle="Mantenha o celular no silencioso para evitar interrupções." layout="center" />;
+        return (
+          <IconSlide 
+            icon={Smartphone} 
+            title="Celular no Silencioso" 
+            subtitle="Mantenha o celular no silencioso para evitar interrupções." 
+            layout="center" 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       case 'no_chat':
         if (isFJU) {
-          return <IconSlide icon={MessageSquareOff} title="Preste Atenção" subtitle="O Encontro Jovem está só começando. Fica ligado e não perde nada!" layout="split-left" variant="fju" />;
+          return (
+            <IconSlide 
+              icon={MessageSquareOff} 
+              title="Preste Atenção" 
+              subtitle="O Encontro Jovem está só começando. Fica ligado e não perde nada!" 
+              layout="split-left" 
+              variant="fju" 
+              effectiveMode={effectiveMode}
+              isLightModeActive={isLightModeActive}
+            />
+          );
         }
-        return <IconSlide icon={MessageSquareOff} title="Silêncio" subtitle="Desligue-se das conversas e concentre-se na reunião." layout="split-left" />;
+        return (
+          <IconSlide 
+            icon={MessageSquareOff} 
+            title="Silêncio" 
+            subtitle="Desligue-se das conversas e concentre-se na reunião." 
+            layout="split-left" 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       case 'soon':
         if (isFJU) {
           return (
@@ -366,21 +459,70 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               pulse 
               layout="center"
               variant="fju"
+              effectiveMode={effectiveMode}
+              isLightModeActive={isLightModeActive}
             />
           );
         }
-        return <IconSlide icon={Clock} title="A reunião começa" subtitle="em instantes..." pulse layout="center" />;
+        return (
+          <IconSlide 
+            icon={Clock} 
+            title="A reunião começa" 
+            subtitle="em instantes..." 
+            pulse 
+            layout="center" 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       case 'social':
         if (isFJU) {
-          return <IconSlide icon={Instagram} title="FJU no Story" subtitle={`Siga a gente e marque o ${SOCIAL.instagram}`} layout="split-left" variant="fju" />;
+          return (
+            <IconSlide 
+              icon={Instagram} 
+              title="FJU no Story" 
+              subtitle={`Siga a gente e marque o ${SOCIAL.instagram}`} 
+              layout="split-left" 
+              variant="fju" 
+              effectiveMode={effectiveMode}
+              isLightModeActive={isLightModeActive}
+            />
+          );
         }
-        return <IconSlide icon={Instagram} title="Siga nosso Instagram" subtitle={SOCIAL.instagram} layout="split-left" />;
+        return (
+          <IconSlide 
+            icon={Instagram} 
+            title="Siga nosso Instagram" 
+            subtitle={SOCIAL.instagram} 
+            layout="split-left" 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       case 'donations':
-        return <DonationSlide variant={isFJU ? 'fju' : undefined} />;
+        return (
+          <DonationSlide 
+            variant={isFJU ? 'fju' : undefined} 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       case 'campaigns':
-        return <CampaignSlide campaigns={customCampaigns} />;
+        return (
+          <CampaignSlide 
+            campaigns={customCampaigns} 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       case 'world_god':
-        return <WorldGodSlide variant={isFJU ? 'fju' : undefined} />;
+        return (
+          <WorldGodSlide 
+            variant={isFJU ? 'fju' : undefined} 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
       default:
         return null;
     }

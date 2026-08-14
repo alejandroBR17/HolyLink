@@ -1,20 +1,66 @@
 /**
- * Media Preloader Service
- * Pre-buffers video elements, decodes image bitmaps, and warms up the cache
- * so transitions on 4GB RAM PCs and mobile devices occur with zero stutter.
+ * Media Preloader Service - Aggressive 2-Slot Lazy Loading
+ * Ensures only the current slide and immediate next slide reside in RAM.
+ * Previous and non-adjacent slides are aggressively purged from browser memory
+ * to guarantee optimal performance on 4GB RAM PCs and mobile devices.
  */
 
 class MediaPreloaderService {
   private imageCache: Map<string, HTMLImageElement> = new Map();
   private videoCache: Map<string, HTMLVideoElement> = new Map();
   private preloadedUrls: Set<string> = new Set();
+  private staticAssetUrls: Set<string> = new Set(['/logo-text.png?v=11', '/logo-text.png']);
 
   /**
-   * Preload and asynchronously decode an image bitmap into memory
+   * Disposes of a cached media resource completely from browser memory
+   */
+  public evictUrl(url: string) {
+    if (!url || this.staticAssetUrls.has(url)) return;
+
+    if (this.videoCache.has(url)) {
+      const video = this.videoCache.get(url);
+      if (video) {
+        try {
+          video.pause();
+          video.removeAttribute('src');
+          video.load(); // Forces browser to free hardware video decoders and VRAM buffers
+        } catch (e) {
+          // Ignore disposal errors
+        }
+      }
+      this.videoCache.delete(url);
+    }
+
+    if (this.imageCache.has(url)) {
+      const img = this.imageCache.get(url);
+      if (img) {
+        img.onload = null;
+        img.onerror = null;
+        img.src = '';
+      }
+      this.imageCache.delete(url);
+    }
+
+    this.preloadedUrls.delete(url);
+  }
+
+  /**
+   * Preload and asynchronously decode an image bitmap into memory.
+   * Maintains strict RAM cap (maximum 2 non-static image buffers).
    */
   public preloadImage(url: string): Promise<void> {
     if (!url || this.preloadedUrls.has(url)) {
       return Promise.resolve();
+    }
+
+    // Strict RAM Limit: Evict oldest image if limit reached
+    if (this.imageCache.size >= 2) {
+      for (const key of this.imageCache.keys()) {
+        if (!this.staticAssetUrls.has(key)) {
+          this.evictUrl(key);
+          break;
+        }
+      }
     }
 
     return new Promise((resolve) => {
@@ -46,30 +92,24 @@ class MediaPreloaderService {
       }
 
       // Safety timeout
-      setTimeout(resolve, 3000);
+      setTimeout(resolve, 2500);
     });
   }
 
   /**
-   * Preload a video URL with metadata and auto buffering
-   * Max 3 concurrent video buffers to preserve RAM on 4GB systems
+   * Preload a video URL with metadata and auto buffering.
+   * Strict RAM safety limit: max 2 buffered video decoders in memory.
    */
   public preloadVideo(url: string): Promise<void> {
     if (!url || this.preloadedUrls.has(url)) {
       return Promise.resolve();
     }
 
-    // Strict RAM safety limit for 4GB PCs: max 3 buffered video decoders
-    if (this.videoCache.size >= 3) {
+    // Strict RAM limit: Evict oldest video decoder immediately
+    if (this.videoCache.size >= 2) {
       const oldestKey = this.videoCache.keys().next().value;
       if (oldestKey) {
-        const oldVideo = this.videoCache.get(oldestKey);
-        if (oldVideo) {
-          oldVideo.pause();
-          oldVideo.removeAttribute('src');
-          oldVideo.load();
-        }
-        this.videoCache.delete(oldestKey);
+        this.evictUrl(oldestKey);
       }
     }
 
@@ -106,7 +146,7 @@ class MediaPreloaderService {
       setTimeout(() => {
         cleanup();
         resolve();
-      }, 3500);
+      }, 3000);
     });
   }
 
@@ -114,22 +154,21 @@ class MediaPreloaderService {
    * Prune unused media objects from cache without deleting underlying files
    */
   public pruneUnused(validUrls: Set<string>) {
+    const urlsToEvict: string[] = [];
+
     this.imageCache.forEach((_, url) => {
-      if (!validUrls.has(url)) {
-        this.imageCache.delete(url);
-        this.preloadedUrls.delete(url);
+      if (!validUrls.has(url) && !this.staticAssetUrls.has(url)) {
+        urlsToEvict.push(url);
       }
     });
 
-    this.videoCache.forEach((video, url) => {
-      if (!validUrls.has(url)) {
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
-        this.videoCache.delete(url);
-        this.preloadedUrls.delete(url);
+    this.videoCache.forEach((_, url) => {
+      if (!validUrls.has(url) && !this.staticAssetUrls.has(url)) {
+        urlsToEvict.push(url);
       }
     });
+
+    urlsToEvict.forEach(url => this.evictUrl(url));
   }
 
   /**
@@ -179,7 +218,9 @@ class MediaPreloaderService {
   }
 
   /**
-   * Preloads current slide + next N slides in sequence
+   * AGGRESSIVE 2-SLOT LAZY LOADING:
+   * Keeps ONLY the current slide and immediate next slide in memory.
+   * Immediately evicts previous and distant slides to release RAM and VRAM.
    */
   public async preloadSlideSequence(
     currentSlideId: string, 
@@ -192,34 +233,40 @@ class MediaPreloaderService {
     const targetSlideIds: string[] = [];
 
     if (currentIndex !== -1) {
-      targetSlideIds.push(slidesOrder[currentIndex]); // Current
-      targetSlideIds.push(slidesOrder[(currentIndex + 1) % slidesOrder.length]); // Next
-      targetSlideIds.push(slidesOrder[(currentIndex + 2) % slidesOrder.length]); // Next+1
+      targetSlideIds.push(slidesOrder[currentIndex]); // 1. Current Active Slide
+      const nextIndex = (currentIndex + 1) % slidesOrder.length;
+      targetSlideIds.push(slidesOrder[nextIndex]); // 2. Immediate Next Slide
     } else {
-      targetSlideIds.push(...slidesOrder.slice(0, 3));
+      // Fallback: first 2 items
+      targetSlideIds.push(...slidesOrder.slice(0, 2));
     }
 
-    const itemsToPreload = customMediaList.filter(m => targetSlideIds.includes(m.id));
-    await this.preloadMediaItems(itemsToPreload);
+    const itemsToKeep = customMediaList.filter(m => targetSlideIds.includes(m.id));
+    const activeUrls = new Set<string>(itemsToKeep.map(m => m.url));
+
+    // Aggressive eviction: purge anything in RAM that is NOT in the 2-slot active set
+    const allCachedUrls = new Set([...this.imageCache.keys(), ...this.videoCache.keys()]);
+    for (const cachedUrl of allCachedUrls) {
+      if (!activeUrls.has(cachedUrl) && !this.staticAssetUrls.has(cachedUrl)) {
+        this.evictUrl(cachedUrl);
+      }
+    }
+
+    // Preload only the current and immediate next item
+    await this.preloadMediaItems(itemsToKeep);
   }
 
   /**
    * Preloads static brand assets and UI icons
    */
   public preloadStaticAssets() {
-    const staticImages = [
-      '/logo-text.png?v=11',
-      '/logo-text.png'
-    ];
-    staticImages.forEach(url => this.preloadImage(url));
+    this.staticAssetUrls.forEach(url => this.preloadImage(url));
   }
 
   public clearCache() {
+    const urls = [...this.preloadedUrls];
+    urls.forEach(url => this.evictUrl(url));
     this.imageCache.clear();
-    this.videoCache.forEach((video) => {
-      video.removeAttribute('src');
-      video.load();
-    });
     this.videoCache.clear();
     this.preloadedUrls.clear();
   }

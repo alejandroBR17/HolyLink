@@ -102,9 +102,6 @@ export function useCustomMedia(
             };
           });
 
-          // Preload media in background so transitions on low-memory PCs are instant
-          mediaPreloader.preloadMediaItems(finalMediaList);
-
           return finalMediaList;
         });
 
