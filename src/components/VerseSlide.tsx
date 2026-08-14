@@ -131,16 +131,16 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
              className={`${getMarginClass(verse.text)} inline-flex items-center gap-4 px-9 py-3 xl:px-11 xl:py-4 rounded-full ${
                isLightMode
                  ? 'bg-zinc-950 border-2'
-                 : 'bg-black/70 backdrop-blur-md border'
+                 : 'bg-zinc-950/80 backdrop-blur-md border'
              } ${
                isFJU 
                  ? 'border-amber-500/50 text-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.2)]' 
-                 : 'border-yellow-500/50 text-yellow-400 shadow-[0_0_25px_rgba(234,179,8,0.2)]'
+                 : 'border-amber-500/30 text-amber-300/95 shadow-[0_0_25px_rgba(234,179,8,0.15)]'
              }`}
            >
              <span 
-               className={`w-3 h-3 rounded-full bg-amber-400 ${
-                 isHighMode ? 'animate-ping' : ''
+               className={`w-2.5 h-2.5 rounded-full ${
+                 isFJU ? (isHighMode ? 'bg-amber-400 animate-ping' : 'bg-amber-400') : 'bg-amber-400/90'
                }`} 
              />
              <p className="text-[2.2rem] xl:text-[2.8rem] font-black tracking-[0.2em] uppercase font-mono leading-none">

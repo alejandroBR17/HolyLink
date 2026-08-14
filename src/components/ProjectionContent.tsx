@@ -637,30 +637,116 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex w-full h-full bg-black/10 relative"
+            className="absolute inset-0 flex w-full h-full bg-[#030201] relative overflow-hidden"
           >
+            {/* Ambient Background Glows */}
+            {!isLightModeActive && (
+              <>
+                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none blur-[180px] ${
+                  isFJU ? 'bg-amber-600/15' : 'bg-yellow-500/10'
+                }`} />
+                <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/40 to-black pointer-events-none" />
+              </>
+            )}
+
             {!isCurrentSlideVideo ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-transparent z-20">
-                <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[2.2rem] xl:text-[2.8rem] font-bold uppercase tracking-[0.3em] mb-6 text-center px-4 animate-pulse`}>
-                  {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
-                </span>
-                <div className="relative h-[16rem] w-full flex items-center justify-center overflow-hidden">
-                  <AnimatePresence mode="popLayout">
-                    <motion.div
-                      key={diffSeconds}
-                      initial={{ opacity: 0, scale: 0.8, y: 30 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 1.2, y: -30 }}
-                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                      className={`absolute font-mono text-[12rem] xl:text-[16rem] text-white font-black leading-none tracking-tighter tabular-nums ${isFJU ? 'drop-shadow-[0_0_80px_rgba(245,158,11,0.3)]' : 'drop-shadow-[0_0_80px_rgba(255,255,255,0.15)]'}`}
-                    >
-                      {diffSeconds}
-                    </motion.div>
-                  </AnimatePresence>
+              <div className="w-full h-full flex flex-col items-center justify-center relative z-20 px-8 select-none">
+                {/* Header Badge */}
+                <motion.div 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-8 ${
+                    isFJU 
+                      ? 'bg-amber-500/10 border border-amber-500/30' 
+                      : 'bg-white/[0.04] border border-amber-500/25'
+                  } backdrop-blur-md`}
+                >
+                  <span className={`w-2.5 h-2.5 rounded-full ${
+                    isFJU ? 'bg-amber-400 animate-ping' : 'bg-amber-400'
+                  }`} />
+                  <span className={`text-xl xl:text-2xl font-black tracking-[0.3em] uppercase font-mono ${
+                    isFJU ? 'text-amber-400' : 'text-amber-300/95'
+                  }`}>
+                    {isFJU ? 'CONTAGEM REGRESSIVA • FJU' : 'MOMENTO SOLENE • CONTAGEM REGRESSIVA'}
+                  </span>
+                </motion.div>
+
+                {/* Main Title */}
+                <motion.h1 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="font-sans font-black text-[4.5rem] xl:text-[5.8rem] text-white uppercase tracking-tight leading-none mb-10 text-center drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]"
+                >
+                  {isFJU ? 'O Encontro Vai Começar!' : 'A Reunião Vai Começar'}
+                </motion.h1>
+
+                {/* Monumental Circular Gauge & Number */}
+                <div className="relative w-[340px] h-[340px] xl:w-[420px] xl:h-[420px] flex items-center justify-center my-2">
+                  <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 400 400">
+                    {/* Background Track */}
+                    <circle
+                      cx="200"
+                      cy="200"
+                      r="175"
+                      className="stroke-white/[0.06]"
+                      strokeWidth="10"
+                      fill="transparent"
+                    />
+                    {/* Glowing Progress Ring */}
+                    <circle
+                      cx="200"
+                      cy="200"
+                      r="175"
+                      className={`${isFJU ? 'stroke-amber-400' : 'stroke-yellow-400'} transition-all duration-1000 ease-linear`}
+                      strokeWidth="12"
+                      strokeDasharray={2 * Math.PI * 175}
+                      strokeDashoffset={(2 * Math.PI * 175) * (1 - (diffSeconds / 60))}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  </svg>
+
+                  {/* Inner Glass Disc */}
+                  <div className={`absolute inset-6 rounded-full ${
+                    isFJU 
+                      ? 'bg-black/60 border border-amber-500/30' 
+                      : 'bg-zinc-950/80 border border-amber-500/25'
+                  } backdrop-blur-xl flex flex-col items-center justify-center shadow-2xl overflow-hidden`}>
+                    <AnimatePresence mode="popLayout">
+                      <motion.div
+                        key={diffSeconds}
+                        initial={{ opacity: 0, scale: 0.75, y: 15 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 1.25, y: -15 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className={`font-mono text-[9.5rem] xl:text-[12.5rem] font-black leading-none tracking-tighter tabular-nums ${
+                          diffSeconds <= 10 
+                            ? (isFJU 
+                                ? 'text-amber-400 drop-shadow-[0_0_60px_rgba(245,158,11,0.85)]' 
+                                : 'text-yellow-400 drop-shadow-[0_0_55px_rgba(234,179,8,0.7)]')
+                            : 'text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.2)]'
+                        }`}
+                      >
+                        {diffSeconds}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                 </div>
-                <span className="text-stone-400 text-3xl font-medium tracking-[0.3em] mt-8 uppercase">
-                  {diffSeconds === 1 ? "Segundo" : "Segundos"}
-                </span>
+
+                {/* Subtitle / Reverence Guidance */}
+                <div className="flex flex-col items-center text-center mt-8">
+                  <span className="text-amber-400/90 text-2xl xl:text-3xl font-mono uppercase tracking-[0.35em] font-extrabold mb-3">
+                    {diffSeconds === 1 ? "Segundo Restante" : "Segundos Restantes"}
+                  </span>
+                  <p className="text-stone-300 text-2xl xl:text-3xl font-normal max-w-3xl leading-relaxed">
+                    {isFJU 
+                      ? "Vem pra FJU! Desliga as notificações e chega mais!" 
+                      : "Em oração e reverência, prepare-se para ouvir a voz do Senhor."
+                    }
+                  </p>
+                </div>
               </div>
             ) : finalMinuteDisplayMode === 'full_video' ? (
               <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black">
@@ -676,31 +762,77 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               </div>
             ) : (
               <>
-                <div className={`w-[35%] h-full flex flex-col items-center justify-center border-r ${isFJU ? 'border-amber-500/20 bg-[#080400]/80 backdrop-blur-md' : 'border-white/5 bg-[#030000]/80 backdrop-blur-md'} z-20`}>
-                  <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[1.6rem] xl:text-[1.8rem] font-bold uppercase tracking-[0.25em] mb-4 text-center px-4 animate-pulse`}>
+                <div className={`w-[36%] h-full flex flex-col items-center justify-center border-r ${
+                  isFJU ? 'border-amber-500/20 bg-[#080400]/90' : 'border-amber-500/20 bg-[#060402]/95'
+                } backdrop-blur-2xl z-20 px-8 select-none`}>
+                  <div className={`inline-flex items-center gap-3 px-6 py-2 rounded-full mb-6 ${
+                    isFJU ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-white/[0.04] border border-amber-500/25'
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${isFJU ? 'bg-amber-400 animate-ping' : 'bg-amber-400'}`} />
+                    <span className={`text-base xl:text-lg font-black tracking-[0.25em] uppercase font-mono ${
+                      isFJU ? 'text-amber-400' : 'text-amber-300'
+                    }`}>
+                      {isFJU ? 'FJU AO VIVO' : 'CONTAGEM REGRESSIVA'}
+                    </span>
+                  </div>
+
+                  <span className="text-white text-3xl xl:text-4xl font-extrabold uppercase tracking-tight mb-8 text-center">
                     {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
                   </span>
-                  <div className="relative h-[13rem] w-full flex items-center justify-center overflow-hidden">
-                    <AnimatePresence mode="popLayout">
-                      <motion.div
-                        key={diffSeconds}
-                        initial={{ opacity: 0, scale: 0.8, y: 30 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 1.2, y: -30 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className={`absolute font-mono text-[9rem] xl:text-[11rem] text-white font-black leading-none tracking-tighter tabular-nums ${isFJU ? 'drop-shadow-[0_0_60px_rgba(245,158,11,0.25)]' : 'drop-shadow-[0_0_60px_rgba(255,255,255,0.1)]'}`}
-                      >
-                        {diffSeconds}
-                      </motion.div>
-                    </AnimatePresence>
+
+                  <div className="relative w-[260px] h-[260px] xl:w-[300px] xl:h-[300px] flex items-center justify-center">
+                    <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 300 300">
+                      <circle
+                        cx="150"
+                        cy="150"
+                        r="130"
+                        className="stroke-white/[0.06]"
+                        strokeWidth="8"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="150"
+                        cy="150"
+                        r="130"
+                        className={`${isFJU ? 'stroke-amber-400' : 'stroke-yellow-400'} transition-all duration-1000 ease-linear`}
+                        strokeWidth="10"
+                        strokeDasharray={2 * Math.PI * 130}
+                        strokeDashoffset={(2 * Math.PI * 130) * (1 - (diffSeconds / 60))}
+                        strokeLinecap="round"
+                        fill="transparent"
+                      />
+                    </svg>
+
+                    <div className={`absolute inset-4 rounded-full ${
+                      isFJU ? 'bg-black/60 border border-amber-500/30' : 'bg-zinc-950/80 border border-amber-500/25'
+                    } flex flex-col items-center justify-center`}>
+                      <AnimatePresence mode="popLayout">
+                        <motion.div
+                          key={diffSeconds}
+                          initial={{ opacity: 0, scale: 0.75, y: 12 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 1.25, y: -12 }}
+                          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                          className={`font-mono text-[7rem] xl:text-[8.5rem] font-black leading-none tracking-tighter tabular-nums ${
+                            diffSeconds <= 10 
+                              ? (isFJU ? 'text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.8)]' : 'text-yellow-400 drop-shadow-[0_0_35px_rgba(234,179,8,0.7)]')
+                              : 'text-white'
+                          }`}
+                        >
+                          {diffSeconds}
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
                   </div>
-                  <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
+
+                  <span className="text-amber-400/90 text-xl xl:text-2xl font-mono uppercase tracking-[0.3em] font-extrabold mt-6">
                     {diffSeconds === 1 ? "Segundo" : "Segundos"}
                   </span>
                 </div>
-                <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
+
+                <div className="w-[64%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
                   <div 
-                    className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.65]"
+                    className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.64]"
                     style={{
                       width: '1920px',
                       height: '1080px',
@@ -727,33 +859,87 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex w-full h-full bg-black/20 relative"
+            className="absolute inset-0 flex w-full h-full bg-[#030201] relative overflow-hidden"
           >
-            <div className={`w-[35%] h-full flex flex-col items-center justify-center border-r ${isFJU ? 'border-amber-500/20 bg-[#080400]/80 backdrop-blur-md' : 'border-white/5 bg-[#030000]/80 backdrop-blur-md'} z-20`}>
-              <span className={`${isFJU ? 'text-amber-500' : 'text-yellow-500'} text-[2rem] font-bold uppercase tracking-[0.4em] mb-4`}>
-                Faltam
-              </span>
-              <div className="relative h-[12rem] w-full flex items-center justify-center overflow-hidden">
-                <AnimatePresence mode="popLayout">
-                  <motion.div
-                    key={diffSeconds}
-                    initial={{ opacity: 0, y: 25 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -25 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    className={`absolute font-mono text-[7.5rem] text-white font-black leading-none tracking-tighter tabular-nums ${isFJU ? 'drop-shadow-[0_0_50px_rgba(245,158,11,0.15)]' : 'drop-shadow-[0_0_50px_rgba(255,255,255,0.05)]'}`}
-                  >
-                    {formatMinutesPart}:{formatSecondsPart}
-                  </motion.div>
-                </AnimatePresence>
+            {/* Left Pod: 38% Width */}
+            <div className={`w-[38%] h-full flex flex-col items-center justify-between border-r ${
+              isFJU ? 'border-amber-500/20 bg-[#080400]/90' : 'border-amber-500/20 bg-[#060402]/95'
+            } backdrop-blur-2xl z-20 px-10 py-16 select-none`}>
+              {/* Top Badge */}
+              <div className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full ${
+                isFJU ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-white/[0.04] border border-amber-500/25'
+              }`}>
+                <span className={`w-2.5 h-2.5 rounded-full ${isFJU ? 'bg-amber-400 animate-ping' : 'bg-amber-400'}`} />
+                <span className={`text-lg xl:text-xl font-black tracking-[0.25em] uppercase font-mono ${
+                  isFJU ? 'text-amber-400' : 'text-amber-300/95'
+                }`}>
+                  {isFJU ? 'FALTAM 5 MINUTOS • FJU' : 'PREPARAÇÃO PARA A REUNIÃO'}
+                </span>
               </div>
-              <span className="text-stone-400 text-2xl font-medium tracking-[0.25em] mt-5 uppercase">
-                Minutos e Segundos
-              </span>
+
+              {/* Center Countdown Unit */}
+              <div className="flex flex-col items-center w-full">
+                <span className="text-white text-3xl xl:text-4xl font-extrabold uppercase tracking-tight mb-8 text-center">
+                  {isFJU ? 'O Encontro Começa em' : 'A Reunião Começa em'}
+                </span>
+
+                {/* Digital Pod Boxes */}
+                <div className="flex items-center justify-center gap-5 xl:gap-7 w-full max-w-md">
+                  <div className={`flex-1 flex flex-col items-center ${
+                    isFJU ? 'bg-black/60 border border-amber-500/30' : 'bg-zinc-950/80 border border-amber-500/25'
+                  } rounded-3xl py-7 shadow-2xl relative overflow-hidden`}>
+                    <span className="font-mono text-[6.5rem] xl:text-[7.8rem] font-black text-white leading-none tabular-nums">
+                      {formatMinutesPart}
+                    </span>
+                    <span className="text-amber-400/90 text-sm xl:text-base font-mono uppercase tracking-[0.25em] font-extrabold mt-3">
+                      Minutos
+                    </span>
+                  </div>
+
+                  <span className="text-amber-400 font-mono text-5xl font-black mb-6">:</span>
+
+                  <div className={`flex-1 flex flex-col items-center ${
+                    isFJU ? 'bg-black/60 border border-amber-500/30' : 'bg-zinc-950/80 border border-amber-500/25'
+                  } rounded-3xl py-7 shadow-2xl relative overflow-hidden`}>
+                    <span className="font-mono text-[6.5rem] xl:text-[7.8rem] font-black text-white leading-none tabular-nums">
+                      {formatSecondsPart}
+                    </span>
+                    <span className="text-amber-400/90 text-sm xl:text-base font-mono uppercase tracking-[0.25em] font-extrabold mt-3">
+                      Segundos
+                    </span>
+                  </div>
+                </div>
+
+                {/* Progress Bar (5 min to 1 min window) */}
+                <div className="w-full max-w-md mt-10">
+                  <div className="w-full h-2.5 bg-white/[0.08] rounded-full overflow-hidden p-0.5">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        isFJU 
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.5)]' 
+                          : 'bg-gradient-to-r from-yellow-600 to-amber-400 shadow-[0_0_15px_rgba(234,179,8,0.4)]'
+                      }`}
+                      style={{
+                        width: `${Math.min(100, Math.max(0, ((300 - Math.min(300, Math.max(60, diffSeconds))) / 240) * 100))}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Solemn Advice */}
+              <p className="text-stone-300 text-xl xl:text-2xl text-center max-w-sm font-normal leading-relaxed">
+                {isFJU 
+                  ? "Aquece aí que estamos nos preparativos finais!" 
+                  : "Mantenha sua mente em oração e expectativa pela Palavra de Deus."
+                }
+              </p>
             </div>
-            <div className="w-[65%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
+
+            {/* Right Slide Stage: 62% Width */}
+            <div className="w-[62%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
               <div 
-                className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.65]"
+                className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.62]"
                 style={{
                   width: '1920px',
                   height: '1080px',
