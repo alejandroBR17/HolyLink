@@ -133,7 +133,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         initial: { opacity: 0 },
         animate: { opacity: 1 },
         exit: { opacity: 0 },
-        transition: { duration: 0.15, ease: "linear" as const }
+        transition: { duration: 0.35, ease: "easeInOut" as const }
       };
     }
     if (effectiveMode === 'balanced') {
@@ -598,7 +598,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: isLightModeActive ? 0.2 : 0.4 }}
+            transition={{ duration: isLightModeActive ? 0.35 : 0.4 }}
             className={`absolute inset-0 w-full h-full z-40 flex items-center justify-center ${
               isLightModeActive ? 'bg-black/50' : 'bg-black/20 backdrop-blur-[2px]'
             }`}

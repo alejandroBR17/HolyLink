@@ -57,25 +57,25 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
 
   const getFontSizeClass = (text: string) => {
     const len = text.length;
-    if (len < 60) return 'text-[4.6rem] xl:text-[5.4rem]';
-    if (len < 90) return 'text-[3.8rem] xl:text-[4.4rem]';
-    if (len < 130) return 'text-[3rem] xl:text-[3.6rem]';
-    return 'text-[2.4rem] xl:text-[3rem]';
+    if (len < 60) return 'text-[5.5rem] xl:text-[6.8rem] 2xl:text-[7.8rem]';
+    if (len < 90) return 'text-[4.6rem] xl:text-[5.6rem] 2xl:text-[6.4rem]';
+    if (len < 140) return 'text-[3.8rem] xl:text-[4.6rem] 2xl:text-[5.2rem]';
+    return 'text-[3.2rem] xl:text-[3.8rem] 2xl:text-[4.4rem]';
   };
 
   const getMarginClass = (text: string) => {
     const len = text.length;
     if (len < 90) return 'mt-8 xl:mt-10';
-    return 'mt-5 xl:mt-6';
+    return 'mt-6 xl:mt-8';
   };
 
-  // Performance-based animation configuration
+  // Performance-based animation configuration (Anti-Lag uses silky 0.35s GPU-friendly cross-fade)
   const motionProps = isLightMode
     ? {
         initial: { opacity: 0 },
         animate: { opacity: 1 },
         exit: { opacity: 0 },
-        transition: { duration: 0.2, ease: "linear" as const }
+        transition: { duration: 0.35, ease: "easeInOut" as const }
       }
     : isHighMode
     ? {
@@ -97,7 +97,7 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
        {!isLightMode && (
          <div 
            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
-             isHighMode ? 'w-[800px] h-[800px] blur-[150px]' : 'w-[450px] h-[450px] blur-[70px]'
+             isHighMode ? 'w-[850px] h-[850px] blur-[160px]' : 'w-[480px] h-[480px] blur-[75px]'
            } ${
              isFJU ? 'bg-amber-600/10' : 'bg-yellow-500/10'
            } rounded-full pointer-events-none`} 
@@ -108,29 +108,29 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
          <motion.div
            key={keyId}
            {...motionProps}
-           className="relative z-10 w-full max-w-[96%] mx-auto flex flex-col items-center"
+           className="relative z-10 w-full max-w-[97%] mx-auto flex flex-col items-center"
          >
            {/* Decorative Quote Mark */}
-           <div className={`mb-3 sm:mb-4 ${isFJU ? 'text-amber-500/40' : 'text-yellow-500/40'} opacity-75`}>
-             <Quote className="w-16 h-16 xl:w-20 xl:h-20 rotate-180" strokeWidth={1.5} />
+           <div className={`mb-4 sm:mb-5 ${isFJU ? 'text-amber-500/40' : 'text-yellow-500/40'} opacity-80`}>
+             <Quote className="w-18 h-18 xl:w-24 xl:h-24 rotate-180" strokeWidth={1.5} />
            </div>
 
            {/* Verse Text with GPU-safe shadow for Anti-Lag */}
            <h2 
-             className={`${getFontSizeClass(verse.text)} text-stone-100 leading-[1.24] font-extrabold tracking-tight ${
+             className={`${getFontSizeClass(verse.text)} text-stone-100 leading-[1.2] font-black tracking-tight ${
                isLightMode 
-                 ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]' 
-                 : 'drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]'
-             } max-w-[96%] mx-auto font-sans`}
+                 ? 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]' 
+                 : 'drop-shadow-[0_4px_28px_rgba(0,0,0,0.95)]'
+             } max-w-[98%] mx-auto font-sans`}
            >
              "{verse.text}"
            </h2>
 
            {/* Bible Reference Pill with Anti-Lag optimizations */}
            <div
-             className={`${getMarginClass(verse.text)} inline-flex items-center gap-3 px-7 py-2.5 xl:px-9 xl:py-3.5 rounded-full ${
+             className={`${getMarginClass(verse.text)} inline-flex items-center gap-4 px-9 py-3 xl:px-11 xl:py-4 rounded-full ${
                isLightMode
-                 ? 'bg-zinc-950 border' // Solid dark background in light mode (no heavy backdrop-blur)
+                 ? 'bg-zinc-950 border-2'
                  : 'bg-black/70 backdrop-blur-md border'
              } ${
                isFJU 
@@ -139,11 +139,11 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
              }`}
            >
              <span 
-               className={`w-2.5 h-2.5 rounded-full bg-amber-400 ${
-                 isHighMode ? 'animate-ping' : '' // Static dot in light and balanced mode to save CPU/GPU frames
+               className={`w-3 h-3 rounded-full bg-amber-400 ${
+                 isHighMode ? 'animate-ping' : ''
                }`} 
              />
-             <p className="text-[1.8rem] xl:text-[2.2rem] font-black tracking-[0.2em] uppercase font-mono leading-none">
+             <p className="text-[2.2rem] xl:text-[2.8rem] font-black tracking-[0.2em] uppercase font-mono leading-none">
                {verse.ref}
              </p>
            </div>
@@ -152,5 +152,3 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
     </div>
   );
 };
-
-
