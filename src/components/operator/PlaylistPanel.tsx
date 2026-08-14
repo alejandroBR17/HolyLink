@@ -187,12 +187,12 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         case 'seat': name = "Fique à vontade"; desc = "Acomode-se no seu lugar"; category = 'fixo'; break;
         case 'bathroom': name = "Vá ao banheiro"; desc = "Ir antes do início do culto"; category = 'fixo'; break;
         case 'phone': name = "Celular no Silencioso"; desc = "Evitar distrações no culto"; category = 'fixo'; break;
-        case 'no_chat': name = "Silêncio / Concentração"; desc = "Momento de oração e reflexão"; category = 'fixo'; break;
+        case 'no_chat': name = "Momento de Concentração"; desc = "Diminuir conversas e focar em Deus"; category = 'fixo'; break;
         case 'soon': name = "Começa em Instantes"; desc = "Contador curto pré-culto"; category = 'fixo'; break;
         case 'social': name = "Redes Sociais"; desc = "@universaljardimosasco"; category = 'fixo'; break;
         case 'donations': name = "Doações / Dízimos"; desc = "QR Code PIX e Dados Bancários"; category = 'fixo'; break;
         case 'campaigns': name = "Campanhas da Igreja"; desc = "Fogueira Santa e propósitos"; category = 'campanha'; break;
-        case 'world_god': name = "Universal pelo Mundo"; desc = "Fotos de templos globais"; category = 'fixo'; break;
+        case 'world_god': name = "Desligue-se do Mundo / Deus"; desc = "Transição e foco na presença de Deus"; category = 'fixo'; break;
         default: name = slideId; desc = "Slide da projeção"; category = 'fixo'; break;
       }
     }

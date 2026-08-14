@@ -294,7 +294,7 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
   return (
     <div className="flex flex-col items-center justify-center text-center max-w-6xl h-full w-full relative select-none">
       {!isLightMode && (
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${isHighMode ? 'w-[850px] h-[850px] blur-[170px]' : 'w-[480px] h-[480px] blur-[75px]'} ${phase === 'god' ? (isFJU ? 'bg-amber-600/15' : 'bg-yellow-500/15') : 'bg-blue-600/10'} rounded-full pointer-events-none transition-colors duration-1000`} />
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${isHighMode ? 'w-[850px] h-[850px] blur-[170px]' : 'w-[480px] h-[480px] blur-[75px]'} ${phase === 'god' ? (isFJU ? 'bg-amber-600/15' : 'bg-yellow-500/15') : (isFJU ? 'bg-amber-600/10' : 'bg-zinc-400/10')} rounded-full pointer-events-none transition-colors duration-1000`} />
       )}
 
       <AnimatePresence mode="wait">
@@ -307,22 +307,26 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
             transition={{ duration: isLightMode ? 0.35 : 0.7, ease: isLightMode ? "easeInOut" : [0.16, 1, 0.3, 1] }}
             className="flex flex-col items-center relative z-10"
           >
-            <div className="inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-8 bg-white/[0.05] border border-white/[0.12] backdrop-blur-md">
-              <span className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="text-xl xl:text-2xl font-black tracking-[0.25em] uppercase font-mono text-cyan-400">
-                MOMENTO DE TRANSIÇÃO
+            <div className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-8 ${isFJU ? 'bg-white/[0.05] border border-amber-500/30' : 'bg-white/[0.05] border border-zinc-500/30'} backdrop-blur-md`}>
+              <span className={`w-3 h-3 rounded-full ${isFJU ? 'bg-amber-400' : 'bg-zinc-300'} animate-pulse`} />
+              <span className={`text-xl xl:text-2xl font-black tracking-[0.25em] uppercase font-mono ${isFJU ? 'text-amber-400' : 'text-zinc-300'}`}>
+                {isFJU ? 'FORÇA JOVEM UNIVERSAL' : 'MOMENTO DE TRANSIÇÃO'}
               </span>
             </div>
 
-            <div className={`p-10 rounded-[3rem] ${isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-black/60 backdrop-blur-md border border-white/[0.12]'} mb-8`}>
-              <Globe className={`w-40 h-40 ${isFJU ? 'text-amber-400/80' : 'text-cyan-400/80'} ${!isLightMode ? 'animate-[spin_25s_linear_infinite]' : ''}`} strokeWidth={1.3} />
+            <div className={`p-10 rounded-[3rem] ${
+              isLightMode 
+                ? 'bg-zinc-950 border-2 border-zinc-800' 
+                : 'bg-zinc-900/70 backdrop-blur-md border border-zinc-700/60 shadow-[0_20px_50px_rgba(0,0,0,0.6)]'
+            } mb-8`}>
+              <Globe className={`w-40 h-40 ${isFJU ? 'text-amber-400' : 'text-zinc-200 drop-shadow-[0_0_35px_rgba(255,255,255,0.25)]'} ${!isLightMode ? 'animate-[spin_25s_linear_infinite]' : ''}`} strokeWidth={1.3} />
             </div>
 
             <h1 className="font-sans font-black text-[6.5rem] xl:text-[8rem] 2xl:text-[9rem] tracking-tight text-white leading-none uppercase drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)]">
               {isFJU ? 'Cola com a gente' : 'Desligue-se do mundo'}
             </h1>
-            <p className="text-stone-300 text-[3.2rem] xl:text-[4rem] font-medium mt-6 tracking-wide leading-snug">
-              Prepare sua mente e seu coração
+            <p className="text-zinc-300 text-[3.2rem] xl:text-[4rem] font-medium mt-6 tracking-wide leading-snug">
+              {isFJU ? 'Prepare a mente e esteja pronto para o que Deus vai falar' : 'Prepare sua mente e esteja pronto para ouvir a voz de Deus'}
             </p>
           </motion.div>
         ) : (
@@ -479,9 +483,9 @@ export const AgendaDaySlide = ({
       >
         {/* Left Column: Day & Theme */}
         <div className={`flex-1 text-left pr-14 xl:pr-20 border-r ${isFJU ? 'border-amber-500/30' : 'border-white/10'}`}>
-          <motion.div variants={itemVariants} className="inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-6 bg-white/[0.05] border border-white/[0.12] backdrop-blur-md">
-            <span className={`w-3 h-3 rounded-full ${isToday ? 'bg-emerald-400 animate-ping' : (isFJU ? 'bg-amber-400' : 'bg-yellow-400')}`} />
-            <span className={`text-xl xl:text-2xl font-black tracking-[0.25em] uppercase font-mono ${isToday ? 'text-emerald-400' : (isFJU ? 'text-amber-400' : 'text-yellow-400')}`}>
+          <motion.div variants={itemVariants} className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-6 bg-white/[0.05] border ${isToday || isFJU ? 'border-amber-500/30' : 'border-white/[0.12]'} backdrop-blur-md`}>
+            <span className={`w-3 h-3 rounded-full ${isToday || isFJU ? 'bg-amber-400 animate-ping' : 'bg-yellow-400'}`} />
+            <span className={`text-xl xl:text-2xl font-black tracking-[0.25em] uppercase font-mono ${isToday || isFJU ? 'text-amber-400' : 'text-yellow-400'}`}>
               {isToday ? 'REUNIÕES DE HOJE' : 'AGENDA DA SEMANA'}
             </span>
           </motion.div>

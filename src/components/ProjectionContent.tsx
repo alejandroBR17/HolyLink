@@ -104,19 +104,34 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   syncStatus = null
 }) => {
   // Logic to detect FJU mode: 
-  // 1. If ongoing meeting is FJU
-  // 2. If next meeting is FJU AND starts in less than 30 minutes
+  // 1. If ongoing meeting is FJU / Encontro Jovem / Força Jovem
+  // 2. If next meeting is FJU / Encontro Jovem / Força Jovem (active during pre-service loop and countdown)
   const isFJU = (() => {
-    if (ongoingMeeting?.theme?.toLowerCase().includes('encontro jovem') || 
-        ongoingMeeting?.theme?.toLowerCase().includes('fju')) return true;
-    
-    if (nextMeetingDate && (nextMeeting?.theme?.toLowerCase().includes('encontro jovem') || 
-        nextMeeting?.theme?.toLowerCase().includes('fju'))) {
-      const diffMs = nextMeetingDate.getTime() - currentTime.getTime();
-      const diffMins = diffMs / (1000 * 60);
-      return diffMins <= 30 && diffMins > 0;
+    const ongoingTheme = (ongoingMeeting?.theme || '').toLowerCase();
+    if (
+      ongoingTheme.includes('encontro jovem') ||
+      ongoingTheme.includes('fju') ||
+      ongoingTheme.includes('força jovem') ||
+      ongoingTheme.includes('jovem')
+    ) {
+      return true;
     }
-    
+
+    const nextTheme = (nextMeeting?.theme || '').toLowerCase();
+    if (
+      nextTheme.includes('encontro jovem') ||
+      nextTheme.includes('fju') ||
+      nextTheme.includes('força jovem') ||
+      nextTheme.includes('jovem')
+    ) {
+      if (nextMeetingDate) {
+        const diffMs = nextMeetingDate.getTime() - currentTime.getTime();
+        const diffMins = diffMs / (1000 * 60);
+        return diffMins <= 240 && diffMins >= -90;
+      }
+      return true;
+    }
+
     return false;
   })();
 
@@ -430,10 +445,11 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           return (
             <IconSlide 
               icon={MessageSquareOff} 
-              title="Preste Atenção" 
-              subtitle="O Encontro Jovem está só começando. Fica ligado e não perde nada!" 
+              title="Fica Ligado" 
+              subtitle="O Encontro Jovem está quase começando. Encerre os papos e prepare-se, não perde nada!" 
               layout="split-left" 
               variant="fju" 
+              category="FORÇA JOVEM UNIVERSAL"
               effectiveMode={effectiveMode}
               isLightModeActive={isLightModeActive}
             />
@@ -442,9 +458,10 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         return (
           <IconSlide 
             icon={MessageSquareOff} 
-            title="Silêncio" 
-            subtitle="Desligue-se das conversas e concentre-se na reunião." 
+            title="Momento de Concentração" 
+            subtitle="À medida que a reunião se aproxima, vá diminuindo as conversas e concentre-se na presença de Deus." 
             layout="split-left" 
+            category="CONCENTRAÇÃO"
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
           />
