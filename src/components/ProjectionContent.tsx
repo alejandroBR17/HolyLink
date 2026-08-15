@@ -668,7 +668,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                   <span className={`text-xl xl:text-2xl font-black tracking-[0.3em] uppercase font-mono ${
                     isFJU ? 'text-amber-400' : 'text-amber-300/95'
                   }`}>
-                    {isFJU ? 'CONTAGEM REGRESSIVA • FJU' : 'MOMENTO SOLENE • CONTAGEM REGRESSIVA'}
+                    {isFJU ? 'CONTAGEM REGRESSIVA • FJU' : 'CONTAGEM REGRESSIVA'}
                   </span>
                 </motion.div>
 

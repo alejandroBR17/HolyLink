@@ -49,7 +49,7 @@ export const IconSlide = ({
     title?.toLowerCase().includes("assento") || title?.toLowerCase().includes("lugar") || title?.toLowerCase().includes("bem-vindo") ? "CASA DE DEUS" :
     title?.toLowerCase().includes("banheiro") || title?.toLowerCase().includes("instalações") || title?.toLowerCase().includes("aviso") ? "AVISO IMPORTANTE" :
     title?.toLowerCase().includes("instagram") || title?.toLowerCase().includes("redes") ? "COMUNICAÇÃO" :
-    title?.toLowerCase().includes("concentração") || title?.toLowerCase().includes("oração") ? "MOMENTO DE ORAÇÃO" :
+    title?.toLowerCase().includes("concentração") || title?.toLowerCase().includes("oração") ? "ORAÇÃO E FÉ" :
     title?.toLowerCase().includes("começar") || title?.toLowerCase().includes("instantes") ? "SANTO CULTO" :
     "ORIENTAÇÃO"
   );
@@ -384,7 +384,7 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
             } backdrop-blur-md`}>
               <span className={`w-2.5 h-2.5 rounded-full ${isFJU ? 'bg-amber-400 animate-pulse' : 'bg-zinc-300/80'}`} />
               <span className={`text-xl xl:text-2xl font-black tracking-[0.25em] uppercase font-mono ${isFJU ? 'text-amber-400' : 'text-zinc-300'}`}>
-                {isFJU ? 'FORÇA JOVEM UNIVERSAL' : 'MOMENTO DE TRANSIÇÃO'}
+                {isFJU ? 'FORÇA JOVEM UNIVERSAL' : 'PREPARAÇÃO'}
               </span>
             </div>
 
