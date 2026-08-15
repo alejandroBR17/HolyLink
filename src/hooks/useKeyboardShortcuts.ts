@@ -13,7 +13,8 @@ export function useKeyboardShortcuts({
   activeAlert,
   volume,
   toggleFullscreen,
-  setActiveMobileTab
+  setActiveMobileTab,
+  projectionMode
 }: any) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -39,6 +40,13 @@ export function useKeyboardShortcuts({
       else if (key === 'c') {
         e.preventDefault();
         updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled);
+      }
+      // P: Toggle Pré-Reunião / Pós-Reunião mode
+      else if (key === 'p') {
+        e.preventDefault();
+        const nextMode = projectionMode === 'post' ? 'pre' : 'post';
+        updateStateAndBroadcast('projectionMode', nextMode);
+        updateStateAndBroadcast('manualSlideOverride', null);
       }
       // Space or ArrowRight or PageDown: Next slide
       else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') {
@@ -112,6 +120,7 @@ export function useKeyboardShortcuts({
     activeAlert,
     volume,
     toggleFullscreen,
-    setActiveMobileTab
+    setActiveMobileTab,
+    projectionMode
   ]);
 }

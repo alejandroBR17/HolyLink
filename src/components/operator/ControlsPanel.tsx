@@ -2,7 +2,7 @@ import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { 
   Tv, ExternalLink, X, EyeOff, Sparkles, Plus, Minus, Play, Pause, RefreshCw, 
   Bell, AlertTriangle, Trash2, Send, VolumeX, Volume2, Megaphone, Cpu, Zap, Gauge, CheckCircle2, HardDrive, Monitor, Download,
-  Shield, Scale, Bot, Sunrise, ShieldAlert, Ban, Baby, Car, Key, CloudRain, Check
+  Shield, Scale, Bot, Sunrise, ShieldAlert, Ban, Baby, Car, Key, CloudRain, Check, Droplets, ArrowRightLeft
 } from 'lucide-react';
 import { ALERTS } from '../../data';
 import { Meeting } from '../../types';
@@ -391,6 +391,7 @@ interface ControlsPanelProps {
   background3DStyle?: 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off';
   background3DFps?: 30 | 60;
   background3DIntensity?: 'high' | 'medium' | 'low';
+  projectionMode?: 'pre' | 'post';
   updateStateAndBroadcast: (key: string, value: any) => void;
   currentTime: Date;
   isProjectionOpen?: boolean;
@@ -417,6 +418,7 @@ export function ControlsPanel({
   background3DStyle = 'auto',
   background3DFps = 60,
   background3DIntensity = 'high',
+  projectionMode = 'pre',
   updateStateAndBroadcast,
   currentTime,
   isProjectionOpen = false,
@@ -553,7 +555,7 @@ export function ControlsPanel({
       id: 'workers',
       title: 'Reunião Obreiros',
       icon: Megaphone,
-      msg: 'Breve reunião com todos os obreiros e colaboradores após o cultivo.'
+      msg: 'Breve reunião com todos os obreiros e colaboradores após a reunião.'
     }
   ];
 
@@ -599,9 +601,9 @@ export function ControlsPanel({
   const tickerSuggestions = [
     "Seja muito bem-vindo à Casa de Deus!",
     "Por favor, silencie o seu aparelho celular para a reunião.",
-    "EBI: Traga seus filhos para o Espaço Infantil durante o culto.",
+    "EBI: Traga seus filhos para o Espaço Infantil durante a reunião.",
     "Participe da Corrente de Libertação nesta Sexta-feira.",
-    "Santo Culto do Domingo: Traga toda a sua família!",
+    "Reunião de Fé do Domingo: Traga toda a sua família!",
     "FJU: Encontro Jovem neste Sábado às 16h."
   ];
 
@@ -611,6 +613,88 @@ export function ControlsPanel({
       {/* COLUMN 1: PROJECTION & TIMERS */}
       <div className="flex flex-col gap-6">
         
+        {/* TRANSMISSION MODE SWITCHER (PRÉ-REUNIÃO / PÓS-REUNIÃO) */}
+        <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-4">
+          <div className="border-b border-[#222] pb-3 flex items-center justify-between">
+            <h3 className="text-zinc-200 font-extrabold text-xs uppercase tracking-wider flex items-center gap-2 font-sans">
+              <ArrowRightLeft className="w-4 h-4 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+              Modo da Transmissão
+            </h3>
+            <span className={`text-[9px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full border ${
+              projectionMode === 'post'
+                ? 'bg-sky-950/80 border-sky-800 text-sky-400'
+                : 'bg-amber-950/80 border-amber-800 text-amber-400'
+            }`}>
+              {projectionMode === 'post' ? 'Pós-Reunião Ativo' : 'Pré-Reunião Ativo'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                updateStateAndBroadcast('projectionMode', 'pre');
+                updateStateAndBroadcast('manualSlideOverride', null);
+              }}
+              className={`p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer border ${
+                projectionMode === 'pre'
+                  ? 'bg-gradient-to-b from-[#1c1c20] to-[#111114] border-amber-500/80 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)]'
+                  : 'bg-[#111113] border-[#2a2a2e] text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${projectionMode === 'pre' ? 'bg-amber-400 animate-pulse' : 'bg-zinc-600'}`} />
+                <span className="font-sans font-extrabold text-xs">Pré-Reunião</span>
+              </div>
+              <span className="text-[9px] text-zinc-500 font-mono text-center">
+                Contagem regressiva, foco e carrossel de entrada
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                updateStateAndBroadcast('projectionMode', 'post');
+                updateStateAndBroadcast('manualSlideOverride', null);
+              }}
+              className={`p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer border ${
+                projectionMode === 'post'
+                  ? 'bg-gradient-to-b from-[#101b2b] to-[#0c1420] border-sky-500/80 text-sky-300 shadow-[0_0_20px_rgba(14,165,233,0.25)]'
+                  : 'bg-[#111113] border-[#2a2a2e] text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${projectionMode === 'post' ? 'bg-sky-400 animate-pulse' : 'bg-zinc-600'}`} />
+                <span className="font-sans font-extrabold text-xs">Pós-Reunião</span>
+              </div>
+              <span className="text-[9px] text-zinc-500 font-mono text-center">
+                Batismo, despedida, bênção da semana e dízimos
+              </span>
+            </button>
+          </div>
+
+          {/* QUICK SHORTCUTS FOR IMPORTANT SLIDES */}
+          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#1a1a1e]">
+            <button
+              type="button"
+              onClick={() => updateStateAndBroadcast('advanceToSlide', 'baptism')}
+              className="py-2.5 px-3 bg-[#111113] hover:bg-sky-950/40 border border-[#2e2e34] hover:border-sky-500/50 rounded-xl text-[10px] font-bold text-sky-400 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:translate-y-[1px]"
+            >
+              <Droplets className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span>Fixar Batismo</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => updateStateAndBroadcast('advanceToSlide', 'blessing')}
+              className="py-2.5 px-3 bg-[#111113] hover:bg-amber-950/40 border border-[#2e2e34] hover:border-amber-500/50 rounded-xl text-[10px] font-bold text-amber-400 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:translate-y-[1px]"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>Fixar Despedida</span>
+            </button>
+          </div>
+        </div>
+
         {/* QUICK ACTION BUTTONS */}
         <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
           <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>

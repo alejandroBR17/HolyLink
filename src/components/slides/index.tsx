@@ -15,7 +15,9 @@ import {
   QrCode,
   Sparkles,
   Info,
-  CheckCircle2
+  CheckCircle2,
+  Droplets,
+  Heart
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { CHURCH_INFO, DONATION, WEEK_SCHEDULES } from '../../data';
@@ -1101,3 +1103,164 @@ export const MeetingEventSlide = ({
     </div>
   );
 };
+
+// ==========================================
+// BAPTISM SLIDE (BATISMO NAS ÁGUAS)
+// ==========================================
+export const BaptismSlide = ({
+  variant,
+  effectiveMode: propEffectiveMode,
+  isLightModeActive: propIsLightMode
+}: {
+  variant?: string;
+  effectiveMode?: 'high' | 'balanced' | 'light';
+  isLightModeActive?: boolean;
+}) => {
+  const diag = usePerformanceDiagnostics();
+  const effectiveMode = propEffectiveMode || diag.effectiveMode;
+  const isLightMode = propIsLightMode !== undefined ? propIsLightMode : diag.isLightModeActive;
+  const isHighMode = effectiveMode === 'high';
+  const isFJU = variant === 'fju';
+
+  return (
+    <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+      {!isLightMode && (
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
+          isHighMode ? 'w-[850px] h-[850px] blur-[170px]' : 'w-[450px] h-[450px] blur-[75px]'
+        } ${isFJU ? 'bg-amber-600/10' : 'bg-sky-500/08'} rounded-full pointer-events-none`} />
+      )}
+
+      <motion.div
+        initial={{ opacity: 0, scale: isLightMode ? 1 : 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: isLightMode ? 0.35 : 0.6, ease: isLightMode ? "easeInOut" : "easeOut" }}
+        className="flex flex-col items-center justify-center text-center max-w-[94%] relative z-10"
+      >
+        <div className={`inline-flex items-center gap-3 px-8 py-2.5 rounded-full mb-6 ${
+          isFJU 
+            ? 'bg-amber-500/10 border border-amber-500/30' 
+            : 'bg-white/[0.04] border border-amber-500/25'
+        } backdrop-blur-md`}>
+          <span className={`w-2.5 h-2.5 rounded-full ${isFJU ? 'bg-amber-400' : 'bg-amber-400/90'}`} />
+          <span className={`text-xl xl:text-2xl font-black tracking-[0.25em] uppercase font-mono ${
+            isFJU ? 'text-amber-400' : 'text-amber-300/95'
+          }`}>
+            PASSO DE FÉ E SALVAÇÃO
+          </span>
+        </div>
+
+        <div className={`p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+          isLightMode 
+            ? 'bg-zinc-950 border-2 border-zinc-800' 
+            : isFJU
+              ? 'bg-black/60 backdrop-blur-md border border-amber-500/30 shadow-2xl'
+              : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/25 shadow-2xl'
+        } mb-7`}>
+          <Droplets className={`w-32 h-32 xl:w-36 xl:h-36 ${
+            isFJU 
+              ? 'text-amber-400 drop-shadow-[0_0_45px_rgba(245,158,11,0.45)]' 
+              : 'text-amber-300/95 drop-shadow-[0_0_35px_rgba(234,179,8,0.25)]'
+          }`} strokeWidth={1.35} />
+        </div>
+
+        <h1 className={`font-sans font-black text-[5.5rem] xl:text-[7rem] 2xl:text-[8rem] tracking-tight text-white leading-[1.02] mb-6 drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]`}>
+          Batismo nas Águas
+        </h1>
+
+        <p className="text-[2.8rem] xl:text-[3.5rem] 2xl:text-[4rem] text-stone-200 font-normal leading-[1.22] max-w-[92%] mb-8">
+          Separe a sua vida para Deus. Após as reuniões realizamos o batismo nas águas.
+        </p>
+
+        <div className={`inline-flex items-center gap-4 px-10 py-4 rounded-full ${
+          isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-zinc-950/85 border border-amber-500/30 backdrop-blur-md shadow-xl'
+        }`}>
+          <p className="text-[2.2rem] xl:text-[2.8rem] text-stone-100 font-bold font-mono tracking-wide">
+            Para se batizar hoje, <span className={isFJU ? 'text-amber-400' : 'text-yellow-400'}>procure o Pastor ou um de nossos Obreiros</span>.
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ==========================================
+// BLESSING / POST MEETING SLIDE (DESPEDIDA & BÊNÇÃO)
+// ==========================================
+export const BlessingSlide = ({
+  variant,
+  effectiveMode: propEffectiveMode,
+  isLightModeActive: propIsLightMode
+}: {
+  variant?: string;
+  effectiveMode?: 'high' | 'balanced' | 'light';
+  isLightModeActive?: boolean;
+}) => {
+  const diag = usePerformanceDiagnostics();
+  const effectiveMode = propEffectiveMode || diag.effectiveMode;
+  const isLightMode = propIsLightMode !== undefined ? propIsLightMode : diag.isLightModeActive;
+  const isHighMode = effectiveMode === 'high';
+  const isFJU = variant === 'fju';
+
+  return (
+    <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+      {!isLightMode && (
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
+          isHighMode ? 'w-[850px] h-[850px] blur-[170px]' : 'w-[450px] h-[450px] blur-[75px]'
+        } ${isFJU ? 'bg-amber-600/10' : 'bg-yellow-500/08'} rounded-full pointer-events-none`} />
+      )}
+
+      <motion.div
+        initial={{ opacity: 0, scale: isLightMode ? 1 : 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: isLightMode ? 0.35 : 0.6, ease: isLightMode ? "easeInOut" : "easeOut" }}
+        className="flex flex-col items-center justify-center text-center max-w-[94%] relative z-10"
+      >
+        <div className={`inline-flex items-center gap-3 px-8 py-2.5 rounded-full mb-6 ${
+          isFJU 
+            ? 'bg-amber-500/10 border border-amber-500/30' 
+            : 'bg-white/[0.04] border border-amber-500/25'
+        } backdrop-blur-md`}>
+          <span className={`w-2.5 h-2.5 rounded-full ${isFJU ? 'bg-amber-400' : 'bg-amber-400/90'}`} />
+          <span className={`text-xl xl:text-2xl font-black tracking-[0.25em] uppercase font-mono ${
+            isFJU ? 'text-amber-400' : 'text-amber-300/95'
+          }`}>
+            {isFJU ? 'VALEU PELA PRESENÇA' : 'DESPEDIDA & FÉ'}
+          </span>
+        </div>
+
+        <div className={`p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+          isLightMode 
+            ? 'bg-zinc-950 border-2 border-zinc-800' 
+            : isFJU
+              ? 'bg-black/60 backdrop-blur-md border border-amber-500/30 shadow-2xl'
+              : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/25 shadow-2xl'
+        } mb-7`}>
+          <Sparkles className={`w-32 h-32 xl:w-36 xl:h-36 ${
+            isFJU 
+              ? 'text-amber-400 drop-shadow-[0_0_45px_rgba(245,158,11,0.45)]' 
+              : 'text-amber-300/95 drop-shadow-[0_0_35px_rgba(234,179,8,0.25)]'
+          }`} strokeWidth={1.35} />
+        </div>
+
+        <h1 className={`font-sans font-black text-[5.5rem] xl:text-[7rem] 2xl:text-[8rem] tracking-tight text-white leading-[1.02] mb-6 drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]`}>
+          {isFJU ? "Valeu por Colar com a Gente!" : "Deus Abençoe a Sua Vida"}
+        </h1>
+
+        <p className="text-[2.8rem] xl:text-[3.5rem] 2xl:text-[4rem] text-stone-200 font-normal leading-[1.22] max-w-[92%] mb-8">
+          {isFJU
+            ? "Guarde essa palavra com você. Nos vemos no próximo sábado!"
+            : "Vá em paz e que o Espírito Santo acompanhe você e toda a sua família."}
+        </p>
+
+        <div className={`inline-flex items-center gap-4 px-10 py-4 rounded-full ${
+          isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-zinc-950/85 border border-amber-500/30 backdrop-blur-md shadow-xl'
+        }`}>
+          <p className="text-[2.2rem] xl:text-[2.8rem] text-stone-100 font-bold font-mono tracking-wide">
+            {CHURCH_INFO.name} — <span className={isFJU ? 'text-amber-400' : 'text-yellow-400'}>{CHURCH_INFO.location}</span>
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+

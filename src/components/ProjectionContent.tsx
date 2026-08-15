@@ -6,7 +6,7 @@ import { ptBR } from 'date-fns/locale';
 import { ParticlesBackground } from './ParticlesBackground';
 import { ThreeBackground3D, BackgroundStyleOption } from './ThreeBackground3D';
 import { VerseSlide } from './VerseSlide';
-import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide, MeetingEventSlide } from './slides';
+import { IconSlide, WorldGodSlide, AgendaDaySlide, DonationSlide, CampaignSlide, VideoSlide, MeetingEventSlide, BaptismSlide, BlessingSlide } from './slides';
 import { SOCIAL } from '../data';
 import { Meeting } from '../types';
 import { usePerformanceDiagnostics } from '../utils/performance';
@@ -536,6 +536,22 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         return (
           <WorldGodSlide 
             variant={isFJU ? 'fju' : undefined} 
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
+      case 'baptism':
+        return (
+          <BaptismSlide
+            variant={isFJU ? 'fju' : undefined}
+            effectiveMode={effectiveMode}
+            isLightModeActive={isLightModeActive}
+          />
+        );
+      case 'blessing':
+        return (
+          <BlessingSlide
+            variant={isFJU ? 'fju' : undefined}
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
           />

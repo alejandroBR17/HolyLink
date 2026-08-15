@@ -29,9 +29,15 @@ export interface ProjectionState {
   background3DStyle: 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off';
   background3DFps: 30 | 60;
   background3DIntensity: 'high' | 'medium' | 'low';
+  projectionMode: 'pre' | 'post';
 }
 
 export function useProjectionState() {
+  const [projectionMode, setProjectionMode] = useState<'pre' | 'post'>(() => {
+    if (typeof window === 'undefined') return 'pre';
+    return (localStorage.getItem('projection_projectionMode') as 'pre' | 'post') || 'pre';
+  });
+
   const [manualSlideOverride, setManualSlideOverride] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('projection_manualSlideOverride');
@@ -223,6 +229,7 @@ export function useProjectionState() {
     }
 
     if (key === 'manualSlideOverride') setManualSlideOverride(value);
+    else if (key === 'projectionMode') setProjectionMode((value as 'pre' | 'post') || 'pre');
     else if (key === 'countdownOffset') setCountdownOffset(typeof value === 'number' ? value : parseInt(value?.toString() || '0', 10));
     else if (key === 'countdownPaused') setCountdownPaused(value === 'true' || value === true);
     else if (key === 'pausedSeconds') setPausedSeconds(value !== null && value !== undefined ? parseInt(value.toString(), 10) : null);
@@ -325,6 +332,7 @@ export function useProjectionState() {
       }
 
       if (key === 'manualSlideOverride') setManualSlideOverride(value);
+      else if (key === 'projectionMode') setProjectionMode((value as 'pre' | 'post') || 'pre');
       else if (key === 'countdownOffset') setCountdownOffset(value !== null && value !== undefined ? parseInt(value.toString(), 10) : 0);
       else if (key === 'countdownPaused') setCountdownPaused(value === 'true' || value === true);
       else if (key === 'pausedSeconds') setPausedSeconds(value !== null && value !== undefined ? parseInt(value.toString(), 10) : null);
@@ -422,6 +430,7 @@ export function useProjectionState() {
     const handleFullSync = () => {
       setSyncStatus({ active: true, message: 'Finalizando sincronização...' });
       setManualSlideOverride(localStorage.getItem('projection_manualSlideOverride'));
+      setProjectionMode((localStorage.getItem('projection_projectionMode') as 'pre' | 'post') || 'pre');
       setCountdownOffset(parseInt(localStorage.getItem('projection_countdownOffset') || '0', 10));
       setCountdownPaused(localStorage.getItem('projection_countdownPaused') === 'true');
       setPausedSeconds(localStorage.getItem('projection_pausedSeconds') ? parseInt(localStorage.getItem('projection_pausedSeconds')!, 10) : null);
@@ -531,6 +540,7 @@ export function useProjectionState() {
       background3DStyle,
       background3DFps,
       background3DIntensity,
+      projectionMode,
       syncStatus
     },
     updateStateAndBroadcast,

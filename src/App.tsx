@@ -37,6 +37,7 @@ const DEFAULT_SLIDES: SlideType[] = [
   'agenda_day_0',
   'seat',
   'verse_1',
+  'baptism',
   'campaigns',
   'agenda_day_1',
   'bathroom',
@@ -53,6 +54,15 @@ const DEFAULT_SLIDES: SlideType[] = [
   'agenda_day_6_causas',
   'agenda_day_6_fju',
   'world_god'
+];
+
+const POST_MEETING_DEFAULT_SLIDES: SlideType[] = [
+  'baptism',
+  'blessing',
+  'agenda_day_0',
+  'donations',
+  'social',
+  'campaigns'
 ];
 
 export default function App() {
@@ -99,6 +109,7 @@ export default function App() {
     background3DStyle,
     background3DFps,
     background3DIntensity,
+    projectionMode,
     syncStatus
   } = state;
 
@@ -234,6 +245,14 @@ export default function App() {
   let isFinalFiveMinutes = !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
   let isLooping = !isJustStarted && !isFinalFiveMinutes && !isFinalMinute;
 
+  // No modo Pós-Reunião, desativamos contagem regressiva de início e priorizamos carrossel de saída
+  if (projectionMode === 'post') {
+    isFinalMinute = false;
+    isFinalFiveMinutes = false;
+    isJustStarted = false;
+    isLooping = true;
+  }
+
   if (manualSlideOverride) {
     if (finalMinuteDisplayMode === 'full_video') {
       if (isFinalMinute || isJustStarted) {
@@ -264,7 +283,8 @@ export default function App() {
   const day = String(now.getDate()).padStart(2, '0');
   const todayStr = `${year}-${month}-${day}`;
 
-  const allAvailableSlides: string[] = [...DEFAULT_SLIDES];
+  const defaultBaseSlides = projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES;
+  const allAvailableSlides: string[] = [...defaultBaseSlides];
   customMediaList.forEach((media) => {
     if (!allAvailableSlides.includes(media.id)) {
       allAvailableSlides.push(media.id);
@@ -278,7 +298,7 @@ export default function App() {
       }
     }
   });
-  if (diffSeconds <= 15 * 60 && !allAvailableSlides.includes('soon')) {
+  if (projectionMode !== 'post' && diffSeconds <= 15 * 60 && !allAvailableSlides.includes('soon')) {
     allAvailableSlides.push('soon');
   }
 
@@ -425,7 +445,8 @@ export default function App() {
     activeAlert,
     volume,
     toggleFullscreen,
-    setActiveMobileTab
+    setActiveMobileTab,
+    projectionMode
   });
 
   useEffect(() => {
@@ -751,7 +772,7 @@ export default function App() {
               ) : (
                 <>
                   <BookOpen className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
-                  <span><strong>Modo Culto Ativo:</strong> Exibindo Bíblia (Carrossel Pausado).</span>
+                  <span><strong>Modo Reunião Ativo:</strong> Exibindo Bíblia (Carrossel Pausado).</span>
                 </>
               )}
             </div>
@@ -945,6 +966,7 @@ export default function App() {
                 background3DStyle={background3DStyle}
                 background3DFps={background3DFps}
                 background3DIntensity={background3DIntensity}
+                projectionMode={projectionMode}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 currentTime={currentTime}
                 isProjectionOpen={isProjectionOpen}
