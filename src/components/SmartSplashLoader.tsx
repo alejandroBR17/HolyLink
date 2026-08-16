@@ -140,8 +140,24 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
 
         {/* Logo / Header */}
         <div className="flex flex-col items-center justify-center mb-4 relative z-10">
-          <div className="h-16 px-5 py-2 rounded-2xl bg-[#030304] border border-[#333] flex items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,1)] overflow-hidden">
-            <img src="/logo-full.png?v=11" alt="HolyLink Logo Completo" className="h-full w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" />
+          <div className="h-16 px-5 py-2 rounded-2xl bg-[#030304] border border-[#333] flex items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,1)] overflow-hidden min-w-[160px]">
+            <img 
+              src="/logo-full.png" 
+              onError={(e) => {
+                const target = e.target as HTMLElement;
+                target.style.display = 'none';
+                const fb = document.getElementById('splash-logo-fallback');
+                if (fb) fb.style.display = 'flex';
+              }}
+              alt="HolyLink" 
+              className="h-full w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" 
+            />
+            <div id="splash-logo-fallback" className="hidden items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center">
+                <span className="text-amber-400 font-black text-xs font-mono">HL</span>
+              </div>
+              <span className="font-sans font-black text-xl tracking-widest text-amber-400">HOLYLINK</span>
+            </div>
           </div>
         </div>
 

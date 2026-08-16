@@ -87,7 +87,7 @@ export const IconSlide = ({
 
   if (layout === 'split-left') {
     return (
-      <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+      <div className="flex items-center justify-center h-full w-full px-14 xl:px-24 relative select-none">
         {!isLightMode && (
           <div className={`absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 ${
             isHighMode ? 'w-[750px] h-[750px] blur-[150px]' : 'w-[420px] h-[420px] blur-[70px]'
@@ -98,13 +98,13 @@ export const IconSlide = ({
           variants={containerVariants} 
           initial="hidden" 
           animate="show" 
-          className="flex items-center justify-between w-full max-w-[97%] relative z-10"
+          className="flex items-center justify-between w-full max-w-[96%] relative z-10 gap-12 xl:gap-16"
         >
           {/* Left Text Block */}
-          <div className="flex-1 text-left pr-12 xl:pr-20">
+          <div className="flex-[1.4] text-left pr-6">
             <motion.div 
               variants={itemVariants} 
-              className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-6 ${
+              className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 ${
                 isFJU 
                   ? 'bg-amber-500/10 border border-amber-500/30' 
                   : 'bg-white/[0.04] border border-amber-500/25'
@@ -122,7 +122,7 @@ export const IconSlide = ({
 
             <motion.h1 
               variants={itemVariants} 
-              className={`font-sans font-black text-[6.5rem] xl:text-[8rem] 2xl:text-[9.2rem] tracking-tight leading-[1.02] mb-6 text-white ${
+              className={`font-sans font-black text-[4.4rem] xl:text-[5.2rem] 2xl:text-[6rem] tracking-tight leading-[1.08] mb-5 text-white ${
                 isLightMode ? 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]' : 'drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]'
               }`}
             >
@@ -131,9 +131,9 @@ export const IconSlide = ({
 
             <motion.p 
               variants={itemVariants} 
-              className={`text-[3.2rem] xl:text-[4rem] 2xl:text-[4.6rem] ${
+              className={`text-[2.2rem] xl:text-[2.6rem] 2xl:text-[3rem] ${
                 isFJU ? 'text-stone-100 font-medium' : 'text-stone-200 font-normal'
-              } leading-[1.22] max-w-[95%]`}
+              } leading-[1.28] max-w-[92%]`}
             >
               {subtitle}
             </motion.p>
@@ -144,7 +144,7 @@ export const IconSlide = ({
             variants={itemVariants} 
             className="flex-shrink-0 relative"
           >
-            <div className={`p-14 xl:p-18 ${
+            <div className={`p-10 xl:p-14 ${
               isFJU ? 'rounded-[3.5rem]' : 'rounded-3xl'
             } ${
               isLightMode 
@@ -159,7 +159,7 @@ export const IconSlide = ({
                 } pointer-events-none`} />
               )}
               <Icon 
-                className={`w-[260px] h-[260px] xl:w-[320px] xl:h-[320px] ${
+                className={`w-[180px] h-[180px] xl:w-[220px] xl:h-[220px] ${
                   isFJU 
                     ? 'text-amber-400 drop-shadow-[0_0_55px_rgba(245,158,11,0.45)]' 
                     : 'text-yellow-400/90 drop-shadow-[0_0_35px_rgba(234,179,8,0.25)]'
@@ -175,7 +175,7 @@ export const IconSlide = ({
 
   if (layout === 'split-right') {
     return (
-      <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+      <div className="flex items-center justify-center h-full w-full px-14 xl:px-24 relative select-none">
         {!isLightMode && (
           <div className={`absolute top-1/2 right-1/3 translate-x-1/2 -translate-y-1/2 ${
             isHighMode ? 'w-[750px] h-[750px] blur-[150px]' : 'w-[420px] h-[420px] blur-[70px]'
@@ -186,14 +186,14 @@ export const IconSlide = ({
           variants={containerVariants} 
           initial="hidden" 
           animate="show" 
-          className="flex items-center justify-between w-full max-w-[97%] relative z-10"
+          className="flex items-center justify-between w-full max-w-[96%] relative z-10 gap-12 xl:gap-16"
         >
           {/* Left Icon Podium */}
           <motion.div 
             variants={itemVariants} 
             className="flex-shrink-0 relative"
           >
-            <div className={`p-14 xl:p-18 ${
+            <div className={`p-10 xl:p-14 ${
               isFJU ? 'rounded-[3.5rem]' : 'rounded-3xl'
             } ${
               isLightMode 
@@ -208,7 +208,7 @@ export const IconSlide = ({
                 } pointer-events-none`} />
               )}
               <Icon 
-                className={`w-[260px] h-[260px] xl:w-[320px] xl:h-[320px] ${
+                className={`w-[180px] h-[180px] xl:w-[220px] xl:h-[220px] ${
                   isFJU 
                     ? 'text-amber-400 drop-shadow-[0_0_55px_rgba(245,158,11,0.45)]' 
                     : 'text-yellow-400/90 drop-shadow-[0_0_35px_rgba(234,179,8,0.25)]'
@@ -219,10 +219,10 @@ export const IconSlide = ({
           </motion.div>
 
           {/* Right Text Block */}
-          <div className="flex-1 text-right pl-12 xl:pl-20">
+          <div className="flex-[1.4] text-right pl-6">
             <motion.div 
               variants={itemVariants} 
-              className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-6 ${
+              className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 ${
                 isFJU 
                   ? 'bg-amber-500/10 border border-amber-500/30' 
                   : 'bg-white/[0.04] border border-amber-500/25'
@@ -240,7 +240,7 @@ export const IconSlide = ({
 
             <motion.h1 
               variants={itemVariants} 
-              className={`font-sans font-black text-[6.5rem] xl:text-[8rem] 2xl:text-[9.2rem] tracking-tight leading-[1.02] mb-6 text-white ${
+              className={`font-sans font-black text-[4.4rem] xl:text-[5.2rem] 2xl:text-[6rem] tracking-tight leading-[1.08] mb-5 text-white ${
                 isLightMode ? 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]' : 'drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]'
               }`}
             >
@@ -249,9 +249,9 @@ export const IconSlide = ({
 
             <motion.p 
               variants={itemVariants} 
-              className={`text-[3.2rem] xl:text-[4rem] 2xl:text-[4.6rem] ${
+              className={`text-[2.2rem] xl:text-[2.6rem] 2xl:text-[3rem] ${
                 isFJU ? 'text-stone-100 font-medium' : 'text-stone-200 font-normal'
-              } leading-[1.22] max-w-[95%] ml-auto`}
+              } leading-[1.28] max-w-[92%] ml-auto`}
             >
               {subtitle}
             </motion.p>
@@ -263,7 +263,7 @@ export const IconSlide = ({
 
   // Layout Center
   return (
-    <div className="flex items-center justify-center h-full w-full px-10 xl:px-20 relative select-none">
+    <div className="flex items-center justify-center h-full w-full px-12 xl:px-24 relative select-none">
       {!isLightMode && (
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
           isHighMode ? 'w-[800px] h-[800px] blur-[160px]' : 'w-[450px] h-[450px] blur-[70px]'
@@ -274,12 +274,12 @@ export const IconSlide = ({
         variants={containerVariants} 
         initial="hidden" 
         animate="show" 
-        className="flex flex-col items-center justify-center text-center max-w-[94%] xl:max-w-[88%] relative z-10"
+        className="flex flex-col items-center justify-center text-center max-w-[92%] relative z-10"
       >
         {/* Category Pill */}
         <motion.div 
           variants={itemVariants} 
-          className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-8 ${
+          className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 ${
             isFJU 
               ? 'bg-amber-500/10 border border-amber-500/30' 
               : 'bg-white/[0.04] border border-amber-500/25'
@@ -297,10 +297,10 @@ export const IconSlide = ({
 
         {/* Center Icon */}
         <motion.div 
-          variants={itemVariants}
-          className="mb-8"
+          variants={itemVariants} 
+          className="mb-6"
         >
-          <div className={`p-10 xl:p-12 ${
+          <div className={`p-8 xl:p-10 ${
             isFJU ? 'rounded-[3rem]' : 'rounded-3xl'
           } ${
             isLightMode 
@@ -310,7 +310,7 @@ export const IconSlide = ({
                 : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/25 shadow-2xl'
           } inline-flex items-center justify-center`}>
             <Icon 
-              className={`w-36 h-36 xl:w-48 xl:h-48 ${
+              className={`w-32 h-32 xl:w-40 xl:h-40 ${
                 isFJU 
                   ? 'text-amber-400 drop-shadow-[0_0_45px_rgba(245,158,11,0.45)]' 
                   : 'text-yellow-400/90 drop-shadow-[0_0_30px_rgba(234,179,8,0.25)]'
@@ -322,7 +322,7 @@ export const IconSlide = ({
 
         <motion.h1 
           variants={itemVariants} 
-          className={`font-sans font-black text-[6.5rem] xl:text-[8rem] 2xl:text-[9.2rem] tracking-tight leading-[1.02] mb-6 text-white uppercase ${
+          className={`font-sans font-black text-[4.4rem] xl:text-[5.4rem] 2xl:text-[6.2rem] tracking-tight leading-[1.08] mb-5 text-white uppercase ${
             isLightMode ? 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]' : 'drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]'
           }`}
         >
@@ -331,9 +331,9 @@ export const IconSlide = ({
 
         <motion.p 
           variants={itemVariants} 
-          className={`text-[3.2rem] xl:text-[4rem] 2xl:text-[4.6rem] ${
+          className={`text-[2.2rem] xl:text-[2.6rem] 2xl:text-[3rem] ${
             isFJU ? 'text-stone-100 font-medium' : 'text-stone-200 font-normal'
-          } leading-[1.22] max-w-[96%]`}
+          } leading-[1.28] max-w-[88%]`}
         >
           {subtitle}
         </motion.p>
@@ -377,9 +377,9 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: isLightMode ? 1 : 1.02 }}
             transition={{ duration: isLightMode ? 0.35 : 0.7, ease: isLightMode ? "easeInOut" : [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center relative z-10"
+            className="flex flex-col items-center relative z-10 max-w-[92%]"
           >
-            <div className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-8 ${
+            <div className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 ${
               isFJU 
                 ? 'bg-amber-500/10 border border-amber-500/30' 
                 : 'bg-white/[0.04] border border-zinc-600/30'
@@ -390,18 +390,18 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
               </span>
             </div>
 
-            <div className={`p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+            <div className={`p-8 xl:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
               isLightMode 
                 ? 'bg-zinc-950 border-2 border-zinc-800' 
                 : 'bg-zinc-900/70 backdrop-blur-md border border-zinc-700/60 shadow-[0_20px_50px_rgba(0,0,0,0.6)]'
-            } mb-8`}>
-              <Globe className={`w-36 h-36 xl:w-44 xl:h-44 ${isFJU ? 'text-amber-400' : 'text-zinc-200 drop-shadow-[0_0_35px_rgba(255,255,255,0.2)]'} ${!isLightMode ? 'animate-[spin_30s_linear_infinite]' : ''}`} strokeWidth={1.3} />
+            } mb-6`}>
+              <Globe className={`w-32 h-32 xl:w-40 xl:h-40 ${isFJU ? 'text-amber-400' : 'text-zinc-200 drop-shadow-[0_0_35px_rgba(255,255,255,0.2)]'} ${!isLightMode ? 'animate-[spin_30s_linear_infinite]' : ''}`} strokeWidth={1.3} />
             </div>
 
-            <h1 className="font-sans font-black text-[6.5rem] xl:text-[8rem] 2xl:text-[9rem] tracking-tight text-white leading-none uppercase drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)]">
+            <h1 className="font-sans font-black text-[4.4rem] xl:text-[5.4rem] 2xl:text-[6.2rem] tracking-tight text-white leading-[1.08] mb-4 uppercase drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)]">
               {isFJU ? 'Cola com a gente' : 'Desligue-se do mundo'}
             </h1>
-            <p className="text-zinc-300 text-[3.2rem] xl:text-[4rem] font-normal mt-6 tracking-wide leading-snug">
+            <p className="text-zinc-300 text-[2.2rem] xl:text-[2.6rem] 2xl:text-[3rem] font-normal tracking-wide leading-[1.28] max-w-[88%]">
               {isFJU ? 'Prepare a mente e esteja pronto para o que Deus vai falar' : 'Prepare sua mente e esteja pronto para ouvir a voz de Deus'}
             </p>
           </motion.div>
@@ -412,9 +412,9 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: isLightMode ? 1 : 1.02 }}
             transition={{ duration: isLightMode ? 0.35 : 0.85, ease: isLightMode ? "easeInOut" : [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center relative z-10"
+            className="flex flex-col items-center relative z-10 max-w-[92%]"
           >
-            <div className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-8 ${
+            <div className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 ${
               isFJU ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-white/[0.04] border border-amber-500/25'
             } backdrop-blur-md`}>
               <span className={`w-2.5 h-2.5 rounded-full ${isFJU ? 'bg-amber-400 animate-ping' : 'bg-amber-400/90'}`} />
@@ -423,18 +423,18 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
               </span>
             </div>
 
-            <div className={`p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+            <div className={`p-8 xl:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
               isLightMode 
                 ? 'bg-zinc-950 border-2 border-amber-500/40' 
                 : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/35 shadow-[0_0_50px_rgba(245,158,11,0.2)]'
-            } mb-8`}>
-              <Flame className={`w-36 h-36 xl:w-44 xl:h-44 ${isFJU ? 'text-amber-400 drop-shadow-[0_0_50px_rgba(245,158,11,0.65)]' : 'text-yellow-400 drop-shadow-[0_0_45px_rgba(234,179,8,0.4)]'}`} strokeWidth={1.35} />
+            } mb-6`}>
+              <Flame className={`w-32 h-32 xl:w-40 xl:h-40 ${isFJU ? 'text-amber-400 drop-shadow-[0_0_50px_rgba(245,158,11,0.65)]' : 'text-yellow-400 drop-shadow-[0_0_45px_rgba(234,179,8,0.4)]'}`} strokeWidth={1.35} />
             </div>
 
-            <h1 className={`font-sans font-black text-[6.5rem] xl:text-[8rem] 2xl:text-[9rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_0_60px_rgba(245,158,11,0.45)]' : 'text-yellow-400 drop-shadow-[0_0_50px_rgba(234,179,8,0.35)]'} leading-none uppercase`}>
+            <h1 className={`font-sans font-black text-[4.4rem] xl:text-[5.4rem] 2xl:text-[6.2rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_0_60px_rgba(245,158,11,0.45)]' : 'text-yellow-400 drop-shadow-[0_0_50px_rgba(234,179,8,0.35)]'} leading-[1.08] mb-4 uppercase`}>
               {isFJU ? 'Vem pra FJU' : 'Ligue-se com Deus'}
             </h1>
-            <p className="text-amber-100/90 text-[3.2rem] xl:text-[4rem] font-normal mt-6 tracking-wide leading-snug">
+            <p className="text-amber-100/90 text-[2.2rem] xl:text-[2.6rem] 2xl:text-[3rem] font-normal tracking-wide leading-[1.28] max-w-[88%]">
               {isFJU ? 'O encontro que vai transformar a sua história' : 'Uma reunião de fé que vai abençoar a sua vida'}
             </p>
           </motion.div>
@@ -552,7 +552,7 @@ export const AgendaDaySlide = ({
       };
 
   return (
-    <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+    <div className="flex items-center justify-center h-full w-full px-14 xl:px-24 relative select-none">
       {!isLightMode && (
         <div className={`absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 ${
           isHighMode ? 'w-[750px] h-[750px] blur-[150px]' : 'w-[420px] h-[420px] blur-[70px]'
@@ -563,11 +563,11 @@ export const AgendaDaySlide = ({
         variants={containerVariants} 
         initial="hidden" 
         animate="show" 
-        className="flex items-center justify-between max-w-[97%] w-full relative z-10"
+        className="flex items-center justify-between max-w-[96%] w-full relative z-10 gap-12 xl:gap-16"
       >
         {/* Left Column: Day & Theme */}
-        <div className={`flex-1 text-left pr-14 xl:pr-20 border-r ${isFJU ? 'border-amber-500/30' : 'border-amber-500/20'}`}>
-          <motion.div variants={itemVariants} className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-6 ${
+        <div className={`flex-[1.1] text-left pr-10 xl:pr-14 border-r ${isFJU ? 'border-amber-500/30' : 'border-amber-500/20'}`}>
+          <motion.div variants={itemVariants} className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-5 ${
             isToday || isFJU 
               ? 'bg-amber-500/10 border border-amber-500/30' 
               : 'bg-white/[0.04] border border-white/[0.12]'
@@ -582,25 +582,25 @@ export const AgendaDaySlide = ({
             </span>
           </motion.div>
 
-          <motion.h3 variants={itemVariants} className="text-stone-300 font-extrabold uppercase tracking-[0.25em] mb-4 text-[2.6rem] xl:text-[3.2rem]">
+          <motion.h3 variants={itemVariants} className="text-stone-300 font-extrabold uppercase tracking-[0.2em] mb-3 text-[2.2rem] xl:text-[2.6rem]">
             {defaultSchedule.dayName}
           </motion.h3>
 
-          <motion.h2 variants={itemVariants} className={`text-[6rem] xl:text-[7.5rem] 2xl:text-[8.5rem] ${
+          <motion.h2 variants={itemVariants} className={`text-[4.2rem] xl:text-[5rem] 2xl:text-[5.8rem] ${
             isFJU ? 'text-white drop-shadow-[0_12px_40px_rgba(245,158,11,0.35)]' : 'text-white drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]'
-          } font-black uppercase tracking-tight leading-[1.03] whitespace-pre-line`}>
+          } font-black uppercase tracking-tight leading-[1.06] whitespace-pre-line`}>
             {theme}
           </motion.h2>
         </div>
 
         {/* Right Column: Time Cards Grid */}
-        <div className="flex-1 pl-14 xl:pl-20">
-          <motion.div variants={itemVariants} className="grid grid-cols-2 gap-6 xl:gap-8">
+        <div className="flex-1 pl-6">
+          <motion.div variants={itemVariants} className="grid grid-cols-2 gap-5 xl:gap-6">
             {formattedTimes.length > 0 ? (
               formattedTimes.map((t, i) => (
                 <div 
                   key={i} 
-                  className={`px-8 py-8 xl:py-10 ${isFJU ? 'rounded-[2.5rem]' : 'rounded-3xl'} border-2 flex flex-col items-center justify-center relative overflow-hidden transition-all ${
+                  className={`px-6 py-6 xl:py-8 ${isFJU ? 'rounded-[2.2rem]' : 'rounded-2xl'} border-2 flex flex-col items-center justify-center relative overflow-hidden transition-all ${
                     t.isSpecial 
                       ? (isFJU 
                           ? "bg-amber-600/20 border-amber-500/60 shadow-[0_0_35px_rgba(245,158,11,0.25)]" 
@@ -612,7 +612,7 @@ export const AgendaDaySlide = ({
                             : "bg-zinc-950/80 backdrop-blur-md border-amber-500/20 shadow-2xl")
                   }`}
                 >
-                  <span className={`font-mono text-[4.4rem] xl:text-[5.4rem] 2xl:text-[6.2rem] font-black tracking-wider leading-none relative z-10 ${
+                  <span className={`font-mono text-[3.8rem] xl:text-[4.6rem] 2xl:text-[5.2rem] font-black tracking-wider leading-none relative z-10 ${
                     t.isSpecial 
                       ? (isFJU ? "text-amber-400" : "text-yellow-400") 
                       : "text-white"
@@ -621,7 +621,7 @@ export const AgendaDaySlide = ({
                   </span>
 
                   {t.isSpecial && (
-                    <span className={`mt-3 text-sm xl:text-base px-4 py-1.5 rounded-full font-black uppercase tracking-widest ${
+                    <span className={`mt-2 text-base font-black px-4 py-1 rounded-full uppercase tracking-widest ${
                       isFJU ? 'bg-amber-500 text-black' : 'bg-yellow-500 text-black'
                     }`}>
                       Especial
@@ -630,8 +630,8 @@ export const AgendaDaySlide = ({
                 </div>
               ))
             ) : (
-              <div className="col-span-2 text-center py-14 bg-black/40 border border-white/[0.1] rounded-3xl">
-                <span className="text-stone-300 text-3xl font-medium">Sem reuniões programadas para este dia.</span>
+              <div className="col-span-2 text-center py-12 bg-black/40 border border-white/[0.1] rounded-3xl">
+                <span className="text-stone-300 text-2xl xl:text-3xl font-medium">Sem reuniões programadas para este dia.</span>
               </div>
             )}
           </motion.div>
@@ -652,7 +652,7 @@ export const DonationSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
   const isFJU = variant === 'fju';
   
   return (
-    <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+    <div className="flex items-center justify-center h-full w-full px-14 xl:px-24 relative select-none">
       {!isLightMode && (
         <div className={`absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 ${
           isHighMode ? 'w-[800px] h-[800px] blur-[160px]' : 'w-[450px] h-[450px] blur-[75px]'
@@ -663,10 +663,10 @@ export const DonationSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
         initial={{ opacity: 0, scale: isLightMode ? 1 : 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: isLightMode ? 0.35 : 0.6, ease: isLightMode ? "easeInOut" : [0.16, 1, 0.3, 1] }}
-        className="flex items-center justify-between w-full max-w-[97%] relative z-10"
+        className="flex items-center justify-between w-full max-w-[96%] relative z-10 gap-12 xl:gap-16"
       >
-        <div className="flex-1 text-left pr-14 xl:pr-20">
-          <div className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-6 ${
+        <div className="flex-[1.3] text-left pr-6">
+          <div className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-5 ${
             isFJU ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-white/[0.04] border border-amber-500/25'
           } backdrop-blur-md`}>
             <HeartHandshake className={`w-7 h-7 ${isFJU ? 'text-amber-400' : 'text-yellow-400'}`} strokeWidth={1.5} />
@@ -675,41 +675,41 @@ export const DonationSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
             </span>
           </div>
 
-          <h1 className={`font-sans font-black text-[6.5rem] xl:text-[8rem] 2xl:text-[9.2rem] tracking-tight leading-[1.02] mb-6 text-white ${
+          <h1 className={`font-sans font-black text-[4.4rem] xl:text-[5.2rem] 2xl:text-[6rem] tracking-tight leading-[1.08] mb-5 text-white ${
             isLightMode ? 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]' : 'drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]'
           }`}>
             {isFJU ? (
-              <>Faça sua <br /><span className="text-amber-400">Doação</span></>
+              <>Faça sua <span className="text-amber-400">Doação</span></>
             ) : (
-              <>Dízimos e <br /><span className="text-yellow-400">Ofertas</span></>
+              <>Dízimos e <span className="text-yellow-400">Ofertas</span></>
             )}
           </h1>
 
-          <p className="text-[3rem] xl:text-[3.8rem] 2xl:text-[4.4rem] text-stone-200 font-normal leading-[1.22] max-w-[95%] mb-8">
+          <p className="text-[2.2rem] xl:text-[2.6rem] 2xl:text-[3rem] text-stone-200 font-normal leading-[1.28] max-w-[92%] mb-6">
             Apresente sua fidelidade e gratidão apontando a câmera para o QR Code ao lado ou acesse <span className={`${isFJU ? 'text-amber-400 font-bold' : 'text-yellow-400 font-bold'}`}>{DONATION.url.replace(/^https?:\/\//, '')}</span>
           </p>
 
-          <div className={`p-7 ${isFJU ? 'rounded-3xl' : 'rounded-2xl'} inline-flex items-center gap-5 ${
+          <div className={`p-6 ${isFJU ? 'rounded-3xl' : 'rounded-2xl'} inline-flex items-center gap-5 ${
             isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-zinc-950/80 border border-amber-500/20 backdrop-blur-md'
           }`}>
             <Info className={`w-8 h-8 ${isFJU ? 'text-amber-400' : 'text-yellow-400/90'} shrink-0`} />
             <div>
-              <p className="text-stone-100 text-2xl xl:text-3xl font-bold">Lembre-se de enviar o comprovante</p>
-              <p className="text-stone-400 text-xl xl:text-2xl mt-1">O contato de WhatsApp está disponível na página de doações.</p>
+              <p className="text-stone-100 text-xl xl:text-2xl font-bold">Lembre-se de enviar o comprovante</p>
+              <p className="text-stone-400 text-lg xl:text-xl mt-0.5">O contato de WhatsApp está disponível na página de doações.</p>
             </div>
           </div>
         </div>
 
         {/* QR Code Container with Frame */}
-        <div className={`flex-shrink-0 p-8 ${isFJU ? 'rounded-[3.5rem]' : 'rounded-3xl'} ${
+        <div className={`flex-shrink-0 p-7 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode 
             ? 'bg-white border-8 border-zinc-800' 
             : isFJU
               ? 'bg-white shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-8 ring-amber-500/30'
               : 'bg-white shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-4 ring-amber-400/30'
         }`}>
-          <QRCode value={DONATION.url} size={440} />
-          <div className="mt-4 text-center">
+          <QRCode value={DONATION.url} size={380} />
+          <div className="mt-3 text-center">
             <span className="text-zinc-900 font-mono font-black text-base uppercase tracking-widest">
               QR CODE OFICIAL
             </span>
@@ -736,7 +736,7 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
   });
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full px-12 xl:px-20 relative select-none">
+    <div className="flex flex-col items-center justify-center w-full h-full px-14 xl:px-24 relative select-none">
       {!isLightMode && (
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
           isHighMode ? 'w-[850px] h-[850px] blur-[170px]' : 'w-[480px] h-[480px] blur-[75px]'
@@ -749,7 +749,7 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
         transition={{ duration: isLightMode ? 0.35 : 0.6, ease: isLightMode ? "easeInOut" : "easeOut" }}
         className="w-full flex flex-col items-center justify-center relative z-10"
       >
-        <div className="inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-8 bg-white/[0.04] border border-amber-500/25 backdrop-blur-md">
+        <div className="inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 bg-white/[0.04] border border-amber-500/25 backdrop-blur-md">
           <Flame className="w-7 h-7 text-amber-400" />
           <span className="text-xl xl:text-2xl font-black tracking-[0.25em] uppercase font-mono text-amber-300/95">
             PROPÓSITOS ATUAIS
@@ -771,45 +771,45 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
 
               if (activeCampaigns.length === 1) {
                 return (
-                  <div key={index} className={`p-14 xl:p-18 rounded-3xl flex items-center justify-between gap-16 w-full max-w-5xl relative overflow-hidden ${
+                  <div key={index} className={`p-12 xl:p-14 rounded-3xl flex items-center justify-between gap-12 w-full max-w-5xl relative overflow-hidden ${
                     isLightMode ? 'bg-zinc-950 border-2 border-amber-500/30' : 'bg-zinc-950/80 backdrop-blur-xl border border-amber-500/30 shadow-[0_25px_60px_rgba(0,0,0,0.8)]'
                   }`}>
                     <div className="flex-1 text-left">
-                      <span className="text-amber-400 text-2xl uppercase tracking-[0.25em] font-extrabold block mb-4">
+                      <span className="text-amber-400 text-xl xl:text-2xl uppercase tracking-[0.25em] font-extrabold block mb-3">
                         EM ANDAMENTO
                       </span>
-                      <h3 className="text-white font-black text-[5.5rem] xl:text-[6.5rem] leading-[1.03] tracking-tight mb-8 whitespace-pre-line">
+                      <h3 className="text-white font-black text-[4rem] xl:text-[4.8rem] leading-[1.08] tracking-tight mb-6 whitespace-pre-line">
                         {campaign.title}
                       </h3>
-                      <div className="inline-flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 px-7 py-3.5 rounded-full">
+                      <div className="inline-flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 px-6 py-3 rounded-full">
                         <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                        <span className="text-amber-400 text-2xl xl:text-3xl uppercase tracking-wider font-black font-mono">
+                        <span className="text-amber-400 text-xl xl:text-2xl uppercase tracking-wider font-black font-mono">
                           {campaign.duration}
                         </span>
                       </div>
                     </div>
 
-                    <div className={`p-12 rounded-2xl ${isLightMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-amber-500/10 border border-amber-500/30 shadow-inner'} flex-shrink-0`}>
-                      <Icon className="w-36 h-36 text-amber-400" strokeWidth={1.35} />
+                    <div className={`p-10 rounded-2xl ${isLightMode ? 'bg-zinc-900 border border-zinc-800' : 'bg-amber-500/10 border border-amber-500/30 shadow-inner'} flex-shrink-0`}>
+                      <Icon className="w-28 h-28 xl:w-32 xl:h-32 text-amber-400" strokeWidth={1.35} />
                     </div>
                   </div>
                 );
               }
 
               return (
-                <div key={index} className={`p-10 rounded-3xl flex flex-col items-center text-center relative overflow-hidden ${
+                <div key={index} className={`p-8 rounded-3xl flex flex-col items-center text-center relative overflow-hidden ${
                   isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/20 shadow-xl'
                 }`}>
-                  <div className="p-7 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-6">
-                    <Icon className="w-24 h-24 text-amber-400" strokeWidth={1.35} />
+                  <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-5">
+                    <Icon className="w-20 h-20 text-amber-400" strokeWidth={1.35} />
                   </div>
                   
-                  <h3 className="text-white font-black text-[3.6rem] xl:text-[4.2rem] leading-tight mb-4 tracking-tight whitespace-pre-line">
+                  <h3 className="text-white font-black text-[2.8rem] xl:text-[3.4rem] leading-tight mb-4 tracking-tight whitespace-pre-line">
                     {campaign.title}
                   </h3>
                   
                   <div className="mt-auto bg-amber-500/10 border border-amber-500/30 px-6 py-2.5 rounded-full">
-                    <p className="text-amber-400 text-xl xl:text-2xl uppercase tracking-[0.15em] font-black font-mono">
+                    <p className="text-amber-400 text-lg xl:text-xl uppercase tracking-[0.15em] font-black font-mono">
                       {campaign.duration}
                     </p>
                   </div>
@@ -817,14 +817,14 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
               );
             })
           ) : (
-            <div className={`w-full max-w-4xl p-14 rounded-3xl flex flex-col items-center text-center mx-auto ${
+            <div className={`w-full max-w-4xl p-12 rounded-3xl flex flex-col items-center text-center mx-auto ${
               isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/20'
             }`}>
-              <div className="p-7 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-6">
-                <Flame className="w-20 h-20 text-amber-400" strokeWidth={1.35} />
+              <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-5">
+                <Flame className="w-18 h-18 text-amber-400" strokeWidth={1.35} />
               </div>
-              <h3 className="text-white font-extrabold text-[3.2rem] xl:text-[3.8rem] tracking-tight mb-4">Ainda Não Há Propósitos em Andamento</h3>
-              <p className="text-stone-300 text-2xl xl:text-3xl leading-relaxed max-w-2xl font-normal">
+              <h3 className="text-white font-extrabold text-[2.8rem] xl:text-[3.4rem] tracking-tight mb-3">Ainda Não Há Propósitos em Andamento</h3>
+              <p className="text-stone-300 text-xl xl:text-2xl leading-relaxed max-w-2xl font-normal">
                 Procure o pastor da igreja ou um dos nossos obreiros para avivar sua fé e se fortalecer sempre no Senhor.
               </p>
             </div>
@@ -1046,7 +1046,7 @@ export const MeetingEventSlide = ({
   const Icon = CalendarDays;
 
   return (
-    <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+    <div className="flex items-center justify-center h-full w-full px-14 xl:px-24 relative select-none">
       {!isLightMode && (
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
           isHighMode ? 'w-[800px] h-[800px] blur-[160px]' : 'w-[450px] h-[450px] blur-[75px]'
@@ -1059,7 +1059,7 @@ export const MeetingEventSlide = ({
         transition={{ duration: isLightMode ? 0.35 : 0.6, ease: isLightMode ? "easeInOut" : "easeOut" }}
         className="flex flex-col items-center justify-center text-center max-w-[90%] relative z-10"
       >
-        <div className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full mb-8 ${
+        <div className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 ${
           isFJU 
             ? 'bg-amber-500/10 border border-amber-500/30' 
             : 'bg-white/[0.04] border border-amber-500/25'
@@ -1072,30 +1072,30 @@ export const MeetingEventSlide = ({
           </span>
         </div>
 
-        <div className={`p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+        <div className={`p-8 xl:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode 
             ? 'bg-zinc-950 border-2 border-zinc-800' 
             : isFJU
               ? 'bg-black/60 backdrop-blur-md border border-amber-500/30 shadow-2xl'
               : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/25 shadow-2xl'
-        } mb-8`}>
-          <Icon className={`w-36 h-36 ${
+        } mb-6`}>
+          <Icon className={`w-32 h-32 xl:w-36 xl:h-36 ${
             isFJU 
               ? 'text-amber-400 drop-shadow-[0_0_45px_rgba(245,158,11,0.45)]' 
               : 'text-yellow-400/90 drop-shadow-[0_0_35px_rgba(234,179,8,0.25)]'
           } ${pulse && isHighMode ? (isFJU ? 'animate-pulse' : 'opacity-95') : ''}`} strokeWidth={1.35} />
         </div>
 
-        <h1 className={`font-sans font-black text-[6.5rem] xl:text-[8rem] 2xl:text-[9rem] tracking-tight ${
+        <h1 className={`font-sans font-black text-[4.4rem] xl:text-[5.4rem] 2xl:text-[6.2rem] tracking-tight ${
           isFJU ? 'text-white drop-shadow-[0_12px_40px_rgba(245,158,11,0.35)]' : 'text-white drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]'
-        } leading-[1.03] mb-8`}>
+        } leading-[1.08] mb-6`}>
           {meeting.theme}
         </h1>
 
-        <div className={`inline-flex items-center gap-5 px-10 py-4 rounded-full ${
+        <div className={`inline-flex items-center gap-4 px-8 py-3.5 rounded-full ${
           isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-zinc-950/80 border border-amber-500/25 backdrop-blur-md'
         }`}>
-          <p className="text-[2.6rem] xl:text-[3.2rem] text-stone-100 font-bold font-mono tracking-wide">
+          <p className="text-[2rem] xl:text-[2.5rem] text-stone-100 font-bold font-mono tracking-wide">
             {formattedDate} — Às <span className={isFJU ? 'text-amber-400' : 'text-yellow-400'}>{meeting.time}</span>
           </p>
         </div>
@@ -1123,7 +1123,7 @@ export const BaptismSlide = ({
   const isFJU = variant === 'fju';
 
   return (
-    <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+    <div className="flex items-center justify-center h-full w-full px-14 xl:px-24 relative select-none">
       {!isLightMode && (
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
           isHighMode ? 'w-[850px] h-[850px] blur-[170px]' : 'w-[450px] h-[450px] blur-[75px]'
@@ -1136,7 +1136,7 @@ export const BaptismSlide = ({
         transition={{ duration: isLightMode ? 0.35 : 0.6, ease: isLightMode ? "easeInOut" : "easeOut" }}
         className="flex flex-col items-center justify-center text-center max-w-[94%] relative z-10"
       >
-        <div className={`inline-flex items-center gap-3 px-8 py-2.5 rounded-full mb-6 ${
+        <div className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 ${
           isFJU 
             ? 'bg-amber-500/10 border border-amber-500/30' 
             : 'bg-white/[0.04] border border-amber-500/25'
@@ -1149,32 +1149,34 @@ export const BaptismSlide = ({
           </span>
         </div>
 
-        <div className={`p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+        <div className={`p-8 xl:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode 
             ? 'bg-zinc-950 border-2 border-zinc-800' 
             : isFJU
               ? 'bg-black/60 backdrop-blur-md border border-amber-500/30 shadow-2xl'
               : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/25 shadow-2xl'
-        } mb-7`}>
-          <Droplets className={`w-32 h-32 xl:w-36 xl:h-36 ${
+        } mb-6`}>
+          <Droplets className={`w-28 h-28 xl:w-32 xl:h-32 ${
             isFJU 
               ? 'text-amber-400 drop-shadow-[0_0_45px_rgba(245,158,11,0.45)]' 
               : 'text-amber-300/95 drop-shadow-[0_0_35px_rgba(234,179,8,0.25)]'
           }`} strokeWidth={1.35} />
         </div>
 
-        <h1 className={`font-sans font-black text-[5.5rem] xl:text-[7rem] 2xl:text-[8rem] tracking-tight text-white leading-[1.02] mb-6 drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]`}>
+        <h1 className={`font-sans font-black text-[4.4rem] xl:text-[5.4rem] 2xl:text-[6.2rem] tracking-tight text-white leading-[1.08] mb-5 drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]`}>
           Batismo nas Águas
         </h1>
 
-        <p className="text-[2.8rem] xl:text-[3.5rem] 2xl:text-[4rem] text-stone-200 font-normal leading-[1.22] max-w-[92%] mb-8">
-          Separe a sua vida para Deus. Após as reuniões realizamos o batismo nas águas.
+        <p className="text-[2.2rem] xl:text-[2.6rem] 2xl:text-[3rem] text-stone-200 font-normal leading-[1.28] max-w-[90%] mb-6">
+          {isFJU 
+            ? "Decida hoje entregar a sua vida a Deus e começar uma nova história." 
+            : "O batismo nas águas é a decisão de sepultar o passado e começar uma nova vida com Deus."}
         </p>
 
-        <div className={`inline-flex items-center gap-4 px-10 py-4 rounded-full ${
+        <div className={`inline-flex items-center gap-4 px-8 py-3.5 rounded-full ${
           isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-zinc-950/85 border border-amber-500/30 backdrop-blur-md shadow-xl'
         }`}>
-          <p className="text-[2.2rem] xl:text-[2.8rem] text-stone-100 font-bold font-mono tracking-wide">
+          <p className="text-[1.9rem] xl:text-[2.4rem] text-stone-100 font-bold font-mono tracking-wide">
             Para se batizar hoje, <span className={isFJU ? 'text-amber-400' : 'text-yellow-400'}>procure o Pastor ou um de nossos Obreiros</span>.
           </p>
         </div>
@@ -1202,7 +1204,7 @@ export const BlessingSlide = ({
   const isFJU = variant === 'fju';
 
   return (
-    <div className="flex items-center justify-center h-full w-full px-12 xl:px-20 relative select-none">
+    <div className="flex items-center justify-center h-full w-full px-14 xl:px-24 relative select-none">
       {!isLightMode && (
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
           isHighMode ? 'w-[850px] h-[850px] blur-[170px]' : 'w-[450px] h-[450px] blur-[75px]'
@@ -1215,7 +1217,7 @@ export const BlessingSlide = ({
         transition={{ duration: isLightMode ? 0.35 : 0.6, ease: isLightMode ? "easeInOut" : "easeOut" }}
         className="flex flex-col items-center justify-center text-center max-w-[94%] relative z-10"
       >
-        <div className={`inline-flex items-center gap-3 px-8 py-2.5 rounded-full mb-6 ${
+        <div className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-6 ${
           isFJU 
             ? 'bg-amber-500/10 border border-amber-500/30' 
             : 'bg-white/[0.04] border border-amber-500/25'
@@ -1228,34 +1230,34 @@ export const BlessingSlide = ({
           </span>
         </div>
 
-        <div className={`p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+        <div className={`p-8 xl:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode 
             ? 'bg-zinc-950 border-2 border-zinc-800' 
             : isFJU
               ? 'bg-black/60 backdrop-blur-md border border-amber-500/30 shadow-2xl'
               : 'bg-zinc-950/80 backdrop-blur-md border border-amber-500/25 shadow-2xl'
-        } mb-7`}>
-          <Sparkles className={`w-32 h-32 xl:w-36 xl:h-36 ${
+        } mb-6`}>
+          <Sparkles className={`w-28 h-28 xl:w-32 xl:h-32 ${
             isFJU 
               ? 'text-amber-400 drop-shadow-[0_0_45px_rgba(245,158,11,0.45)]' 
               : 'text-amber-300/95 drop-shadow-[0_0_35px_rgba(234,179,8,0.25)]'
           }`} strokeWidth={1.35} />
         </div>
 
-        <h1 className={`font-sans font-black text-[5.5rem] xl:text-[7rem] 2xl:text-[8rem] tracking-tight text-white leading-[1.02] mb-6 drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]`}>
+        <h1 className={`font-sans font-black text-[4.4rem] xl:text-[5.4rem] 2xl:text-[6.2rem] tracking-tight text-white leading-[1.08] mb-5 drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]`}>
           {isFJU ? "Valeu por Colar com a Gente!" : "Deus Abençoe a Sua Vida"}
         </h1>
 
-        <p className="text-[2.8rem] xl:text-[3.5rem] 2xl:text-[4rem] text-stone-200 font-normal leading-[1.22] max-w-[92%] mb-8">
+        <p className="text-[2.2rem] xl:text-[2.6rem] 2xl:text-[3rem] text-stone-200 font-normal leading-[1.28] max-w-[90%] mb-6">
           {isFJU
             ? "Guarde essa palavra com você. Nos vemos no próximo sábado!"
             : "Vá em paz e que o Espírito Santo acompanhe você e toda a sua família."}
         </p>
 
-        <div className={`inline-flex items-center gap-4 px-10 py-4 rounded-full ${
+        <div className={`inline-flex items-center gap-4 px-8 py-3.5 rounded-full ${
           isLightMode ? 'bg-zinc-950 border-2 border-zinc-800' : 'bg-zinc-950/85 border border-amber-500/30 backdrop-blur-md shadow-xl'
         }`}>
-          <p className="text-[2.2rem] xl:text-[2.8rem] text-stone-100 font-bold font-mono tracking-wide">
+          <p className="text-[1.9rem] xl:text-[2.4rem] text-stone-100 font-bold font-mono tracking-wide">
             {CHURCH_INFO.name} — <span className={isFJU ? 'text-amber-400' : 'text-yellow-400'}>{CHURCH_INFO.location}</span>
           </p>
         </div>

@@ -618,11 +618,35 @@ export default function App() {
           
           <div className="relative z-10 flex items-center justify-between w-full lg:w-auto gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/40 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] shrink-0 bg-[#111113] flex items-center justify-center p-0.5 group">
-                <img src="/icon-192.png?v=11" alt="HolyLink Símbolo" className="w-full h-full object-contain rounded-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/40 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] shrink-0 bg-[#111113] flex items-center justify-center p-1 group">
+                <img 
+                  src="/icon-192.png" 
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                  alt="HolyLink Símbolo" 
+                  className="w-full h-full object-contain rounded-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" 
+                />
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
-                <img src="/logo-text.png?v=11" alt="HolyLink Tipografia" className="h-6 w-[80px] object-cover object-center shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" />
+                <div className="flex items-center h-6">
+                  <img 
+                    src="/logo-text.png" 
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                      const fallback = document.getElementById('holylink-text-fallback');
+                      if (fallback) fallback.style.display = 'inline-block';
+                    }}
+                    alt="HolyLink" 
+                    className="h-6 w-auto max-w-[130px] object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" 
+                  />
+                  <span 
+                    id="holylink-text-fallback" 
+                    className="hidden font-sans font-black text-lg tracking-wider text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                  >
+                    HOLYLINK
+                  </span>
+                </div>
                 <span className="text-zinc-300 text-xs font-black sm:border-l sm:border-[#333] sm:pl-2.5 font-sans uppercase tracking-wider">
                   Painel do Operador
                 </span>

@@ -9,7 +9,16 @@ class MediaPreloaderService {
   private imageCache: Map<string, HTMLImageElement> = new Map();
   private videoCache: Map<string, HTMLVideoElement> = new Map();
   private preloadedUrls: Set<string> = new Set();
-  private staticAssetUrls: Set<string> = new Set(['/logo-text.png?v=11', '/logo-text.png']);
+  private staticAssetUrls: Set<string> = new Set([
+    '/logo-text.png?v=11', 
+    '/logo-text.png',
+    '/logo-full.png?v=11',
+    '/logo-full.png',
+    '/icon-192.png?v=11',
+    '/icon-192.png',
+    '/icon-512.png',
+    '/icon-symbol-838.png'
+  ]);
 
   /**
    * Disposes of a cached media resource completely from browser memory

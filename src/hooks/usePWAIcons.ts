@@ -4,9 +4,9 @@ export type PWAIconType = 'symbol' | 'full' | 'text';
 export type PWAIconTheme = 'dark' | 'light' | 'transparent';
 
 const ICON_URLS = {
-  symbol: 'https://i.imgur.com/pMBaMxp.png',
-  full: 'https://i.imgur.com/mY1f23o.png',
-  text: 'https://i.imgur.com/nfQCp7o.png'
+  symbol: '/icon-192.png',
+  full: '/logo-full.png',
+  text: '/logo-text.png'
 };
 
 export function usePWAIcons() {

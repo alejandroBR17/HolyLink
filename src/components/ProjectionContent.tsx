@@ -1001,41 +1001,41 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex flex-col"
           >
-            <header className={`h-[145px] shrink-0 px-24 flex items-center justify-between border-b border-white/[0.08] bg-[#050505]/70 backdrop-blur-md relative z-50`}>
-              <div className="flex flex-col gap-3">
+            <header className={`h-[145px] shrink-0 px-20 flex items-center justify-between border-b border-white/[0.08] bg-[#050505]/75 backdrop-blur-md relative z-50`}>
+              <div className="flex flex-col justify-center">
                 <div>
-                  <h1 className="font-sans font-black text-[3.2rem] tracking-[0.16em] text-white leading-none uppercase">
+                  <h1 className="font-sans font-black text-[3rem] xl:text-[3.3rem] tracking-[0.12em] text-white leading-none uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                     {churchInfo.name}
                   </h1>
-                  <p className={`text-xl font-bold tracking-[0.62em] uppercase mt-1 ${isFJU ? 'text-amber-500' : 'text-yellow-500'}`}>
+                  <p className={`text-2xl font-black tracking-[0.25em] uppercase mt-1.5 ${isFJU ? 'text-amber-400' : 'text-yellow-400'}`}>
                     {churchInfo.location}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-12">
-                <div className="flex items-center gap-10">
+              <div className="flex items-center gap-10">
+                <div className="flex items-center gap-8">
                   <div className="text-right">
-                    <span className="text-[11px] font-bold text-stone-400 tracking-[0.25em] uppercase block mb-1">
+                    <span className="text-sm xl:text-base font-black text-amber-300/90 tracking-[0.2em] uppercase block mb-1">
                       {isFJU ? 'O Encontro Começa em:' : 'A Reunião Começa em:'}
                     </span>
-                    <div className="flex items-baseline justify-end gap-1 font-mono text-white text-4xl font-bold tracking-tighter">
+                    <div className="flex items-baseline justify-end gap-1.5 font-mono text-white text-5xl font-black tracking-tight">
                       <span>{hoursStr}</span>
-                      <span className="text-base font-sans text-stone-500 uppercase font-bold mr-2">h</span>
-                      <span className={!isMiniature ? `${isFJU ? 'text-amber-500' : 'text-yellow-500'} animate-pulse` : ""}>:</span>
+                      <span className="text-xl font-sans text-stone-400 uppercase font-extrabold mr-2">h</span>
+                      <span className={!isMiniature ? `${isFJU ? 'text-amber-400' : 'text-yellow-400'} animate-pulse` : ""}>:</span>
                       <span>{minutesStr}</span>
-                      <span className="text-base font-sans text-stone-500 uppercase font-bold">m</span>
+                      <span className="text-xl font-sans text-stone-400 uppercase font-extrabold">m</span>
                     </div>
                   </div>
 
                   {!isMiniature && (
                     <>
-                      <div className="h-12 w-[1px] bg-white/[0.1]" />
-                      <div className={`border px-6 py-3 rounded-xl flex flex-col items-center justify-center ${isFJU ? 'bg-amber-600/10 border-amber-500/30' : 'bg-white/[0.05] border-white/[0.1]'}`}>
-                        <span className={`font-mono text-3xl font-bold tracking-wider ${isFJU ? 'text-amber-100' : 'text-stone-100'}`}>
+                      <div className="h-14 w-[1px] bg-white/[0.15]" />
+                      <div className={`border-2 px-7 py-3 rounded-2xl flex flex-col items-center justify-center ${isFJU ? 'bg-amber-600/15 border-amber-500/40 shadow-lg' : 'bg-white/[0.06] border-white/[0.15] shadow-lg'}`}>
+                        <span className={`font-mono text-3xl xl:text-4xl font-black tracking-wider ${isFJU ? 'text-amber-100' : 'text-stone-100'}`}>
                           {format(currentTime, 'HH:mm:ss')}
                         </span>
-                        <span className={`font-sans text-xs tracking-[0.2em] uppercase mt-1 ${isFJU ? 'text-amber-400' : 'text-stone-400'}`}>
+                        <span className={`font-sans text-sm xl:text-base font-bold tracking-[0.15em] uppercase mt-1 ${isFJU ? 'text-amber-300' : 'text-amber-200/90'}`}>
                           {format(currentTime, "EEEE, dd 'de' MMMM", { locale: ptBR })}
                         </span>
                       </div>

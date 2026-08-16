@@ -57,16 +57,16 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
 
   const getFontSizeClass = (text: string) => {
     const len = text.length;
-    if (len < 60) return 'text-[5.5rem] xl:text-[6.8rem] 2xl:text-[7.8rem]';
-    if (len < 90) return 'text-[4.6rem] xl:text-[5.6rem] 2xl:text-[6.4rem]';
-    if (len < 140) return 'text-[3.8rem] xl:text-[4.6rem] 2xl:text-[5.2rem]';
-    return 'text-[3.2rem] xl:text-[3.8rem] 2xl:text-[4.4rem]';
+    if (len < 60) return 'text-[4.4rem] xl:text-[5.4rem] 2xl:text-[6.2rem]';
+    if (len < 90) return 'text-[3.8rem] xl:text-[4.6rem] 2xl:text-[5.2rem]';
+    if (len < 140) return 'text-[3.2rem] xl:text-[3.8rem] 2xl:text-[4.4rem]';
+    return 'text-[2.6rem] xl:text-[3.2rem] 2xl:text-[3.6rem]';
   };
 
   const getMarginClass = (text: string) => {
     const len = text.length;
-    if (len < 90) return 'mt-8 xl:mt-10';
-    return 'mt-6 xl:mt-8';
+    if (len < 90) return 'mt-6 xl:mt-8';
+    return 'mt-5 xl:mt-6';
   };
 
   // Performance-based animation configuration (Anti-Lag uses silky 0.35s GPU-friendly cross-fade)
