@@ -4,7 +4,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen, 
-  CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download, Sparkles
+  CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download, Sparkles,
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS } from './data';
 import { getNextMeeting, getSlideDuration } from './utils';
@@ -203,6 +204,59 @@ export default function App() {
   const [isSmartBooting, setIsSmartBooting] = useState<boolean>(true);
   const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
   const { isInstalled, hasUpdateAvailable, forceAppUpdate, isUpdating } = usePWAInstall();
+
+  // Mobile and Desktop header / sidebar collapsing state
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('holylink_header_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('holylink_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isScrolledDown, setIsScrolledDown] = useState<boolean>(false);
+  const lastScrollTopRef = useRef<number>(0);
+
+  const handleMainScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
+    const currentScrollTop = e.currentTarget.scrollTop;
+    const delta = currentScrollTop - lastScrollTopRef.current;
+    
+    // Auto-collapse header on mobile when scrolling down, restore when scrolling up or at top
+    if (currentScrollTop > 50 && delta > 10) {
+      setIsScrolledDown(true);
+    } else if (delta < -12 || currentScrollTop <= 20) {
+      setIsScrolledDown(false);
+    }
+    lastScrollTopRef.current = currentScrollTop;
+  }, []);
+
+  const toggleHeaderCollapse = useCallback(() => {
+    setIsHeaderCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('holylink_header_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const toggleSidebarCollapse = useCallback(() => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('holylink_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   // Time ticker (updates currentTime every second) & global audio unlock
   useEffect(() => {
@@ -613,7 +667,11 @@ export default function App() {
         )}
 
         {/* TOP BAR / NAVIGATION - SKEUOMORPHIC RACK-MOUNT FRAME */}
-        <header className="h-auto lg:h-16 px-4 lg:px-6 py-3 lg:py-0 bg-[#08080a] border-b border-[#27272a] flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-20 shrink-0 shadow-[0_8px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] relative">
+        <header className={`px-4 lg:px-6 bg-[#08080a] flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-20 shrink-0 shadow-[0_8px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] relative transition-all duration-300 ${
+          (isHeaderCollapsed || isScrolledDown)
+            ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:h-16 lg:py-0 lg:opacity-100 lg:border-b lg:border-[#27272a] lg:pointer-events-auto'
+            : 'max-h-[500px] h-auto lg:h-16 py-3 lg:py-0 border-b border-[#27272a] opacity-100'
+        }`}>
           <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
           
           <div className="relative z-10 flex items-center justify-between w-full lg:w-auto gap-3">
@@ -654,24 +712,36 @@ export default function App() {
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-[#0d0d0f] border border-[#2a2a2e] px-3 py-1.5 rounded-xl text-[10px] font-extrabold text-zinc-300 uppercase tracking-wider shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+              <div className="flex items-center gap-1.5 bg-[#0d0d0f] border border-[#2a2a2e] px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold text-zinc-300 uppercase tracking-wider shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
                 {localStorage.getItem('projection_deviceRole') === 'phone' ? (
                   <span className="flex items-center gap-1 text-amber-400 font-black">
                     <Smartphone className="w-3.5 h-3.5" />
-                    Controle Móvel
+                    Móvel
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-zinc-300">
                     <Monitor className="w-3.5 h-3.5 text-amber-500" />
-                    Console Principal
+                    Console
                   </span>
                 )}
               </div>
+
+              {/* Mobile manual collapse button */}
+              <button
+                type="button"
+                onClick={toggleHeaderCollapse}
+                aria-label={isHeaderCollapsed ? "Expandir Topo" : "Recolher Topo"}
+                title={isHeaderCollapsed ? "Expandir Topo" : "Recolher Topo"}
+                className="lg:hidden flex items-center gap-1 bg-[#161618] hover:bg-[#202024] text-amber-400 border border-amber-500/30 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 shadow cursor-pointer"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+                <span>Recolher</span>
+              </button>
             </div>
           </div>
           
-          <div className="relative z-10 flex items-center gap-2 w-full lg:w-auto flex-wrap sm:flex-nowrap">
+          <div className="relative z-10 grid grid-cols-2 sm:flex items-center gap-2 w-full lg:w-auto">
             {isElectron && (
               <button
                 type="button"
@@ -685,14 +755,14 @@ export default function App() {
                     setIsProjectionWindowShowing(true);
                   }
                 }}
-                className={`flex-1 sm:flex-none min-h-[38px] border text-xs font-extrabold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ${
+                className={`col-span-1 sm:flex-none min-h-[38px] border text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ${
                   isProjectionWindowShowing
                     ? 'bg-red-950/80 border-red-800/80 hover:bg-red-900/80 text-red-300 shadow-[0_0_12px_rgba(220,38,38,0.2)]'
                     : 'bg-emerald-950/80 border-emerald-800/80 hover:bg-emerald-900/80 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
                 }`}
               >
                 <Tv className="w-3.5 h-3.5 shrink-0" />
-                <span className="whitespace-nowrap">{isProjectionWindowShowing ? 'Apagar Projetor' : 'Ligar Projetor'}</span>
+                <span className="whitespace-nowrap truncate">{isProjectionWindowShowing ? 'Apagar' : 'Ligar Projetor'}</span>
               </button>
             )}
 
@@ -703,24 +773,24 @@ export default function App() {
                 setIsLocalProjection(true);
                 toggleFullscreen();
               }}
-              className="flex-1 sm:flex-none min-h-[38px] bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-200 text-xs font-extrabold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]"
+              className="col-span-1 sm:flex-none min-h-[38px] bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-200 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]"
             >
               <Monitor className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="whitespace-nowrap">Projetar Aqui</span>
+              <span className="whitespace-nowrap truncate">Projetar Aqui</span>
             </button>
 
             <button
               type="button"
               aria-label="Sincronizar ou conectar celular"
               onClick={() => setActiveMobileTab('sync')}
-              className={`flex-1 sm:flex-none min-h-[38px] border text-xs font-extrabold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ${
+              className={`col-span-1 sm:flex-none min-h-[38px] border text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ${
                 activeMobileTab === 'sync'
                   ? 'bg-amber-500 border-amber-400 text-black font-black shadow-[0_0_12px_rgba(245,158,11,0.4)]'
                   : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-[#444] text-zinc-300'
               }`}
             >
               <Smartphone className="w-3.5 h-3.5 shrink-0" />
-              <span className="whitespace-nowrap">Conectar Celular</span>
+              <span className="whitespace-nowrap truncate">Conectar Celular</span>
             </button>
 
             {!isInstalled && (
@@ -728,10 +798,10 @@ export default function App() {
                 type="button"
                 aria-label="Instalar App HolyLink"
                 onClick={() => setShowPwaModal(true)}
-                className="flex-1 sm:flex-none min-h-[38px] bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-amber-900/50 hover:border-amber-500/50 text-amber-400 text-xs font-extrabold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+                className="col-span-1 sm:flex-none min-h-[38px] bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-amber-900/50 hover:border-amber-500/50 text-amber-400 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
               >
                 <Download className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="whitespace-nowrap">Instalar App</span>
+                <span className="whitespace-nowrap truncate">Instalar</span>
               </button>
             )}
 
@@ -754,7 +824,7 @@ export default function App() {
                     showAlert('Erro ao tentar abrir a janela de projeção. Verifique permissões de pop-up.', 'error');
                   }
                 }}
-                className="w-full sm:w-auto min-h-[38px] bg-amber-500 hover:bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all cursor-pointer active:translate-y-[1px]"
+                className="col-span-2 sm:col-span-1 sm:w-auto min-h-[38px] bg-amber-500 hover:bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all cursor-pointer active:translate-y-[1px]"
               >
                 <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
                 <span className="whitespace-nowrap">Monitor 2ª Tela</span>
@@ -768,7 +838,7 @@ export default function App() {
                   updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
                   updateStateAndBroadcast('isProjectionOpen', false);
                 }}
-                className="w-full sm:w-auto min-h-[38px] bg-red-600 hover:bg-red-500 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(220,38,38,0.35)] transition-all cursor-pointer active:translate-y-[1px]"
+                className="col-span-2 sm:col-span-1 sm:w-auto min-h-[38px] bg-red-600 hover:bg-red-500 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(220,38,38,0.35)] transition-all cursor-pointer active:translate-y-[1px]"
               >
                 <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
                 <span className="whitespace-nowrap">Fechar 2ª Tela</span>
@@ -779,7 +849,11 @@ export default function App() {
 
         {/* ACTIVE BROADCAST HEADER BANNER - SKEUOMORPHIC LED DISPLAY */}
         {isJustStartedRaw && (
-          <div className={`px-4 py-2.5 border-b flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
+          <div className={`px-4 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all duration-300 z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
+            (isHeaderCollapsed || isScrolledDown)
+              ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:py-2.5 lg:border-b lg:opacity-100 lg:pointer-events-auto'
+              : 'max-h-40 py-2.5 border-b opacity-100'
+          } ${
             dismissedJustStarted 
               ? "bg-emerald-950/40 border-emerald-800/50 text-emerald-400" 
               : "bg-amber-950/40 border-amber-800/50 text-amber-400"
@@ -815,7 +889,32 @@ export default function App() {
         )}
 
         {/* MOBILE NAVIGATION TABS (Skeuomorphic hardware console tabs) */}
-        <nav aria-label="Navegação Principal do Operador" className="lg:hidden flex overflow-x-auto no-scrollbar bg-[#050507] border-b border-[#222] sticky top-0 z-20 shrink-0 p-2 gap-2 shadow-[0_6px_20px_rgba(0,0,0,0.95)]">
+        <nav aria-label="Navegação Principal do Operador" className="lg:hidden flex items-center overflow-x-auto no-scrollbar bg-[#050507] border-b border-[#222] sticky top-0 z-20 shrink-0 p-1.5 gap-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.95)]">
+          {/* Quick Header Toggle Pill */}
+          <button
+            type="button"
+            onClick={toggleHeaderCollapse}
+            aria-label={(isHeaderCollapsed || isScrolledDown) ? "Expandir barra superior" : "Recolher barra superior"}
+            title={(isHeaderCollapsed || isScrolledDown) ? "Expandir barra superior" : "Recolher barra superior"}
+            className={`flex-none px-2.5 py-2 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 rounded-xl border transition-all cursor-pointer active:scale-95 shrink-0 ${
+              (isHeaderCollapsed || isScrolledDown)
+                ? "bg-amber-500/15 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+                : "bg-[#111113] border-[#2a2a2e] text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            {(isHeaderCollapsed || isScrolledDown) ? (
+              <>
+                <ChevronDown className="w-3.5 h-3.5 animate-bounce text-amber-400" />
+                <span className="font-extrabold text-[9px]">Topo</span>
+              </>
+            ) : (
+              <>
+                <ChevronUp className="w-3.5 h-3.5" />
+                <span className="font-extrabold text-[9px]">Foco</span>
+              </>
+            )}
+          </button>
+
           {[
             { id: 'slides', label: 'Mídias', icon: Layout },
             { id: 'texts', label: 'Bíblia', icon: BookOpen },
@@ -834,14 +933,14 @@ export default function App() {
                 aria-selected={isActive}
                 aria-label={`Aba ${tab.label}`}
                 onClick={() => setActiveMobileTab(tab.id as any)}
-                className={`flex-none min-w-[72px] py-2 px-1 text-[10px] font-extrabold uppercase tracking-wider flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer rounded-xl relative overflow-hidden active:translate-y-[1px] ${
+                className={`flex-1 min-w-[56px] py-1.5 px-1 text-[10px] font-extrabold uppercase tracking-wider flex flex-col items-center justify-center gap-1 transition-all cursor-pointer rounded-xl relative overflow-hidden active:translate-y-[1px] ${
                   isActive
                     ? "bg-amber-500 border border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
                     : "bg-[#111113] text-zinc-400 border border-[#27272a] hover:text-white hover:border-[#333]"
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 relative z-10 transition-colors ${isActive ? 'text-black' : 'text-zinc-400'}`} />
-                <span className="truncate max-w-full relative z-10">{tab.label}</span>
+                <Icon className={`w-3.5 h-3.5 shrink-0 relative z-10 transition-colors ${isActive ? 'text-black' : 'text-zinc-400'}`} />
+                <span className="truncate max-w-full relative z-10 text-[9px]">{tab.label}</span>
               </button>
             );
           })}
@@ -851,13 +950,27 @@ export default function App() {
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
           
           {/* DESKTOP SIDEBAR PANEL - SKEUOMORPHIC RACK DECK */}
-          <aside className="hidden lg:flex flex-col w-[240px] bg-[#070709] border-r border-[#27272a] py-6 px-4 shrink-0 justify-between shadow-[inset_-10px_0_20px_rgba(0,0,0,0.8)] relative">
+          <aside className={`hidden lg:flex flex-col ${isSidebarCollapsed ? 'w-[70px] px-2.5' : 'w-[240px] px-4'} bg-[#070709] border-r border-[#27272a] py-6 shrink-0 justify-between shadow-[inset_-10px_0_20px_rgba(0,0,0,0.8)] relative transition-all duration-300`}>
             <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
             
             <div className="relative z-10 flex flex-col gap-6">
-              <div className="flex items-center justify-between border-b border-[#222] pb-3 px-1">
-                <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest font-mono">NAVEGAÇÃO DECK</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
+              <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'} border-b border-[#222] pb-3 px-1`}>
+                {!isSidebarCollapsed && (
+                  <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest font-mono">NAVEGAÇÃO DECK</span>
+                )}
+                <button
+                  type="button"
+                  onClick={toggleSidebarCollapse}
+                  title={isSidebarCollapsed ? "Expandir Barra Lateral" : "Recolher Barra Lateral"}
+                  aria-label={isSidebarCollapsed ? "Expandir Barra Lateral" : "Recolher Barra Lateral"}
+                  className="p-1.5 rounded-lg bg-[#141417] hover:bg-[#1f1f24] text-zinc-400 hover:text-amber-400 border border-[#2a2a2e] transition-all active:scale-95 cursor-pointer shadow"
+                >
+                  {isSidebarCollapsed ? (
+                    <PanelLeftOpen className="w-3.5 h-3.5" />
+                  ) : (
+                    <PanelLeftClose className="w-3.5 h-3.5" />
+                  )}
+                </button>
               </div>
               
               <nav aria-label="Navegação Lateral" className="flex flex-col gap-2">
@@ -876,15 +989,18 @@ export default function App() {
                       type="button"
                       role="tab"
                       aria-selected={isActive}
+                      title={item.label}
                       onClick={() => setActiveMobileTab(item.id as any)}
-                      className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-extrabold transition-all text-left cursor-pointer active:translate-y-[1px] relative overflow-hidden group ${
+                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-3.5 py-3'} rounded-xl text-xs font-extrabold transition-all text-left cursor-pointer active:translate-y-[1px] relative overflow-hidden group ${
                         isActive
                           ? "bg-amber-500 border border-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.35)] font-black"
                           : "bg-[#0d0d0f] text-zinc-400 border border-[#222] hover:bg-[#141417] hover:border-[#333] hover:text-zinc-200"
                       }`}
                     >
                       <IconComponent className={`w-4 h-4 shrink-0 relative z-10 transition-colors ${isActive ? "text-black" : "text-amber-500/80 group-hover:text-amber-400"}`} />
-                      <span className="relative z-10 truncate">{item.label}</span>
+                      {!isSidebarCollapsed && (
+                        <span className="relative z-10 truncate">{item.label}</span>
+                      )}
                     </button>
                   );
                 })}
@@ -892,25 +1008,45 @@ export default function App() {
             </div>
 
             {/* Sidebar Footer status */}
-            <div className="relative z-10 border-t border-[#222] pt-4 px-2 flex flex-col gap-1.5 text-left bg-[#030304] p-3 rounded-xl border">
-              <span className="text-[9px] text-zinc-500 font-black uppercase font-mono tracking-widest">STATUS HARDWARE</span>
-              <div className="flex items-center gap-2 text-[10px] text-zinc-300 font-mono font-bold">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
-                <span>OPERADOR ON-LINE</span>
-              </div>
+            <div className={`relative z-10 border-t border-[#222] pt-4 px-2 flex flex-col gap-1.5 text-left bg-[#030304] p-3 rounded-xl border ${isSidebarCollapsed ? 'items-center justify-center p-2' : ''}`}>
+              {!isSidebarCollapsed ? (
+                <>
+                  <span className="text-[9px] text-zinc-500 font-black uppercase font-mono tracking-widest">STATUS HARDWARE</span>
+                  <div className="flex items-center gap-2 text-[10px] text-zinc-300 font-mono font-bold">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
+                    <span>OPERADOR ON-LINE</span>
+                  </div>
+                </>
+              ) : (
+                <span title="Operador On-line" className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
+              )}
             </div>
           </aside>
 
           {/* ACTIVE CONTENT WORKSPACE */}
-          <main className="flex-1 overflow-y-auto bg-zinc-950/20 p-4 sm:p-6 pb-36 lg:pb-28 flex flex-col gap-6 min-h-0">
+          <main onScroll={handleMainScroll} className="flex-1 overflow-y-auto bg-zinc-950/20 p-3.5 sm:p-6 pb-36 lg:pb-28 flex flex-col gap-4 sm:gap-6 min-h-0">
             
-            <div className="text-left">
-              <span className="text-[10px] text-amber-500 font-black uppercase tracking-widest block">
-                {activeMobileTab === 'slides' ? 'Mídia' : activeMobileTab === 'texts' ? 'Escrituras' : activeMobileTab === 'agenda' ? 'Programação' : activeMobileTab === 'controls' ? 'Broadcasting' : 'Segurança'}
-              </span>
-              <h2 className="text-lg sm:text-xl font-extrabold text-zinc-100 uppercase tracking-tight mt-0.5">
-                {activeMobileTab === 'slides' ? 'Fila de Mídias & Slides' : activeMobileTab === 'texts' ? 'Bíblia & Textos' : activeMobileTab === 'agenda' ? 'Programação & Agenda' : activeMobileTab === 'controls' ? 'Controles & Stage' : 'Conexão & Backup'}
-              </h2>
+            <div className="text-left flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-amber-500 font-black uppercase tracking-widest block">
+                  {activeMobileTab === 'slides' ? 'Mídia' : activeMobileTab === 'texts' ? 'Escrituras' : activeMobileTab === 'agenda' ? 'Programação' : activeMobileTab === 'controls' ? 'Broadcasting' : 'Segurança'}
+                </span>
+                <h2 className="text-base sm:text-xl font-extrabold text-zinc-100 uppercase tracking-tight mt-0.5">
+                  {activeMobileTab === 'slides' ? 'Fila de Mídias & Slides' : activeMobileTab === 'texts' ? 'Bíblia & Textos' : activeMobileTab === 'agenda' ? 'Programação & Agenda' : activeMobileTab === 'controls' ? 'Controles & Stage' : 'Conexão & Backup'}
+                </h2>
+              </div>
+
+              {/* Mobile In-Workspace Compact Toggle */}
+              {(isHeaderCollapsed || isScrolledDown) && (
+                <button
+                  type="button"
+                  onClick={toggleHeaderCollapse}
+                  className="lg:hidden flex items-center gap-1.5 bg-[#111113] hover:bg-[#1a1a1d] text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow cursor-pointer active:scale-95"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                  <span>Ver Topo</span>
+                </button>
+              )}
             </div>
 
             {/* Render selected panels */}
