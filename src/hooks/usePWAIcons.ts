@@ -22,23 +22,31 @@ export function usePWAIcons() {
     localStorage.setItem('holylink_pwa_icon_theme', iconTheme);
 
     const iconUrl = ICON_URLS[iconType];
-    const bgColor = iconTheme === 'light' ? '#ffffff' : iconTheme === 'dark' ? '#020617' : 'transparent';
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const fullIconUrl = origin ? `${origin}${iconUrl}` : iconUrl;
+    const startUrl = origin ? `${origin}/` : './';
 
     const manifest = {
-      "id": "/",
-      "name": "HolyLink \u2014 Transmiss\u00e3o & Proje\u00e7\u00e3o",
+      "id": startUrl,
+      "name": "HolyLink — Transmissão & Projeção",
       "short_name": "HolyLink",
-      "description": "Sistema profissional de proje\u00e7\u00e3o P2P.",
-      "start_url": "/",
-      "scope": "/",
+      "description": "Sistema profissional de projeção P2P.",
+      "start_url": startUrl,
+      "scope": startUrl,
       "display": "standalone",
       "orientation": "any",
       "background_color": iconTheme === 'light' ? '#ffffff' : '#020617',
       "theme_color": iconTheme === 'light' ? '#ffffff' : '#020617',
       "icons": [
         {
-          "src": iconUrl,
-          "sizes": "838x838",
+          "src": fullIconUrl,
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any maskable"
+        },
+        {
+          "src": origin ? `${origin}/icon-512.png` : '/icon-512.png',
+          "sizes": "512x512",
           "type": "image/png",
           "purpose": "any maskable"
         }
