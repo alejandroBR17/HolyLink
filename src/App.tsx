@@ -31,6 +31,7 @@ import { usePWAInstall } from './hooks/usePWAInstall';
 import { usePWAIcons } from './hooks/usePWAIcons';
 
 import { setupGlobalAudioUnlock } from './utils/permissions';
+import { LOGO_URLS } from './constants/logos';
 
 type SlideType = string;
 
@@ -641,9 +642,13 @@ export default function App() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/40 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] shrink-0 bg-[#111113] flex items-center justify-center p-1 group">
                 <img 
-                  src="/icon-192.png" 
+                  src={LOGO_URLS.symbol} 
+                  referrerPolicy="no-referrer"
                   onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
+                    const img = e.currentTarget;
+                    if (img.src !== window.location.origin + LOGO_URLS.symbolLocal && !img.src.endsWith(LOGO_URLS.symbolLocal)) {
+                      img.src = LOGO_URLS.symbolLocal;
+                    }
                   }}
                   alt="HolyLink Símbolo" 
                   className="w-full h-full object-contain rounded-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" 
@@ -652,11 +657,17 @@ export default function App() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
                 <div className="flex items-center h-6">
                   <img 
-                    src="/logo-text.png" 
+                    src={LOGO_URLS.text} 
+                    referrerPolicy="no-referrer"
                     onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                      const fallback = document.getElementById('holylink-text-fallback');
-                      if (fallback) fallback.style.display = 'inline-block';
+                      const img = e.currentTarget;
+                      if (img.src !== window.location.origin + LOGO_URLS.textLocal && !img.src.endsWith(LOGO_URLS.textLocal)) {
+                        img.src = LOGO_URLS.textLocal;
+                      } else {
+                        img.style.display = 'none';
+                        const fallback = document.getElementById('holylink-text-fallback');
+                        if (fallback) fallback.style.display = 'inline-block';
+                      }
                     }}
                     alt="HolyLink" 
                     className="h-6 w-auto max-w-[130px] object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" 

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
+import { LOGO_URLS } from '../constants/logos';
 
 export type PWAIconType = 'symbol' | 'full' | 'text';
 export type PWAIconTheme = 'dark' | 'light' | 'transparent';
 
 const ICON_URLS: Record<PWAIconType, string> = {
-  symbol: '/icon-192.png',
-  full: '/logo-full.png',
-  text: '/logo-text.png'
+  symbol: LOGO_URLS.symbol,
+  full: LOGO_URLS.full,
+  text: LOGO_URLS.text
 };
 
 export function usePWAIcons() {

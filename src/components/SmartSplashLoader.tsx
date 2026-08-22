@@ -3,6 +3,7 @@ import { Sparkles, Gauge, Zap, CheckCircle2, Cpu, ShieldCheck, AlertCircle, Arro
 import { mediaPreloader } from '../utils/preloader';
 import { usePerformanceDiagnostics } from '../utils/performance';
 import { checkAllPermissions, requestSinglePermission, PermissionStatusItem } from '../utils/permissions';
+import { LOGO_URLS } from '../constants/logos';
 
 interface SmartSplashLoaderProps {
   customMediaList: Array<{ id: string; type: 'image' | 'video'; url: string }>;
@@ -142,12 +143,17 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
         <div className="flex flex-col items-center justify-center mb-4 relative z-10">
           <div className="h-16 px-5 py-2 rounded-2xl bg-[#030304] border border-[#333] flex items-center justify-center shadow-[inset_0_2px_8px_rgba(0,0,0,1)] overflow-hidden min-w-[160px]">
             <img 
-              src="/logo-full.png" 
+              src={LOGO_URLS.full} 
+              referrerPolicy="no-referrer"
               onError={(e) => {
-                const target = e.target as HTMLElement;
-                target.style.display = 'none';
-                const fb = document.getElementById('splash-logo-fallback');
-                if (fb) fb.style.display = 'flex';
+                const img = e.currentTarget;
+                if (img.src !== window.location.origin + LOGO_URLS.fullLocal && !img.src.endsWith(LOGO_URLS.fullLocal)) {
+                  img.src = LOGO_URLS.fullLocal;
+                } else {
+                  img.style.display = 'none';
+                  const fb = document.getElementById('splash-logo-fallback');
+                  if (fb) fb.style.display = 'flex';
+                }
               }}
               alt="HolyLink" 
               className="h-full w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" 
