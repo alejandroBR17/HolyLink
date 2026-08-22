@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 export type PWAIconType = 'symbol' | 'full' | 'text';
 export type PWAIconTheme = 'dark' | 'light' | 'transparent';
 
-const ICON_URLS = {
+const ICON_URLS: Record<PWAIconType, string> = {
   symbol: '/icon-192.png',
   full: '/logo-full.png',
   text: '/logo-text.png'
@@ -21,45 +21,12 @@ export function usePWAIcons() {
     localStorage.setItem('holylink_pwa_icon_type', iconType);
     localStorage.setItem('holylink_pwa_icon_theme', iconTheme);
 
-    const iconUrl = ICON_URLS[iconType];
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const fullIconUrl = origin ? `${origin}${iconUrl}` : iconUrl;
-    const startUrl = origin ? `${origin}/` : './';
+    const iconUrl = ICON_URLS[iconType] || '/icon-192.png';
 
-    const manifest = {
-      "id": startUrl,
-      "name": "HolyLink — Transmissão & Projeção",
-      "short_name": "HolyLink",
-      "description": "Sistema profissional de projeção P2P.",
-      "start_url": startUrl,
-      "scope": startUrl,
-      "display": "standalone",
-      "orientation": "any",
-      "background_color": iconTheme === 'light' ? '#ffffff' : '#020617',
-      "theme_color": iconTheme === 'light' ? '#ffffff' : '#020617',
-      "icons": [
-        {
-          "src": fullIconUrl,
-          "sizes": "192x192",
-          "type": "image/png",
-          "purpose": "any maskable"
-        },
-        {
-          "src": origin ? `${origin}/icon-512.png` : '/icon-512.png',
-          "sizes": "512x512",
-          "type": "image/png",
-          "purpose": "any maskable"
-        }
-      ]
-    };
-
-    const manifestStr = JSON.stringify(manifest);
-    const blob = new Blob([manifestStr], { type: 'application/json' });
-    const manifestBlobUrl = URL.createObjectURL(blob);
-
+    // Keep static /manifest.json as the single authoritative manifest link
     const manifestLink = document.getElementById('pwa-manifest') as HTMLLinkElement;
-    if (manifestLink) {
-      manifestLink.href = manifestBlobUrl;
+    if (manifestLink && manifestLink.getAttribute('href') !== '/manifest.json') {
+      manifestLink.href = '/manifest.json';
     }
 
     const appleIcon = document.getElementById('pwa-apple-icon') as HTMLLinkElement;
@@ -82,11 +49,8 @@ export function usePWAIcons() {
     if (themeColor) {
       themeColor.setAttribute("content", iconTheme === "light" ? "#ffffff" : "#020617");
     }
-
-    return () => {
-      URL.revokeObjectURL(manifestBlobUrl);
-    };
   }, [iconType, iconTheme]);
 
   return { iconType, setIconType, iconTheme, setIconTheme, getIconUrl: () => ICON_URLS[iconType] };
 }
+
