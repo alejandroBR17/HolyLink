@@ -301,7 +301,16 @@ export default function App() {
   const day = String(now.getDate()).padStart(2, '0');
   const todayStr = `${year}-${month}-${day}`;
 
-  const defaultBaseSlides = projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES;
+  const activeCampaignsFiltered = (customCampaigns || []).filter((c) => {
+    if (!c.endDate) return true;
+    return c.endDate >= todayStr;
+  });
+  const hasActiveCampaigns = activeCampaignsFiltered.length > 0;
+
+  const defaultBaseSlides = (projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES).filter(id => {
+    if (id === 'campaigns' && !hasActiveCampaigns) return false;
+    return true;
+  });
   const allAvailableSlides: string[] = [...defaultBaseSlides];
   customMediaList.forEach((media) => {
     if (!allAvailableSlides.includes(media.id)) {
@@ -655,14 +664,13 @@ export default function App() {
                 />
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
-                <div className="flex items-center h-6">
+                <div className="flex items-center h-7">
                   <img 
                     src={LOGO_URLS.text} 
-                    referrerPolicy="no-referrer"
                     onError={(e) => {
                       const img = e.currentTarget;
-                      if (img.src !== window.location.origin + LOGO_URLS.textLocal && !img.src.endsWith(LOGO_URLS.textLocal)) {
-                        img.src = LOGO_URLS.textLocal;
+                      if (img.src !== LOGO_URLS.textCdn) {
+                        img.src = LOGO_URLS.textCdn;
                       } else {
                         img.style.display = 'none';
                         const fallback = document.getElementById('holylink-text-fallback');
@@ -670,7 +678,7 @@ export default function App() {
                       }
                     }}
                     alt="HolyLink" 
-                    className="h-6 w-auto max-w-[130px] object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" 
+                    className="h-6 sm:h-7 w-auto max-w-[150px] object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" 
                   />
                   <span 
                     id="holylink-text-fallback" 

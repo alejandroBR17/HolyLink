@@ -1,7 +1,8 @@
 // Direct CDN & local logo asset references
 export const LOGO_URLS = {
-  // 1. Text only logo
-  text: 'https://i.imgur.com/nfQCp7o.png',
+  // 1. Text only logo (tightly cropped locally to avoid massive vertical whitespace)
+  text: '/logo-text.png',
+  textCdn: 'https://i.imgur.com/nfQCp7o.png',
   textLocal: '/logo-text.png',
 
   // 2. Symbol only (without text)
