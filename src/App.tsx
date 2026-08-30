@@ -98,6 +98,7 @@ export default function App() {
     countdownPaused,
     countdownOffset,
     dismissedJustStarted,
+    
     videoPinBehavior,
     finalMinuteDisplayMode,
     verseDisplayPriority,
@@ -1073,6 +1074,7 @@ export default function App() {
                 customVerseRef={customVerseRef}
                 activeVerseIndex={activeVerseIndex}
                 customMediaList={customMediaList}
+                
                 videoPinBehavior={videoPinBehavior}
                 finalMinuteDisplayMode={finalMinuteDisplayMode}
                 verseDisplayPriority={verseDisplayPriority}
@@ -1118,6 +1120,7 @@ export default function App() {
               customVerseRef={customVerseRef}
               activeVerseIndex={activeVerseIndex}
               customMediaList={customMediaList}
+              
               videoPinBehavior={videoPinBehavior}
               finalMinuteDisplayMode={finalMinuteDisplayMode}
               verseDisplayPriority={verseDisplayPriority}
@@ -1242,6 +1245,7 @@ export default function App() {
           churchInfo={CHURCH_INFO}
           alerts={ALERTS}
           customMediaList={customMediaList}
+          
           videoPinBehavior={videoPinBehavior}
           finalMinuteDisplayMode={finalMinuteDisplayMode}
           verseDisplayPriority={verseDisplayPriority}

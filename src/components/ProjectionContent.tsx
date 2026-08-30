@@ -43,6 +43,7 @@ interface ProjectionContentProps {
   churchInfo: { name: string; location: string };
   alerts: Record<string, { message: string }>;
   customMediaList?: CustomMedia[];
+  
   videoPinBehavior?: string;
   finalMinuteDisplayMode?: 'split' | 'full_video';
   verseDisplayPriority?: 'verse_over_video' | 'video_over_verse';
@@ -84,6 +85,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   churchInfo,
   alerts,
   customMediaList = [],
+  
   videoPinBehavior = 'loop',
   finalMinuteDisplayMode = 'split',
   verseDisplayPriority = 'verse_over_video',

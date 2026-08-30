@@ -20,6 +20,7 @@ interface MonitorPanelProps {
   blackoutEnabled: boolean;
   clearContentEnabled: boolean;
   currentSlideId: string;
+  
   hoursStr: string;
   minutesStr: string;
   diffSeconds: number;
@@ -61,6 +62,7 @@ export function MonitorPanel({
   blackoutEnabled,
   clearContentEnabled,
   currentSlideId,
+  
   hoursStr,
   minutesStr,
   diffSeconds,
@@ -300,6 +302,7 @@ export function MonitorPanel({
                 blackoutEnabled={blackoutEnabled}
                 clearContentEnabled={clearContentEnabled}
                 currentSlideId={currentSlideId}
+                
                 hoursStr={hoursStr}
                 minutesStr={minutesStr}
                 diffSeconds={diffSeconds}

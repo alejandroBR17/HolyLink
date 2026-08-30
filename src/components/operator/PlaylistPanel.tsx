@@ -37,6 +37,7 @@ interface PlaylistPanelProps {
   isUploading: boolean;
   uploadError: string | null;
   videoPinBehavior: 'loop' | 'unpin';
+  
   finalMinuteDisplayMode?: 'split' | 'full_video';
   verseDisplayPriority?: 'verse_over_video' | 'video_over_verse';
   handleMoveMedia: (id: string, direction: 'up' | 'down') => void;
@@ -70,6 +71,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   isUploading,
   uploadError,
   videoPinBehavior,
+  
   finalMinuteDisplayMode = 'split',
   verseDisplayPriority = 'verse_over_video',
   handleMoveMedia,
