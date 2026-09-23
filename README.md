@@ -91,7 +91,7 @@ Ele opera como uma aplicação web progressiva (**PWA**) de alta performance, pe
 
 1. **Clone o repositório:**
    ```bash
-   git clone https://github.com/seu-usuario/holylink.git
+   git clone https://github.com/alejandroBR17/holylink.git
    cd holylink
    ```
 
@@ -128,6 +128,14 @@ Ele opera como uma aplicação web progressiva (**PWA**) de alta performance, pe
 | `Setas Direita / Esquerda` | Avança ou Volta o Slide na fila |
 | `Esc` | Desafixa qualquer mídia manual e retorna ao loop automático |
 | `F` | Alterna modo de tela cheia |
+
+---
+
+## 👨‍💻 Autor & Contato
+
+Desenvolvido por **Alejandro Cortes**  
+- **Email:** ale.sobral.cortes@gmail.com  
+- **GitHub:** [@alejandroBR17](https://github.com/alejandroBR17)  
 
 ---
 

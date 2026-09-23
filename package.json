@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "Painel profissional de transmissão, controle dinâmico e projeção P2P em tempo real.",
+  "author": "Alejandro Cortes <ale.sobral.cortes@gmail.com>",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
