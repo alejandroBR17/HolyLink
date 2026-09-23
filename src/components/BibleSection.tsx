@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Sparkles, RefreshCw, BookOpen, Tag, ChevronDown, X, Filter, Bookmark, Check, Trash2, ArrowRight } from 'lucide-react';
 import { VERSES } from '../data';
+import { getSetting, saveSetting } from '../utils';
 
 interface BibleSectionProps {
   onShowVerse: (text: string, ref: string) => void;
@@ -73,11 +74,9 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
   const [isBookmarksLoaded, setIsBookmarksLoaded] = useState(false);
 
   useEffect(() => {
-    import('../utils').then(({ getSetting }) => {
-      getSetting('custom_saved_bible_verses', []).then(saved => {
-        setCustomBookmarks(saved);
-        setIsBookmarksLoaded(true);
-      });
+    getSetting('custom_saved_bible_verses', []).then(saved => {
+      setCustomBookmarks(saved);
+      setIsBookmarksLoaded(true);
     });
   }, []);
 
@@ -87,10 +86,8 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
   // Salva novos favoritos no IndexedDB
   useEffect(() => {
     if (!isBookmarksLoaded) return;
-    import('../utils').then(({ saveSetting }) => {
-      saveSetting('custom_saved_bible_verses', customBookmarks).catch(e => {
-        console.error('Erro ao salvar favoritos no DB', e);
-      });
+    saveSetting('custom_saved_bible_verses', customBookmarks).catch(e => {
+      console.error('Erro ao salvar favoritos no DB', e);
     });
   }, [customBookmarks, isBookmarksLoaded]);
 

@@ -445,7 +445,6 @@ export function useProjectionState() {
       setCustomVerseRef(localStorage.getItem('projection_customVerseRef') || '');
       setDismissedJustStarted(localStorage.getItem('projection_dismissedJustStarted') === 'true');
       setMediaUpdateTrigger(localStorage.getItem('projection_mediaUpdateTrigger') || '0');
-      setThemeMediaId(localStorage.getItem('projection_themeMediaId'));
       setVideoPinBehavior((localStorage.getItem('projection_videoPinBehavior') as 'unpin' | 'loop') || 'unpin');
       setCarouselStartTimeOffset(parseInt(localStorage.getItem('projection_carouselStartTimeOffset') || '0', 10));
       setIsProjectionOpen(localStorage.getItem('projection_isProjectionOpen') === 'true');

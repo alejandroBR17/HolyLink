@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { ALERTS } from '../../data';
 import { Meeting } from '../../types';
+import { getSetting, saveSetting } from '../../utils';
 import { usePerformanceDiagnostics } from '../../utils/performance';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { PWAInstallModal } from '../PWAInstallModal';
@@ -518,11 +519,9 @@ export function ControlsPanel({
   const [isAlertHistoryLoaded, setIsAlertHistoryLoaded] = useState(false);
 
   useEffect(() => {
-    import('../../utils').then(({ getSetting }) => {
-      getSetting('projection_alert_history', []).then(history => {
-        setAlertHistory(history);
-        setIsAlertHistoryLoaded(true);
-      });
+    getSetting('projection_alert_history', []).then(history => {
+      setAlertHistory(history);
+      setIsAlertHistoryLoaded(true);
     });
   }, []);
 
@@ -566,7 +565,7 @@ export function ControlsPanel({
     // Save to history
     const updated = [message.trim(), ...alertHistory.filter(h => h !== message.trim())].slice(0, 10);
     setAlertHistory(updated);
-    import('../../utils').then(({ saveSetting }) => saveSetting('projection_alert_history', updated));
+    saveSetting('projection_alert_history', updated);
   };
 
   const handleCustomAlertSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -595,7 +594,7 @@ export function ControlsPanel({
   const handleDeleteHistoryItem = (idx: number) => {
     const updated = alertHistory.filter((_, i) => i !== idx);
     setAlertHistory(updated);
-    import('../../utils').then(({ saveSetting }) => saveSetting('projection_alert_history', updated));
+    saveSetting('projection_alert_history', updated);
   };
 
   const tickerSuggestions = [

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Undo2, Shuffle, RefreshCw, Send, MessageSquarePlus, Sparkles, Bell, Check, Trash2 } from 'lucide-react';
 import { BibleSection } from '../BibleSection';
 import { VERSES } from '../../data';
+import { getSetting, saveSetting } from '../../utils';
 
 interface BiblePanelProps {
   activeVerseIndex: number | null;
@@ -64,11 +65,9 @@ export const BiblePanel = React.memo(function BiblePanel({
   const [isNoticesLoaded, setIsNoticesLoaded] = useState(false);
 
   useEffect(() => {
-    import('../../utils').then(({ getSetting }) => {
-      getSetting('projection_saved_notices', []).then(saved => {
-        setSavedNotices(saved);
-        setIsNoticesLoaded(true);
-      });
+    getSetting('projection_saved_notices', []).then(saved => {
+      setSavedNotices(saved);
+      setIsNoticesLoaded(true);
     });
   }, []);
 
@@ -135,18 +134,14 @@ export const BiblePanel = React.memo(function BiblePanel({
 
     const updated = [newNotice, ...savedNotices.filter(n => n.text !== text)];
     setSavedNotices(updated);
-    import('../../utils').then(({ saveSetting }) => {
-      saveSetting('projection_saved_notices', updated);
-      if (notify) notify("Aviso salvo na lista rápida!", "success");
-    });
+    saveSetting('projection_saved_notices', updated);
+    if (notify) notify("Aviso salvo na lista rápida!", "success");
   };
 
   const handleDeleteSavedNotice = (idx: number) => {
     const updated = savedNotices.filter((_, i) => i !== idx);
     setSavedNotices(updated);
-    import('../../utils').then(({ saveSetting }) => {
-      saveSetting('projection_saved_notices', updated);
-    });
+    saveSetting('projection_saved_notices', updated);
   };
 
   const handleClearCustomText = () => {
