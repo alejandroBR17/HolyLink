@@ -332,64 +332,6 @@ export function MonitorPanel({
           </div>
         </div>
 
-        {/* TACTILE PHYSICAL CONTROL CONSOLE BAR FOR OPERATORS */}
-        <div className="relative z-10 bg-[#030303] p-3 rounded-2xl border border-[#222] shadow-[inset_0_2px_10px_rgba(0,0,0,1)] flex flex-col gap-3">
-          <div className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-widest px-1 flex items-center justify-between">
-            <span>PAINEL DE COMANDOS TÁTICOS</span>
-            <span>HARDWARE OVERRIDE</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}
-              className={`p-3.5 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[46px] ${
-                blackoutEnabled
-                  ? 'bg-red-600 border-red-400 text-white shadow-[0_0_25px_rgba(220,38,38,0.6)] animate-pulse'
-                  : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-amber-500/50 text-zinc-200 shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px]'
-              }`}
-            >
-              <EyeOff className={`w-4 h-4 shrink-0 ${blackoutEnabled ? 'text-white' : 'text-amber-500'}`} />
-              <span className="font-sans">{blackoutEnabled ? 'RESTAURAR TELA' : 'BLACKOUT (B)'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}
-              className={`p-3.5 rounded-xl border text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[46px] ${
-                clearContentEnabled
-                  ? 'bg-amber-500 border-amber-400 text-black shadow-[0_0_25px_rgba(245,158,11,0.6)]'
-                  : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-amber-500/50 text-zinc-200 shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px]'
-              }`}
-            >
-              <Eye className={`w-4 h-4 shrink-0 ${clearContentEnabled ? 'text-black' : 'text-amber-500'}`} />
-              <span className="font-sans">{clearContentEnabled ? 'MOSTRAR TEXTO' : 'LIMPAR TEXTO (C)'}</span>
-            </button>
-          </div>
-
-          {/* HDMI OUT BUTTON */}
-          <div className="flex gap-3">
-            {!isProjectionOpen ? (
-              <button
-                type="button"
-                onClick={handleOpenMonitor}
-                className="flex-1 p-3 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-zinc-100 text-xs font-extrabold rounded-xl flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] min-h-[44px]"
-              >
-                <ExternalLink className="w-4 h-4 text-amber-500 shrink-0 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
-                <span className="font-sans">Projetar na 2ª Tela (HDMI)</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleCloseMonitor}
-                className="flex-1 p-3 bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold rounded-xl flex items-center justify-center gap-2.5 cursor-pointer transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] active:translate-y-[2px] min-h-[44px]"
-              >
-                <X className="w-4 h-4 shrink-0" />
-                <span className="font-sans">Fechar 2ª Tela</span>
-              </button>
-            )}
-          </div>
-        </div>
       </section>
 
       {/* PRÓXIMA MÍDIA / A SEGUIR CARD - DESIGN SKEUOMÓRFICO TÁTICO */}
@@ -442,6 +384,7 @@ export function MonitorPanel({
         </div>
       </section>
 
+<details className="holy-disclosure"><summary>Ajuda de projeção e diagnóstico</summary><div>
       {/* HARDWARE DIAGNOSTIC & AUTOMATIC OPTIMIZATION BANNER */}
       <section aria-label="Desempenho e Memória" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 text-left group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
@@ -498,6 +441,7 @@ export function MonitorPanel({
         </div>
       </section>
 
+</div></details>
       {/* HARDWARE BENCHMARK MODAL */}
       <HardwareBenchmarkModal
         isOpen={showBenchmarkModal}

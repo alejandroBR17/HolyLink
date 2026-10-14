@@ -88,6 +88,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filterMode, setFilterMode] = useState<QueueFilterMode>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [queueLimit, setQueueLimit] = useState(() => window.innerWidth < 600 ? 5 : 8);
+  useEffect(() => setQueueLimit(window.innerWidth < 600 ? 5 : 8), [filterMode, searchTerm]);
 
   // Estados para a central de gestão de mídias
   const [mediaViewMode, setMediaViewMode] = useState<'list' | 'grid'>('list');
@@ -318,7 +320,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
+    <div className="playlist-workspace flex flex-col gap-6 w-full">
       
       {/* SEÇÃO DA FILA DE REPRODUÇÃO */}
       <section aria-label="Playlists e Fila de Slides" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
@@ -332,7 +334,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider font-sans">Fila e Sequência de Projeção</h2>
+                <h2 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider font-sans">Sequência de projeção</h2>
                 <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
                   {activeSlides.length} ATIVOS • {formatTotalTime(totalLoopDuration)}
                 </span>
@@ -343,7 +345,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
           {/* CONTROLES DE MODO DE PROJEÇÃO */}
           <div className="flex flex-wrap items-center gap-2">
-            {handleReorderInterleaved && (
+<details className="holy-disclosure queue-organizer"><summary>Organizar sequência</summary><div className="flex flex-wrap gap-2">            {handleReorderInterleaved && (
               <button
                 type="button"
                 onClick={() => {
@@ -394,7 +396,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               </button>
             )}
 
-            {manualSlideOverride ? (
+</div></details>            {manualSlideOverride ? (
               <button
                 type="button"
                 onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
@@ -543,8 +545,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <p className="text-[11px] text-zinc-500">Tente ajustar o termo de pesquisa ou trocar de categoria.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {filteredSlides.map((slideId) => {
+          <div className="queue-list">
+            {filteredSlides.slice(0, queueLimit).map((slideId) => {
               const isActiveInLoop = activeSlides.includes(slideId);
               const isCurrentOnAir = currentSlideId === slideId;
               const isFixedOverride = manualSlideOverride === slideId;
@@ -552,25 +554,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               const activeIndexInQueue = activeSlides.indexOf(slideId);
               const { name, desc, category } = getSlideDetails(slideId);
 
-              // Cores das badges por tipo
-              const getCategoryBadge = () => {
-                switch (category) {
-                  case 'agenda':
-                  case 'evento':
-                    return <span className="bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase">Agenda</span>;
-                  case 'campanha':
-                    return <span className="bg-purple-500/15 border border-purple-500/30 text-purple-400 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase">Campanha</span>;
-                  case 'midia':
-                    return <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase">Mídia Local</span>;
-                  default:
-                    return <span className="bg-zinc-800 border border-zinc-700 text-zinc-400 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase">Slide Fixo</span>;
-                }
-              };
-
               return (
                 <div
                   key={slideId}
-                  className={`p-4 rounded-xl border transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px] ${
+                  className={`queue-row p-4 rounded-xl border transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px] ${
                     isDisabled
                       ? "bg-[#050507] border-[#1f1f22] opacity-50"
                       : isCurrentOnAir
@@ -594,7 +581,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         </span>
                       )}
 
-                      {getCategoryBadge()}
+
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -662,9 +649,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         }`}
                       >
                         <Send className="w-3 h-3" />
-                        <span className="hidden sm:inline">{isFixedOverride ? "Desafixar" : "Projetar"}</span>
+                        <span >{isFixedOverride ? "Desafixar" : "Projetar"}</span>
                       </button>
 
+                      <details className="queue-row-options"><summary aria-label={`Ordenar ${name}`}>Ordenar</summary><div>
                       {/* SUBIR AO TOPO */}
                       <button
                         type="button"
@@ -704,15 +692,18 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       >
                         <ChevronsDown className="w-3.5 h-3.5" />
                       </button>
+                      </div></details>
                     </div>
                   </div>
                 </div>
               );
             })}
+            {filteredSlides.length > queueLimit && <button type="button" className="queue-more" onClick={() => setQueueLimit(queueLimit + 8)}>Mostrar mais slides ({queueLimit} de {filteredSlides.length})</button>}
           </div>
         )}
       </section>
 
+<details className="holy-disclosure media-library"><summary>Biblioteca de mídias ({customMediaList.length})</summary>
       {/* GERENCIADOR DE MÍDIAS CUSTOMIZADAS */}
       <section aria-label="Gerenciador de Mídias Customizadas" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
@@ -903,6 +894,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           </div>
         </div>
 
+<details className="holy-disclosure"><summary>Comportamento de vídeos e textos</summary><div>
         {/* COMPORTAMENTO VÍDEO FIXO */}
         <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Ação ao Término de Vídeos Fixados:</span>
@@ -1006,6 +998,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           </div>
         </div>
 
+</div></details>
         {/* LISTA OU GRADE DE MÍDIAS LOCAIS */}
         {filteredCustomMedia.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 text-zinc-400 text-xs text-center py-10 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
@@ -1361,7 +1354,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             })}
           </div>
         )}
-      </section>
+      </section></details>
+
 
       {/* MODAL DE PRÉ-VISUALIZAÇÃO EXPANDIDA */}
       {previewMedia && (

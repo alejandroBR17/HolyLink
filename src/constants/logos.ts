@@ -1,15 +1,6 @@
-// Direct CDN & local logo asset references
+// Assets downloaded from the original sources; no runtime CDN dependency.
 export const LOGO_URLS = {
-  // 1. Text only logo (tightly cropped locally to avoid massive vertical whitespace)
-  text: '/logo-text.png',
-  textCdn: 'https://i.imgur.com/nfQCp7o.png',
-  textLocal: '/logo-text.png',
-
-  // 2. Symbol only (without text)
-  symbol: 'https://i.imgur.com/pMBaMxp.png',
-  symbolLocal: '/icon-192.png',
-
-  // 3. Full Logo (symbol + text)
-  full: 'https://i.imgur.com/mY1f23o.png',
-  fullLocal: '/logo-full.png'
+  text: '/brand/hl-text-20261014.webp', textCdn: '/brand/hl-text-20261014.webp', textLocal: '/brand/hl-text-20261014.webp',
+  symbol: '/brand/hl-symbol-20261014.webp', symbolLocal: '/brand/hl-symbol-20261014.webp',
+  full: '/brand/hl-full-20261014.webp', fullLocal: '/brand/hl-full-20261014.webp'
 } as const;

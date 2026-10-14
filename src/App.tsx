@@ -590,7 +590,7 @@ export default function App() {
 
   if (!isProjectionView && !isLocalProjection) {
     return (
-      <div className="w-full h-full bg-[#09090b] text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
+      <div className="operator-shell w-full h-full text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
         
         {/* GLOBAL SYNC OVERLAY */}
         <AnimatePresence>
@@ -649,184 +649,23 @@ export default function App() {
           </div>
         )}
 
-        {/* TOP BAR / NAVIGATION - SKEUOMORPHIC RACK-MOUNT FRAME */}
-        <header className={`operator-header px-4 lg:px-6 bg-[#08080a] flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-20 shrink-0 shadow-[0_8px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] relative transition-all duration-300 ${
-          isScrolledDown
-            ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:h-16 lg:py-0 lg:opacity-100 lg:border-b lg:border-[#27272a] lg:pointer-events-auto'
-            : 'max-h-[500px] h-auto lg:h-16 py-3 lg:py-0 border-b border-[#27272a] opacity-100'
-        }`}>
-          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-          
-          <div className="relative z-10 flex items-center justify-between w-full lg:w-auto gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/40 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] shrink-0 bg-[#111113] flex items-center justify-center p-1 group">
-                <img 
-                  src={LOGO_URLS.symbol} 
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const img = e.currentTarget;
-                    if (img.src !== window.location.origin + LOGO_URLS.symbolLocal && !img.src.endsWith(LOGO_URLS.symbolLocal)) {
-                      img.src = LOGO_URLS.symbolLocal;
-                    }
-                  }}
-                  alt="HolyLink Símbolo" 
-                  className="w-full h-full object-contain rounded-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" 
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
-                <div className="flex items-center h-7">
-                  <img 
-                    src={LOGO_URLS.text} 
-                    onError={(e) => {
-                      const img = e.currentTarget;
-                      if (img.src !== LOGO_URLS.textCdn) {
-                        img.src = LOGO_URLS.textCdn;
-                      } else {
-                        img.style.display = 'none';
-                        const fallback = document.getElementById('holylink-text-fallback');
-                        if (fallback) fallback.style.display = 'inline-block';
-                      }
-                    }}
-                    alt="HolyLink" 
-                    className="h-6 sm:h-7 w-auto max-w-[150px] object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" 
-                  />
-                  <span 
-                    id="holylink-text-fallback" 
-                    className="hidden font-sans font-black text-lg tracking-wider text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                  >
-                    HOLYLINK
-                  </span>
-                </div>
-                <span className="text-zinc-300 text-xs font-black sm:border-l sm:border-[#333] sm:pl-2.5 font-sans uppercase tracking-wider">
-                  Painel do Operador
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-[#0d0d0f] border border-[#2a2a2e] px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold text-zinc-300 uppercase tracking-wider shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
-                {localStorage.getItem('projection_deviceRole') === 'phone' ? (
-                  <span className="flex items-center gap-1 text-amber-400 font-black">
-                    <Smartphone className="w-3.5 h-3.5" />
-                    Móvel
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-zinc-300">
-                    <Monitor className="w-3.5 h-3.5 text-amber-500" />
-                    Console
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="operator-header-actions relative z-10 grid grid-cols-2 sm:flex items-center gap-2 w-full lg:w-auto">
-            {isElectron && (
-              <button
-                type="button"
-                aria-label={isProjectionWindowShowing ? 'Apagar Projetor' : 'Ligar Projetor'}
-                onClick={() => {
-                  if (isProjectionWindowShowing) {
-                    ipcRendererRef.current?.send('hide-projection');
-                    setIsProjectionWindowShowing(false);
-                  } else {
-                    ipcRendererRef.current?.send('show-projection');
-                    setIsProjectionWindowShowing(true);
-                  }
-                }}
-                className={`col-span-1 sm:flex-none min-h-[38px] border text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ${
-                  isProjectionWindowShowing
-                    ? 'bg-red-950/80 border-red-800/80 hover:bg-red-900/80 text-red-300 shadow-[0_0_12px_rgba(220,38,38,0.2)]'
-                    : 'bg-emerald-950/80 border-emerald-800/80 hover:bg-emerald-900/80 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
-                }`}
-              >
-                <Tv className="w-3.5 h-3.5 shrink-0" />
-                <span className="whitespace-nowrap truncate">{isProjectionWindowShowing ? 'Apagar' : 'Ligar Projetor'}</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              aria-label="Projetar neste navegador"
-              onClick={() => {
-                setIsLocalProjection(true);
-                toggleFullscreen();
-              }}
-              className="col-span-1 sm:flex-none min-h-[38px] bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-200 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]"
-            >
-              <Monitor className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="whitespace-nowrap truncate">Projetar Aqui</span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="Sincronizar ou conectar celular"
-              onClick={() => setActiveMobileTab('sync')}
-              className={`col-span-1 sm:flex-none min-h-[38px] border text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ${
-                activeMobileTab === 'sync'
-                  ? 'bg-amber-500 border-amber-400 text-black font-black shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-                  : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-[#444] text-zinc-300'
-              }`}
-            >
-              <Smartphone className="w-3.5 h-3.5 shrink-0" />
-              <span className="whitespace-nowrap truncate">Conectar Celular</span>
-            </button>
-
-            {!isInstalled && (
-              <button
-                type="button"
-                aria-label="Instalar App HolyLink"
-                onClick={() => setShowPwaModal(true)}
-                className="col-span-1 sm:flex-none min-h-[38px] bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-amber-900/50 hover:border-amber-500/50 text-amber-400 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-              >
-                <Download className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="whitespace-nowrap truncate">Instalar</span>
-              </button>
-            )}
-
-            {!isProjectionOpen ? (
-              <button
-                type="button"
-                aria-label="Abrir janela do monitor em segunda tela"
-                onClick={() => {
-                  try {
-                    const url = window.location.origin + window.location.pathname + '?projection';
-                    const newWin = window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
-                    if (newWin) {
-                      setProjectionWin(newWin);
-                      updateStateAndBroadcast('isProjectionOpen', true);
-                      updateStateAndBroadcast('projectionCloseTrigger', null);
-                    } else {
-                      showAlert('A janela de projeção foi bloqueada pelo navegador. Permita pop-ups nas configurações e tente novamente.', 'error');
-                    }
-                  } catch (err) {
-                    showAlert('Erro ao tentar abrir a janela de projeção. Verifique permissões de pop-up.', 'error');
-                  }
-                }}
-                className="col-span-2 sm:col-span-1 sm:w-auto min-h-[38px] bg-amber-500 hover:bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all cursor-pointer active:translate-y-[1px]"
-              >
-                <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-                <span className="whitespace-nowrap">Monitor 2ª Tela</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                aria-label="Fechar janela do monitor em segunda tela"
-                onClick={() => {
-                  setProjectionWin(null);
-                  updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
-                  updateStateAndBroadcast('isProjectionOpen', false);
-                }}
-                className="col-span-2 sm:col-span-1 sm:w-auto min-h-[38px] bg-red-600 hover:bg-red-500 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(220,38,38,0.35)] transition-all cursor-pointer active:translate-y-[1px]"
-              >
-                <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-                <span className="whitespace-nowrap">Fechar 2ª Tela</span>
-              </button>
-            )}
+        <header className="holy-topbar">
+          <div className="holy-brand"><img src={LOGO_URLS.symbol} alt="Símbolo HolyLink" width={44} height={44} /><div><h1>HolyLink</h1><span>Projeção · 16:9</span></div></div>
+          <div className="holy-header-actions">
+            <button type="button" className="holy-output-button" onClick={() => {
+              if (isProjectionOpen) {setProjectionWin(null); updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString()); updateStateAndBroadcast('isProjectionOpen', false); return;}
+              const win = window.open(window.location.origin + window.location.pathname + '?projection', 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
+              if (!win) {showAlert('Permita a abertura de janelas para usar o telão.', 'error'); return;}
+              setProjectionWin(win); updateStateAndBroadcast('isProjectionOpen', true); updateStateAndBroadcast('projectionCloseTrigger', null);
+            }}><ExternalLink size={18} aria-hidden="true" /><span>{isProjectionOpen ? 'Fechar telão' : 'Abrir telão'}</span></button>
+            <details className="holy-options"><summary aria-label="Mais opções">Opções<ChevronDown size={16} aria-hidden="true" /></summary><div>
+              <button type="button" onClick={event => {setIsLocalProjection(true); toggleFullscreen(); event.currentTarget.closest('details')?.removeAttribute('open');}}><Maximize size={18} />Projetar neste aparelho</button>
+              <button type="button" onClick={event => {setActiveMobileTab('sync'); event.currentTarget.closest('details')?.removeAttribute('open');}}><Smartphone size={18} />Conectar celular</button>
+              <button type="button" onClick={event => {setShowPwaModal(true); event.currentTarget.closest('details')?.removeAttribute('open');}}><Download size={18} />Instalar HolyLink</button>
+              {isElectron && <button type="button" onClick={() => {ipcRendererRef.current?.send(isProjectionWindowShowing ? 'hide-projection' : 'show-projection'); setIsProjectionWindowShowing(!isProjectionWindowShowing);}}><Tv size={18} />Alternar janela do projetor</button>}
+            </div></details>
           </div>
         </header>
-
         {/* ACTIVE BROADCAST HEADER BANNER - SKEUOMORPHIC LED DISPLAY */}
         {isJustStartedRaw && (
           <div className={`px-4 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all duration-300 z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
@@ -868,93 +707,16 @@ export default function App() {
           </div>
         )}
 
-        {/* MOBILE NAVIGATION TABS (Skeuomorphic hardware console tabs) */}
-        <nav aria-label="Navegação Principal do Operador" className="lg:hidden flex items-center overflow-x-auto no-scrollbar bg-[#050507] border-b border-[#222] sticky top-0 z-20 shrink-0 p-1.5 gap-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.95)]">
+        <nav className="holy-navigation" role="tablist" aria-label="Áreas do operador">
           {[
-            { id: 'slides', label: 'Mídias', icon: Layout },
-            { id: 'texts', label: 'Bíblia', icon: BookOpen },
-            { id: 'agenda', label: 'Agenda', icon: CalendarDays },
-            { id: 'controls', label: 'Ações', icon: Settings },
-            { id: 'sync', label: 'Celular', icon: RefreshCw },
-            { id: 'monitor', label: 'Monitor', icon: Monitor },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeMobileTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-label={`Aba ${tab.label}`}
-                onClick={() => setActiveMobileTab(tab.id as any)}
-                className={`flex-1 min-w-[56px] py-2 px-1 text-[10px] font-extrabold uppercase tracking-wider flex flex-col items-center justify-center gap-1 transition-all cursor-pointer rounded-xl relative overflow-hidden active:translate-y-[1px] ${
-                  isActive
-                    ? "bg-amber-500 border border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                    : "bg-[#111113] text-zinc-400 border border-[#27272a] hover:text-white hover:border-[#333]"
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 shrink-0 relative z-10 transition-colors ${isActive ? 'text-black' : 'text-zinc-400'}`} />
-                <span className="truncate max-w-full relative z-10 text-[9px]">{tab.label}</span>
-              </button>
-            );
-          })}
+            {id:'slides',label:'Sequência',icon:Layout}, {id:'texts',label:'Bíblia',icon:BookOpen},
+            {id:'agenda',label:'Agenda',icon:CalendarDays}, {id:'controls',label:'Ajustes',icon:Settings},
+            {id:'sync',label:'Conexão',icon:Smartphone}, {id:'monitor',label:'Monitor',icon:Monitor}
+          ].map(tab => {const Icon = tab.icon; return <button type="button" role="tab" key={tab.id} aria-selected={activeMobileTab===tab.id} aria-label={'Aba '+tab.label} onClick={() => setActiveMobileTab(tab.id as any)}><Icon size={19} aria-hidden="true" /><span>{tab.label}</span></button>;})}
         </nav>
-
         {/* MAIN PANEL CONTENT GRID */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
+        <div className="operator-workspace flex-1 flex flex-col overflow-hidden min-h-0">
           
-          {/* DESKTOP SIDEBAR PANEL - SKEUOMORPHIC RACK DECK */}
-          <aside className="hidden lg:flex flex-col w-[240px] px-4 bg-[#070709] border-r border-[#27272a] py-6 shrink-0 justify-between shadow-[inset_-10px_0_20px_rgba(0,0,0,0.8)] relative">
-            <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-            
-            <div className="relative z-10 flex flex-col gap-6">
-              <div className="flex items-center justify-between border-b border-[#222] pb-3 px-1">
-                <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest font-mono">NAVEGAÇÃO DECK</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
-              </div>
-              
-              <nav aria-label="Navegação Lateral" className="flex flex-col gap-2">
-                {[
-                  { id: 'slides', label: 'Playlists & Mídias', icon: Layout },
-                  { id: 'texts', label: 'Textos & Bíblia', icon: BookOpen },
-                  { id: 'agenda', label: 'Agenda & Eventos', icon: CalendarDays },
-                  { id: 'controls', label: 'Controles Gerais', icon: Settings },
-                  { id: 'sync', label: 'Sincronizar Celular', icon: RefreshCw },
-                ].map((item) => {
-                  const IconComponent = item.icon;
-                  const isActive = activeMobileTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      title={item.label}
-                      onClick={() => setActiveMobileTab(item.id as any)}
-                      className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-extrabold transition-all text-left cursor-pointer active:translate-y-[1px] relative overflow-hidden group ${
-                        isActive
-                          ? "bg-amber-500 border border-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.35)] font-black"
-                          : "bg-[#0d0d0f] text-zinc-400 border border-[#222] hover:bg-[#141417] hover:border-[#333] hover:text-zinc-200"
-                      }`}
-                    >
-                      <IconComponent className={`w-4 h-4 shrink-0 relative z-10 transition-colors ${isActive ? "text-black" : "text-amber-500/80 group-hover:text-amber-400"}`} />
-                      <span className="relative z-10 truncate">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-
-            {/* Sidebar Footer status */}
-            <div className="relative z-10 border-t border-[#222] pt-4 px-2 flex flex-col gap-1.5 text-left bg-[#030304] p-3 rounded-xl border">
-              <span className="text-[9px] text-zinc-500 font-black uppercase font-mono tracking-widest">STATUS HARDWARE</span>
-              <div className="flex items-center gap-2 text-[10px] text-zinc-300 font-mono font-bold">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
-                <span>OPERADOR ON-LINE</span>
-              </div>
-            </div>
-          </aside>
 
           {/* ACTIVE CONTENT WORKSPACE */}
           <nav className="operator-quick-strip" aria-label="Controles essenciais da projeção">
@@ -962,19 +724,8 @@ export default function App() {
             <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />{clearContentEnabled ? 'Mostrar texto' : 'Limpar texto'}</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(-1)}><ChevronLeft size={18} aria-hidden="true" />Slide anterior</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
-          </nav>          <main onScroll={handleMainScroll} className="flex-1 overflow-y-auto bg-zinc-950/20 p-3.5 sm:p-6 pb-36 lg:pb-28 flex flex-col gap-4 sm:gap-6 min-h-0">
+          </nav>          <main onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">
             
-            <div className="text-left flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-amber-500 font-black uppercase tracking-widest block">
-                  {activeMobileTab === 'slides' ? 'Mídia' : activeMobileTab === 'texts' ? 'Escrituras' : activeMobileTab === 'agenda' ? 'Programação' : activeMobileTab === 'controls' ? 'Broadcasting' : 'Segurança'}
-                </span>
-                <h2 className="text-base sm:text-xl font-extrabold text-zinc-100 uppercase tracking-tight mt-0.5">
-                  {activeMobileTab === 'slides' ? 'Fila de Mídias & Slides' : activeMobileTab === 'texts' ? 'Bíblia & Textos' : activeMobileTab === 'agenda' ? 'Programação & Agenda' : activeMobileTab === 'controls' ? 'Controles & Stage' : 'Conexão & Backup'}
-                </h2>
-              </div>
-            </div>
-
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (
               <PlaylistPanel
@@ -1111,62 +862,7 @@ export default function App() {
             )}
           </main>
 
-          {/* DESKTOP RIGHT PREVIEW MONITOR SIDEBAR */}
-          <aside className="hidden lg:flex w-[320px] xl:w-[360px] border-l border-zinc-900 bg-zinc-950/40 p-6 flex-col gap-6 overflow-y-auto shrink-0 text-left">
-            <MonitorPanel
-              projectionWin={null}
-              setProjectionWin={setProjectionWin}
-              currentTime={currentTime}
-              isLooping={isLooping}
-              isFinalFiveMinutes={isFinalFiveMinutes}
-              isFinalMinute={isFinalMinute}
-              isJustStarted={isJustStarted}
-              activeAlert={activeAlert}
-              blackoutEnabled={blackoutEnabled}
-              clearContentEnabled={clearContentEnabled}
-              currentSlideId={currentSlideId}
-              hoursStr={hoursStr}
-              minutesStr={minutesStr}
-              diffSeconds={diffSeconds}
-              formatMinutesPart={formatMinutesPart}
-              formatSecondsPart={formatSecondsPart}
-              customVerseText={customVerseText}
-              customVerseRef={customVerseRef}
-              activeVerseIndex={activeVerseIndex}
-              customMediaList={customMediaList}
-              
-              videoPinBehavior={videoPinBehavior}
-              finalMinuteDisplayMode={finalMinuteDisplayMode}
-              verseDisplayPriority={verseDisplayPriority}
-              loopIteration={loopIteration}
-              updateStateAndBroadcast={updateStateAndBroadcast}
-              customMeetings={customMeetings}
-              customCampaigns={customCampaigns}
-              nextMeeting={nextMeeting}
-              nextMeetingDate={nextMeetingDate}
-              ongoingMeeting={ongoingMeeting}
-              volume={volume}
-              tickerText={tickerText}
-              background3DStyle={background3DStyle}
-              background3DFps={background3DFps}
-              background3DIntensity={background3DIntensity}
-              syncStatus={syncStatus}
-              isProjectionOpen={isProjectionOpen}
-              activeSlides={activeSlides}
-            />
 
-            <div className="text-xs text-zinc-500 leading-relaxed mt-4 border-t border-zinc-900 pt-4">
-              <strong>Guia de Transmissão:</strong>
-              <br />
-              1. Conecte o projetor ou TV na saída HDMI da sua máquina.
-              <br />
-              2. Use o botão <strong>"Abrir Monitor"</strong> acima.
-              <br />
-              3. Na janela que abrir na TV, clique em qualquer lugar para ativar a <strong>Tela Cheia</strong> automática.
-              <br />
-              4. Use este painel para monitorar, trocar slides e disparar alertas instantâneos!
-            </div>
-          </aside>
         </div>
 
         <CustomModal 

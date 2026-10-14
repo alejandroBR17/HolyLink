@@ -609,6 +609,7 @@ export function ControlsPanel({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full animate-in fade-in duration-200">
       
+<details className="holy-disclosure"><summary>Projeção, efeitos e cronômetro</summary>
       {/* COLUMN 1: PROJECTION & TIMERS */}
       <div className="flex flex-col gap-6">
         
@@ -1110,6 +1111,8 @@ export function ControlsPanel({
         </div>
       </div>
 
+</details>
+<details className="holy-disclosure"><summary>Avisos, áudio e letreiro</summary>
       {/* COLUMN 2: ALERTS & AUDIO & LETREIRO */}
       <div className="flex flex-col gap-6">
         
@@ -1290,7 +1293,7 @@ export function ControlsPanel({
         </div>
 
         {/* PERFORMANCE & ANTI-LAG MODULE */}
-        <PerformanceControlModule />
+
 
         {/* AUDIO MIXER MODULE */}
         <div className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-4 group">
@@ -1354,6 +1357,8 @@ export function ControlsPanel({
 
       </div>
 
+</details>
+<details className="holy-disclosure"><summary>Desempenho e energia</summary><PerformanceControlModule /></details>
       <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
     </div>
   );

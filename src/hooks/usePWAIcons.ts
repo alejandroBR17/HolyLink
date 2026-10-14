@@ -1,14 +1,8 @@
 import { useState, useEffect } from 'react';
-import { LOGO_URLS } from '../constants/logos';
+
 
 export type PWAIconType = 'symbol' | 'full' | 'text';
 export type PWAIconTheme = 'dark' | 'light' | 'transparent';
-
-const ICON_URLS: Record<PWAIconType, string> = {
-  symbol: LOGO_URLS.symbol,
-  full: LOGO_URLS.full,
-  text: LOGO_URLS.text
-};
 
 export function usePWAIcons() {
   const [iconType, setIconType] = useState<PWAIconType>(() => {
@@ -22,7 +16,9 @@ export function usePWAIcons() {
     localStorage.setItem('holylink_pwa_icon_type', iconType);
     localStorage.setItem('holylink_pwa_icon_theme', iconTheme);
 
-    const iconUrl = ICON_URLS[iconType] || '/icon-192.png';
+    const type = ['symbol','full','text'].includes(iconType) ? iconType : 'symbol';
+    const theme = ['dark','light','transparent'].includes(iconTheme) ? iconTheme : 'transparent';
+    const iconUrl = '/pwa/local-'+type+'-'+theme+'-192.png';
 
     // Keep static /manifest.json as the single authoritative manifest link
     const manifestLink = document.getElementById('pwa-manifest') as HTMLLinkElement;
@@ -42,7 +38,7 @@ export function usePWAIcons() {
 
     const icon512 = document.getElementById('pwa-icon-512') as HTMLLinkElement;
     if (icon512) {
-      icon512.href = iconUrl;
+      icon512.href = '/pwa/local-'+type+'-'+theme+'-512.png';
     }
 
     // Dynamic theme color update
@@ -52,6 +48,6 @@ export function usePWAIcons() {
     }
   }, [iconType, iconTheme]);
 
-  return { iconType, setIconType, iconTheme, setIconTheme, getIconUrl: () => ICON_URLS[iconType] };
+  return { iconType, setIconType, iconTheme, setIconTheme, getIconUrl: () => '/pwa/local-'+(['symbol','full','text'].includes(iconType)?iconType:'symbol')+'-'+(['dark','light','transparent'].includes(iconTheme)?iconTheme:'transparent')+'-192.png' };
 }
 

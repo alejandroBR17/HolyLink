@@ -1,15 +1,5 @@
-const CACHE_NAME = 'holylink-pwa-v9';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.png',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png',
-  '/logo-full.png',
-  '/logo-text.png'
-];
+const CACHE_NAME = 'holylink-pwa-v10-local-images';
+const urlsToCache = ['/', '/index.html', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/local-symbol-dark-192.png', '/pwa/local-symbol-dark-512.png'];
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {

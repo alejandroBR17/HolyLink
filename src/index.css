@@ -79,3 +79,57 @@ html, body, #root {
 :is(.operator-card,.operator-quick-strip) :is(button,input,textarea):focus-visible { outline:2px solid #f2bf68; outline-offset:3px; }
 @media(max-width:1023px) { .operator-header-actions button { grid-column:span 1 !important; min-height:44px; } .operator-quick-strip { padding:10px 14px; gap:6px; } .operator-quick-strip button { flex-direction:column; gap:4px; padding:7px 4px; font-size:11px; } }
 @media(max-width:600px) { .operator-card { padding:16px; } .operator-actions > button { flex:1; } .operator-section-heading h3 { font-size:20px; } .notice-library { grid-template-columns:1fr; } }
+.operator-shell { background:#101116; color:#f4f0e9; }
+.holy-topbar { padding:16px 24px; display:flex; gap:14px; align-items:center; justify-content:space-between; background:#1b1a20; border-bottom:1px solid #383139; }
+.holy-brand { display:flex; align-items:center; gap:12px; min-width:0; }
+.holy-brand img { border-radius:12px; object-fit:contain; flex-shrink:0; }
+.holy-brand h1 { font-size:21px; font-weight:700; line-height:1.2; }
+.holy-brand span { display:block; margin-top:4px; font-size:11px; color:#c5b8a4; }
+.holy-header-actions { display:flex; gap:10px; align-items:center; }
+.holy-output-button,.holy-options summary { min-height:44px; display:flex; align-items:center; justify-content:center; gap:8px; padding:11px 15px; border-radius:12px; border:1px solid #5e4b32; font-size:13px; font-weight:600; cursor:pointer; }
+.holy-output-button { background:linear-gradient(#f2c36c,#dba443); color:#251a0d; }
+.holy-options { position:relative; }
+.holy-options summary { color:#eee2d1; background:#242128; list-style:none; }
+.holy-options[open] > div { position:absolute; right:0; top:calc(100% + 8px); z-index:100; width:270px; max-width:calc(100vw - 24px); padding:8px; border:1px solid #53424a; border-radius:16px; background:#222027; box-shadow:0 16px 40px #0008; }
+.holy-options button { display:flex; gap:10px; align-items:center; width:100%; min-height:44px; padding:10px; text-align:left; font-size:13px; border-radius:10px; color:#eee6d9; }
+.holy-options button:hover { background:#3a3030; }
+.holy-navigation { display:flex; gap:8px; overflow-x:auto; flex-shrink:0; padding:10px 24px; background:#17171d; border-bottom:1px solid #383139; }
+.holy-navigation button { display:flex; gap:8px; align-items:center; justify-content:center; min-height:44px; padding:10px 18px; border-radius:12px; font-size:13px; font-weight:600; color:#bfb8b4; flex-shrink:0; }
+.holy-navigation button[aria-selected=true] { background:#3b3022; color:#f0c477; box-shadow:inset 0 0 0 1px #756044; }
+.operator-main { padding:24px max(20px,calc((100vw - 1120px)/2)) 80px; }
+.operator-quick-strip { display:flex; justify-content:center; background:#16161c; padding:10px 20px; }
+.operator-quick-strip button { flex:1; max-width:260px; }
+.operator-shell :is(h2,h3,h4) { text-transform:none; letter-spacing:0; }
+.operator-shell :is(section,.operator-card) { border-color:#3c353b; box-shadow:0 8px 20px #0003; }
+.operator-shell [style*="linear-gradient(#fff 1px"] { display:none; }
+.operator-shell svg { filter:none; }
+.operator-shell :is(.animate-ping,.animate-pulse) { animation:none; }
+.holy-disclosure { border:1px solid #42373c; background:#1c1a20; border-radius:17px; padding:0; min-width:0; }
+.holy-disclosure > summary { list-style:none; padding:18px; min-height:54px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:14px; font-weight:600; color:#e8dbc7; }
+.holy-disclosure > summary::after { content:'+'; color:#e8bd73; font-size:22px; }
+.holy-disclosure[open] > summary::after { content:'−'; }
+.holy-disclosure > :not(summary) { margin:0 16px 16px; }
+.queue-list { display:grid; grid-template-columns:1fr; gap:10px; }
+.queue-row { min-height:0; padding:14px 16px; gap:9px; box-shadow:none!important; }
+.queue-row > .absolute { display:none; }
+.queue-row > div:nth-of-type(2) { border-bottom:0; padding-bottom:0; margin-bottom:0; }
+.queue-row h3 { font-size:15px; }
+.queue-row > div:nth-of-type(3) p { display:none; }
+.queue-row button { min-height:40px; min-width:40px; }
+.queue-row-options { position:relative; }
+.queue-row-options summary { list-style:none; cursor:pointer; min-height:40px; padding:10px; font-size:12px; color:#d9c7ad; border:1px solid #55434b; border-radius:10px; }
+.queue-row-options[open] > div { display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; }
+.operator-shell :is(button,summary,input,textarea,select):focus-visible { outline:2px solid #ecc06f; outline-offset:3px; }
+@media(min-width:750px) { .queue-row { display:grid; grid-template-columns:minmax(0,1fr) auto; } .queue-row > div:nth-of-type(2) { grid-column:1/-1; } .queue-row > div:nth-of-type(3) { grid-column:1; grid-row:2; align-self:center; } .queue-row > div:nth-of-type(4) { grid-column:2; grid-row:2; } }
+@media(max-width:600px) { .holy-topbar { padding:12px; gap:8px; } .holy-brand { gap:8px; } .holy-brand img { width:34px; height:34px; } .holy-brand h1 { font-size:18px; } .holy-output-button,.holy-options summary { font-size:11px; padding:9px; gap:5px; } .holy-navigation { padding:8px 12px; gap:5px; } .holy-navigation button { flex-direction:column; padding:8px 12px; font-size:11px; gap:4px; } .operator-main { padding:16px 12px 60px; } .operator-quick-strip { padding:8px 12px; gap:5px; } .operator-quick-strip button { font-size:10px; } }
+.operator-shell :is([class~="opacity-[0.02]"],[class~="opacity-[0.03]"]) { display:none; }
+.queue-row > div:nth-of-type(4) { border-top:0; padding-top:0; }
+.queue-more { grid-column:1/-1; min-height:48px; border:1px solid #514449; border-radius:12px; color:#edc17a; background:#242028; font-size:13px; font-weight:600; cursor:pointer; }
+.queue-organizer summary { padding:10px 12px; min-height:44px; font-size:12px; }
+.queue-organizer { min-width:210px; }
+.queue-organizer > div { margin-top:10px; }
+@media(min-width:750px) { .queue-row { grid-template-columns:120px minmax(0,1fr) auto; align-items:center; } .queue-row > div:nth-of-type(2) { grid-column:1; grid-row:1; } .queue-row > div:nth-of-type(3) { grid-column:2; grid-row:1; } .queue-row > div:nth-of-type(4) { grid-column:3; grid-row:1; } }
+@media(max-width:600px) { .holy-navigation { gap:3px; } .holy-navigation button { flex:1; min-width:0; padding:8px 2px; font-size:9.5px; } .holy-navigation span { white-space:nowrap; } }
+.queue-row > div:nth-of-type(2) { flex-direction:column; align-items:flex-start; gap:5px; }
+.queue-row > div:nth-of-type(2) > div { flex-wrap:wrap; gap:4px; }
+.queue-row button,.queue-row-options summary { min-height:44px; min-width:44px; }
