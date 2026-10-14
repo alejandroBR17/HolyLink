@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen, 
   CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download, Sparkles,
-  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, EyeOff, Eye
 } from 'lucide-react';
 import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS } from './data';
 import { getNextMeeting, getSlideDuration } from './utils';
@@ -560,6 +560,15 @@ export default function App() {
     }
   }, [videoPinBehavior, currentSlideId, activeSlides, customMediaList, updateStateAndBroadcast]);
 
+  const navigateOutput = (direction: number) => {
+    if (!activeSlides.length) return;
+    const index = activeSlides.indexOf(currentSlideId);
+    const next = ((index < 0 ? 0 : index) + direction + activeSlides.length) % activeSlides.length;
+    updateStateAndBroadcast('customVerseText', null);
+    updateStateAndBroadcast('customVerseRef', null);
+    updateStateAndBroadcast('activeVerseIndex', null);
+    updateStateAndBroadcast('manualSlideOverride', activeSlides[next]);
+  };
   const [isCurrentlyFullscreen, setIsCurrentlyFullscreen] = useState(false);
 
   useEffect(() => {
@@ -641,7 +650,7 @@ export default function App() {
         )}
 
         {/* TOP BAR / NAVIGATION - SKEUOMORPHIC RACK-MOUNT FRAME */}
-        <header className={`px-4 lg:px-6 bg-[#08080a] flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-20 shrink-0 shadow-[0_8px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] relative transition-all duration-300 ${
+        <header className={`operator-header px-4 lg:px-6 bg-[#08080a] flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-20 shrink-0 shadow-[0_8px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] relative transition-all duration-300 ${
           isScrolledDown
             ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:h-16 lg:py-0 lg:opacity-100 lg:border-b lg:border-[#27272a] lg:pointer-events-auto'
             : 'max-h-[500px] h-auto lg:h-16 py-3 lg:py-0 border-b border-[#27272a] opacity-100'
@@ -712,7 +721,7 @@ export default function App() {
             </div>
           </div>
           
-          <div className="relative z-10 grid grid-cols-2 sm:flex items-center gap-2 w-full lg:w-auto">
+          <div className="operator-header-actions relative z-10 grid grid-cols-2 sm:flex items-center gap-2 w-full lg:w-auto">
             {isElectron && (
               <button
                 type="button"
@@ -948,7 +957,12 @@ export default function App() {
           </aside>
 
           {/* ACTIVE CONTENT WORKSPACE */}
-          <main onScroll={handleMainScroll} className="flex-1 overflow-y-auto bg-zinc-950/20 p-3.5 sm:p-6 pb-36 lg:pb-28 flex flex-col gap-4 sm:gap-6 min-h-0">
+          <nav className="operator-quick-strip" aria-label="Controles essenciais da projeção">
+            <button type="button" aria-pressed={blackoutEnabled} onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}><EyeOff size={18} aria-hidden="true" />{blackoutEnabled ? 'Restaurar tela' : 'Blackout'}</button>
+            <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />{clearContentEnabled ? 'Mostrar texto' : 'Limpar texto'}</button>
+            <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(-1)}><ChevronLeft size={18} aria-hidden="true" />Slide anterior</button>
+            <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
+          </nav>          <main onScroll={handleMainScroll} className="flex-1 overflow-y-auto bg-zinc-950/20 p-3.5 sm:p-6 pb-36 lg:pb-28 flex flex-col gap-4 sm:gap-6 min-h-0">
             
             <div className="text-left flex items-center justify-between">
               <div>
@@ -1206,8 +1220,8 @@ export default function App() {
           <div className="bg-amber-500 text-black p-6 rounded-full mb-6 shadow-[0_0_50px_rgba(245,158,11,0.4)] animate-bounce">
             <Maximize className="w-12 h-12" />
           </div>
-          <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Clique para Enviar à 2ª Tela</h2>
-          <p className="text-zinc-300 text-xl font-medium">Ele detectará o projetor/TV automaticamente e ficará em tela cheia.</p>
+          <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Ativar tela cheia no telão</h2>
+          <p className="text-zinc-300 text-xl font-medium">Abra esta janela no telão ligado por HDMI e clique para entrar em tela cheia.</p>
         </div>
       )}
       

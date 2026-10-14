@@ -4,6 +4,7 @@ import { VERSES } from '../data';
 import { getSetting, saveSetting } from '../utils';
 
 interface BibleSectionProps {
+  prepareOnly?: boolean;
   onShowVerse: (text: string, ref: string) => void;
   currentProjectedRef?: string | null;
 }
@@ -33,7 +34,7 @@ const CATEGORIES = [
   { id: 'vitoria', label: 'Vitória & Força' }
 ];
 
-export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionProps) {
+export function BibleSection({ onShowVerse, currentProjectedRef, prepareOnly = false }: BibleSectionProps) {
   const [mainTab, setMainTab] = useState<'search' | 'saved'>('search');
 
   // Estado local para controle visual da projeção
@@ -43,6 +44,7 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
   const activeProjectedRef = currentProjectedRef !== undefined ? currentProjectedRef : internalProjectedRef;
 
   const handleProject = (text: string, ref: string) => {
+    if (prepareOnly) {onShowVerse(text, ref); return;}
     setInternalProjectedRef(ref);
     setProjectedToast({ ref, text });
     onShowVerse(text, ref);
@@ -446,7 +448,7 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4" />
-                        <span>Projetar no Telão</span>
+                        <span>{prepareOnly ? 'Preparar na prévia' : 'Projetar no Telão'}</span>
                       </>
                     )}
                   </button>
@@ -573,7 +575,7 @@ export function BibleSection({ onShowVerse, currentProjectedRef }: BibleSectionP
                         ) : (
                           <>
                             <Sparkles className="w-3 h-3" />
-                            <span>Projetar</span>
+                            <span>{prepareOnly ? 'Preparar' : 'Projetar'}</span>
                           </>
                         )}
                       </button>

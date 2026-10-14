@@ -217,18 +217,16 @@ export function MonitorPanel({
         <div className="relative z-10 flex items-center justify-between border-b border-[#333] pb-3 gap-2 flex-wrap">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="p-2 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] relative">
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-black" />
               <Monitor className="w-4 h-4 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Monitor de Transmissão</h3>
+                <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Monitor da saída</h3>
                 <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                  1080p FHD
+                  Composição 16:9
                 </span>
               </div>
-              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">Preview e controle do telão ao vivo</p>
+              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Prévia neste aparelho. Confira a exibição no telão.</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
@@ -252,8 +250,7 @@ export function MonitorPanel({
               <span className="font-sans">Atalhos</span>
             </button>
             <span className="bg-emerald-950/80 border border-emerald-900/60 text-emerald-400 text-[9px] font-mono font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shrink-0" />
-              LIVE
+              Prévia local
             </span>
           </div>
         </div>
@@ -264,11 +261,10 @@ export function MonitorPanel({
           {/* BEZEL TOP BAR WITH PHYSICAL LOGO & POWER LED */}
           <div className="flex items-center justify-between px-2 pb-2.5 mb-1 text-[10px] text-zinc-500 font-mono border-b border-[#18181b]">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
-              <span className="font-extrabold text-zinc-400 tracking-widest">PROJECTION DISPLAY UNIT // MAIN OUTPUT</span>
+              <span className="font-extrabold text-zinc-400 tracking-widest">Saída preparada · 16:9</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-zinc-600">60 FPS • SIGNAL: STABLE</span>
+              <span className="hidden sm:inline text-zinc-400">{Math.round(fps)} FPS locais</span>
               <div className="flex items-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />

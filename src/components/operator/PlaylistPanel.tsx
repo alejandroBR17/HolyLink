@@ -159,7 +159,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
     let desc = "";
     let category: 'fixo' | 'agenda' | 'campanha' | 'midia' | 'evento' = 'fixo';
 
-    if (slideId.startsWith("agenda_day_")) {
+    if (slideId.startsWith('verse_')) {
+      name = `Versículo ${slideId.split('_')[1] || ''}`;
+      desc = 'Texto bíblico da sequência automática';
+    } else if (slideId.startsWith("agenda_day_")) {
       category = 'agenda';
       if (slideId === "agenda_day_6_causas") {
         name = "Agenda: Sábado (Causas Impossíveis)";
@@ -577,7 +580,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                 >
                   <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-zinc-700/30 to-transparent"></div>
                   
-                  {/* FLAG DE STATUS NO AR OU FIXADO */}
+                  {/* FLAG DE STATUS NA SAÍDA OU FIXADO */}
                   <div className="flex items-center justify-between gap-2 border-b border-[#222] pb-2.5 mb-2.5">
                     <div className="flex items-center gap-2">
                       {/* POSIÇÃO NA FILA */}
@@ -598,7 +601,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       {isCurrentOnAir && (
                         <span className="bg-amber-500 text-black text-[9px] font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.6)] flex items-center gap-1 shrink-0">
                           <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
-                          NO AR
+                          NA SAÍDA
                         </span>
                       )}
                       
@@ -651,6 +654,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         type="button"
                         onClick={() => updateStateAndBroadcast('manualSlideOverride', isFixedOverride ? null : slideId)}
                         title={isFixedOverride ? "Desafixar e voltar ao automático" : "Projetar este slide imediatamente"}
+                        aria-label={`${isFixedOverride ? 'Desafixar' : 'Projetar'} ${name}`}
                         className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold border transition-all flex items-center gap-1.5 cursor-pointer focus-visible:outline-none ${
                           isFixedOverride
                             ? "bg-amber-500 border-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(245,158,11,0.5)]"
