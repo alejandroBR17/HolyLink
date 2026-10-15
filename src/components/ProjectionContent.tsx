@@ -227,7 +227,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                   if (parent && !parent.querySelector('.img-error-fallback')) {
                     const fallback = document.createElement('div');
                     fallback.className = 'img-error-fallback absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-hl-gold-bright p-6 text-center';
-                    fallback.innerHTML = `<span class="font-bold text-xl mb-1">Erro de Carregamento</span><span class="text-hl-soft text-sm">${media.name}</span>`;
+                    const title=document.createElement('span');title.className='font-bold text-xl mb-1';title.textContent='Erro de carregamento';
+                    const name=document.createElement('span');name.className='text-hl-soft text-sm';name.textContent=media.name;
+                    fallback.append(title,name);
                     parent.appendChild(fallback);
                   }
                 }}

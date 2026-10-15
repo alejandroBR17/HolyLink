@@ -20,3 +20,9 @@ test('a deliberate quick reversal does not get lost during the transition',()=>{
  state.userIntent(-50,30);assert.equal(state.scroll(50,1000,40),false);
  assert.equal(state.scroll(100,1000,50),false);
 });
+
+test('explicit reveal works when collapsing made the whole page fit',()=>{
+ const state=new HeaderScroll();state.userIntent(100,10);state.scroll(100,500,20);assert.equal(state.collapsed,true);
+ state.scroll(0,0,450);state.reveal(500);assert.equal(state.collapsed,false);assert.equal(state.scroll(20,500,510),false);
+ state.userIntent(100,1000);assert.equal(state.scroll(100,500,1010),true);
+});

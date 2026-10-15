@@ -221,6 +221,7 @@ export default function App() {
   const touchYRef=useRef<number|null>(null);
   const handleMainScroll=useCallback((event:React.UIEvent<HTMLElement>)=>{
     const el=event.currentTarget;
+    if((document.activeElement?.matches(':focus-visible')&&document.activeElement.closest('.operator-chrome'))||document.querySelector('.holy-options[open]'))return;
     setIsScrolledDown(headerScrollRef.current.scroll(el.scrollTop,el.scrollHeight-el.clientHeight,performance.now()));
   },[]);
 
@@ -640,6 +641,7 @@ export default function App() {
 
         {hasUpdateAvailable && <AppUpdateNotice updating={isUpdating} onUpdate={forceAppUpdate}/>}
 
+        <div className={`operator-chrome ${isScrolledDown?'is-collapsed':''}`} data-collapsed={isScrolledDown} aria-hidden={isScrolledDown} inert={isScrolledDown}><div className="operator-chrome-body">
         <header className="holy-topbar">
           <div className="holy-brand"><img src={LOGO_URLS.symbol} alt="Símbolo HolyLink" width={44} height={44} /><div><h1>HolyLink</h1><span>Projeção · 16:9</span></div></div>
           <div className="holy-header-actions">
@@ -659,11 +661,7 @@ export default function App() {
         </header>
         {/* ACTIVE BROADCAST HEADER BANNER - SKEUOMORPHIC LED DISPLAY */}
         {isJustStartedRaw && (
-          <div data-operator-banner data-collapsed={isScrolledDown} aria-hidden={isScrolledDown&&dimensions.width<1024} inert={isScrolledDown&&dimensions.width<1024} className={`px-4 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all duration-300 z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
-            isScrolledDown
-              ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:py-2.5 lg:border-b lg:opacity-100 lg:pointer-events-auto'
-              : 'max-h-40 py-2.5 border-b opacity-100'
-          } ${
+          <div data-operator-banner data-collapsed={isScrolledDown} className={`px-4 py-2.5 border-b flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
             dismissedJustStarted
               ? "bg-emerald-950/40 border-emerald-800/50 text-emerald-400"
               : "bg-hl-gold-well/40 border-hl-line-strong/50 text-hl-gold-bright"
@@ -698,6 +696,7 @@ export default function App() {
           </div>
         )}
 
+        </div></div>
         <nav className="holy-navigation" role="tablist" aria-label="Áreas do operador">
           {[
             {id:'slides',label:'Sequência',icon:Layout}, {id:'texts',label:'Bíblia',icon:BookOpen},
@@ -711,6 +710,7 @@ export default function App() {
 
           {/* ACTIVE CONTENT WORKSPACE */}
           <nav className="operator-quick-strip" aria-label="Controles essenciais da projeção">
+            {isScrolledDown&&<button type="button" className="operator-reveal-top" aria-label="Mostrar topo" title="Mostrar topo" onClick={()=>{headerScrollRef.current.reveal(performance.now());setIsScrolledDown(false);requestAnimationFrame(()=>document.querySelector<HTMLElement>('.holy-options summary')?.focus({preventScroll:true}));}}><ChevronUp size={20}/></button>}
             <button type="button" aria-pressed={blackoutEnabled} onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}><EyeOff size={18} aria-hidden="true" />Blackout</button>
             <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />Limpar tela</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(-1)}><ChevronLeft size={18} aria-hidden="true" />Slide anterior</button>
@@ -835,6 +835,7 @@ export default function App() {
                 blackoutEnabled={blackoutEnabled}
                 clearContentEnabled={clearContentEnabled}
                 currentSlideId={currentSlideId}
+                manualSlideOverride={manualSlideOverride}
                 hoursStr={hoursStr}
                 minutesStr={minutesStr}
                 diffSeconds={diffSeconds}

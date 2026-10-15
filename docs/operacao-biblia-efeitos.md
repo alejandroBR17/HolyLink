@@ -108,3 +108,12 @@ Validação: lint/build; 59 testes nativos ao todo (incluindo prova dos pixels d
 
 
 Conferência posterior encontrou o celular anterior ainda importado diretamente em Conexão, Monitor, projeção, slides e diagnóstico. Todos esses usos agora importam o símbolo moderno compartilhado; os demais ícones dessas áreas não foram migrados integralmente. Lint/build e revisão das seis áreas em 390/1365 px passaram após essa correção adicional. No Chrome 144+, mudanças relevantes de ícone podem exigir revisão/aceitação no menu do aplicativo; URLs foram alteradas para permitir essa detecção. Fonte: https://developer.chrome.com/blog/improvements-to-web-app-updates . Não orientar desinstalação como rotina, pois há dados locais a preservar.
+
+
+## Monitor — composição local e operação
+
+O Monitor mostra o conteúdo atual respeitando blackout, passagem enviada/prioridade, cronômetro, modo de reunião e conteúdo oculto, além do próximo item real da fila. Os nomes usam o mesmo descritivo para conteúdo atual e seguinte. Retomar fila remove passagem/fixação; no modo de reunião já iniciado também libera o carrossel. O cronômetro não é desligado implicitamente. Indicadores de aviso e letreiro mostram estados ativos, sem afirmar recebimento físico pelo HDMI.
+
+A prévia é silenciosa e pode ser ampliada num diálogo 16:9, com Escape/foco preservados. Há somente uma composição local montada, inclusive quando ampliada. Pausar a prévia desmonta seu renderer e reduz o trabalho deste aparelho, mantendo leitura do conteúdo atual e a operação/projeção. Essa pausa não é persistida entre entradas; vídeos da prévia podem reiniciar ao ampliar/recolher/retomar e não são um espelho sincronizado do instante do vídeo no telão.
+
+O cabeçalho completo (marca, abrir telão/opções e aviso de reunião) recolhe ao rolar para baixo. Navegação e controles rápidos ficam acessíveis. Rolar para cima restaura; a seta Mostrar topo permite restaurar mesmo quando o recolhimento fez toda a página caber na tela. Menu de opções aberto ou foco de teclado no cabeçalho impedem ocultação inesperada. Elementos recolhidos ficam inert, com animação reduzida conforme a preferência do aparelho.

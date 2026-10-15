@@ -229,3 +229,11 @@ html, body, #root {
 .operator-shell .sequence-console button.sequence-primary { background:linear-gradient(160deg,#ffe894,#ffce32 55%,#efa915); color:#181100; border-color:#ffe078; }
 
 .operator-main { overflow-anchor:none; }
+
+.operator-chrome{display:grid;grid-template-rows:1fr;flex-shrink:0;transition:grid-template-rows .3s ease,opacity .2s ease;opacity:1;z-index:30;position:relative}
+.operator-chrome-body{min-height:0}
+.operator-chrome.is-collapsed{grid-template-rows:0fr;opacity:0;pointer-events:none}
+.operator-chrome.is-collapsed .operator-chrome-body{overflow:hidden}
+@media(prefers-reduced-motion:reduce){.operator-chrome{transition:none}}
+
+.operator-quick-strip button.operator-reveal-top{flex:0 0 44px;padding:6px}

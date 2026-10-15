@@ -6,6 +6,7 @@ export class HeaderScroll {
   private intentUntil=0;
   private lockedUntil=0;
   private travel=0;
+  reveal(now:number){this.collapsed=false;this.travel=0;this.intent=0;this.intentUntil=0;this.lockedUntil=now+400;}
   userIntent(direction:number,now:number) {
     const next=Math.sign(direction);
     if(!next)return;

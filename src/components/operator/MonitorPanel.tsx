@@ -1,4 +1,6 @@
-import {nextQueueItem} from '../../utils/monitor-queue';
+import {MonitorPreview} from './MonitorPreview';
+import {selectProjectionVerse} from '../../utils/verse-selection';
+import {nextQueueItem,describeQueueItem} from '../../utils/monitor-queue';
 import {Smartphone} from '../ui/icons';
 import {ShortcutsGuide} from './ShortcutsGuide';
 import {useDialogFocus} from '../../hooks/useDialogFocus';
@@ -6,12 +8,10 @@ import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useRef, useState, useEffect } from 'react';
 import { Monitor, Tv, ExternalLink, X, SkipForward, BookOpen, Keyboard, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, HardDrive, CheckCircle2, Download } from '../ui/icons';
 import { ProjectionContent } from '../ProjectionContent';
-import { CHURCH_INFO, ALERTS } from '../../data';
+import { CHURCH_INFO, ALERTS, VERSES } from '../../data';
 import { Meeting } from '../../types';
 import { HardwareBenchmarkModal } from '../HardwareBenchmarkModal';
 import { usePerformanceDiagnostics } from '../../utils/performance';
-import { PWAInstallModal } from '../PWAInstallModal';
-import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 interface MonitorPanelProps {
   onNavigate: (tab:'slides'|'texts'|'agenda'|'controls'|'sync') => void;
@@ -28,6 +28,7 @@ interface MonitorPanelProps {
   blackoutEnabled: boolean;
   clearContentEnabled: boolean;
   currentSlideId: string;
+  manualSlideOverride:string|null;
 
   hoursStr: string;
   minutesStr: string;
@@ -73,6 +74,7 @@ export function MonitorPanel({
   blackoutEnabled,
   clearContentEnabled,
   currentSlideId,
+  manualSlideOverride,
 
   hoursStr,
   minutesStr,
@@ -103,19 +105,15 @@ export function MonitorPanel({
   activeSlides = []
 }: MonitorPanelProps) {
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.15);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const shortcutsRef = useDialogFocus(showShortcutsModal, () => setShowShortcutsModal(false));
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
-  const [showPwaModal, setShowPwaModal] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
 
   const [ramCleared, setRamCleared] = useState(false);
   const cacheFeedbackTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   useEffect(()=>()=>{if(cacheFeedbackTimer.current)clearTimeout(cacheFeedbackTimer.current);},[]);
   const { fps, mode, effectiveMode, report, purgeCache } = usePerformanceDiagnostics();
-  const { isInstalled } = usePWAInstall();
 
   const handleClearRam = () => {
     purgeCache();
@@ -136,116 +134,32 @@ export function MonitorPanel({
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const updateScale = (entries: ResizeObserverEntry[]) => {
-      for (let entry of entries) {
-        const width = entry.contentRect.width;
-        setScale(width / 1920);
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(updateScale);
-    resizeObserver.observe(containerRef.current);
-
-    const currentWidth = containerRef.current.clientWidth;
-    setScale(currentWidth / 1920);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
   const nextMedia=nextQueueItem(activeSlides,currentSlideId,customMediaList,customMeetings);
   const verseOverlay=!!customVerseText||activeVerseIndex!==null;
   const advanceQueue=()=>{
     if(!nextMedia.id)return;
     updateStateAndBroadcast('customVerseText','');updateStateAndBroadcast('customVerseRef','');
     updateStateAndBroadcast('activeVerseIndex',null);updateStateAndBroadcast('manualSlideOverride',null);
+    if(isJustStarted)updateStateAndBroadcast('dismissedJustStarted',true);
     updateStateAndBroadcast('advanceToSlide',nextMedia.id);
   };
+
+  const countdownActive=isFinalFiveMinutes||isFinalMinute;
+  const verseVisible=!!customVerseText&&(verseDisplayPriority==='verse_over_video'||!countdownActive);
+  const verse=selectProjectionVerse(VERSES,{text:customVerseText,ref:customVerseRef,index:activeVerseIndex,loop:isJustStarted?undefined:loopIteration,offset:!isJustStarted&&currentSlideId.startsWith('verse_')?Number(currentSlideId.slice(6))||0:0,timeMs:currentTime.getTime()}).verse;
+  const current=describeQueueItem(currentSlideId,customMediaList,customMeetings);
+  const liveTitle=blackoutEnabled?'Tela preta':verseVisible?verse.ref:isFinalMinute||isFinalFiveMinutes?`${formatMinutesPart}:${formatSecondsPart}`:isJustStarted?verse.ref:clearContentEnabled?'Conteúdo da fila oculto':currentSlideId.startsWith('verse_')?verse.ref:current.title;
+  const liveDetail=blackoutEnabled?'Blackout ativo. O restante da composição permanece preparado.':verseVisible?'Passagem bíblica sobre a fila.':countdownActive?'Contagem para a próxima reunião.':isJustStarted?'Passagem do modo de reunião.':clearContentEnabled?'Limpar tela está ativo; avisos e letreiro podem continuar.':manualSlideOverride?'Conteúdo fixado pelo operador.':'Sequência automática.';
+  const resumeSequence=()=>{updateStateAndBroadcast('customVerseText',null);updateStateAndBroadcast('customVerseRef',null);updateStateAndBroadcast('activeVerseIndex',null);updateStateAndBroadcast('manualSlideOverride',null);if(isJustStarted)updateStateAndBroadcast('dismissedJustStarted',true);};
 
   return (
     <div className="monitor-workspace console-area flex flex-col gap-5 w-full text-left">
 
-      {/* MONITOR CANVAS CONTAINER - COMPLEX SKEUOMORPHIC MONITOR FRAME */}
-      <section aria-label="Monitor de Transmissão" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden flex flex-col gap-4 group">
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-        {/* CABEÇALHO DO MONITOR */}
-        <div className="relative z-10 flex items-center justify-between border-b border-hl-line pb-3 gap-2 flex-wrap">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] relative">
-              <Monitor className="w-4 h-4 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Monitor da saída</h3>
-                <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                  Composição 16:9
-                </span>
-              </div>
-              <p className="text-[11px] text-hl-muted font-medium mt-0.5">A composição da sua reunião, com a próxima tela logo abaixo. Confira também o telão.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-            {!isInstalled && (
-              <button
-                type="button"
-                onClick={() => setShowPwaModal(true)}
-                className="p-1.5 bg-gradient-to-b from-hl-raised to-hl-raised border border-hl-line hover:border-hl-gold/50 text-hl-gold-bright rounded-xl text-xs font-bold flex items-center justify-center transition-all active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] cursor-pointer"
-                title="Instalar App HolyLink (PWA)"
-              >
-                <Download className="w-3.5 h-3.5 text-hl-gold shrink-0" />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setShowShortcutsModal(!showShortcutsModal)}
-              className="px-2.5 py-1.5 bg-gradient-to-b from-hl-raised to-hl-raised border border-hl-line hover:border-hl-line-strong text-hl-soft hover:text-white rounded-xl text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-              title="Atalhos e Comandos"
-            >
-              <Keyboard className="w-3.5 h-3.5 text-hl-gold shrink-0" />
-              <span className="font-sans">Atalhos</span>
-            </button>
-            <span className="bg-emerald-950/80 border border-emerald-900/60 text-emerald-400 text-[9px] font-mono font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              Prévia local
-            </span>
-          </div>
-        </div>
-
-        {/* PHYSICAL MONITOR FRAME WITH BEZEL, REFLECTION AND LED STATUS */}
-        <div className="relative z-10 bg-hl-canvas p-3 sm:p-4 rounded-2xl border-2 border-hl-line-soft shadow-[0_20px_50px_rgba(0,0,0,1),inset_0_2px_8px_rgba(255,255,255,0.04)]">
-
-          {/* BEZEL TOP BAR WITH PHYSICAL LOGO & POWER LED */}
-          <div className="flex items-center justify-between px-2 pb-2.5 mb-1 text-[10px] text-hl-dim font-mono border-b border-hl-line-soft">
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-hl-muted tracking-widest">Saída preparada · 16:9</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-hl-muted">{Math.round(fps)} FPS locais</span>
-              <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-hl-gold/80" />
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              </div>
-            </div>
-          </div>
-
-          {/* Scaled Preview Frame with TV Bezel */}
-          <div
-            ref={containerRef}
-            className="w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] border border-hl-line-soft"
-          >
-            {/* Screen Glass Surface Reflection */}
-            <div className="absolute inset-0 pointer-events-none z-30 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.06]" />
-
-            <div
-              className="console-projection-surface absolute origin-top-left pointer-events-none"
-              style={{
-                width: '1920px',
-                height: '1080px',
-                transform: `scale(${scale})`
-              }}
-            >
+      <MonitorPreview title={liveTitle} detail={liveDetail}
+        badges={<>{blackoutEnabled&&<span>Tela preta</span>}{clearContentEnabled&&<span>Conteúdo oculto</span>}{activeAlert&&<span>Aviso na tela</span>}{tickerText&&<span>Letreiro ativo</span>}{!blackoutEnabled&&!clearContentEnabled&&!activeAlert&&!tickerText&&<span>{verseVisible||isJustStarted?'Bíblia':countdownActive?'Contagem':manualSlideOverride?'Fixado':'Em sequência'}</span>}</>}
+        actions={<><button type="button" onClick={()=>onNavigate('slides')}>Ver sequência</button>{(manualSlideOverride||verseOverlay)&&<button type="button" onClick={resumeSequence}>Retomar fila automática</button>}</>}
+        tools={<><button type="button" onClick={()=>setShowShortcutsModal(true)} title="Atalhos e Comandos" aria-label="Atalhos da projeção"><Keyboard size={20}/></button></>}
+      >
               <ProjectionContent
                 currentTime={currentTime}
                 isLooping={isLooping}
@@ -286,11 +200,7 @@ export function MonitorPanel({
                 background3DIntensity={background3DIntensity}
                 syncStatus={syncStatus}
               />
-            </div>
-          </div>
-        </div>
-
-      </section>
+      </MonitorPreview>
 
       {/* PRÓXIMA MÍDIA / A SEGUIR CARD - DESIGN SKEUOMÓRFICO TÁTICO */}
       <section aria-label="A Seguir na Fila" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 group">
@@ -491,7 +401,6 @@ export function MonitorPanel({
         </div>
       )}
 
-      <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
     </div>
   );
 }
