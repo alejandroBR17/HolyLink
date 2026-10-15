@@ -241,31 +241,32 @@ export default function App() {
   if (ongoingMeeting) {
     const mStart = new Date(currentTime);
     mStart.setHours(ongoingMeeting.hours, ongoingMeeting.minutes, 0, 0);
+    if(mStart>currentTime)mStart.setDate(mStart.getDate()-1);
     const elapsedSinceStart = currentTime.getTime() - mStart.getTime();
     if (elapsedSinceStart >= 0 && elapsedSinceStart <= 30 * 60 * 1000) {
       isJustStartedRaw = true;
     }
   }
 
-  const adjustedNextMeetingDate = new Date(nextMeetingDate.getTime() + countdownOffset);
-  const diffMs = adjustedNextMeetingDate.getTime() - currentTime.getTime();
+  const adjustedNextMeetingDate = nextMeetingDate?new Date(nextMeetingDate.getTime() + countdownOffset):null;
+  const diffMs = adjustedNextMeetingDate?adjustedNextMeetingDate.getTime() - currentTime.getTime():Infinity;
 
   if (!isJustStartedRaw && diffMs <= 0) {
     isJustStartedRaw = true;
   }
 
   let isJustStarted = isJustStartedRaw && !dismissedJustStarted;
-  let diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
+  let diffSeconds = nextMeetingDate?Math.max(0, Math.floor(diffMs / 1000)):0;
 
-  if (countdownPaused && pausedSeconds !== null) {
+  if (nextMeetingDate && countdownPaused && pausedSeconds !== null) {
     diffSeconds = pausedSeconds;
   }
 
   const formatMinutesPart = Math.floor(diffSeconds / 60).toString().padStart(2, '0');
   const formatSecondsPart = (diffSeconds % 60).toString().padStart(2, '0');
 
-  let isFinalMinute = !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
-  let isFinalFiveMinutes = !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
+  let isFinalMinute = Boolean(nextMeetingDate) && !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
+  let isFinalFiveMinutes = Boolean(nextMeetingDate) && !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
   let isLooping = !isJustStarted && !isFinalFiveMinutes && !isFinalMinute;
 
   // No modo Pós-Reunião, desativamos contagem regressiva de início e priorizamos carrossel de saída
@@ -313,6 +314,7 @@ export default function App() {
   const hasActiveCampaigns = activeCampaignsFiltered.length > 0;
 
   const defaultBaseSlides = (projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES).filter(id => {
+    if(id==='soon'&&!nextMeetingDate)return false;
     if (id === 'campaigns' && !hasActiveCampaigns) return false;
     return true;
   });
@@ -330,7 +332,7 @@ export default function App() {
       }
     }
   });
-  if (projectionMode !== 'post' && diffSeconds <= 15 * 60 && !allAvailableSlides.includes('soon')) {
+  if (nextMeetingDate && projectionMode !== 'post' && diffSeconds <= 15 * 60 && !allAvailableSlides.includes('soon')) {
     allAvailableSlides.push('soon');
   }
 
@@ -509,8 +511,8 @@ export default function App() {
 
   const countHours = Math.floor(diffSeconds / 3600);
   const countMinutes = Math.floor((diffSeconds % 3600) / 60);
-  const hoursStr = countHours.toString().padStart(2, '0');
-  const minutesStr = countMinutes.toString().padStart(2, '0');
+  const hoursStr = nextMeetingDate?countHours.toString().padStart(2, '0'):'--';
+  const minutesStr = nextMeetingDate?countMinutes.toString().padStart(2, '0'):'--';
 
   // Re-sync time immediately when returning to tab from background
   useEffect(() => {
@@ -536,13 +538,13 @@ export default function App() {
         }
       } else if (manualSlideOverride.startsWith('meeting_event_')) {
         const meetId = manualSlideOverride.replace('meeting_event_', '');
-        const exists = customMeetings.some((m) => m.id === meetId);
+        const exists = customMeetings.some((m) => m.id === meetId && (!m.date || m.date >= todayStr));
         if (!exists) {
           updateStateAndBroadcast('manualSlideOverride', null);
         }
       }
     }
-  }, [manualSlideOverride, customMediaList, customMeetings, isMediaLoaded, isProjectionView, updateStateAndBroadcast]);
+  }, [manualSlideOverride, customMediaList, customMeetings, isMediaLoaded, isProjectionView, updateStateAndBroadcast,todayStr]);
 
   const handleVideoEnded = useCallback(() => {
     if (videoPinBehavior === 'unpin') {

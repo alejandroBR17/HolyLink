@@ -1,10 +1,11 @@
 import {ConsoleIntro} from './ConsoleIntro';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame, WifiOff, RefreshCw, AlertTriangle, Sparkles, Copy, Zap, Check
 } from 'lucide-react';
 import { Meeting } from '../../types';
+import {calendarDate,clockTime,localDateKey,meetingIsToday,WEEK_DAYS} from '../../utils/agenda';
 
 interface Campaign {
   id: string;
@@ -49,6 +50,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   showAlert,
   onResetCampaigns
 }: AgendaPanelProps) {
+  const latest=useRef({customMeetings,customCampaigns});latest.current={customMeetings,customCampaigns};
   const notify = showToast || showAlert;
   const [newMeetTheme, setNewMeetTheme] = useState('');
   const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
@@ -57,6 +59,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const [newMeetTime, setNewMeetTime] = useState('19:30');
   const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
   const [editingMeetId, setEditingMeetId] = useState<string | null>(null);
+  const [meetingError,setMeetingError]=useState('');
+  const [meetingBase,setMeetingBase]=useState('');
 
   const [newCampTitle, setNewCampTitle] = useState('');
   const [newCampDuration, setNewCampDuration] = useState('');
@@ -64,32 +68,46 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const [newCampEndDate, setNewCampEndDate] = useState('');
   const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
   const [editingCampId, setEditingCampId] = useState<string | null>(null);
+  const [campaignError,setCampaignError]=useState('');
+  const [campaignBase,setCampaignBase]=useState('');
+  const meetingConflict=Boolean(editingMeetId&&meetingBase!==JSON.stringify(customMeetings.find(m=>m.id===editingMeetId)));
+  const campaignConflict=Boolean(editingCampId&&campaignBase!==JSON.stringify(customCampaigns.find(c=>c.id===editingCampId)));
 
   const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(true);
   const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(true);
+  const [meetingFilter,setMeetingFilter]=useState('all');
+  const [meetingSearch,setMeetingSearch]=useState('');
+  const revealForm=(id:string)=>{
+    const input=document.getElementById(id);
+    input?.focus({preventScroll:true});
+    input?.closest('form')?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  };
+  useEffect(()=>{if(showAddMeetingForm)revealForm('meeting-theme');},[showAddMeetingForm,editingMeetId]);
+  useEffect(()=>{if(showAddCampaignForm)revealForm('campaign-title');},[showAddCampaignForm,editingCampId]);
 
-  const daysMap = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  const daysMap = WEEK_DAYS;
 
   // Current local date YYYY-MM-DD
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const todayStr = `${year}-${month}-${day}`;
+  const todayStr = localDateKey(now);
 
   const expiredMeetings = (customMeetings || []).filter(m => m.date && m.date < todayStr);
+  const visibleMeetings=customMeetings.filter(meet=>{
+    const matches=`${meet.theme} ${meet.dayName} ${meet.time}`.toLocaleLowerCase('pt-BR').includes(meetingSearch.trim().toLocaleLowerCase('pt-BR'));
+    return matches&&(meetingFilter==='all'||meetingFilter==='weekly'&&!meet.date||meetingFilter==='upcoming'&&Boolean(meet.date&&meet.date>=todayStr)||meetingFilter==='past'&&Boolean(meet.date&&meet.date<todayStr));
+  });
 
   const handleClearExpiredMeetings = () => {
     if (expiredMeetings.length === 0) return;
     if (showConfirm) {
       showConfirm(
-        'Limpar Eventos Passados?',
+        'Excluir eventos passados?',
         `Deseja remover ${expiredMeetings.length} evento(s) pontual(is) cuja data já passou?`,
         () => {
-          const updated = (customMeetings || []).filter(m => !(m.date && m.date < todayStr));
+          const updated = latest.current.customMeetings.filter(m => !(m.date && m.date < localDateKey(new Date())));
           updateStateAndBroadcast('customMeetings', updated);
         },
-        'info'
+        'danger'
       );
     } else {
       const updated = (customMeetings || []).filter(m => !(m.date && m.date < todayStr));
@@ -143,12 +161,15 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   };
 
   const handleSaveMeeting = () => {
+    setMeetingError('');
+    if(meetingConflict){setMeetingError('Esta reunião mudou em outro controle. Cancele e abra a edição novamente.');return;}
     if (!newMeetTheme.trim()) {
-      if (notify) notify("Por favor, preencha o tema/título da reunião.", "error");
+      setMeetingError('Informe o tema da reunião.');document.getElementById('meeting-theme')?.focus();
       return;
     }
-
-    const [hours, minutes] = newMeetTime.split(':').map(Number);
+    const time=clockTime(newMeetTime);
+    if(!time){setMeetingError('Informe um horário válido.');document.getElementById('meeting-time')?.focus();return;}
+    const {hours,minutes}=time;
     let finalDayName = '';
     let finalDay: number | undefined = undefined;
     let finalDate: string | undefined = undefined;
@@ -157,8 +178,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       finalDayName = daysMap[newMeetWeeklyDay];
       finalDay = newMeetWeeklyDay;
     } else {
-      if (!newMeetDate) {
-        if (notify) notify("Por favor, selecione a data do evento.", "error");
+      if (!calendarDate(newMeetDate)) {
+        setMeetingError('Escolha uma data válida para o evento.');document.getElementById('meeting-date')?.focus();
         return;
       }
       const dateParts = newMeetDate.split('-');
@@ -169,7 +190,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
     }
 
     const mObject: Meeting = {
-      id: editingMeetId || `meet_${Date.now()}`,
+      id: editingMeetId || `meet_${crypto.randomUUID()}`,
       day: finalDay,
       dayName: finalDayName,
       theme: newMeetTheme.trim(),
@@ -197,7 +218,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const handleDeleteMeeting = (id: string) => {
     if (showConfirm) {
       showConfirm('Excluir Reunião?', 'Tem certeza que deseja remover esta reunião?', () => {
-        const updated = customMeetings.filter(m => m.id !== id);
+        const updated = latest.current.customMeetings.filter(m => m.id !== id);
         updateStateAndBroadcast('customMeetings', updated);
         if (notify) notify("Reunião removida.", "info");
       }, 'danger');
@@ -209,13 +230,16 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   };
 
   const handleSaveCampaign = () => {
+    setCampaignError('');
+    if(campaignConflict){setCampaignError('Esta campanha mudou em outro controle. Cancele e abra a edição novamente.');return;}
     if (!newCampTitle.trim()) {
-      if (notify) notify("Por favor, informe o título do propósito/campanha.", "error");
+      setCampaignError('Informe o nome da campanha.');document.getElementById('campaign-title')?.focus();
       return;
     }
+    if(newCampEndDate&&!calendarDate(newCampEndDate)){setCampaignError('Escolha uma data limite válida ou deixe o campo vazio.');return;}
 
     const cObject: Campaign = {
-      id: editingCampId || `camp_${Date.now()}`,
+      id: editingCampId || `camp_${crypto.randomUUID()}`,
       title: newCampTitle.trim(),
       duration: newCampDuration.trim() || "Diariamente",
       iconType: newCampType,
@@ -242,7 +266,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const handleDeleteCampaign = (id: string) => {
     if (showConfirm) {
       showConfirm('Excluir Campanha?', 'Tem certeza que deseja remover este propósito/campanha?', () => {
-        const updated = customCampaigns.filter(c => c.id !== id);
+        const updated = latest.current.customCampaigns.filter(c => c.id !== id);
         updateStateAndBroadcast('customCampaigns', updated);
       }, 'danger');
     } else {
@@ -292,10 +316,11 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   onClick={() => {
                     setShowAddMeetingForm(true);
                     setEditingMeetId(null);
+                    setMeetingError('');setMeetingBase('');
                     setNewMeetTheme('');
                     setNewMeetType('weekly');
                     setNewMeetWeeklyDay(new Date().getDay());
-                    setNewMeetDate(new Date().toISOString().split('T')[0]);
+                    setNewMeetDate(todayStr);
                     setNewMeetTime('19:30');
                   }}
                   className="w-full py-3 bg-gradient-to-b from-hl-raised to-hl-raised border border-hl-line hover:border-hl-gold/50 text-hl-copy rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px]"
@@ -325,14 +350,14 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </div></details>
               </div>
             ) : (
-              <div className="bg-hl-panel border border-hl-line p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
+              <form aria-label="Formulário de reunião" onSubmit={event=>{event.preventDefault();handleSaveMeeting();}} className="bg-hl-panel border border-hl-line p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
                 <div className="flex items-center justify-between border-b border-hl-line pb-2.5">
                   <span className="text-xs font-extrabold text-hl-gold font-sans uppercase tracking-wider">
                     {editingMeetId ? "Editar Reunião" : "Nova Reunião / Evento"}
                   </span>
                   <button
                     type="button"
-                    onClick={() => setShowAddMeetingForm(false)}
+                    onClick={() => setShowAddMeetingForm(false)} aria-label="Fechar formulário de reunião"
                     className="text-hl-muted hover:text-white transition-colors p-1 cursor-pointer bg-hl-raised border border-hl-line rounded-lg"
                   >
                     <X className="w-4 h-4" />
@@ -343,7 +368,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   <label htmlFor="meeting-theme" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Tema do Culto / Evento</label>
                   <input
                     type="text"
-                    id="meeting-theme" value={newMeetTheme}
+                    id="meeting-theme" value={newMeetTheme} maxLength={2000}
                     onChange={(e) => setNewMeetTheme(e.target.value)}
                     placeholder="Ex: Noite da Salvação, Corrente da Vitória..."
                     className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold focus:ring-1 focus:ring-hl-gold/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
@@ -356,6 +381,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     <button
                       type="button"
                       onClick={() => setNewMeetType('weekly')}
+                      aria-pressed={newMeetType==='weekly'}
                       className={`py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer font-sans active:translate-y-[1px] ${
                         newMeetType === 'weekly'
                           ? "bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]"
@@ -367,6 +393,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     <button
                       type="button"
                       onClick={() => setNewMeetType('one_time')}
+                      aria-pressed={newMeetType==='one_time'}
                       className={`py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer font-sans active:translate-y-[1px] ${
                         newMeetType === 'one_time'
                           ? "bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]"
@@ -413,13 +440,14 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   />
                 </div>
 
+                {(meetingError||meetingConflict)&&<p className="agenda-error" role="alert">{meetingConflict?'Esta reunião mudou em outro controle. Cancele e abra a edição novamente.':meetingError}</p>}
                 <div className="flex gap-2.5 mt-1">
                   <button
-                    type="button"
-                    onClick={handleSaveMeeting}
+                    type="submit"
+                    disabled={meetingConflict}
                     className="flex-1 py-2.5 bg-hl-gold hover:bg-hl-gold-bright text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(255,211,79,0.3)] active:translate-y-[1px]"
                   >
-                    Confirmar Cadastro
+                    {editingMeetId?'Salvar alterações':'Adicionar reunião'}
                   </button>
                   <button
                     type="button"
@@ -432,7 +460,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     Cancelar
                   </button>
                 </div>
-              </div>
+              </form>
             )}
 
             {/* EXPIRED MEETINGS NOTIFICATION BANNER */}
@@ -458,14 +486,17 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             )}
 
             {/* MEETS LIST */}
+            <div className="agenda-list-tools"><label>Buscar reunião<input value={meetingSearch} onChange={event=>setMeetingSearch(event.target.value)} placeholder="Tema, dia ou horário"/></label><label>Mostrar<select aria-label="Filtrar reuniões" value={meetingFilter} onChange={event=>setMeetingFilter(event.target.value)}><option value="all">Todas</option><option value="weekly">Semanais</option><option value="upcoming">Eventos futuros</option><option value="past">Eventos passados</option></select></label></div>
             <div className="flex flex-col gap-2.5 pr-1">
               {(customMeetings || []).length === 0 ? (
                 <div className="text-hl-dim text-center py-6 text-xs italic bg-hl-canvas border border-dashed border-hl-line-soft rounded-xl font-medium">
                   Nenhuma reunião ou evento adicionado.
                 </div>
               ) : (
-                [...customMeetings]
+                [...visibleMeetings]
                   .sort((a, b) => {
+                    if(a.date&&b.date)return a.date.localeCompare(b.date)||a.time.localeCompare(b.time);
+                    if(Boolean(a.date)!==Boolean(b.date))return a.date?1:-1;
                     const dayA = a.day ?? 0;
                     const dayB = b.day ?? 0;
                     if (dayA !== dayB) return dayA - dayB;
@@ -476,7 +507,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 
                     return (
                       <div
-                        key={meet.id}
+                        key={meet.id} data-meeting-id={meet.id}
                         className={`flex items-center justify-between p-3.5 rounded-xl border text-xs transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
                           isExpired
                             ? "bg-red-950/20 border-red-900/40 opacity-60"
@@ -500,7 +531,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                                 {meet.date ? "Único" : "Semanal"}
                               </span>
                             )}
-                            {meet.day === now.getDay() && !isExpired && (
+                            {meetingIsToday(meet,now) && !isExpired && (
                               <span className="text-[8px] px-1.5 py-0.5 rounded font-black uppercase bg-emerald-500 text-black animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]">
                                 Hoje!
                               </span>
@@ -527,6 +558,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                             type="button"
                             onClick={() => {
                               setEditingMeetId(meet.id);
+                              setMeetingBase(JSON.stringify(meet));setMeetingError('');
                               setNewMeetTheme(meet.theme);
                               setNewMeetTime(meet.time);
                               setNewMeetType(meet.date ? 'one_time' : 'weekly');
@@ -553,6 +585,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   })
               )}
             </div>
+            {customMeetings.length>0&&!visibleMeetings.length&&<p className="operator-muted" role="status">Nenhuma reunião corresponde à busca e ao filtro.</p>}
           </div>
         )}
       </section>
@@ -592,6 +625,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   type="button"
                   onClick={() => {
                     setEditingCampId(null);
+                    setCampaignBase('');setCampaignError('');
                     setShowAddCampaignForm(true);
                     setNewCampTitle('');
                     setNewCampDuration('');
@@ -624,10 +658,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   </div>
                 </div></details>
 
-                {onResetCampaigns && (
+                {onResetCampaigns && showConfirm && (
                   <button
                     type="button"
-                    onClick={onResetCampaigns}
+                    onClick={()=>{if(showConfirm)showConfirm('Restaurar campanhas padrão?','As campanhas cadastradas serão substituídas pelos modelos originais. Deseja continuar?',()=>onResetCampaigns(), 'danger');}}
                     className="w-full py-2.5 bg-hl-raised hover:bg-hl-raised text-hl-muted hover:text-hl-gold-bright border border-hl-line-soft hover:border-hl-gold/40 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer mt-1 active:translate-y-[1px]"
                   >
                     <RefreshCw className="w-3.5 h-3.5 shrink-0 text-hl-gold" /> Restaurar Propósitos Padrão
@@ -635,14 +669,14 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 )}
               </div>
             ) : (
-              <div className="bg-hl-panel border border-hl-line p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
+              <form aria-label="Formulário de campanha" onSubmit={event=>{event.preventDefault();handleSaveCampaign();}} className="bg-hl-panel border border-hl-line p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
                 <div className="flex items-center justify-between border-b border-hl-line pb-2.5">
                   <span className="text-xs font-extrabold text-hl-gold font-sans uppercase tracking-wider">
                     {editingCampId ? "Editar Propósito" : "Novo Propósito"}
                   </span>
                   <button
                     type="button"
-                    onClick={() => {
+                    aria-label="Fechar formulário de campanha" onClick={() => {
                       setShowAddCampaignForm(false);
                       setEditingCampId(null);
                     }}
@@ -656,7 +690,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   <label htmlFor="campaign-title" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Nome da Campanha</label>
                   <input
                     type="text"
-                    id="campaign-title" value={newCampTitle}
+                    id="campaign-title" value={newCampTitle} maxLength={4000}
                     onChange={(e) => setNewCampTitle(e.target.value)}
                     placeholder="Ex: Jejum de Daniel, Fogueira Santa..."
                     className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold focus:ring-1 focus:ring-hl-gold/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
@@ -667,7 +701,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   <label htmlFor="campaign-duration" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Duração (Exibição)</label>
                   <input
                     type="text"
-                    id="campaign-duration" value={newCampDuration}
+                    id="campaign-duration" value={newCampDuration} maxLength={2000}
                     onChange={(e) => setNewCampDuration(e.target.value)}
                     placeholder="Ex: De 11 a 31 de Outubro, 21 Dias..."
                     className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold focus:ring-1 focus:ring-hl-gold/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
@@ -736,16 +770,17 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     onChange={(e) => setNewCampEndDate(e.target.value)}
                     className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
-                  <span className="text-[9px] text-hl-dim font-mono mt-0.5">Sumiço automático dos slides ao passar da data</span>
+                  <span className="text-[11px] text-hl-dim mt-0.5">Exibe até o fim desse dia. Depois, sai do telão e permanece cadastrada para edição.</span>
                 </div>
 
+                {(campaignError||campaignConflict)&&<p className="agenda-error" role="alert">{campaignConflict?'Esta campanha mudou em outro controle. Cancele e abra a edição novamente.':campaignError}</p>}
                 <div className="flex gap-2.5 mt-1">
                   <button
-                    type="button"
-                    onClick={handleSaveCampaign}
+                    type="submit"
+                    disabled={campaignConflict}
                     className="flex-1 py-2.5 bg-hl-gold hover:bg-hl-gold-bright text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(255,211,79,0.3)] active:translate-y-[1px]"
                   >
-                    Confirmar Cadastro
+                    {editingCampId?'Salvar alterações':'Adicionar campanha'}
                   </button>
                   <button
                     type="button"
@@ -758,7 +793,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     Cancelar
                   </button>
                 </div>
-              </div>
+              </form>
             )}
 
             {/* CAMPAIGNS LIST */}
@@ -772,13 +807,12 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   // Check if expired
                   let isExpired = false;
                   if (camp.endDate) {
-                    const end = new Date(camp.endDate + 'T23:59:59');
-                    if (new Date() > end) isExpired = true;
+                    if (camp.endDate < todayStr) isExpired = true;
                   }
 
                   return (
                     <div
-                      key={camp.id || `camp_${index}`}
+                      key={camp.id || `camp_${index}`} data-campaign-id={camp.id}
                       className={`flex items-center justify-between p-3.5 rounded-xl border text-xs bg-hl-panel border-hl-line-soft transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
                         isExpired ? "opacity-45" : ""
                       }`}
@@ -822,6 +856,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                           type="button"
                           onClick={() => {
                             setEditingCampId(camp.id);
+                            setCampaignBase(JSON.stringify(camp));setCampaignError('');
                             setNewCampTitle(camp.title);
                             setNewCampDuration(camp.duration);
                             setNewCampType(camp.iconType || 'flame');

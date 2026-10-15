@@ -95,8 +95,8 @@ interface ControlsPanelProps {
   setProjectionWin: (w: Window | null) => void;
   blackoutEnabled: boolean;
   clearContentEnabled: boolean;
-  nextMeeting: Meeting;
-  nextMeetingDate: Date;
+  nextMeeting: Meeting|null;
+  nextMeetingDate: Date|null;
   hoursStr: string;
   minutesStr: string;
   diffSeconds: number;
@@ -213,6 +213,7 @@ export function ControlsPanel({
   };
 
   const handleToggleTimerPlayPause = () => {
+    if(!nextMeetingDate)return;
     if (countdownPaused) {
       const currentDiffMs = nextMeetingDate.getTime() - new Date().getTime();
       const currentDiffSec = Math.floor(currentDiffMs / 1000);
@@ -228,6 +229,7 @@ export function ControlsPanel({
   };
 
   const adjustTimer = (minutes:number) => {
+    if(!nextMeetingDate)return;
     if(countdownPaused) updateStateAndBroadcast('pausedSeconds',Math.max(0,(pausedSeconds ?? diffSeconds)+minutes*60));
     else updateStateAndBroadcast('countdownOffset',countdownOffset+minutes*60000);
   };
@@ -349,9 +351,9 @@ export function ControlsPanel({
           <div className="settings-choice-pair" role="group" aria-label="Fixar momento">{([{id:'baptism',name:'Batismo',icon:Droplets},{id:'blessing',name:'Despedida',icon:Hand}] as const).map(item => <button key={item.id} aria-pressed={manualSlideOverride === item.id} onClick={() => {updateStateAndBroadcast('activeVerseIndex',null); updateStateAndBroadcast('customVerseText',null); updateStateAndBroadcast('customVerseRef',null); updateStateAndBroadcast('manualSlideOverride',manualSlideOverride === item.id ? null : item.id);}}><item.icon size={19}/><strong>{manualSlideOverride === item.id ? 'Soltar ' : 'Fixar '}{item.name}</strong></button>)}</div>
           {(manualSlideOverride === 'baptism' || manualSlideOverride === 'blessing') && <div className="settings-pinned"><p role="status">{manualSlideOverride === 'baptism' ? 'Batismo' : 'Despedida'} fixado. A fila continua preservada.</p><button className="settings-primary settings-resume" onClick={() => updateStateAndBroadcast('manualSlideOverride',null)}><Play size={18}/><span>Voltar à fila normal</span></button></div>}
         </section>
-        <section className="settings-card settings-wide"><header><Timer size={19}/><div><h3>Contagem regressiva</h3><p>{nextMeeting.dayName}, às {nextMeeting.time} · {nextMeeting.theme}</p></div></header><div className="settings-timer-display"><strong>{hoursStr}:{minutesStr}</strong><span>{countdownPaused ? 'Contagem pausada' : 'Até a próxima reunião'}{countdownOffset ? ' · horário ajustado' : ''}</span></div>
-          <div className="settings-timer-adjust"><fieldset className="settings-time-add"><legend><Plus size={17}/>Aumentar contagem</legend><div>{[1,5,30].map(n => <button key={n} aria-label={`Acrescentar ${n} minuto${n>1?'s':''}`} onClick={() => adjustTimer(n)}><Plus size={16}/>{n} min</button>)}</div></fieldset><fieldset className="settings-time-subtract"><legend><Minus size={17}/>Diminuir contagem</legend><div>{[1,5,30].map(n => <button key={n} aria-label={`Diminuir ${n} minuto${n>1?'s':''}`} onClick={() => adjustTimer(-n)}><Minus size={16}/>{n} min</button>)}</div></fieldset></div>
-          <div className="settings-button-row"><button onClick={handleToggleTimerPlayPause}>{countdownPaused ? <Play size={18}/> : <Pause size={18}/>} {countdownPaused ? 'Retomar contagem' : 'Pausar contagem'}</button><button onClick={handleResetTimer}><RotateCcw size={18}/>Restaurar horário da agenda</button></div>
+        <section className="settings-card settings-wide"><header><Timer size={19}/><div><h3>Contagem regressiva</h3><p>{nextMeeting?`${nextMeeting.dayName}, às ${nextMeeting.time} · ${nextMeeting.theme}`:'Cadastre uma reunião futura na Agenda para ativar a contagem.'}</p></div></header><div className="settings-timer-display"><strong>{hoursStr}:{minutesStr}</strong><span>{!nextMeeting ? 'Sem próxima reunião' : countdownPaused ? 'Contagem pausada' : 'Até a próxima reunião'}{countdownOffset ? ' · horário ajustado' : ''}</span></div>
+          <div className="settings-timer-adjust"><fieldset disabled={!nextMeetingDate} className="settings-time-add"><legend><Plus size={17}/>Aumentar contagem</legend><div>{[1,5,30].map(n => <button key={n} aria-label={`Acrescentar ${n} minuto${n>1?'s':''}`} onClick={() => adjustTimer(n)}><Plus size={16}/>{n} min</button>)}</div></fieldset><fieldset disabled={!nextMeetingDate} className="settings-time-subtract"><legend><Minus size={17}/>Diminuir contagem</legend><div>{[1,5,30].map(n => <button key={n} aria-label={`Diminuir ${n} minuto${n>1?'s':''}`} onClick={() => adjustTimer(-n)}><Minus size={16}/>{n} min</button>)}</div></fieldset></div>
+          <div className="settings-button-row"><button disabled={!nextMeetingDate} onClick={handleToggleTimerPlayPause}>{countdownPaused ? <Play size={18}/> : <Pause size={18}/>} {countdownPaused ? 'Retomar contagem' : 'Pausar contagem'}</button><button disabled={!nextMeetingDate} onClick={handleResetTimer}><RotateCcw size={18}/>Restaurar horário da agenda</button></div>
         </section>
       </div></details>
       <details open className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Waves} title="Fundos e efeitos" description="Escolha o ambiente e confira a animação." badge={background3DStyle === 'off' ? 'Desligado' : 'Visual selecionado'}/></summary><div className="settings-section-body settings-single"><BackgroundControls style={background3DStyle} fps={background3DFps} intensity={background3DIntensity} update={updateStateAndBroadcast}/></div></details>

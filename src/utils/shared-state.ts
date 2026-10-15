@@ -1,3 +1,4 @@
+import {calendarDate} from './agenda.ts';
 type Validator = (value: unknown) => boolean;
 const text = (max: number): Validator => value => typeof value === 'string' && value.length <= max;
 const nullable = (check: Validator): Validator => value => value === null || check(value);
@@ -17,11 +18,12 @@ const array = (check: Validator, max = 500): Validator => value => {
   return Array.isArray(parsed) && parsed.length <= max && parsed.every(check) && JSON.stringify(parsed).length <= 500_000;
 };
 const optional = (value: unknown, check: Validator) => value === undefined || check(value);
-const date = (value: unknown) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
+const date = (value: unknown) => calendarDate(value)!==null;
 const meeting: Validator = value => record(value) && Object.keys(value).every(key => ['id','theme','day','dayName','time','hours','minutes','date'].includes(key))
   && text(200)(value.id) && text(2000)(value.theme) && text(100)(value.dayName)
   && typeof value.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.time)
   && number(0, 23, true)(value.hours) && number(0, 59, true)(value.minutes)
+  && Number(value.hours)===Number(value.time.slice(0,2)) && Number(value.minutes)===Number(value.time.slice(3))
   && optional(value.day, number(0, 6, true)) && optional(value.date, date);
 const campaign: Validator = value => record(value) && Object.keys(value).every(key => ['id','title','duration','iconType','endDate'].includes(key))
   && text(200)(value.id) && text(4000)(value.title)

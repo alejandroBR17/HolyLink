@@ -43,8 +43,8 @@ interface MonitorPanelProps {
   updateStateAndBroadcast: (key: string, value: any) => void;
   customMeetings: Meeting[];
   customCampaigns: any[];
-  nextMeeting: Meeting;
-  nextMeetingDate: Date;
+  nextMeeting: Meeting|null;
+  nextMeetingDate: Date|null;
   ongoingMeeting: Meeting | null;
   volume: number;
   tickerText: string | null;
