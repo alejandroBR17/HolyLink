@@ -12,7 +12,7 @@ import { useWakeLock } from '../../hooks/useWakeLock';
 import { PWAInstallModal } from '../PWAInstallModal';
 
 function PerformanceControlModule() {
-  const {isSupported,isActive,enable,disable} = useWakeLock(false);
+  const {isSupported,isActive,isRequested,enable,disable} = useWakeLock(false);
   const {fps,hardwareConcurrency,mode,effectiveMode,setPerformanceMode,report,purgeCache} = usePerformanceDiagnostics();
   const [message,setMessage] = useState('');
   return <section className="settings-card"><header><Gauge size={19}/><div><h3>Qualidade deste aparelho</h3><p>Modo atual: {effectiveMode === 'high' ? 'Alta' : effectiveMode === 'light' ? 'Leve' : 'Equilibrada'}.</p></div></header>
@@ -20,7 +20,8 @@ function PerformanceControlModule() {
     <div className="settings-diagnostics"><div><span>Atualização da aba</span><strong>{fps} FPS</strong></div><div><span>Processadores lógicos</span><strong>{hardwareConcurrency || 'Não informado'}</strong></div><div><span>RAM aproximada</span><strong>{report?.ramDisplay || 'Não informada'}</strong></div><div><span>Memória JavaScript</span><strong>{report?.jsHeapUsedMB !== undefined ? `${report.jsHeapUsedMB} MB` : 'Não informada'}</strong></div></div>
     <label className="settings-field">Perfil de qualidade<select value={mode} onChange={e => setPerformanceMode(e.target.value as 'auto'|'light'|'balanced'|'high')}><option value="auto">Automático · adapta ao aparelho</option><option value="light">Leve · transições simples</option><option value="balanced">Equilibrado</option><option value="high">Alta qualidade</option></select></label>
     <p className="settings-hint">Este perfil ajusta transições e detalhes locais. O estilo do fundo é escolhido em Fundos e efeitos.</p>
-    <div className="settings-button-row"><button aria-pressed={isActive} disabled={!isSupported} onClick={async () => {if(isActive){await disable(); setMessage('Tela acesa desativada.');}else{const ok=await enable(); setMessage(ok ? 'Tela acesa ativada enquanto o navegador permitir.' : 'O navegador não permitiu manter a tela acesa.');}}}><Monitor size={18}/>{!isSupported ? 'Tela acesa indisponível' : isActive ? 'Desativar tela acesa' : 'Manter tela acesa'}</button><button onClick={() => {purgeCache(); setMessage('Cache de pré-carregamento limpo. Seus arquivos foram preservados.');}}><HardDrive size={18}/>Limpar cache de pré-carregamento</button></div>
+    <div className="settings-button-row"><button aria-pressed={isRequested} disabled={!isSupported} onClick={() => {if(isRequested){void disable();setMessage('Preferência de tela acesa desativada.');}else{void enable();setMessage('Preferência de tela acesa ativada.');}}}><Monitor size={18}/>{!isSupported ? 'Tela acesa indisponível' : isRequested ? 'Desativar tela acesa' : 'Manter tela acesa'}</button><button onClick={() => {purgeCache(); setMessage('Cache de pré-carregamento limpo. Seus arquivos foram preservados.');}}><HardDrive size={18}/>Limpar cache de pré-carregamento</button></div>
+    <p className="settings-hint" role="status">{!isSupported?'Este navegador não oferece controle de repouso.':isActive?'O navegador está mantendo esta tela acesa.':isRequested?'Preferência ativada, mas o navegador não está mantendo a tela acesa.':'Preferência desativada. O repouso segue as configurações do aparelho.'}</p>
     <p role="status" className="settings-feedback">{message}</p>
   </section>;
 }
@@ -32,60 +33,47 @@ function AudioVolumeControl({
   volume: number;
   updateStateAndBroadcast: (key: string, value: any) => void;
 }) {
-  const [localVolume, setLocalVolume] = useState<number>(volume);
-  const isDraggingRef = useRef<boolean>(false);
-  const throttleTimerRef = useRef<any>(null);
-  const latestVolume = useRef(volume);
-  useEffect(() => () => {if (throttleTimerRef.current) clearTimeout(throttleTimerRef.current);},[]);
-
-  // Keep local state in sync with external volume prop ONLY when not actively dragging
-  useEffect(() => {
-    if (!isDraggingRef.current) {
-      setLocalVolume(volume);
+  const [localVolume,setLocalVolume]=useState(volume);
+  const isDraggingRef=useRef(false);
+  const timer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const latest=useRef(volume),lastSent=useRef(volume);
+  const update=useRef(updateStateAndBroadcast);update.current=updateStateAndBroadcast;
+  const commit=()=>{
+    if(timer.current){clearTimeout(timer.current);timer.current=null;}
+    isDraggingRef.current=false;
+    if(lastSent.current!==latest.current){lastSent.current=latest.current;update.current('volume',latest.current);}
+  };
+  useEffect(()=>()=>{
+    if(timer.current)clearTimeout(timer.current);
+    if(lastSent.current!==latest.current)update.current('volume',latest.current);
+  },[]);
+  useEffect(()=>{
+    lastSent.current=volume;
+    if(!isDraggingRef.current){
+      if(timer.current){clearTimeout(timer.current);timer.current=null;}
+      latest.current=volume;lastSent.current=volume;setLocalVolume(volume);
     }
-  }, [volume]);
-
-  // Handle slider drag
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = parseFloat(e.target.value);
-    latestVolume.current = newVal;
-    setLocalVolume(newVal);
-
-    // Throttle broadcast during dragging to avoid state echo stutter across dual screens
-    if (!throttleTimerRef.current) {
-      throttleTimerRef.current = setTimeout(() => {
-        updateStateAndBroadcast('volume', latestVolume.current);
-        throttleTimerRef.current = null;
-      }, 30);
-    }
+  },[volume]);
+  const handleSliderChange=(event:React.ChangeEvent<HTMLInputElement>)=>{
+    const value=Number(event.target.value);
+    if(!Number.isFinite(value))return;
+    latest.current=Math.max(0,Math.min(1,value));setLocalVolume(latest.current);
+    if(!timer.current)timer.current=setTimeout(()=>{
+      timer.current=null;
+      if(lastSent.current!==latest.current){lastSent.current=latest.current;update.current('volume',latest.current);}
+    },40);
   };
-
-  const handlePointerDown = () => {
-    isDraggingRef.current = true;
+  const handlePointerDown=(event:React.PointerEvent<HTMLInputElement>)=>{
+    isDraggingRef.current=true;
+    try{event.currentTarget.setPointerCapture(event.pointerId);}catch{/* Keyboard/synthetic events may not own a pointer. */}
   };
-
-  const handlePointerUp = () => {
-    isDraggingRef.current = false;
-    if (throttleTimerRef.current) {
-      clearTimeout(throttleTimerRef.current);
-      throttleTimerRef.current = null;
-    }
-    updateStateAndBroadcast('volume', localVolume);
-  };
-
-  const handlePresetClick = (val: number) => {
-    if (throttleTimerRef.current) {clearTimeout(throttleTimerRef.current); throttleTimerRef.current = null;}
-    isDraggingRef.current = false;
-    setLocalVolume(val);
-    updateStateAndBroadcast('volume', val);
-  };
-
-  const displayVolume = isDraggingRef.current ? localVolume : volume;
-  const volPercent = Math.round(displayVolume * 100);
-
+  const handlePointerUp=()=>commit();
+  const handlePresetClick=(value:number)=>{latest.current=value;setLocalVolume(value);commit();};
+  const displayVolume=localVolume;
+  const volPercent=Math.round(displayVolume*100);
   return <div className="settings-audio">
     <div className="settings-audio-level"><span>{displayVolume === 0 ? 'Áudio silenciado' : 'Volume das mídias'}</span><strong>{volPercent}%</strong></div>
-    <div className="settings-audio-slider"><button aria-label={displayVolume === 0 ? 'Ativar áudio em 80%' : 'Silenciar áudio'} onClick={() => handlePresetClick(displayVolume === 0 ? .8 : 0)}>{displayVolume === 0 ? <VolumeX size={20}/> : <Volume2 size={20}/>}</button><input aria-label="Volume das mídias" type="range" min="0" max="1" step="0.01" value={displayVolume} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} onBlur={handlePointerUp} onChange={handleSliderChange}/></div>
+    <div className="settings-audio-slider"><button aria-label={displayVolume === 0 ? 'Ativar áudio em 80%' : 'Silenciar áudio'} onClick={() => handlePresetClick(displayVolume === 0 ? .8 : 0)}>{displayVolume === 0 ? <VolumeX size={20}/> : <Volume2 size={20}/>}</button><input aria-label="Volume das mídias" type="range" min="0" max="1" step="0.01" value={displayVolume} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} onLostPointerCapture={handlePointerUp} onBlur={handlePointerUp} onKeyUp={event=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(event.key))commit();}} onChange={handleSliderChange}/></div>
     <div className="settings-audio-presets" role="group" aria-label="Volumes rápidos">{[{label:'Mudo',val:0},{label:'20%',val:.2},{label:'50%',val:.5},{label:'80%',val:.8},{label:'100%',val:1}].map(item => <button key={item.label} aria-pressed={Math.abs(displayVolume-item.val)<.01} onClick={() => handlePresetClick(item.val)}>{item.label}</button>)}</div>
   </div>;
 }
@@ -148,8 +136,17 @@ export function ControlsPanel({
   const notify = showToast || showAlert;
   const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
-  const [tickerDraft,setTickerDraft] = useState(tickerText || '');
-  useEffect(() => setTickerDraft(tickerText || ''),[tickerText]);
+  const [tickerDraft,setTickerDraft] = useState(()=>{
+    try{const saved=JSON.parse(localStorage.getItem('holylink_ticker_draft_v1')||'null');if(typeof saved==='string'&&saved.length<=500)return saved;}catch{/* Keep the current live text if the draft is invalid. */}
+    return tickerText||'';
+  });
+  const tickerEdited=useRef(tickerDraft!==(tickerText||''));
+  const editTicker=(value:string)=>{tickerEdited.current=true;setTickerDraft(value);};
+  useEffect(()=>{if(!tickerEdited.current)setTickerDraft(tickerText||'');},[tickerText]);
+  useEffect(()=>{try{
+    if(tickerDraft!==(tickerText||''))localStorage.setItem('holylink_ticker_draft_v1',JSON.stringify(tickerDraft));
+    else localStorage.removeItem('holylink_ticker_draft_v1');
+  }catch{/* Editing remains available without local storage. */}},[tickerDraft,tickerText]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -369,7 +366,7 @@ export function ControlsPanel({
           </form>
           {!!alertHistory.length && <details className="settings-recent"><summary>Reutilizar avisos recentes ({alertHistory.length})</summary><ul>{alertHistory.map((msg,index) => <li key={msg}><button onClick={() => handleSendAlertMessage(msg)} aria-label={`Reenviar aviso: ${msg}`}><RotateCcw size={17}/><span>{msg}</span></button><button aria-label={`Excluir aviso do histórico: ${msg}`} onClick={() => handleDeleteHistoryItem(index)}><Trash2 size={18}/></button></li>)}</ul></details>}
         </section>
-        <section className="settings-card"><header><MessageSquareText size={19}/><div><h3>Letreiro na faixa inferior</h3><p>Prepare o texto e toque em Exibir.</p></div></header>{tickerText && <div className="settings-live-message"><span>Em exibição</span><p>{tickerText}</p></div>}<form className="settings-form" onSubmit={e => {e.preventDefault(); if(tickerDraft.trim()) updateStateAndBroadcast('tickerText',tickerDraft.trim());}}><label>Texto do letreiro<textarea value={tickerDraft} onChange={e => setTickerDraft(e.target.value)} required maxLength={500} rows={3}/></label><div className="settings-button-row"><button type="submit" className="settings-primary" disabled={!tickerDraft.trim()}><Send size={18}/>Exibir letreiro</button>{tickerText && <button type="button" onClick={() => {updateStateAndBroadcast('tickerText',null); setTickerDraft('');}}><X size={18}/>Retirar letreiro</button>}</div></form><details className="settings-recent"><summary>Sugestões de mensagens</summary><div className="settings-suggestions">{tickerSuggestions.map(suggestion => <button key={suggestion} onClick={() => setTickerDraft(suggestion)}>{suggestion}</button>)}</div></details></section>
+        <section className="settings-card"><header><MessageSquareText size={19}/><div><h3>Letreiro na faixa inferior</h3><p>Prepare o texto e toque em Exibir.</p></div></header>{tickerText && <div className="settings-live-message"><span>Em exibição</span><p>{tickerText}</p></div>}<form className="settings-form" onSubmit={e => {e.preventDefault(); if(tickerDraft.trim()){tickerEdited.current=false;setTickerDraft(tickerDraft.trim());updateStateAndBroadcast('tickerText',tickerDraft.trim());}}}><label htmlFor="settings-ticker-text">Texto do letreiro</label><textarea id="settings-ticker-text" value={tickerDraft} onChange={e => editTicker(e.target.value)} required maxLength={500} rows={3}/><div className="settings-button-row"><button type="submit" className="settings-primary" disabled={!tickerDraft.trim()}><Send size={18}/>Exibir letreiro</button>{tickerText && <button type="button" onClick={() => {updateStateAndBroadcast('tickerText',null);if(!tickerEdited.current)setTickerDraft('');}}><X size={18}/>Retirar letreiro</button>}</div></form>{tickerDraft!==(tickerText||'')&&<div className="settings-draft-notice" role="status">Rascunho local · ainda não está no telão.<button type="button" onClick={()=>{tickerEdited.current=false;setTickerDraft(tickerText||'');}}>Descartar rascunho</button></div>}<details className="settings-recent"><summary>Sugestões de mensagens</summary><div className="settings-suggestions">{tickerSuggestions.map(suggestion => <button key={suggestion} onClick={() => editTicker(suggestion)}>{suggestion}</button>)}</div></details></section>
         <section className="settings-card"><header><Volume2 size={19}/><div><h3>Áudio das mídias</h3><p>Volume compartilhado com a projeção.</p></div></header><AudioVolumeControl volume={volume} updateStateAndBroadcast={updateStateAndBroadcast}/><p className="settings-hint">O volume físico do PC e das caixas de som continua sendo ajustado nos próprios aparelhos.</p></section>
       </div></details>
       <details className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Gauge} title="Desempenho e energia" description="Qualidade, permissões e tela acesa neste aparelho."/></summary><div className="settings-section-body settings-single"><PerformanceControlModule/><div className="settings-card"><BrowserPermissions/></div></div></details>

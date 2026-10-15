@@ -4,6 +4,7 @@ import {mediaPreloader} from '../utils/preloader';
 import {LOGO_URLS} from '../constants/logos';
 import {requestSinglePermission} from '../utils/permissions';
 import {BrowserPermissions} from './BrowserPermissions';
+import {resumeWakeLock} from '../utils/wakeLock';
 interface SmartSplashLoaderProps {
   customMediaList:Array<{id:string;type:'image'|'video';url:string}>;
   mediaReady:boolean;
@@ -38,7 +39,7 @@ export function SmartSplashLoader({customMediaList,mediaReady,mediaLoadError,cur
       {warning&&failed>0&&<p className="boot-warning">{failed} recurso(s) não responderam ou não puderam ser preparados. Confira as mídias antes da projeção.</p>}
       {finished&&<BrowserPermissions startup/>}
       {!finished&&<p className="boot-explanation">Preparando recursos locais e mídias próximas da fila. Você pode entrar enquanto a preparação continua.</p>}
-      <button onClick={()=>{void requestSinglePermission('audio');void requestSinglePermission('wakelock');complete.current();}}><ArrowRight size={18}/>{finished?'Entrar no HolyLink':'Entrar sem aguardar'}</button>
+      <button onClick={()=>{void requestSinglePermission('audio');void resumeWakeLock();complete.current();}}><ArrowRight size={18}/>{finished?'Entrar no HolyLink':'Entrar sem aguardar'}</button>
     </section>
   </div>;
 }

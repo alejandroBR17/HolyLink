@@ -1,8 +1,9 @@
-import {requestWakeLock,isWakeLockActive} from './wakeLock';
+import {requestWakeLock,isWakeLockActive,isWakeLockRequested,isWakeLockSupported} from './wakeLock';
 export interface PermissionStatusItem {
   id:'audio'|'storage'|'notifications'|'wakelock'|'projection_window';
   title:string;description:string;
   status:'granted'|'prompt'|'denied'|'unsupported';
+  disabledByChoice?:boolean;
 }
 let audioContext:AudioContext|null=null;
 // Remember the request outcome for UX; persisted() remains authoritative.
@@ -48,7 +49,7 @@ export async function checkAllPermissions():Promise<PermissionStatusItem[]>{
   return [
     {id:'audio',title:'Áudio',description:audio==='granted'?'Sessão de áudio liberada nesta aba.':audio==='prompt'?'Toque para liberar o áudio nesta aba.':'O navegador não disponibilizou a sessão de áudio.',status:audio},
     {id:'storage',title:'Proteger arquivos locais',description:storage==='granted'?'Proteção persistente concedida pelo navegador.':storage==='prompt'?'Solicite proteção extra contra limpeza automática. O navegador decide se pode concedê-la.':storage==='denied'?'O navegador não confirmou a proteção extra. Seus arquivos continuam no armazenamento local comum. Você pode entrar normalmente.':'Proteção extra indisponível neste navegador. Você pode usar o armazenamento local comum.',status:storage},
-    {id:'wakelock',title:'Manter tela acesa',description:isWakeLockActive()?'Tela acesa solicitada neste aparelho.':'Evita o repouso enquanto a aba estiver visível e o navegador permitir.',status:'wakeLock' in navigator?isWakeLockActive()?'granted':'prompt':'unsupported'},
+    {id:'wakelock',title:'Manter tela acesa',disabledByChoice:!isWakeLockRequested(),description:isWakeLockActive()?'Tela acesa solicitada neste aparelho.':!isWakeLockRequested()?'Você desativou esta opção. Ative aqui se quiser impedir o repouso.':'Evita o repouso enquanto a aba estiver visível e o navegador permitir.',status:isWakeLockSupported()?isWakeLockActive()?'granted':'prompt':'unsupported'},
   ];
 }
 export async function requestSinglePermission(id:PermissionStatusItem['id']):Promise<boolean>{
