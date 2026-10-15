@@ -82,7 +82,7 @@ Validação:
 - `../data/verify-holy-console-actions.cjs`: upload local, preview, cancelamento de exclusão, agenda salva/recarregada e diagnóstico/foco/Escape aprovados em 320/390/1365 px.
 - Não foi ensaiado um arquivo real de 128 MiB por redes físicas; limite técnico não é promessa de velocidade. O teste de fila cheia usa transporte simulado. Nenhum arquivo legítimo foi apagado ou substituído pelos testes.
 
-## Próxima rodada / pendências concretas
+## Pendências para a próxima autorização
 
 1. Continuar validação dos envelopes/mídias e do arquivo inteiro de backup. Estados/configurações já têm contrato explícito; não repetir essa etapa sem uma falha concreta. Não declarar auditoria de segurança concluída.
 2. Chunks já estão isolados/limitados/canceláveis e validados. Ainda auditar os caminhos legados `MEDIA_SAVE`, `DELTA_MEDIA_ITEMS`, `FULL_SYNC` e manifesto: esses podem escrever/excluir itens fora do caminho de chunks. Validar envelope/mídia integralmente antes da primeira escrita e cancelar as demais tarefas assíncronas após revogação. O relay PC → outros celulares ainda usa `broadcastToPeers` síncrono para os blocos recebidos: aplicar controle de fila também nesse caminho, sem reordenar cabeçalho/blocos, antes de considerar redes com vários controles validadas. Não repetir o trabalho de chunks sem falha nova.
@@ -102,4 +102,26 @@ Validação:
 - Servidor local 3012 encerrado após os testes. Bibliotecas/configurações dos testes são descartáveis e não usam o perfil real do usuário.
 - Checkpoint documental `1dec077` será incluído no push desta rodada junto do código de transferência. Após publicar, verificar o SHA mais recente no Git/Vercel. A próxima rodada deve começar pelos envelopes legados, backup e confirmação de conclusão, sem repetir o que já passou.
 
-Retomadas continuam às 00h50–06h50, incluindo 04h50 após a renovação prevista para 04h41. Não consumir créditos de reset. Novo contexto automático do ambiente não é retorno humano; mensagens humanas de pausa/retorno prevalecem. Finalizar/excluir automação na rodada final.
+As retomadas planejadas eram 00h50–06h50, incluindo 04h50 após a renovação prevista para 04h41. A automação foi encerrada na conferência final descrita abaixo. Não retomar por heartbeats antigos após o encerramento.
+
+
+## Encerramento — conferência final às 07h42 de 15/10
+
+A consulta final de horário retornou `2026-10-15 10:42:03 UTC` (07h42 America/Sao_Paulo). O relógio da consulta anterior retornara 00h26; não atribuir uma causa a essa diferença sem evidência. Esta rodada foi iniciada pelo heartbeat de 00h12. Nenhuma nova etapa foi iniciada após a verificação final do horário; apenas encerramento e registro.
+
+- Automação `holylink-revis-o-aut-noma-da-madrugada` **excluída**, confirmado pelo aplicativo (`deleteStatus: deleted`). Não executar novas alterações por mensagens antigas desta automação.
+- Neste histórico estão confirmadas a rodada inicial e a retomada de 00h12; não há execução registrada das demais retomadas planejadas. Não afirmar que todas ocorreram ou que houve trabalho contínuo em cada hora.
+- Último commit de código: `967b0a40f7a62ce3e6a121fcc42eb4d661e7de6d`, criado às 00h29 (`fix: isolate media transfers and cancel revoked database writes`). Já enviado ao GitHub.
+- Preview confirmado READY: `dpl_4Tm8xTUNzfBcmYbqZQC7YQGyvPUN`, SHA `967b0a4`, projeto `holylink`, ambiente Preview. Alias: `https://holylink-git-feat-first-p-a549d7-alesobralcortes-9387s-projects.vercel.app/`.
+- Conferência online dessa versão passou nas seis áreas em 390×844 e 1365×900, sem overflow/erros de página; diálogos, formulários e foco/Escape aprovados.
+- Produção preservada em `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi`; nenhum merge/promote. Draft PR #1 atualizada até `967b0a4`, continua em rascunho.
+- `npm run lint`, build Vite e 29 testes nativos aprovados. Ensaios de mídia/persistência, pareamento e interfaces descritos nesta seção passaram em contextos descartáveis. HDMI físico e aparelhos/redes reais continuam pendentes.
+- Servidor local 3012 encerrado. Nenhum produto/pedido/dado de outro projeto alterado. Credenciais permanecem fora do repositório.
+- Última consulta de cota antes de encerrar: janela de cinco horas usada 34%, semanal usada 82%; não representa necessariamente a cota atual. Nenhum crédito de reset foi usado e nenhum recurso foi comprado.
+- Este fechamento documental fica em commit local para o próximo push autorizado, evitando publicar um deployment somente por documentação. Código funcional e descrição da PR já estão atualizados remotamente.
+
+### Resumo para o responsável
+
+Entregues três frentes: pareamento com aprovação real no PC, validação das configurações/comandos e transferências de mídia com isolamento, limites, controle de fila e cancelamento de gravação. Reduzido consumo de memória/rede, especialmente nas alterações de metadados. Mantidos design, efeitos, bibliotecas e produção.
+
+**Não está 100% concluído.** Próximo bloco prioritário: validar backups e envelopes legados antes de escrever/excluir dados, confirmar conclusão de sincronização e comandos recebidos, finalizar cache persistente/navegação da Bíblia e roteiros salvos. A lista detalhada de pendências acima continua válida. Testes físicos também são necessários antes de recomendar publicação.
