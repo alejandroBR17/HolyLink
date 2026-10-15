@@ -31,3 +31,17 @@ Não carrega toda a biblioteca na RAM, não faz benchmark completo nessa tela, n
 - Navegador isolado em 320/390/768/1365: atual após paginação e busca, destaque/Blackout/ocultação, grupos de tempo, modal real de exclusão, Escape/foco e ausência de overflow. Fixtures só no IndexedDB descartável dos testes.
 - Falha de imagem de marca simulada: abertura informa pendência e permite prosseguir conscientemente.
 - Revisão das seis áreas em sete tamanhos; não houve ensaio com hardware da igreja ou HDMI físico.
+
+## Refinamento após avaliação no celular
+
+O destaque deixou a barra lateral grossa/quadrada e passou a cartão arredondado com padding próprio (grid no celular), ícone contido e selo discreto “Exibindo”. A faixa atual foi reduzida a título e ações; mantidos localizar item e abrir monitor. Não repete descrições, posição, textos explicativos e parágrafos de estado. Blackout/Limpar tela mantêm rótulos estáveis e estado somente visual (contraste, borda, ícone), com `aria-pressed` preservado. Retirados os textos Ativo/Inativo; corrigida especificidade da regra antiga que sobrescrevia o fundo dos controles essenciais.
+
+### Permissões antes da entrada
+
+Após a preparação real dos recursos, a abertura mostra checagem e solicitações de áudio, persistência de armazenamento e tela acesa. O usuário entra pelo botão final ou pode pular a preparação enquanto ela ocorre. Os métodos antigos existiam, mas o caminho executado da abertura saltava a etapa de permissões. Ela agora faz parte explícita do fluxo.
+
+Cada solicitação é iniciada por toque e atualiza o estado verificado. Áudio usa um contexto compartilhado e confere estado `running`; falha não vira concedido. Persistência é proteção opcional contra limpeza e não equivale ao funcionamento básico do IndexedDB. Tela acesa é concedida somente quando existe solicitação ativa, não pela simples presença da API. Erro/ausência/timeout são informados, sem bloquear a entrada permanentemente. Notificações de sistema não são pedidas sem uma função que as utilize; abertura de segunda tela é conferida pela ação real de abrir a janela.
+
+A checagem vale para aparelho/aba em uso, não concede acesso ao PC remotamente, não testa HDMI físico nem garante autoplay em outra janela. O fluxo orienta conferir áudio/pop-ups na segunda tela.
+
+Validação atual: 40 testes nativos, TypeScript/build, revisão das seis áreas em sete tamanhos e teste dedicado em 320/390/768/1365: solicitações e estados por APIs simuladas, recusa/ausência sem falso sucesso, continuação disponível, faixa atual compacta, ícone dentro do padding e contraste visual dos controles com rótulos estáveis. Capturas foram inspecionadas; não foi um ensaio no celular físico do responsável.

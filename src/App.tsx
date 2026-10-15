@@ -728,8 +728,8 @@ export default function App() {
 
           {/* ACTIVE CONTENT WORKSPACE */}
           <nav className="operator-quick-strip" aria-label="Controles essenciais da projeção">
-            <button type="button" aria-pressed={blackoutEnabled} onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}><EyeOff size={18} aria-hidden="true" />{blackoutEnabled ? 'Restaurar tela' : 'Blackout'}<small className="quick-control-state">{blackoutEnabled ? 'Ativo' : 'Inativo'}</small></button>
-            <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />{clearContentEnabled ? 'Mostrar texto' : 'Limpar texto'}<small className="quick-control-state">{clearContentEnabled ? 'Ativo' : 'Inativo'}</small></button>
+            <button type="button" aria-pressed={blackoutEnabled} onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}><EyeOff size={18} aria-hidden="true" />Blackout</button>
+            <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />Limpar tela</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(-1)}><ChevronLeft size={18} aria-hidden="true" />Slide anterior</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
           </nav>          <main onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">

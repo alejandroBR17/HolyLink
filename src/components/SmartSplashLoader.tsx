@@ -1,7 +1,8 @@
 import React, {useEffect,useRef,useState} from 'react';
-import {LoaderCircle,CheckCircle2,AlertTriangle,ArrowRight,Layers} from 'lucide-react';
+import {LoaderCircle,CheckCircle2,AlertTriangle,ArrowRight,Layers,Volume2,HardDrive,Monitor,ShieldCheck} from 'lucide-react';
 import {mediaPreloader} from '../utils/preloader';
 import {LOGO_URLS} from '../constants/logos';
+import {checkAllPermissions,requestSinglePermission,type PermissionStatusItem} from '../utils/permissions';
 interface SmartSplashLoaderProps {
   customMediaList:Array<{id:string;type:'image'|'video';url:string}>;
   mediaReady:boolean;
@@ -12,6 +13,19 @@ interface SmartSplashLoaderProps {
 }
 export function SmartSplashLoader({customMediaList,mediaReady,mediaLoadError,currentSlideId,activeSlides,onComplete}:SmartSplashLoaderProps){
   const [completed,setCompleted]=useState(0),[total,setTotal]=useState(0),[finished,setFinished]=useState(false),[failed,setFailed]=useState(0);
+  const [permissions,setPermissions]=useState<PermissionStatusItem[]|null>(null);
+  const [requesting,setRequesting]=useState<string|null>(null);
+  const [permissionMessage,setPermissionMessage]=useState('');
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;void checkAllPermissions().then(items=>{if(mounted.current)setPermissions(items);});return()=>{mounted.current=false;};},[]);
+  const requestPermission=async(id:PermissionStatusItem['id'])=>{
+    setRequesting(id);setPermissionMessage('');
+    const granted=await requestSinglePermission(id);
+    const items=await checkAllPermissions();
+    if(!mounted.current)return;
+    setPermissions(items);setRequesting(null);
+    setPermissionMessage(granted?'Solicitação concluída. Confira o estado atualizado.':'O navegador não liberou este recurso. Você pode continuar e conferir as configurações do aparelho.');
+  };
   const complete=useRef(onComplete);complete.current=onComplete;
   const snapshot=useRef({customMediaList,currentSlideId,activeSlides});snapshot.current={customMediaList,currentSlideId,activeSlides};
   useEffect(()=>{
@@ -20,7 +34,6 @@ export function SmartSplashLoader({customMediaList,mediaReady,mediaLoadError,cur
     const source=snapshot.current;
     void mediaPreloader.prepareStartup(source.currentSlideId,source.activeSlides,source.customMediaList,(done,count)=>{if(active){setCompleted(done);setTotal(count);}}).then(result=>{
       if(!active)return;setFinished(true);setFailed(result.failed);
-      if(!result.failed&&!mediaLoadError)complete.current();
     }).catch(()=>{if(active){setFailed(1);setFinished(true);}});
     return()=>{active=false;};
   },[mediaReady,mediaLoadError]);
@@ -35,8 +48,12 @@ export function SmartSplashLoader({customMediaList,mediaReady,mediaLoadError,cur
       <div className="boot-real-progress" role="progressbar" aria-label="Verificações iniciais" aria-valuemin={0} aria-valuemax={100} aria-valuenow={mediaReady&&total?progress:undefined}><span style={{width:mediaReady&&total?`${progress}%`:'8%'}}/></div>
       {mediaLoadError&&<p className="boot-warning">{mediaLoadError} Seus arquivos não foram apagados.</p>}
       {warning&&failed>0&&<p className="boot-warning">{failed} recurso(s) não responderam ou não puderam ser preparados. Confira as mídias antes da projeção.</p>}
-      <p className="boot-explanation">A preparação verifica recursos reais e aquece somente as mídias atual e seguinte, quando houver. Vídeos, rede e capacidade do aparelho ainda podem afetar a reprodução.</p>
-      <button onClick={()=>complete.current()}><ArrowRight size={18}/>{warning?'Abrir e conferir pendências':'Entrar sem aguardar'}</button>
+      {finished&&<div className="boot-permissions"><div className="boot-permissions-title"><ShieldCheck size={17}/><h2>Conferir permissões</h2><button onClick={()=>{void checkAllPermissions().then(items=>{if(mounted.current)setPermissions(items);});}} aria-label="Verificar permissões novamente"><LoaderCircle size={16}/></button></div>{permissions?permissions.map(item=>{
+        const Icon=item.id==='audio'?Volume2:item.id==='storage'?HardDrive:Monitor;
+        return <div className="boot-permission" key={item.id}><Icon size={18}/><div><strong>{item.title}</strong><small>{item.status==='granted'?'Liberado':item.status==='unsupported'?'Indisponível':item.status==='denied'?'Bloqueado':'Pendente'}</small><p>{item.description}</p></div>{item.status==='granted'?<CheckCircle2 className="boot-permission-ok" size={20}/>:item.status==='prompt'?<button disabled={requesting!==null} onClick={()=>{void requestPermission(item.id);}} aria-label={`Permitir ${item.title}`}>{requesting===item.id?<LoaderCircle className="animate-spin" size={17}/>:'Permitir'}</button>:<AlertTriangle size={18}/>}</div>;
+      }):<p role="status">Conferindo recursos do navegador…</p>}<p role="status" className="boot-permission-message">{permissionMessage}</p><p className="boot-permission-note">Vale para este aparelho e esta aba. Ao abrir a segunda tela, confira áudio e pop-ups no PC também.</p></div>}
+      {!finished&&<p className="boot-explanation">Preparando recursos locais e mídias próximas da fila. Você pode entrar enquanto a preparação continua.</p>}
+      <button onClick={()=>complete.current()} disabled={requesting!==null}><ArrowRight size={18}/>{finished?'Entrar no HolyLink':'Entrar sem aguardar'}</button>
     </section>
   </div>;
 }

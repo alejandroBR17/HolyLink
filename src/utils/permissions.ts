@@ -1,211 +1,54 @@
-import { requestWakeLock } from './wakeLock';
-
+import {requestWakeLock,isWakeLockActive} from './wakeLock';
 export interface PermissionStatusItem {
-  id: 'audio' | 'storage' | 'notifications' | 'wakelock' | 'projection_window';
-  title: string;
-  description: string;
-  status: 'granted' | 'prompt' | 'denied' | 'unsupported';
+  id:'audio'|'storage'|'notifications'|'wakelock'|'projection_window';
+  title:string;description:string;
+  status:'granted'|'prompt'|'denied'|'unsupported';
 }
-
-let isAudioUnlockedGlobal = false;
-
-/**
- * Silently unlocks audio context on the first user interaction anywhere in the app
- */
-export function setupGlobalAudioUnlock() {
-  if (typeof window === 'undefined' || isAudioUnlockedGlobal) return;
-
-  const unlock = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        const ctx = new AudioCtx();
-        if (ctx.state === 'suspended') {
-          ctx.resume().catch(() => {});
-        }
-      }
-      isAudioUnlockedGlobal = true;
-    } catch (e) {
-      // ignore
-    }
-
-    ['click', 'touchstart', 'keydown', 'pointerdown'].forEach((evt) => {
-      window.removeEventListener(evt, unlock, true);
-    });
-  };
-
-  ['click', 'touchstart', 'keydown', 'pointerdown'].forEach((evt) => {
-    window.addEventListener(evt, unlock, { once: true, capture: true });
-  });
+let audioContext:AudioContext|null=null;
+function getAudioContext(){
+  if(typeof window==='undefined')return null;
+  const AudioCtx=window.AudioContext||(window as Window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+  if(!AudioCtx)return null;
+  if(!audioContext||audioContext.state==='closed')audioContext=new AudioCtx();
+  return audioContext;
 }
-
-/**
-  Checks current browser permission status for all critical projection features
- */
-export async function checkAllPermissions(): Promise<PermissionStatusItem[]> {
-  const items: PermissionStatusItem[] = [];
-
-  // 1. Audio / Autoplay
-  try {
-    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    if (audioCtx.state === 'running') {
-      items.push({
-        id: 'audio',
-        title: 'Áudio & Mídia',
-        description: 'Reprodução de hinos e trilhas de vídeo',
-        status: 'granted'
-      });
-    } else {
-      items.push({
-        id: 'audio',
-        title: 'Áudio & Mídia',
-        description: 'Clique para liberar reprodução de som',
-        status: 'prompt'
-      });
-    }
-    audioCtx.close();
-  } catch (e) {
-    items.push({
-      id: 'audio',
-      title: 'Áudio & Mídia',
-      description: 'Áudio ativo',
-      status: 'granted'
-    });
-  }
-
-  // 2. Storage Persistence (IndexedDB quota)
-  try {
-    if (navigator.storage && navigator.storage.persisted) {
-      const isPersisted = await navigator.storage.persisted();
-      if (isPersisted) {
-        items.push({
-          id: 'storage',
-          title: 'Armazenamento',
-          description: 'Cache de vídeos e imagens ativado',
-          status: 'granted'
-        });
-      } else {
-        items.push({
-          id: 'storage',
-          title: 'Armazenamento',
-          description: 'Salvar arquivos e dados no navegador',
-          status: 'prompt'
-        });
-      }
-    } else {
-      items.push({
-        id: 'storage',
-        title: 'Armazenamento',
-        description: 'Armazenamento local ativo',
-        status: 'granted'
-      });
-    }
-  } catch (e) {
-    items.push({
-      id: 'storage',
-      title: 'Armazenamento',
-      description: 'Armazenamento ativo',
-      status: 'granted'
-    });
-  }
-
-  // 3. Notifications
-  try {
-    if (typeof Notification !== 'undefined') {
-      if (Notification.permission === 'granted') {
-        items.push({
-          id: 'notifications',
-          title: 'Notificações',
-          description: 'Alertas visuais ativados',
-          status: 'granted'
-        });
-      } else if (Notification.permission === 'denied') {
-        items.push({
-          id: 'notifications',
-          title: 'Notificações',
-          description: 'Desativado no navegador',
-          status: 'denied'
-        });
-      } else {
-        items.push({
-          id: 'notifications',
-          title: 'Notificações',
-          description: 'Alertas e avisos do sistema',
-          status: 'prompt'
-        });
-      }
-    } else {
-      items.push({
-        id: 'notifications',
-        title: 'Notificações',
-        description: 'Não suportado',
-        status: 'unsupported'
-      });
-    }
-  } catch (e) {
-    items.push({
-      id: 'notifications',
-      title: 'Notificações',
-      description: 'Indisponível',
-      status: 'unsupported'
-    });
-  }
-
-  // 4. Wake Lock (Prevent screen sleep)
-  if ('wakeLock' in navigator) {
-    items.push({
-      id: 'wakelock',
-      title: 'Manter Tela Acesa (WakeLock)',
-      description: 'Impede que o monitor de projeção entre em repouso durante o culto',
-      status: 'granted'
-    });
-  } else {
-    items.push({
-      id: 'wakelock',
-      title: 'Prevenção de Repouso',
-      description: 'Indisponível neste navegador',
-      status: 'unsupported'
-    });
-  }
-
-  return items;
+async function unlockAudio(){
+  try{
+    const ctx=getAudioContext();if(!ctx)return false;
+    if(ctx.state!=='running')await bounded(ctx.resume(),undefined);
+    return ctx.state==='running';
+  }catch{return false;}
 }
-
-/**
- * Requests specific permission from user one-by-one without losing existing state
- */
-export async function requestSinglePermission(id: PermissionStatusItem['id']): Promise<boolean> {
-  try {
-    if (id === 'audio') {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      await audioCtx.resume();
-      audioCtx.close();
-      return true;
-    }
-
-    if (id === 'storage') {
-      if (navigator.storage && navigator.storage.persist) {
-        const granted = await navigator.storage.persist();
-        return granted;
-      }
-      return true;
-    }
-
-    if (id === 'notifications') {
-      if (typeof Notification !== 'undefined') {
-        const result = await Notification.requestPermission();
-        return result === 'granted';
-      }
-      return true;
-    }
-
-    if (id === 'wakelock') {
-      return await requestWakeLock();
-    }
-
-    return true;
-  } catch (e) {
-    console.warn(`Error requesting permission for ${id}:`, e);
+async function bounded<T>(task:Promise<T>,fallback:T):Promise<T>{
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  try{return await Promise.race([task,new Promise<T>(resolve=>{timer=setTimeout(()=>resolve(fallback),2500);})]);}finally{clearTimeout(timer);}
+}
+let unlockRegistered=false;
+export function setupGlobalAudioUnlock(){
+  if(typeof window==='undefined'||unlockRegistered)return;
+  unlockRegistered=true;
+  const events=['click','touchstart','keydown','pointerdown'];
+  const unlock=()=>{void unlockAudio();events.forEach(type=>window.removeEventListener(type,unlock,true));};
+  events.forEach(type=>window.addEventListener(type,unlock,{once:true,capture:true}));
+}
+export async function checkAllPermissions():Promise<PermissionStatusItem[]>{
+  let audio:'granted'|'prompt'|'unsupported'='unsupported';
+  try{const ctx=getAudioContext();if(ctx)audio=ctx.state==='running'?'granted':'prompt';}catch{}
+  let storage:PermissionStatusItem['status']='unsupported';
+  try{if(navigator.storage?.persisted)storage=await bounded(navigator.storage.persisted(),false)?'granted':'prompt';}catch{storage='unsupported';}
+  return [
+    {id:'audio',title:'Áudio',description:audio==='granted'?'Sessão de áudio liberada nesta aba.':audio==='prompt'?'Toque para liberar o áudio nesta aba.':'O navegador não disponibilizou a sessão de áudio.',status:audio},
+    {id:'storage',title:'Proteger arquivos locais',description:storage==='granted'?'Proteção persistente concedida pelo navegador.':storage==='prompt'?'Peça proteção contra limpeza automática dos arquivos.':'Proteção persistente indisponível; o armazenamento comum é separado.',status:storage},
+    {id:'wakelock',title:'Manter tela acesa',description:isWakeLockActive()?'Tela acesa solicitada neste aparelho.':'Evita o repouso enquanto a aba estiver visível e o navegador permitir.',status:'wakeLock' in navigator?isWakeLockActive()?'granted':'prompt':'unsupported'},
+  ];
+}
+export async function requestSinglePermission(id:PermissionStatusItem['id']):Promise<boolean>{
+  try{
+    if(id==='audio')return await unlockAudio();
+    if(id==='storage')return navigator.storage?.persist?await bounded(navigator.storage.persist(),false):false;
+    if(id==='wakelock')return await bounded(requestWakeLock(),false);
+    // System notifications are not used by the current projection workflow.
+    // Opening a second screen must be tested by its actual window.open action.
     return false;
-  }
+  }catch{return false;}
 }
