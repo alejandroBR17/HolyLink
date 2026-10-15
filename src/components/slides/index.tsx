@@ -1,24 +1,7 @@
+import {Smartphone} from '../ui/icons';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  Globe,
-  Flame,
-  HeartHandshake,
-  CalendarDays,
-  WifiOff,
-  MessageSquareOff,
-  Smartphone,
-  Clock,
-  Instagram,
-  DoorOpen,
-  Armchair,
-  QrCode,
-  Sparkles,
-  Info,
-  CheckCircle2,
-  Droplets,
-  Heart
-} from 'lucide-react';
+import { Globe, Flame, HeartHandshake, CalendarDays, WifiOff, MessageSquareOff, Clock, Instagram, DoorOpen, Armchair, QrCode, Sparkles, Info, CheckCircle2, Droplets, Heart } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { CHURCH_INFO, DONATION, WEEK_SCHEDULES } from '../../data';
 import { Meeting } from '../../types';

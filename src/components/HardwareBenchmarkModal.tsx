@@ -1,23 +1,7 @@
+import {Smartphone} from './ui/icons';
 import {useDialogFocus} from '../hooks/useDialogFocus';
 import React from 'react';
-import {
-  Cpu,
-  HardDrive,
-  Monitor,
-  Zap,
-  Activity,
-  X,
-  RefreshCw,
-  Trash2,
-  CheckCircle2,
-  Gauge,
-  Layers,
-  Sparkles,
-  Smartphone,
-  Laptop,
-  Check,
-  AlertTriangle
-} from 'lucide-react';
+import { Cpu, HardDrive, Monitor, Zap, Activity, X, RefreshCw, Trash2, CheckCircle2, Gauge, Layers, Sparkles, Laptop, Check, AlertTriangle } from 'lucide-react';
 import { usePerformanceDiagnostics, PerformanceMode } from '../utils/performance';
 
 interface HardwareBenchmarkModalProps {

@@ -1,3 +1,4 @@
+import {Smartphone} from './ui/icons';
 import {MEETINGS, CAMPAIGNS} from '../data';
 import {describeMedia, readMediaManifest, planMediaMerge, mapMediaReferences, readMediaCatalog} from '../utils/media-manifest';
 import {sendPeerChunk} from '../utils/peer-send';
@@ -8,7 +9,7 @@ import {ConsoleIntro} from './operator/ConsoleIntro';
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { Peer } from 'peerjs';
 import QRCode from "react-qr-code";
-import { Download, Upload, Laptop, Smartphone, RefreshCw, Activity, CheckCircle2, XCircle, FlaskConical, Zap, ShieldCheck, Play } from 'lucide-react';
+import { Download, Upload, Laptop, RefreshCw, Activity, CheckCircle2, XCircle, FlaskConical, Zap, ShieldCheck, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import { getAllMediaItems, saveMediaItem, deleteMediaItem } from '../utils';
 import { sendMediaInChunks, handleIncomingChunk, cancelIncomingTransfers } from '../utils/webrtcChunking';

@@ -1,8 +1,9 @@
+import {Smartphone} from '../ui/icons';
 import {ShortcutsGuide} from './ShortcutsGuide';
 import {useDialogFocus} from '../../hooks/useDialogFocus';
 import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useRef, useState, useEffect } from 'react';
-import { Monitor, Tv, ExternalLink, X, SkipForward, Film, Image as ImageIcon, BookOpen, Calendar, Heart, Keyboard, Smartphone, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, Cpu, HardDrive, CheckCircle2, Download } from 'lucide-react';
+import { Monitor, Tv, ExternalLink, X, SkipForward, Film, Image as ImageIcon, BookOpen, Calendar, Heart, Keyboard, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, Cpu, HardDrive, CheckCircle2, Download } from 'lucide-react';
 import { ProjectionContent } from '../ProjectionContent';
 import { CHURCH_INFO, ALERTS } from '../../data';
 import { Meeting } from '../../types';
