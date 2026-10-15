@@ -487,6 +487,7 @@ export const SyncSection = React.memo(function SyncSection({
           return;
         }
         try {
+          if (data?.type==='SYNC_FAILED') {window.dispatchEvent(new Event('projection_sync_finished'));setDirectSyncStatus('error');setSyncMessage('O outro aparelho não conseguiu concluir a sincronização.');return;}
           if (data?.type==='REQUEST_MEDIA_CATALOG') {await sendMediaCatalog(conn);return;}
           if (data?.type==='UPDATE_STATE' && isSharedStateUpdate(data.key,data.value)) data={...data,value:mapMediaReferences(data.key,data.value,readMediaAliases())};
           if (data?.type==='MEDIA_SAVE' && typeof data.mediaItem?.id==='string') data={...data,mediaItem:{...data.mediaItem,id:resolveMediaId(data.mediaItem.id)}};
@@ -603,7 +604,8 @@ export const SyncSection = React.memo(function SyncSection({
             const storage=readSharedStorage(data.localStorage || {});
             setSyncMessage('Conferindo conteúdo das mídias. Arquivos exclusivos do PC serão preservados...');
             const localMedia=await getAllMediaItems();
-            const localManifest=await describeMedia(localMedia,()=>conn.open && !!session?.approved);
+            const sizes=new Set(manifestItems.map(item=>item.size));
+            const localManifest=await describeMedia(localMedia.filter(item=>item.blob && sizes.has(item.blob.size)),()=>conn.open && !!session?.approved);
             if (!conn.open || !session?.approved) return;
             const plan=planMediaMerge(localManifest,manifestItems);
             localStorage.setItem(MEDIA_ALIASES_KEY,JSON.stringify({...readMediaAliases(),...plan.aliases}));
@@ -743,7 +745,7 @@ export const SyncSection = React.memo(function SyncSection({
               }
             }
             const mediaItems = await getAllMediaItems();
-            const mediaManifest = await describeMedia(mediaItems,()=>conn.open && approvedConnections.has(conn));
+            const mediaManifest = readMediaManifest(await describeMedia(mediaItems,()=>conn.open && approvedConnections.has(conn)));
 
             conn.send({
               type: 'SYNC_MANIFEST',
@@ -834,6 +836,10 @@ export const SyncSection = React.memo(function SyncSection({
 
         } catch (err) {
           if (!conn.open || !session?.approved) return;
+          if(['SYNC_MANIFEST','REQUEST_FULL_SYNC','REQUEST_DELTA_MEDIA'].includes(data?.type)) {
+            try {conn.send({type:'SYNC_FAILED',version:1,message:err instanceof Error?err.message:'Falha ao sincronizar.'});} catch {}
+            window.dispatchEvent(new Event('projection_sync_finished'));
+          }
           console.error('Erro na recepção dos dados:', err);
           setDirectSyncStatus('error');
           setSyncMessage('Falha ao receber os dados. Verifique a conexão e tente novamente.');
@@ -1112,7 +1118,7 @@ export const SyncSection = React.memo(function SyncSection({
             return;
           }
 
-          if (incomingData?.type==='SYNC_FAILED') {setIsPulling(false);setIsPushing(false);window.dispatchEvent(new Event('projection_sync_finished'));setSyncMessage('O PC não conseguiu salvar todas as mídias. Seus arquivos locais foram preservados.');return;}
+          if (incomingData?.type==='SYNC_FAILED') {setIsPulling(false);setIsPushing(false);window.dispatchEvent(new Event('projection_sync_finished'));setSyncMessage(typeof incomingData.message==='string'?incomingData.message.slice(0,500):'O PC não conseguiu salvar todas as mídias. Seus arquivos locais foram preservados.');return;}
           if (incomingData && incomingData.type === 'SYNC_COMPLETE') {
             setIsPushing(false);
             await Promise.allSettled([...pendingMediaWrites]);
@@ -1258,6 +1264,8 @@ export const SyncSection = React.memo(function SyncSection({
           }
         } catch (e) {
           if (!conn.open || !session.approved) return;
+          setIsPushing(false);setIsPulling(false);window.dispatchEvent(new Event('projection_sync_finished'));
+          setSyncMessage(e instanceof Error?e.message:'Falha ao sincronizar com o PC.');
           console.error("Erro ao processar dados recebidos do PC:", e);
         }
       });
@@ -1357,7 +1365,7 @@ export const SyncSection = React.memo(function SyncSection({
       }
 
       const mediaItems = await getAllMediaItems();
-      const mediaManifest = await describeMedia(mediaItems,()=>conn.open && approvedConnections.has(conn));
+      const mediaManifest = readMediaManifest(await describeMedia(mediaItems,()=>conn.open && approvedConnections.has(conn)));
       storageData.projection_customMeetings ??= JSON.stringify(MEETINGS);
       storageData.projection_customCampaigns ??= JSON.stringify(CAMPAIGNS);
       storageData.projection_disabledSlides ??= '[]';
@@ -1374,7 +1382,7 @@ export const SyncSection = React.memo(function SyncSection({
       setIsPushing(false);
       if(!conn.open || !approvedConnections.has(conn))return;
       console.error(err);
-      setSyncMessage("Erro ao transmitir os dados.");
+      setSyncMessage(err instanceof Error?err.message:"Erro ao transmitir os dados.");
     }
   };
 

@@ -15,6 +15,7 @@ O celular envia agenda/configurações e mescla mídias com o PC. A ausência de
 - Catálogo de arquivos do PC via conexão autorizada, sem baixar vídeos/imagens para o celular. A biblioteca mostra os arquivos que ainda não estão representados na biblioteca local; referências equivalentes são ocultadas para evitar linhas duplicadas.
 - Na mesma biblioteca: projetar, pausar/ativar e excluir arquivo do PC. Pausar preserva o arquivo; excluir requer confirmação e remove possíveis cópias nos aparelhos conectados. Exclusão por um alias resolve para o arquivo real e informa todos os aliases aos aparelhos conectados.
 - Catálogo limpo ao desconectar; ações recusadas sem conexão autorizada. Mensagem de exclusão é solicitação, sem afirmar sucesso antes da atualização do catálogo.
+- Manifesto inválido/arquivo acima do limite produz resposta de falha e libera o celular sem aplicar configurações do pacote rejeitado. Arquivos locais de tamanhos incompatíveis não precisam ser lidos para a comparação.
 - O PC confirma fim do envio somente depois das gravações de chunks em curso. Essa confirmação libera o estado ocupado e a tela de progresso do celular. Falha/desconexão também encerra o progresso, sem anunciar conclusão bem-sucedida.
 - Alterar somente metadados não abre uma tela de transferência que ficava presa no operador do PC.
 
@@ -22,7 +23,7 @@ O celular envia agenda/configurações e mescla mídias com o PC. A ausência de
 
 - 34 testes nativos aprovados, incluindo igualdade de conteúdo independente do nome/ID, conteúdo diferente do mesmo tamanho, referências/aliases, manifesto malformado e assinatura com leitura por fatias/cancelamento.
 - `npm run lint` e `npm run build` aprovados.
-- `../data/verify-holy-merge.cjs`: duas instâncias em contextos distintos, bancos IndexedDB reais, PeerJS simulado e ponte de mensagens entre páginas. Aprovação; catálogo; projetar/pausar/ativar arquivo exclusivo do PC; mescla; preservação do exclusivo; atualização de bytes diferentes do mesmo tamanho; reutilização de arquivo com outro ID; ordem preservada; segunda sincronização sem bytes; preflight de upload duplicado sem bytes; exclusão explícita de exclusivo; exclusão de aliases/cópias conectadas; conclusão e interface liberada após confirmação.
+- `../data/verify-holy-merge.cjs`: duas instâncias em contextos distintos, bancos IndexedDB reais, PeerJS simulado e ponte de mensagens entre páginas. Aprovação; catálogo; projetar/pausar/ativar arquivo exclusivo do PC; mescla; preservação do exclusivo; atualização de bytes diferentes do mesmo tamanho; reutilização de arquivo com outro ID; ordem preservada; segunda sincronização sem bytes; preflight de upload duplicado sem bytes; exclusão explícita de exclusivo; exclusão de aliases/cópias conectadas; conclusão e interface liberada após confirmação; manifesto acima do limite rejeitado sem alterar configuração/arquivos; interface liberada também na falha/desconexão.
 - `../data/verify-holy-remote-ui.cjs`: 320×740, 390×844, 430×932, 844×390 e 1365×900; nome longo, paginação, cancelamento da exclusão, limpeza ao desconectar e ausência de overflow.
 - Sem dados legítimos modificados pelos testes e sem ensaio de HDMI/rede física.
 
