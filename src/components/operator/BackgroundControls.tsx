@@ -13,6 +13,7 @@ const styles = [
 export function BackgroundControls({style,fps,intensity,update}: {style:BackgroundStyleOption; fps:30|60; intensity:'high'|'medium'|'low'; update:(key:string,value:unknown)=>void}) {
   const [preview, setPreview] = useState(false);
   const [status, setStatus] = useState<'active'|'unavailable'>('active');
+  const [compatible, setCompatible] = useState(false);
   return <section className="ambience-controls" aria-labelledby="ambience-title">
     <div className="operator-section-heading"><div><span className="operator-eyebrow"><Waves size={16}/>Atmosfera da projeção</span><h3 id="ambience-title">Fundos e movimento</h3><p>Escolha o visual. Os ajustes são enviados ao PC conectado.</p></div></div>
     <div className="ambience-options" role="group" aria-label="Estilo do fundo">{styles.map(item => <button key={item.id} aria-pressed={style === item.id} onClick={() => {setStatus('active'); update('background3DStyle',item.id);}}><item.icon size={21}/><span><strong>{item.label}</strong><small>{item.description}</small></span></button>)}</div>
@@ -23,9 +24,9 @@ export function BackgroundControls({style,fps,intensity,update}: {style:Backgrou
     <p className="operator-muted">FPS é um limite, não uma garantia. Partículas 2D têm movimento próprio. A qualidade geral deste aparelho fica em Desempenho.</p>
     <details className="bible-picker ambience-preview" onToggle={e => setPreview(e.currentTarget.open)}><summary><Eye size={17}/>Conferir efeito neste aparelho · 16:9</summary>
       {preview && <><div className="ambience-preview-frame" data-style={style}>
-        <ThreeBackground3D stylePreset={style} fpsLimit={fps} intensity={intensity} onStatus={setStatus}/><ParticlesBackground disabled={style !== 'particles_2d'}/>
+        <ThreeBackground3D stylePreset={style} fpsLimit={fps} intensity={intensity} onStatus={setStatus} compatible={compatible}/><ParticlesBackground disabled={style !== 'particles_2d'}/>
         <div className="ambience-preview-caption"><span>Prévia do fundo</span><strong>{styles.find(item => item.id === style)?.label}</strong></div>
-      </div><p role="status" className="operator-notice">{style === 'off' ? 'Camada animada desligada. As imagens e os vídeos da fila continuam.' : status === 'unavailable' && style !== 'particles_2d' ? 'WebGL indisponível neste aparelho. O PC pode ter suporte diferente; confira a saída nele.' : 'Simulação local, sem trocar o slide. Automático mostra a aurora aqui; no encontro jovem usa a aura.'}</p><p className="operator-muted">Fotos e vídeos em tela cheia podem cobrir o fundo. Blackout oculta toda a saída. Esta prévia não confirma o HDMI do PC.</p></>}
+      </div>{style !== 'off' && style !== 'particles_2d' && <button className="ambience-compatible-toggle" aria-pressed={compatible} onClick={() => setCompatible(v => !v)}>{compatible ? 'Voltar à prévia 3D' : 'Usar prévia leve neste aparelho'}</button>}<p role="status" className="operator-notice">{style === 'off' ? 'Camada animada desligada. As imagens e os vídeos da fila continuam.' : compatible && style !== 'particles_2d' ? 'Prévia leve selecionada. Demonstra o ambiente sem 3D e não altera a renderização do PC.' : status === 'unavailable' && style !== 'particles_2d' ? 'Versão animada compatível: o 3D não pôde renderizar neste aparelho. O PC pode usar o 3D normalmente.' : 'Prévia local do efeito, sem trocar o slide. Automático mostra Aurora aqui.'}</p><p className="operator-muted">Fotos e vídeos em tela cheia podem cobrir o fundo no telão. Confira a composição na aba Monitor.</p></>}
     </details>
   </section>;
 }

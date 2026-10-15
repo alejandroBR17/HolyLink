@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
 export type BackgroundStyleOption = 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off';
@@ -11,6 +11,7 @@ interface ThreeBackground3DProps {
   fpsLimit?: 30 | 60;
   intensity?: 'high' | 'medium' | 'low';
   onStatus?: (status: 'active' | 'unavailable') => void;
+  compatible?: boolean;
 }
 
 // ----------------------------------------------------------------------
@@ -101,7 +102,7 @@ const fragmentShader = `
       vec3 waveColor = mix(colGold, colCrimson, mixRatio);
       finalColor = mix(waveColor, colAmber, glow * 0.5);
 
-      alpha = glow * 0.45 * uIntensity * smoothstep(1.0, 0.1, st.y);
+      alpha = glow * 0.65 * uIntensity * (1.0 - smoothstep(0.1, 1.0, st.y));
     }
     // =============================================================
     // ESTILO 1: VÉU DIVINO / RAIOS CELESTIAIS 3D
@@ -117,7 +118,7 @@ const fragmentShader = `
       float rayPattern2 = cos(angle * 20.0 - time * 1.1 + fbm(st * 1.0)) * 0.5 + 0.5;
       float rays = (rayPattern1 * 0.65 + rayPattern2 * 0.35);
 
-      float coneMask = smoothstep(1.5, 0.1, distToTop) * smoothstep(0.0, 0.85, 1.0 - st.y);
+      float coneMask = (1.0 - smoothstep(0.1, 1.5, distToTop)) * smoothstep(0.0, 0.85, 1.0 - st.y);
       
       vec3 colPearlWhite = vec3(0.98, 0.96, 0.82); // Marfim Celestial
       vec3 colDivineGold = vec3(0.92, 0.68, 0.15); // Dourado Divino
@@ -136,7 +137,7 @@ const fragmentShader = `
       float r = length(distVec);
 
       float pulse = sin(r * 16.0 - time * 2.2 + fbm(st * 2.5) * 1.8) * 0.5 + 0.5;
-      float ringHalo = smoothstep(0.65, 0.25, abs(r - 0.35 - sin(time * 0.7) * 0.04));
+      float ringHalo = 1.0 - smoothstep(0.25, 0.65, abs(r - 0.35 - sin(time * 0.7) * 0.04));
 
       vec3 colBlueFJU = vec3(0.22, 0.74, 0.97);  // Azul Céu FJU
       vec3 colAmberFJU = vec3(0.98, 0.62, 0.08); // Âmbar Energia
@@ -145,7 +146,7 @@ const fragmentShader = `
       vec3 auraColor = mix(colBlueFJU, colAmberFJU, pulse);
       finalColor = mix(auraColor, colIndigo, smoothstep(0.0, 0.65, r));
 
-      float coreGlow = smoothstep(0.85, 0.0, r);
+      float coreGlow = 1.0 - smoothstep(0.0, 0.85, r);
       alpha = (ringHalo * 0.55 + pulse * 0.3) * coreGlow * 0.42 * uIntensity;
     }
 
@@ -161,8 +162,10 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
   fpsLimit = 60,
   intensity = 'high',
   onStatus,
+  compatible = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [fallback, setFallback] = useState(false);
 
   const diffSecondsRef = useRef(diffSeconds);
   useEffect(() => {
@@ -171,6 +174,8 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
 
   useEffect(() => {
     if (disabled || stylePreset === 'off' || stylePreset === 'particles_2d') return;
+    if (compatible) return;
+    setFallback(false);
 
     const container = containerRef.current;
     if (!container) return;
@@ -192,11 +197,18 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
         alpha: true,
         antialias: false,
         powerPreference: 'default', // Evita superaquecimento e reset de GPU em notebooks/PCs modestos
-        precision: 'mediump',
+        // Simplex permutation exceeds the minimum mediump range on mobile GPUs.
+        precision: 'highp',
       });
     } catch (e) {
+      setFallback(true);
       onStatus?.('unavailable');
       console.warn("WebGL renderer creation failed, falling back safely.");
+      return;
+    }
+    if (renderer.capabilities.precision !== 'highp') {
+      renderer.dispose();
+      setFallback(true); onStatus?.('unavailable');
       return;
     }
 
@@ -217,6 +229,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     const handleContextLost = (e: Event) => {
       e.preventDefault();
       isContextLost = true;
+      setFallback(true);
       onStatus?.('unavailable');
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       console.warn("WebGL Context Lost - Interrompendo renderização 3D com segurança para proteger o navegador.");
@@ -306,6 +319,11 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     let animationFrameId: number;
     let lastTime = performance.now();
     const frameInterval = 1000 / fpsLimit;
+    renderer.debug.onShaderError = () => {
+      isContextLost = true;
+      setFallback(true); onStatus?.('unavailable');
+    };
+    const startTime = performance.now();
 
     const animate = (now: number) => {
       if (isContextLost) return;
@@ -315,7 +333,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       if (delta < frameInterval) return;
       lastTime = now - (delta % frameInterval);
 
-      const elapsedTime = now * 0.001;
+      const elapsedTime = (now - startTime) * 0.001;
       uniforms.uTime.value = elapsedTime;
 
       // Movimento ultra leve das micro-partículas
@@ -336,6 +354,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       } catch (e) {
         console.warn("Render loop caught WebGL exception, pausing animation safely:", e);
         onStatus?.('unavailable');
+        setFallback(true);
         isContextLost = true;
       }
     };
@@ -373,14 +392,15 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [disabled, isFJU, stylePreset, fpsLimit, intensity, onStatus]);
+  }, [disabled, isFJU, stylePreset, fpsLimit, intensity, onStatus, compatible]);
 
   if (disabled || stylePreset === 'off' || stylePreset === 'particles_2d') return null;
 
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 z-0 pointer-events-none overflow-hidden transition-opacity duration-1000"
-    />
+      className={`absolute inset-0 z-0 pointer-events-none overflow-hidden ${fallback || compatible ? 'atmosphere-fallback-host' : ''}`}
+      data-renderer={fallback || compatible ? 'compatible' : 'webgl'}
+    >{(fallback || compatible) && <div className={`atmosphere-compatible atmosphere-${stylePreset === 'auto' ? isFJU ? 'fju_aura' : 'aurora' : stylePreset} atmosphere-intensity-${intensity}`} aria-hidden="true"><i/><i/><i/></div>}</div>
   );
 };

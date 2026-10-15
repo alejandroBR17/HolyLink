@@ -34,3 +34,17 @@ Dados exibidos são deste aparelho/aba. Processadores lógicos vêm do navegador
 - Motor WebGL real no navegador: frames mudam com o tempo, Aurora/Véu diferem, sem erro de shader; fechar demonstração desmonta canvas.
 - Revisão das seis áreas em sete tamanhos, 320–1920 px, formulários, diálogos, foco/Escape, sem overflow ou erro de página.
 - Não foi um ensaio em celular físico, rede da igreja ou HDMI. Pareamento permanente continua pendente.
+
+## Revisão integral de Ajustes após retorno do celular
+
+A aba foi reorganizada em Operação da reunião, Fundos e efeitos, Avisos/áudio/letreiro, Desempenho/energia e Atalhos. Cartões e formulários ganharam tipografia legível, rótulos, áreas de toque de pelo menos 44 px, quebra de textos e disposição própria no celular. O retorno da mídia fixada ocupa a largura do cartão com altura mínima de 52 px, sem encolher no flex. O teste encontrou uma regra global de maior especificidade que limitava esse ajuste; o seletor corrigido foi medido em oito larguras.
+
+Corrigidos também o indicador de janela aberta após bloqueio de popup e os ajustes de tempo durante pausa. Letreiro agora tem rascunho e envio explícito, em vez de publicar cada tecla. Os cinco avisos rápidos continuam imediatos; formulários de texto, carro e criança foram preservados, com histórico reutilizável e exclusão acessível ao toque. O mixer foi redesenhado sem textos de 8–9 px, com controles de volume, silêncio e presets. Limpar cache e manter tela acesa têm nomes e mensagens próprios.
+
+### Portabilidade do fundo preto
+
+O shader usava `smoothstep` com bordas invertidas e `mediump` em permutações que excedem a faixa mínima dessa precisão. São defeitos de portabilidade que podem produzir resultado diferente entre desktop e GPU móvel; não foi confirmada a GPU exata do responsável. As máscaras agora usam bordas crescentes e o cálculo pede `highp`, com tempo relativo ao início. Referência: [especificação GLSL ES, precisão e smoothstep](https://registry.khronos.org/OpenGL/specs/es/2.0/GLSL_ES_Specification_1.00.pdf), seções 4.5 e 8.3.
+
+Sem WebGL/precisão necessária, erro de shader ou perda de contexto, o motor mostra uma composição CSS compatível do estilo escolhido. Essa alternativa também vale para a projeção que não tenha suporte gráfico. A prévia identifica a versão compatível; não a apresenta como o mesmo shader 3D. O botão “Usar prévia leve neste aparelho” permite escolhê-la localmente, sem mudar o estilo/configuração enviados ao PC. Fechar a prévia desmonta os recursos gráficos.
+
+Ensaios: oito tamanhos (320, 360, 390, 430, 768, 844 em paisagem, 1365 e 1920); altura do retorno, operação/pausa/avisos/letreiro/volume/cache/popups, ausência de overflow e alvos de toque. Navegador em viewport móvel: animação de Aurora/Véu/Aura com WebGL real, sem WebGL por simulação, perda de contexto e troca manual leve/3D sem alterar configuração compartilhada. O aparelho físico do responsável e o HDMI continuam necessários para confirmação final.

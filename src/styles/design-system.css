@@ -50,3 +50,13 @@
 .holy-theme input[type="range"]::-webkit-slider-runnable-track { height:6px; background:#3a3040; border-radius:99px; }
 .holy-theme input[type="range"]::-webkit-slider-thumb { margin-top:-7px; }
 .holy-theme input[type="range"]::-moz-range-track { height:6px; background:#3a3040; border-radius:99px; }
+.atmosphere-fallback-host>canvas{display:none!important}
+.atmosphere-compatible{position:absolute;inset:0;overflow:hidden;background:#040306;opacity:.95}
+.atmosphere-compatible i{position:absolute;display:block;width:140%;height:90%;left:-20%;top:5%;background:radial-gradient(ellipse,#d79a27a0,transparent 65%);filter:blur(12px);animation:holy-atmosphere-drift 12s ease-in-out infinite alternate;transform:rotate(-15deg)}
+.atmosphere-compatible i:nth-child(2){top:30%;left:0;background:radial-gradient(ellipse,#a8402060,transparent 65%);animation-delay:-6s;animation-duration:17s}
+.atmosphere-compatible i:nth-child(3){width:80%;height:60%;top:0;left:-10%;background:radial-gradient(ellipse,#ffe79760,transparent 65%);animation-delay:-3s;animation-duration:14s}
+.atmosphere-veil i{width:45%;height:160%;top:-30%;left:20%;background:linear-gradient(105deg,transparent,#ffe79760,transparent);transform:rotate(20deg)}
+.atmosphere-fju_aura i{width:100%;height:130%;left:0;top:-15%;border-radius:50%;background:radial-gradient(ellipse,transparent 25%,#dba82480 45%,#5163be50 60%,transparent 75%)}
+.atmosphere-intensity-low{opacity:.6}.atmosphere-intensity-medium{opacity:.8}
+@keyframes holy-atmosphere-drift{from{transform:translate(-6%,-8%) rotate(-12deg) scale(.92)}to{transform:translate(8%,12%) rotate(16deg) scale(1.15)}}
+@media(prefers-reduced-motion:reduce){.atmosphere-compatible i{animation:none}}
