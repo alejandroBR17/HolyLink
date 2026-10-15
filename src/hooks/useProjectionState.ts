@@ -1,3 +1,4 @@
+import {isSharedStateUpdate} from '../utils/shared-state';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CHURCH_INFO, ALERTS, VERSES, CAMPAIGNS, MEETINGS } from '../data';
 import { Meeting } from '../types';
@@ -322,6 +323,7 @@ export function useProjectionState() {
     let bc: BroadcastChannel | null = null;
 
     const updateStateLocalOnly = (key: string, value: any) => {
+      if (!isSharedStateUpdate(key, value)) return;
       const stringValue = (value === null || value === undefined) ? null : (typeof value === 'object' ? JSON.stringify(value) : value.toString());
       if (localStorage.getItem(`projection_${key}`) !== stringValue) {
         if (stringValue === null) {
@@ -337,6 +339,7 @@ export function useProjectionState() {
       else if (key === 'countdownPaused') setCountdownPaused(value === 'true' || value === true);
       else if (key === 'pausedSeconds') setPausedSeconds(value !== null && value !== undefined ? parseInt(value.toString(), 10) : null);
       else if (key === 'activeAlert') setActiveAlert(value);
+      else if (key === 'tickerText') setTickerText(value);
       else if (key === 'blackoutEnabled') setBlackoutEnabled(value === 'true' || value === true);
       else if (key === 'clearContentEnabled') setClearContentEnabled(value === 'true' || value === true);
       else if (key === 'volume') {

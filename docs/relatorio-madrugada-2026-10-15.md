@@ -43,15 +43,34 @@ Validação:
 - Capturas de aprovação: `../data/holylink-pairing/approval-{320,390,844,1365}.png` (fora do repositório).
 - Teste usa transporte simulado e não comprova WebRTC em redes reais, conexão física HDMI ou aprovação em aparelhos reais.
 
+## Segunda etapa — comandos e configurações recebidos
+
+Commit da etapa anterior: `cd45e7ca4b9bfe9af4aecf5ee82b06db51a81300`. Preview anterior confirmado READY: `dpl_HbRebSdmz66Px7yUtTpZBnoGtb5T`, no alias da branch. Produção continuou em `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi`.
+
+- Contrato explícito de estados compartilháveis, com tipos, enumerações, limites de tamanho e estruturas de agenda/campanha/listas. Chaves de identidade e propriedades desconhecidas não são comandos válidos.
+- Validação antes de aplicar `UPDATE_STATE` no receptor, no celular e no listener compartilhado entre janelas. Texto e referência nulos continuam válidos para limpar uma passagem; valores numéricos inválidos deixam de poder provocar erro em `volume.toString()`.
+- Configurações recebidas por sincronismo e restauração são analisadas por completo antes do primeiro `localStorage.setItem`: uma configuração conhecida inválida rejeita o conjunto, sem aplicar parcialmente os campos anteriores. Chaves de outros apps e de identidade são ignoradas. Sinais de ciclo de vida da janela não são restaurados por backup/cópia.
+- Manifestos enviados contêm somente configurações compartilháveis, preservando preferências locais de desempenho e identidade de cada dispositivo.
+- Corrigida atualização visual de `tickerText` recebida remotamente: antes era persistida sem atualizar o estado React.
+- Isso não conclui validação do arquivo inteiro de backup nem da mídia: ainda é preciso validar todos os itens antes de qualquer escrita, além de limitar chunks e cancelar tarefas revogadas.
+
+Validação desta etapa:
+
+- `npm run lint` e `npm run build`: aprovados.
+- 18 testes nativos aprovados (4 novos de contrato de estado).
+- Teste de pareamento ampliado: além das provas anteriores, um aparelho autorizado não altera identidade, não injeta chave externa, volume nulo, enum inválido ou lista/agenda malformada. Um conjunto de configurações inválido não escreve os campos válidos anteriores. Letreiro remoto é conferido no DOM do Monitor.
+- `../data/verify-holy-unified.cjs`: busca, seleção, projeção, paginação, histórico, falha de busca, comunicação entre janelas e ausência de overflow aprovados em 320/390/430/1365 px. API de Bíblia simulada nesse teste.
+- Primeira etapa também validada online na prévia em 390 e 1365 px, seis áreas, formulários, foco/Escape e ausência de overflow.
+
 ## Próxima rodada / pendências concretas
 
-1. Validar formatos/limites das mensagens de um aparelho já autorizado. Ainda existem handlers legados permissivos e cópia de chaves arbitrárias no sincronismo/backup. Não declarar auditoria de segurança concluída.
+1. Continuar validação dos envelopes/mídias e do arquivo inteiro de backup. Estados/configurações já têm contrato explícito; não repetir essa etapa sem uma falha concreta. Não declarar auditoria de segurança concluída.
 2. Limitar transferências incompletas e isolá-las por conexão; buffers de chunks hoje globais. Garantir cancelamento de tarefas assíncronas após revogar conexão e não aceitar chunks com índices/tamanhos inválidos.
 3. Confirmação por mensagem de comandos recebidos; não confundir com imagem física confirmada. Rever reconexões em loop constante.
 4. Cache persistente da Bíblia (atual cache é apenas em memória do componente), navegação rápida sem busca repetitiva e recuperação offline das passagens já consultadas.
-5. Roteiros nomeados persistidos e backup validado antes de qualquer escrita. Preservar arquivos/configurações existentes.
+5. Roteiros nomeados persistidos e backup validado antes de qualquer escrita. Preservar arquivos/configurações existentes. Conferir também cópia de configurações padrão não persistidas: manifesto atual envia somente as chaves salvas, então defaults ausentes não substituem uma customização antiga no destino. Definir cópia/mescla claramente antes de alterar a regra.
 6. Revisão visual dos fluxos novos e consolidar relatório final às 06h50, excluindo a automação.
 
 ## Publicação e limites
 
-Etapa restrita à branch de prévia. Não fazer merge nem promover produção. Consultar o Git/Vercel para obter o SHA/deployment desta etapa; o alias de prévia permanece o registrado acima. Atualizar este bloco na retomada após confirmar o deployment. Nenhuma credencial deve entrar neste relatório.
+Etapas restritas à branch de prévia. Não fazer merge nem promover produção. Consultar o Git/Vercel para obter o SHA/deployment desta etapa; o alias de prévia permanece o registrado acima. Atualizar este bloco na retomada após confirmar o deployment. Nenhuma credencial deve entrar neste relatório.

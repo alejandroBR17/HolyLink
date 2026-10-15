@@ -1,3 +1,4 @@
+import {isSharedStateUpdate, readSharedStorage} from '../utils/shared-state';
 import {PairingApproval} from './PairingApproval';
 import {PairingSession, createPairingCode, isPairingCode} from '../utils/pairing-session';
 import {ConsoleIntro} from './operator/ConsoleIntro';
@@ -447,6 +448,7 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (data && data.type === 'UPDATE_STATE') {
+            if (!isSharedStateUpdate(data.key, data.value)) {setSyncMessage('Comando inválido ignorado. A projeção foi preservada.'); return;}
             // Forward real-time state update to BroadcastChannel
             const bc = new BroadcastChannel('holyrics_projection_sync');
             bc.postMessage({ type: 'UPDATE_STATE', key: data.key, value: data.value });
@@ -534,7 +536,7 @@ export const SyncSection = React.memo(function SyncSection({
               const currentRole = localStorage.getItem('projection_deviceRole') || 'pc';
               const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
 
-              Object.entries(data.localStorage).forEach(([key, val]) => {
+              Object.entries(readSharedStorage(data.localStorage)).forEach(([key, val]) => {
                 if (
                   key === 'projection_deviceRole' ||
                   key === 'projection_myReceiverCode' ||
@@ -722,7 +724,7 @@ export const SyncSection = React.memo(function SyncSection({
             conn.send({
               type: 'SYNC_MANIFEST',
               version: 1,
-              localStorage: storageData,
+              localStorage: readSharedStorage(storageData),
               mediaManifest
             });
             return;
@@ -740,7 +742,7 @@ export const SyncSection = React.memo(function SyncSection({
             const currentRole = localStorage.getItem('projection_deviceRole') || 'pc';
             const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
 
-            Object.entries(data.localStorage).forEach(([key, val]) => {
+            Object.entries(readSharedStorage(data.localStorage)).forEach(([key, val]) => {
               if (
                 key === 'projection_deviceRole' ||
                 key === 'projection_myReceiverCode' ||
@@ -1006,7 +1008,7 @@ export const SyncSection = React.memo(function SyncSection({
               const currentRole = localStorage.getItem('projection_deviceRole') || 'phone';
               const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
 
-              Object.entries(incomingData.localStorage).forEach(([key, val]) => {
+              Object.entries(readSharedStorage(incomingData.localStorage)).forEach(([key, val]) => {
                 if (
                   key === 'projection_deviceRole' ||
                   key === 'projection_myReceiverCode' ||
@@ -1079,6 +1081,7 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (incomingData && incomingData.type === 'UPDATE_STATE') {
+            if (!isSharedStateUpdate(incomingData.key, incomingData.value)) {setSyncMessage('Comando inválido ignorado. As configurações foram preservadas.'); return;}
             const bc = new BroadcastChannel('holyrics_projection_sync');
             bc.postMessage({ type: 'UPDATE_STATE', key: incomingData.key, value: incomingData.value });
             bc.close();
@@ -1150,7 +1153,7 @@ export const SyncSection = React.memo(function SyncSection({
               const currentRole = localStorage.getItem('projection_deviceRole') || 'phone';
               const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
 
-              Object.entries(incomingData.localStorage).forEach(([key, val]) => {
+              Object.entries(readSharedStorage(incomingData.localStorage)).forEach(([key, val]) => {
                 if (
                   key === 'projection_deviceRole' ||
                   key === 'projection_myReceiverCode' ||
@@ -1314,7 +1317,7 @@ export const SyncSection = React.memo(function SyncSection({
       conn.send({
         type: 'SYNC_MANIFEST',
         version: 1,
-        localStorage: storageData,
+        localStorage: readSharedStorage(storageData),
         mediaManifest
       });
 
@@ -1478,7 +1481,7 @@ export const SyncSection = React.memo(function SyncSection({
           const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
           const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
 
-          Object.entries(data.localStorage).forEach(([key, val]) => {
+          Object.entries(readSharedStorage(data.localStorage)).forEach(([key, val]) => {
             if (
               key === 'projection_deviceRole' ||
               key === 'projection_myReceiverCode' ||
