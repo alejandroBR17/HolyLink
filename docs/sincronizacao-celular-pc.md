@@ -49,3 +49,10 @@ Backups JSON v1 e v2 são inspecionados por inteiro antes de qualquer escrita, c
 Recebimento do PC só aceita manifesto após solicitação explícita; manifesto não solicitado, confirmação prematura, pacote incompleto e formatos monolíticos antigos não anunciam sucesso. Transferências de mídia continuam incrementais: arquivos já concluídos podem permanecer após interrupção; não há transação global de toda a sincronização. Atualize ambos os aparelhos antes do teste.
 
 Verificação desta etapa: 70 testes nativos; bancos IndexedDB reais em contextos descartáveis com PeerJS simulado para aprovação, HMAC, recarga dos dois aparelhos, queda, revogação, pausa persistida, mescla/deduplicação e exclusão. Backup exercitado em 320/390/768/1365 px, incluindo arquivo corrompido, cancelar, preservar exclusivos e falha de quota com rollback. HDMI, rede entre aparelhos físicos e instalação real permanecem para teste do responsável. Exclusões offline continuam sem diário distribuído.
+
+
+## Diagnóstico funcional e limites
+
+O diagnóstico mede uma mensagem e sua confirmação via BroadcastChannel, grava/lê bytes de um Blob em um banco IndexedDB temporário isolado e o remove, acessa o servidor PeerJS e envia 16 KiB com eco e conferência de bytes pelo WebRTC entre dois peers deste navegador. O tempo é a ida e volta medida após abrir o canal, sem afirmar velocidade fixa. Falhas locais não impedem a tentativa dos outros testes independentes; a etapa WebRTC depende da sinalização. Recursos temporários são encerrados também em falha, timeout e desmontagem.
+
+O ensaio não usa nem altera a biblioteca real, não chama PNG de vídeo e não envia comandos para uma projeção de verdade. Não comprova reprodução de vídeos, conectividade celular/PC em redes distintas, HDMI ou imagem física. Para esses casos, opere o celular e confira o telão. O teste só é executado ao solicitar; não existe sondagem contínua por este diagnóstico.

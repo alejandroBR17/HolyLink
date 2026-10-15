@@ -1,3 +1,4 @@
+import {diagnosticSteps,runConnectionDiagnostics,type DiagnosticStep} from '../utils/connection-diagnostics';
 import {readTransferMetadata} from '../utils/chunk-assembler';
 import {BackupPanel} from './operator/BackupPanel';
 import {prepareBackup,inspectBackup,applyPreparedBackup,MAX_BACKUP_FILE_BYTES,MAX_BACKUP_MEDIA_BYTES,type PreparedBackup} from '../utils/backup';
@@ -268,196 +269,19 @@ export const SyncSection = React.memo(function SyncSection({
   };
 
 
-  // States for automated diagnostic test simulation
-  const [isTesting, setIsTesting] = useState(false);
-  const [testSteps, setTestSteps] = useState<Array<{ id: string; name: string; status: 'pending' | 'running' | 'ok' | 'fail'; detail?: string }>>([]);
-  const [testSummary, setTestSummary] = useState<{ success: boolean; latencyMs?: number; message?: string } | null>(null);
-  const [showTestPanel, setShowTestPanel] = useState(false);
-
-  const runDiagnosticTest = async () => {
-    setIsTesting(true);
-    setShowTestPanel(true);
-    setTestSummary(null);
-
-    const initialSteps = [
-      { id: 'bc', name: '1. Sincronização entre Janelas', status: 'pending' as const },
-      { id: 'db', name: '2. Armazenamento de Mídias', status: 'pending' as const },
-      { id: 'p2p_init', name: '3. Conexão Sem Fio (P2P)', status: 'pending' as const },
-      { id: 'p2p_file', name: '4. Transmissão de Mídias', status: 'pending' as const },
-      { id: 'p2p_event', name: '5. Controles em Tempo Real', status: 'pending' as const },
-    ];
-    setTestSteps(initialSteps);
-
-    const updateStep = (id: string, status: 'running' | 'ok' | 'fail', detail?: string) => {
-      setTestSteps((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, status, detail } : s))
-      );
-    };
-
-    let startTime = performance.now();
-    let measuredLatencyMs = 0;
-
-    try {
-      // Step 1: BroadcastChannel
-      updateStep('bc', 'running');
-      await new Promise<void>((resolve, reject) => {
-        const bcName = `holyrics_diag_${Date.now()}`;
-        const bcRx = new BroadcastChannel(bcName);
-        const bcTx = new BroadcastChannel(bcName);
-        const timer = setTimeout(() => {
-          bcRx.close();
-          bcTx.close();
-          reject(new Error("Timeout no BroadcastChannel local"));
-        }, 1500);
-
-        bcRx.onmessage = (msg) => {
-          if (msg.data && msg.data.ping === 'diag_ok') {
-            clearTimeout(timer);
-            bcRx.close();
-            bcTx.close();
-            resolve();
-          }
-        };
-
-        bcTx.postMessage({ ping: 'diag_ok' });
-      });
-      updateStep('bc', 'ok', 'Sincronização entre janelas OK (< 5ms)');
-
-      // Step 2: IndexedDB Blob Read/Write/Delete (Images + Video Blobs)
-      updateStep('db', 'running');
-      const sampleBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-      const byteCharacters = atob(sampleBase64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const testBlob = new Blob([new Uint8Array(byteNumbers)], { type: 'video/mp4' });
-      const testMediaId = `diag_temp_video_${Date.now()}`;
-
-      await saveMediaItem({
-        id: testMediaId,
-        type: 'video',
-        name: 'teste_diagnostico_video.mp4',
-        duration: 15000,
-        enabledInLoop: true,
-        blob: testBlob
-      });
-
-      const allItems = await getAllMediaItems();
-      const found = allItems.find(item => item.id === testMediaId);
-      if (!found || !found.blob || found.blob.size === 0) {
-        throw new Error("Falha ao salvar ou carregar o arquivo de vídeo no armazenamento local");
-      }
-      await deleteMediaItem(testMediaId);
-      updateStep('db', 'ok', 'Armazenamento local de mídias OK');
-
-      // Step 3 & 4 & 5: PeerJS Loopback
-      updateStep('p2p_init', 'running');
-      const testCode = `DIAG${Math.floor(1000 + Math.random() * 9000)}`;
-      const rxPeerId = `holyrics_${testCode}`;
-
-      const testRxPeer = new Peer(rxPeerId);
-
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          testRxPeer.destroy();
-          reject(new Error("Timeout de conexão"));
-        }, 8000);
-
-        testRxPeer.on('open', () => {
-          clearTimeout(timeout);
-          resolve();
-        });
-
-        testRxPeer.on('error', (err: any) => {
-          clearTimeout(timeout);
-          reject(new Error(`Erro no servidor P2P: ${err.message || err.type}`));
-        });
-      });
-      updateStep('p2p_init', 'ok', 'Servidor de conexão sem fio OK');
-
-      // Step 4: Transmissão P2P de Arquivos (Vídeo & Imagem via DataChannel)
-      updateStep('p2p_file', 'running');
-      const testTxPeer = new Peer();
-
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          testTxPeer.destroy();
-          testRxPeer.destroy();
-          reject(new Error("Timeout na transferência de dados"));
-        }, 8000);
-
-        testTxPeer.on('open', () => {
-          const conn = testTxPeer.connect(rxPeerId);
-
-          testRxPeer.on('connection', (rxConn) => {
-            rxConn.on('data', (incomingData: any) => {
-              if (incomingData && incomingData.type === 'TEST_MEDIA_PAYLOAD') {
-                const receivedBase64 = incomingData.mediaItem?.base64;
-                if (receivedBase64 === sampleBase64 && incomingData.mediaItem?.type === 'video') {
-                  measuredLatencyMs = Math.round(performance.now() - startTime);
-                  clearTimeout(timeout);
-                  testTxPeer.destroy();
-                  testRxPeer.destroy();
-                  resolve();
-                } else {
-                  clearTimeout(timeout);
-                  testTxPeer.destroy();
-                  testRxPeer.destroy();
-                  reject(new Error("Erro na integridade dos dados"));
-                }
-              }
-            });
-          });
-
-          conn.on('open', () => {
-            startTime = performance.now();
-            conn.send({
-              type: 'TEST_MEDIA_PAYLOAD',
-              mediaItem: {
-                id: 'p2p_video_test',
-                name: 'video_fundo.mp4',
-                type: 'video',
-                base64: sampleBase64,
-                mimeType: 'video/mp4'
-              }
-            });
-          });
-        });
-
-        testTxPeer.on('error', (err: any) => {
-          clearTimeout(timeout);
-          testTxPeer.destroy();
-          testRxPeer.destroy();
-          reject(new Error(`Erro P2P: ${err.message || err.type}`));
-        });
-      });
-
-      updateStep('p2p_file', 'ok', `Transmissão de dados OK (${measuredLatencyMs}ms)`);
-
-      // Step 5: Real-time Event (Slide controls, video volume, quick alerts)
-      updateStep('p2p_event', 'running');
-      window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'diag_sync_test_event', value: Date.now() } }));
-      updateStep('p2p_event', 'ok', 'Comandos remotos em tempo real OK');
-
-      setTestSummary({
-        success: true,
-        latencyMs: measuredLatencyMs,
-        message: 'Todos os testes de conexão foram concluídos com sucesso!'
-      });
-
-    } catch (err: any) {
-      console.error("Diagnostic test failed:", err);
-      setTestSteps((prev) =>
-        prev.map((s) => (s.status === 'running' ? { ...s, status: 'fail', detail: err.message } : s))
-      );
-      setTestSummary({
-        success: false,
-        message: `Falha no teste: ${err.message || 'Erro desconhecido'}`
-      });
-    } finally {
-      setIsTesting(false);
-    }
+  const [isTesting,setIsTesting]=useState(false);
+  const [testSteps,setTestSteps]=useState<DiagnosticStep[]>([]);
+  const [testSummary,setTestSummary]=useState<{success:boolean;latencyMs?:number;message:string}|null>(null);
+  const [showTestPanel,setShowTestPanel]=useState(false);
+  const diagnosticAbortRef=useRef<AbortController|null>(null);
+  useEffect(()=>()=>diagnosticAbortRef.current?.abort(),[]);
+  const runDiagnosticTest=async()=>{
+    if(diagnosticAbortRef.current)return;
+    const controller=new AbortController();diagnosticAbortRef.current=controller;
+    setIsTesting(true);setShowTestPanel(true);setTestSummary(null);setTestSteps(diagnosticSteps());
+    try{const result=await runConnectionDiagnostics((id,status,detail)=>{if(!controller.signal.aborted)setTestSteps(previous=>previous.map(step=>step.id===id?{...step,status,detail}:step));},()=>new Peer(),controller.signal);if(!controller.signal.aborted)setTestSummary(result);}
+    catch(error){if(!controller.signal.aborted)setTestSummary({success:false,message:error instanceof Error?error.message:'Falha no diagnóstico.'});}
+    finally{if(diagnosticAbortRef.current===controller)diagnosticAbortRef.current=null;if(!controller.signal.aborted)setIsTesting(false);}
   };
 
   // Cleanup peer and timeouts on unmount
@@ -1330,6 +1154,7 @@ export const SyncSection = React.memo(function SyncSection({
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-hl-soft text-[11px]">{step.name}</span>
                     <span className="shrink-0">
+                      {step.status === 'skipped' && <span className="text-hl-dim text-[10px]">Não realizado</span>}
                       {step.status === 'pending' && <span className="text-hl-dim text-[10px] font-mono">Aguardando</span>}
                       {step.status === 'running' && <RefreshCw className="w-3.5 h-3.5 text-hl-gold-bright animate-spin" />}
                       {step.status === 'ok' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
@@ -1354,7 +1179,7 @@ export const SyncSection = React.memo(function SyncSection({
                 {testSummary.message}
                 {testSummary.latencyMs !== undefined && testSummary.latencyMs > 0 && (
                   <div className="text-[10px] text-emerald-400 mt-1 font-mono font-bold">
-                    • Latência P2P Direta (Round-trip): {testSummary.latencyMs}ms
+                    Ida e volta WebRTC neste aparelho: {testSummary.latencyMs}ms
                   </div>
                 )}
               </div>

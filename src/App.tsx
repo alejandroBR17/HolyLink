@@ -1,3 +1,4 @@
+import {HeaderScroll} from './utils/header-scroll';
 import {AppUpdateNotice} from './components/AppUpdateNotice';
 import {selectProjectionVerse} from './utils/verse-selection';
 import {isYouthProjection} from './utils/projection-theme';
@@ -216,20 +217,12 @@ export default function App() {
   const { isInstalled, hasUpdateAvailable, forceAppUpdate, isUpdating } = usePWAInstall();
 
   const [isScrolledDown, setIsScrolledDown] = useState<boolean>(false);
-  const lastScrollTopRef = useRef<number>(0);
-
-  const handleMainScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
-    const currentScrollTop = e.currentTarget.scrollTop;
-    const delta = currentScrollTop - lastScrollTopRef.current;
-
-    // Auto-collapse header on mobile when scrolling down, restore when scrolling up or at top
-    if (currentScrollTop > 40 && delta > 8) {
-      setIsScrolledDown(true);
-    } else if (delta < -10 || currentScrollTop <= 15) {
-      setIsScrolledDown(false);
-    }
-    lastScrollTopRef.current = currentScrollTop;
-  }, []);
+  const headerScrollRef=useRef(new HeaderScroll());
+  const touchYRef=useRef<number|null>(null);
+  const handleMainScroll=useCallback((event:React.UIEvent<HTMLElement>)=>{
+    const el=event.currentTarget;
+    setIsScrolledDown(headerScrollRef.current.scroll(el.scrollTop,el.scrollHeight-el.clientHeight,performance.now()));
+  },[]);
 
   // Time ticker (updates currentTime every second) & global audio unlock
   useEffect(() => {
@@ -666,7 +659,7 @@ export default function App() {
         </header>
         {/* ACTIVE BROADCAST HEADER BANNER - SKEUOMORPHIC LED DISPLAY */}
         {isJustStartedRaw && (
-          <div className={`px-4 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all duration-300 z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
+          <div data-operator-banner data-collapsed={isScrolledDown} aria-hidden={isScrolledDown&&dimensions.width<1024} inert={isScrolledDown&&dimensions.width<1024} className={`px-4 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all duration-300 z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
             isScrolledDown
               ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:py-2.5 lg:border-b lg:opacity-100 lg:pointer-events-auto'
               : 'max-h-40 py-2.5 border-b opacity-100'
@@ -722,7 +715,7 @@ export default function App() {
             <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />Limpar tela</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(-1)}><ChevronLeft size={18} aria-hidden="true" />Slide anterior</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
-          </nav>          <main onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">
+          </nav>          <main onWheelCapture={event=>headerScrollRef.current.userIntent(event.deltaY,performance.now())} onTouchStartCapture={event=>{touchYRef.current=event.touches[0]?.clientY??null;}} onTouchMoveCapture={event=>{const y=event.touches[0]?.clientY;if(y!==undefined&&touchYRef.current!==null)headerScrollRef.current.userIntent(touchYRef.current-y,performance.now());touchYRef.current=y??null;}} onKeyDownCapture={event=>{if((event.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]'))return;const direction=['ArrowDown','PageDown','End'].includes(event.key)?1:['ArrowUp','PageUp','Home'].includes(event.key)?-1:0;headerScrollRef.current.userIntent(direction,performance.now());}} onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">
 
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (

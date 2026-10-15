@@ -1,9 +1,10 @@
+import {nextQueueItem} from '../../utils/monitor-queue';
 import {Smartphone} from '../ui/icons';
 import {ShortcutsGuide} from './ShortcutsGuide';
 import {useDialogFocus} from '../../hooks/useDialogFocus';
 import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useRef, useState, useEffect } from 'react';
-import { Monitor, Tv, ExternalLink, X, SkipForward, Film, Image as ImageIcon, BookOpen, Calendar, Heart, Keyboard, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, Cpu, HardDrive, CheckCircle2, Download } from 'lucide-react';
+import { Monitor, Tv, ExternalLink, X, SkipForward, BookOpen, Keyboard, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, HardDrive, CheckCircle2, Download } from '../ui/icons';
 import { ProjectionContent } from '../ProjectionContent';
 import { CHURCH_INFO, ALERTS } from '../../data';
 import { Meeting } from '../../types';
@@ -111,13 +112,16 @@ export function MonitorPanel({
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
 
   const [ramCleared, setRamCleared] = useState(false);
+  const cacheFeedbackTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  useEffect(()=>()=>{if(cacheFeedbackTimer.current)clearTimeout(cacheFeedbackTimer.current);},[]);
   const { fps, mode, effectiveMode, report, purgeCache } = usePerformanceDiagnostics();
   const { isInstalled } = usePWAInstall();
 
   const handleClearRam = () => {
     purgeCache();
     setRamCleared(true);
-    setTimeout(() => setRamCleared(false), 3000);
+    if(cacheFeedbackTimer.current)clearTimeout(cacheFeedbackTimer.current);
+    cacheFeedbackTimer.current=setTimeout(() => setRamCleared(false), 3000);
   };
 
   useEffect(() => {
@@ -151,71 +155,14 @@ export function MonitorPanel({
     return () => resizeObserver.disconnect();
   }, []);
 
-  const handleOpenMonitor = () => {
-    const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
-    try {
-      const newWin = window.open(projectionUrl, 'holyrics_projection', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
-      setProjectionWin(newWin);
-    } catch (e) {
-      console.warn("Could not open projection window:", e);
-    }
-    updateStateAndBroadcast('isProjectionOpen', true);
-    updateStateAndBroadcast('projectionCloseTrigger', null);
+  const nextMedia=nextQueueItem(activeSlides,currentSlideId,customMediaList,customMeetings);
+  const verseOverlay=!!customVerseText||activeVerseIndex!==null;
+  const advanceQueue=()=>{
+    if(!nextMedia.id)return;
+    updateStateAndBroadcast('customVerseText','');updateStateAndBroadcast('customVerseRef','');
+    updateStateAndBroadcast('activeVerseIndex',null);updateStateAndBroadcast('manualSlideOverride',null);
+    updateStateAndBroadcast('advanceToSlide',nextMedia.id);
   };
-
-  const handleCloseMonitor = () => {
-    setProjectionWin(null);
-    updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
-    updateStateAndBroadcast('isProjectionOpen', false);
-  };
-
-  // Compute next slide / media details
-  const getNextMediaInfo = () => {
-    if (customVerseText) {
-      return {
-        id: 'verse_next',
-        title: customVerseRef ? `Próximo Versículo (${customVerseRef})` : 'Versículo Bíblico em Exibição',
-        typeLabel: 'Texto Sagrado',
-        icon: <BookOpen className="w-4 h-4 text-hl-gold" />
-      };
-    }
-
-    if (!activeSlides || activeSlides.length === 0) {
-      return { id: null, title: 'Nenhum slide na fila', typeLabel: 'Vazio', icon: <Monitor className="w-4 h-4 text-hl-dim" /> };
-    }
-
-    const currentIndex = activeSlides.indexOf(currentSlideId);
-    const nextIndex = currentIndex !== -1 ? (currentIndex + 1) % activeSlides.length : 0;
-    const nextId = activeSlides[nextIndex];
-
-    if (nextId === 'agenda_day_0') {
-      return { id: nextId, title: 'Agenda do Dia / Próxima Reunião', typeLabel: 'Card da Igreja', icon: <Calendar className="w-4 h-4 text-blue-400" /> };
-    } else if (nextId === 'world_god') {
-      return { id: nextId, title: 'Onde Tem Igreja Universal', typeLabel: 'Card Institucional', icon: <BookOpen className="w-4 h-4 text-emerald-400" /> };
-    } else if (nextId === 'donation') {
-      return { id: nextId, title: 'Dízimos e Ofertas (PIX)', typeLabel: 'Chave PIX', icon: <Heart className="w-4 h-4 text-hl-gold-bright" /> };
-    } else if (nextId?.startsWith('campaign_')) {
-      const index = parseInt(nextId.replace('campaign_', ''), 10);
-      const camp = customCampaigns[index];
-      return { id: nextId, title: camp?.title || 'Campanha de Fé', typeLabel: 'Campanha', icon: <Heart className="w-4 h-4 text-red-400" /> };
-    } else if (nextId?.startsWith('meeting_')) {
-      return { id: nextId, title: 'Próximo Evento da Reunião', typeLabel: 'Evento', icon: <Calendar className="w-4 h-4 text-hl-gold-bright" /> };
-    } else {
-      const media = customMediaList.find(m => m.id === nextId);
-      if (media) {
-        return {
-          id: nextId,
-          title: media.name || 'Mídia Personalizada',
-          typeLabel: media.type === 'video' ? 'Vídeo MP4' : 'Imagem JPG/PNG',
-          icon: media.type === 'video' ? <Film className="w-4 h-4 text-purple-400" /> : <ImageIcon className="w-4 h-4 text-sky-400" />
-        };
-      }
-    }
-
-    return { id: nextId, title: 'Próximo Slide', typeLabel: 'Slide', icon: <Monitor className="w-4 h-4 text-hl-gold" /> };
-  };
-
-  const nextMedia = getNextMediaInfo();
 
   return (
     <div className="monitor-workspace console-area flex flex-col gap-5 w-full text-left">
@@ -358,7 +305,7 @@ export function MonitorPanel({
               <h4 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans leading-snug">A Seguir na Fila</h4>
               <p className="text-[10px] text-hl-muted font-medium leading-tight mt-0.5">
                 {activeSlides.length > 0
-                  ? `Posição ${(activeSlides.indexOf(currentSlideId) + 2) > activeSlides.length ? 1 : activeSlides.indexOf(currentSlideId) + 2} de ${activeSlides.length}`
+                  ? `Posição ${nextMedia.position} de ${activeSlides.length}`
                   : 'Aguardando mídias'}
               </p>
             </div>
@@ -371,13 +318,13 @@ export function MonitorPanel({
         <div className="relative z-10 bg-hl-canvas border border-hl-line-soft rounded-xl p-3 sm:p-3.5 flex flex-col gap-3 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
           <div className="flex items-start gap-2.5 min-w-0 w-full">
             <div className="p-2.5 bg-hl-raised rounded-xl border border-hl-line shrink-0 text-hl-gold flex items-center justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              {nextMedia.icon}
+              <SkipForward className="w-4 h-4 text-hl-gold"/>
             </div>
             <div className="min-w-0 flex-1 text-left">
               <span className="text-[9px] font-mono font-extrabold text-hl-gold uppercase tracking-widest block mb-0.5">PRÓXIMO CONTEÚDO</span>
               <p className="text-xs sm:text-sm font-sans font-extrabold text-hl-copy leading-snug break-words">{nextMedia.title}</p>
               <p className="text-[11px] text-hl-muted font-medium leading-relaxed mt-0.5 break-words">
-                {customVerseText ? 'Aguardando encerramento do versículo ativo' : 'Pronto na fila do projetor'}
+                {blackoutEnabled?'Tela preta ativa: retire o blackout para ver o conteúdo.':clearContentEnabled?'Conteúdo oculto: retire Limpar tela para ver a fila.':verseOverlay?'Há uma passagem sobre a fila. Avançar retira a passagem e retoma este conteúdo.':isFinalFiveMinutes||isFinalMinute||isJustStarted?'O cronômetro ou modo de reunião pode estar sobre a fila.':'Próximo conteúdo da sequência deste operador.'}
               </p>
             </div>
           </div>
@@ -385,7 +332,7 @@ export function MonitorPanel({
           {nextMedia.id && (
             <button
               type="button"
-              onClick={() => updateStateAndBroadcast('advanceToSlide', nextMedia.id)}
+              onClick={advanceQueue}
               className="bg-hl-gold hover:bg-hl-gold-bright text-black text-xs font-black px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-[0_0_15px_rgba(255,211,79,0.3)] flex items-center justify-center gap-2 active:translate-y-[1px] w-full min-h-[40px]"
             >
               <SkipForward className="w-3.5 h-3.5 shrink-0" />
@@ -452,6 +399,58 @@ export function MonitorPanel({
         </div>
       </section>
 
+      {/* SMART DEVICE GUIDANCE CARD */}
+      <section aria-label="Modo de Dispositivo" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden text-left group">
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
+        <div className="relative z-10 flex flex-wrap items-center justify-between mb-3 gap-2 border-b border-hl-line pb-3">
+          <h4 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans flex items-center gap-2 min-w-0">
+            {isMobileDevice ? (
+              <Smartphone className="w-4 h-4 text-hl-gold animate-pulse shrink-0" />
+            ) : (
+              <Laptop className="w-4 h-4 text-hl-gold shrink-0" />
+            )}
+            <span className="break-words">Orientação: {isMobileDevice ? 'Tela portátil' : 'Computador'}</span>
+          </h4>
+          <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[9px] font-mono px-2.5 py-1 rounded uppercase tracking-wider font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
+            {localStorage.getItem('projection_deviceRole')==='phone'?'Controle escolhido':localStorage.getItem('projection_deviceRole')==='pc'?'Projeção escolhida':'Orientação de uso'}
+          </span>
+        </div>
+
+        {isMobileDevice ? (
+          <div className="relative z-10 text-[11px] text-hl-muted space-y-2 leading-relaxed">
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
+              <span>Para controlar outro aparelho, escolha <strong>Celular de controle</strong> em Conexão e autorize no PC.</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
+              <span>Abra este mesmo link no PC da igreja conectado à TV/HDMI.</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
+              <span>Use os botões <strong>BLACKOUT</strong>, <strong>LIMPAR TEXTO</strong> e a <strong>FILA DE TRANSMISSÃO</strong> para controlar tudo em tempo real!</span>
+            </p>
+          </div>
+        ) : (
+          <div className="relative z-10 text-[11px] text-hl-muted space-y-2 leading-relaxed">
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
+              <span>Conecte a TV ou Projetor na saída HDMI do computador.</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
+              <span>Use <strong>Abrir telão</strong> no topo e mova a janela para a segunda tela.</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
+              <span>Atalhos: <strong>B</strong> (Blackout), <strong>C</strong> (Limpar), <strong>Espaço</strong> (Próximo) e <strong>ESC</strong> (Resetar).</span>
+            </p>
+          </div>
+        )}
+      </section>
+
+
 </div></details>
       {/* HARDWARE BENCHMARK MODAL */}
       <HardwareBenchmarkModal
@@ -491,57 +490,6 @@ export function MonitorPanel({
           </div>
         </div>
       )}
-
-      {/* SMART DEVICE GUIDANCE CARD */}
-      <section aria-label="Modo de Dispositivo" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden text-left group">
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-        <div className="relative z-10 flex items-center justify-between mb-3 gap-2 border-b border-hl-line pb-3">
-          <h4 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans flex items-center gap-2 min-w-0">
-            {isMobileDevice ? (
-              <Smartphone className="w-4 h-4 text-hl-gold animate-pulse shrink-0" />
-            ) : (
-              <Laptop className="w-4 h-4 text-hl-gold shrink-0" />
-            )}
-            <span className="truncate">Modo: {isMobileDevice ? 'Celular / Tablet' : 'Computador / Mesa'}</span>
-          </h4>
-          <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[9px] font-mono px-2.5 py-1 rounded uppercase tracking-wider font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
-            {isMobileDevice ? 'Controle Remoto' : 'HDMI + Teclado'}
-          </span>
-        </div>
-
-        {isMobileDevice ? (
-          <div className="relative z-10 text-[11px] text-hl-muted space-y-2 leading-relaxed">
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
-              <span>Seu celular opera como <strong>Controle Remoto Sem Fio</strong> do projetor.</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
-              <span>Abra este mesmo link no PC da igreja conectado à TV/HDMI.</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
-              <span>Use os botões <strong>BLACKOUT</strong>, <strong>LIMPAR TEXTO</strong> e a <strong>FILA DE TRANSMISSÃO</strong> para controlar tudo em tempo real!</span>
-            </p>
-          </div>
-        ) : (
-          <div className="relative z-10 text-[11px] text-hl-muted space-y-2 leading-relaxed">
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
-              <span>Conecte a TV ou Projetor na saída HDMI do computador.</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
-              <span>Clique em <strong>"Projetar na 2ª Tela (HDMI)"</strong>.</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
-              <span>Atalhos: <strong>B</strong> (Blackout), <strong>C</strong> (Limpar), <strong>Espaço</strong> (Próximo) e <strong>ESC</strong> (Resetar).</span>
-            </p>
-          </div>
-        )}
-      </section>
 
       <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
     </div>

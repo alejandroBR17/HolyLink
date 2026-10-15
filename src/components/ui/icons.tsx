@@ -1,3 +1,4 @@
+import {SkipForward as PhSkipForward} from '@phosphor-icons/react/dist/csr/SkipForward';
 import {Lightning as PhLightning} from '@phosphor-icons/react/dist/csr/Lightning';
 import {Flask as PhFlask} from '@phosphor-icons/react/dist/csr/Flask';
 import {XCircle as PhXCircle} from '@phosphor-icons/react/dist/csr/XCircle';
@@ -142,3 +143,5 @@ export const XCircle = themed(PhXCircle);
 export const FlaskConical = themed(PhFlask);
 
 export const Zap = themed(PhLightning);
+
+export const SkipForward=themed(PhSkipForward);
