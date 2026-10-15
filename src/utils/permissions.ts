@@ -5,6 +5,8 @@ export interface PermissionStatusItem {
   status:'granted'|'prompt'|'denied'|'unsupported';
 }
 let audioContext:AudioContext|null=null;
+// A refusal belongs to this session; never persist a pretend browser grant.
+let storageRequested=false;
 function getAudioContext(){
   if(typeof window==='undefined')return null;
   const AudioCtx=window.AudioContext||(window as Window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
@@ -35,17 +37,20 @@ export async function checkAllPermissions():Promise<PermissionStatusItem[]>{
   let audio:'granted'|'prompt'|'unsupported'='unsupported';
   try{const ctx=getAudioContext();if(ctx)audio=ctx.state==='running'?'granted':'prompt';}catch{}
   let storage:PermissionStatusItem['status']='unsupported';
-  try{if(navigator.storage?.persisted)storage=await bounded(navigator.storage.persisted(),false)?'granted':'prompt';}catch{storage='unsupported';}
+  try{if(navigator.storage?.persisted&&navigator.storage?.persist)storage=await bounded(navigator.storage.persisted(),false)?'granted':storageRequested?'denied':'prompt';}catch{storage='unsupported';}
   return [
     {id:'audio',title:'Áudio',description:audio==='granted'?'Sessão de áudio liberada nesta aba.':audio==='prompt'?'Toque para liberar o áudio nesta aba.':'O navegador não disponibilizou a sessão de áudio.',status:audio},
-    {id:'storage',title:'Proteger arquivos locais',description:storage==='granted'?'Proteção persistente concedida pelo navegador.':storage==='prompt'?'Peça proteção contra limpeza automática dos arquivos.':'Proteção persistente indisponível; o armazenamento comum é separado.',status:storage},
+    {id:'storage',title:'Proteger arquivos locais',description:storage==='granted'?'Proteção persistente concedida pelo navegador.':storage==='prompt'?'Solicite proteção extra contra limpeza automática. O navegador decide se pode concedê-la.':storage==='denied'?'O navegador não confirmou a proteção extra. Seus arquivos continuam no armazenamento local comum. Você pode entrar normalmente.':'Proteção extra indisponível neste navegador. Você pode usar o armazenamento local comum.',status:storage},
     {id:'wakelock',title:'Manter tela acesa',description:isWakeLockActive()?'Tela acesa solicitada neste aparelho.':'Evita o repouso enquanto a aba estiver visível e o navegador permitir.',status:'wakeLock' in navigator?isWakeLockActive()?'granted':'prompt':'unsupported'},
   ];
 }
 export async function requestSinglePermission(id:PermissionStatusItem['id']):Promise<boolean>{
   try{
     if(id==='audio')return await unlockAudio();
-    if(id==='storage')return navigator.storage?.persist?await bounded(navigator.storage.persist(),false):false;
+    if(id==='storage'){
+      storageRequested=true;
+      return navigator.storage?.persist?await bounded(navigator.storage.persist(),false):false;
+    }
     if(id==='wakelock')return await bounded(requestWakeLock(),false);
     // System notifications are not used by the current projection workflow.
     // Opening a second screen must be tested by its actual window.open action.

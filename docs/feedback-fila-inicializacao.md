@@ -44,4 +44,12 @@ Cada solicitação é iniciada por toque e atualiza o estado verificado. Áudio 
 
 A checagem vale para aparelho/aba em uso, não concede acesso ao PC remotamente, não testa HDMI físico nem garante autoplay em outra janela. O fluxo orienta conferir áudio/pop-ups na segunda tela.
 
+### Apenas permissões pendentes e resultado da proteção local
+
+A lista omite recursos já concedidos e desaparece quando não há pendências. A solicitação de proteção local mostra “Solicitando…” e verifica o estado efetivo após a resposta. Recusa, exceção ou timeout deixam explicação junto ao recurso, sem repetir um botão “Permitir” que aparentava não fazer nada. A recusa é lembrada apenas nesta sessão; reconsultar verifica o estado real, sem insistir automaticamente. Entrar continua disponível durante a solicitação opcional.
+
+Persistência não é permissão para ler/gravar a biblioteca: é proteção extra contra remoção automática. Chrome pode decidir silenciosamente, sem janela; não podemos forçar concessão. A interface distingue isso do armazenamento comum e não promete recuperar arquivos já removidos. Referência: [Persistent storage — web.dev](https://web.dev/articles/persistent-storage).
+
+Validação desta correção: TypeScript/build e 40 testes nativos aprovados; navegador em 320/390/768/1365 px com concessão e recusa simuladas; casos adicionais de exceção, timeout, todas concedidas, reconsulta após recusa e entrada sem bloqueio. Nenhuma concessão simulada foi usada como evidência do aparelho físico.
+
 Validação atual: 40 testes nativos, TypeScript/build, revisão das seis áreas em sete tamanhos e teste dedicado em 320/390/768/1365: solicitações e estados por APIs simuladas, recusa/ausência sem falso sucesso, continuação disponível, faixa atual compacta, ícone dentro do padding e contraste visual dos controles com rótulos estáveis. Capturas foram inspecionadas; não foi um ensaio no celular físico do responsável.
