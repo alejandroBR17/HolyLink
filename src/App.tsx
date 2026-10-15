@@ -1,3 +1,4 @@
+import {isYouthProjection} from './utils/projection-theme';
 import { useSlideManager } from "./hooks/useSlideManager";
 import { useWakeLock } from "./hooks/useWakeLock";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -729,6 +730,7 @@ export default function App() {
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (
               <PlaylistPanel
+                slidesOrder={slidesOrder}
                 currentSlideId={currentSlideId}
                 manualSlideOverride={manualSlideOverride}
                 activeSlides={activeSlides}
@@ -762,6 +764,8 @@ export default function App() {
 
             {activeMobileTab === 'texts' && (
               <BiblePanel
+                isFJU={isYouthProjection(ongoingMeeting, nextMeeting, nextMeetingDate, currentTime)}
+                backgroundStyle={background3DStyle}
                 activeVerseIndex={activeVerseIndex}
                 customVerseText={customVerseText}
                 customVerseRef={customVerseRef}

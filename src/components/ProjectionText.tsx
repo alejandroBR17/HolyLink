@@ -1,4 +1,6 @@
 import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {ThreeBackground3D, type BackgroundStyleOption} from './ThreeBackground3D';
+import {ParticlesBackground} from './ParticlesBackground';
 import {projectionFontSize} from '../utils/projection-text';
 
 export function ProjectionText({text, reference}: {text: string; reference?: string}) {
@@ -27,7 +29,7 @@ export function ProjectionText({text, reference}: {text: string; reference?: str
 }
 
 // Identical 1920×1080 composition in the draft and HDMI output.
-export function TextProjectionPreview({text, reference}: {text: string; reference?: string}) {
+export function TextProjectionPreview({text, reference, backgroundStyle = 'auto', isFJU = false}: {text: string; reference?: string; backgroundStyle?: BackgroundStyleOption; isFJU?: boolean}) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
   useEffect(() => {
@@ -38,5 +40,5 @@ export function TextProjectionPreview({text, reference}: {text: string; referenc
     observer.observe(element); resize();
     return () => observer.disconnect();
   }, []);
-  return <div ref={ref} className="text-projection-preview" aria-label="Prévia do texto em 16:9"><div style={{width: 1920, height: 1080, transform: `scale(${scale})`, transformOrigin: 'top left'}}><ProjectionText text={text || 'Seu texto aparece aqui'} reference={reference} /></div></div>;
+  return <div ref={ref} className="text-projection-preview" aria-label="Prévia do texto em 16:9"><div style={{width: 1920, height: 1080, transform: `scale(${scale})`, transformOrigin: 'top left', position: 'relative', background: '#020204'}}><ThreeBackground3D isFJU={isFJU} stylePreset={backgroundStyle} disabled={backgroundStyle === 'off' || backgroundStyle === 'particles_2d'} fpsLimit={30} intensity="low"/><ParticlesBackground disabled={backgroundStyle !== 'particles_2d'}/><ProjectionText text={text || 'Seu texto aparece aqui'} reference={reference} /></div></div>;
 }

@@ -62,7 +62,7 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [disabled]);
 
   if (disabled) return null;
 

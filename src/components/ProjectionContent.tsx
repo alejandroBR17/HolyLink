@@ -1,3 +1,4 @@
+import {isYouthProjection} from '../utils/projection-theme';
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, X, Armchair, DoorOpen, Smartphone, MessageSquareOff, Clock, Instagram, Globe, Flame, Users2, RefreshCw } from 'lucide-react';
@@ -108,34 +109,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   // Logic to detect FJU mode: 
   // 1. If ongoing meeting is FJU / Encontro Jovem / Força Jovem
   // 2. If next meeting is FJU / Encontro Jovem / Força Jovem (active during pre-service loop and countdown)
-  const isFJU = (() => {
-    const ongoingTheme = (ongoingMeeting?.theme || '').toLowerCase();
-    if (
-      ongoingTheme.includes('encontro jovem') ||
-      ongoingTheme.includes('fju') ||
-      ongoingTheme.includes('força jovem') ||
-      ongoingTheme.includes('jovem')
-    ) {
-      return true;
-    }
-
-    const nextTheme = (nextMeeting?.theme || '').toLowerCase();
-    if (
-      nextTheme.includes('encontro jovem') ||
-      nextTheme.includes('fju') ||
-      nextTheme.includes('força jovem') ||
-      nextTheme.includes('jovem')
-    ) {
-      if (nextMeetingDate) {
-        const diffMs = nextMeetingDate.getTime() - currentTime.getTime();
-        const diffMins = diffMs / (1000 * 60);
-        return diffMins <= 240 && diffMins >= -90;
-      }
-      return true;
-    }
-
-    return false;
-  })();
+  const isFJU = isYouthProjection(ongoingMeeting, nextMeeting, nextMeetingDate, currentTime);
 
   const themeColor = isFJU ? 'text-amber-500' : 'text-yellow-500';
   const borderColor = isFJU ? 'border-amber-500/40' : 'border-white/10';
@@ -574,7 +548,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   );
 
   return (
-    <div className="w-full h-full relative select-none font-sans overflow-hidden bg-[#050000] text-white flex flex-col justify-between">
+    <div className="w-full h-full relative select-none font-sans overflow-hidden bg-[#020204] text-white flex flex-col justify-between">
       {/* 3D Volumetric Background Engine */}
       <ThreeBackground3D 
         disabled={background3DStyle === 'off' || background3DStyle === 'particles_2d'}

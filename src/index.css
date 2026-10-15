@@ -171,3 +171,57 @@ html, body, #root {
 .bible-unified .bible-current .operator-actions { margin-top:0; }
 .bible-unified .bible-recent li { max-width:100%; }
 @media(max-width:600px) { .bible-unified .bible-readable-text { font-size:16px; } }
+/* HolyLink: obsidian console / luminous gold */
+.operator-shell { --holy-gold:#ffd34f; --holy-ink:#030305; --holy-surface:#0b0b10; --holy-edge:#30303a; background:radial-gradient(ellipse at 50% -30%,#39301233,transparent 65%),#030305; color:#f5f5f7; }
+.operator-shell .operator-card { background:linear-gradient(145deg,#101015,#07070a 75%); border-color:#30303a; border-radius:14px; box-shadow:inset 0 1px 0 #ffdc6815,0 14px 40px #0006; }
+.operator-shell .holy-topbar { background:#07070b; border-bottom-color:#34313a; box-shadow:0 3px 25px #0008; }
+.operator-shell .holy-brand h1 { letter-spacing:-.5px; color:#fff8df; }
+.operator-shell .holy-brand span { color:#b7b4a9; }
+.operator-shell .holy-navigation,.operator-shell .operator-quick-strip { background:#08080d; border-color:#262630; }
+.operator-shell .holy-navigation button { color:#a7a7b4; border-radius:8px; }
+.operator-shell .holy-navigation button[aria-selected=true] { color:#ffe075; background:linear-gradient(#ffd34f18,#ffd34f07); box-shadow:inset 0 0 0 1px #ffd34f66,inset 0 -2px 0 #ffd34f; }
+.operator-shell .holy-navigation button[aria-selected=true] svg { filter:drop-shadow(0 0 5px #ffbd3544); }
+.operator-shell :is(.holy-output-button,.operator-primary,.sequence-primary),.operator-shell .bible-reference-form .operator-primary { background:linear-gradient(160deg,#ffe894,#ffce32 55%,#efa915); color:#181100; border:1px solid #ffe078; box-shadow:inset 0 1px 0 #fff6,0 0 18px #ffc52c12; }
+.operator-shell :is(.holy-options summary,.holy-options[open]>div,.holy-disclosure,.operator-quick-strip button,.operator-actions button:not(.operator-primary)) { background:linear-gradient(#16161e,#0a0a0f); color:#e4e4ec; border-color:#34343f; border-radius:10px; }
+.operator-shell .operator-eyebrow,.operator-shell .operator-format-tag,.operator-shell .operator-notice,.operator-shell .bible-picker summary,.operator-shell .bible-recent strong { color:#ffdb69; }
+.operator-shell .operator-muted { color:#aaaab7; }
+.operator-shell .bible-search :is(input,select) { background:#050508; border-color:#363640; color:#f6f6f8; }
+.operator-shell .bible-search label { color:#c4c4d0; }
+.operator-shell .bible-unified .bible-readable-text { color:#f0f0f5; }
+.operator-shell .bible-unified .bible-passage h3 { color:#ffdd75; }
+.operator-shell :is(.bible-picker,.bible-current,.bible-unified .bible-passage:has(.bible-readable-text)) { border-color:#30303a; }
+.operator-shell :is(button,summary,input,textarea,select):focus-visible { outline-color:#ffda53; }
+.projection-reading { position:relative; z-index:1; background:radial-gradient(ellipse at center,#000b,transparent 85%); color:#fffdf6; }
+.projection-reading-text { text-shadow:0 3px 20px #000,0 1px 4px #000; }
+.projection-reading-rule { background:linear-gradient(90deg,transparent,#ffd34f 35%,#fff2b1 50%,#ffd34f 65%,transparent); box-shadow:0 0 20px #ffc40044; width:160px; height:3px; }
+.projection-reading-reference { color:#ffe17a; border:1px solid #ffd34f55; background:#020204aa; padding:12px 32px; border-radius:8px; letter-spacing:1px; box-shadow:0 0 30px #d9950017; }
+.text-projection-preview { border-color:#665522; border-radius:10px; }
+.sequence-heading { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+.sequence-heading h2 { font-size:25px; font-weight:700; margin:5px 0; }
+.sequence-heading p { color:#aaaab8; font-size:12px; }
+.sequence-console button { min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid #353540; border-radius:8px; padding:9px 12px; font-size:12px; font-weight:600; cursor:pointer; background:#111118; color:#e5e5eb; }
+.sequence-console button:disabled { opacity:.35; cursor:not-allowed; }
+.sequence-console .sequence-primary { color:#171000; }
+.sequence-edit-actions { display:flex; gap:8px; }
+.sequence-status { margin-top:18px; display:flex; align-items:center; gap:8px; font-size:12px; color:#d9d9e2; background:#030305; border:1px solid #282831; padding:8px 12px; border-radius:8px; }
+.sequence-status button { margin-left:auto; }
+.sequence-status-light { width:6px; height:6px; border-radius:50%; background:#ffd34f; box-shadow:0 0 8px #ffcd3355; flex-shrink:0; }
+.sequence-tools { display:flex; gap:10px; margin:16px 0; }
+.sequence-tools label { display:flex; align-items:center; gap:8px; padding:0 12px; min-width:0; flex:1; background:#030305; border:1px solid #30303b; border-radius:8px; color:#aaaab7; }
+.sequence-tools input { width:100%; min-width:0; min-height:44px; font-size:13px; outline:none; }
+.sequence-tools select { background:#0a0a10; min-height:44px; border:1px solid #30303b; padding:8px; border-radius:8px; font-size:12px; max-width:40%; }
+.sequence-guidance { margin:16px 0; color:#ffe17b; font-size:13px; line-height:1.5; }
+.sequence-list { list-style:none; padding:0; margin:0; }
+.sequence-item { display:flex; align-items:center; gap:12px; min-width:0; padding:12px 0; border-top:1px solid #292932; }
+.sequence-position { color:#706e7b; font-size:12px; font-variant-numeric:tabular-nums; width:22px; flex-shrink:0; text-align:center; }
+.sequence-item-current .sequence-position { color:#ffda56; }
+.sequence-item-current { background:linear-gradient(90deg,#ffd34f0c,transparent); }
+.sequence-item-text { min-width:0; flex:1; }
+.sequence-item-text h3 { font-size:14px; line-height:1.5; font-weight:600; overflow-wrap:anywhere; }
+.sequence-item-text p { font-size:11px; color:#9393a3; line-height:1.5; margin-top:3px; }
+.sequence-item-hidden .sequence-item-text { opacity:.55; }
+.sequence-item-actions { display:flex; gap:6px; flex-shrink:0; }
+.sequence-console .sequence-project { border-color:#665221; color:#ffe27d; background:#191507; }
+.sequence-console .queue-more { width:100%; margin-top:12px; }
+@media(max-width:600px) { .sequence-item { gap:8px; flex-wrap:wrap; } .sequence-item-text { flex-basis:calc(100% - 36px); } .sequence-item-actions { margin-left:30px; } .sequence-heading h2 { font-size:23px; } }
+.operator-shell .sequence-console button.sequence-primary { background:linear-gradient(160deg,#ffe894,#ffce32 55%,#efa915); color:#181100; border-color:#ffe078; }

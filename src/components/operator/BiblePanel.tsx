@@ -3,9 +3,12 @@ import {Send, ChevronLeft, ChevronRight, RotateCcw, Repeat2} from 'lucide-react'
 import {BibleSection} from '../BibleSection';
 import {getSetting} from '../../utils';
 import {paginateProjectionText} from '../../utils/projection-text';
+import type {BackgroundStyleOption} from '../ThreeBackground3D';
 import {TextProjectionPreview} from '../ProjectionText';
 import {readPassageHistory, rememberPassage, type Passage} from '../../utils/bible-history';
 interface BiblePanelProps {
+  backgroundStyle?: BackgroundStyleOption;
+  isFJU?: boolean;
   activeVerseIndex: number | null;
   customVerseText: string | null;
   customVerseRef: string | null;
@@ -13,7 +16,8 @@ interface BiblePanelProps {
   showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
   showAlert?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
-export const BiblePanel = React.memo(function BiblePanel({activeVerseIndex, customVerseText, customVerseRef, updateStateAndBroadcast}: BiblePanelProps) {
+export const BiblePanel = React.memo(function BiblePanel({isFJU, backgroundStyle, activeVerseIndex, customVerseText, customVerseRef, updateStateAndBroadcast}: BiblePanelProps) {
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [passage, setPassage] = useState<Passage | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [recent, setRecent] = useState(readPassageHistory);
@@ -54,7 +58,7 @@ export const BiblePanel = React.memo(function BiblePanel({activeVerseIndex, cust
           {pages.length > 1 && <div className="operator-actions"><button disabled={selected === 0} onClick={() => setPageIndex(selected - 1)} aria-label="Página anterior na prévia"><ChevronLeft size={18}/>Anterior</button><button disabled={selected === pages.length - 1} onClick={() => setPageIndex(selected + 1)} aria-label="Próxima página na prévia">Próxima<ChevronRight size={18}/></button><small>Passagens longas são divididas para leitura no telão.</small></div>}
           <div className="operator-actions"><button className="operator-primary" onClick={() => project(passage, selected)}><Send size={18}/>{liveIndex === selected ? 'Enviar novamente' : 'Projetar esta página'}</button></div>
         </> : null}
-        {passage && <details className="bible-picker bible-preview"><summary>Conferir aparência no telão · 16:9</summary><TextProjectionPreview text={pages[selected]} reference={referenceFor(selected, passage, pages.length)}/></details>}<p className="operator-notice" role="status">{message}</p>
+        {passage && <details className="bible-picker bible-preview" onToggle={event => setPreviewOpen(event.currentTarget.open)}><summary>Conferir aparência no telão · 16:9</summary>{previewOpen && <TextProjectionPreview isFJU={isFJU} backgroundStyle={backgroundStyle} text={pages[selected]} reference={referenceFor(selected, passage, pages.length)}/>}</details>}<p className="operator-notice" role="status">{message}</p>
         {(customVerseText || activeVerseIndex !== null) && <div className="bible-current"><span className="operator-eyebrow">Último envio{customVerseRef ? ` · ${customVerseRef}` : ''}</span>{liveIndex >= 0 && pages.length > 1 && <div className="operator-actions"><button disabled={liveIndex === 0} onClick={() => passage && project(passage, liveIndex - 1)}><ChevronLeft size={18}/>Anterior no telão</button><button disabled={liveIndex === pages.length - 1} onClick={() => passage && project(passage, liveIndex + 1)}>Próxima no telão<ChevronRight size={18}/></button></div>}<div className="operator-actions"><button onClick={restore}><RotateCcw size={17}/>Retomar sequência</button></div></div>}
       </div>
       <details className="bible-picker bible-recent">

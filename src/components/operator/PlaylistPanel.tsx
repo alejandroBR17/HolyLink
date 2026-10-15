@@ -23,6 +23,7 @@ interface PlaylistPanelProps {
   currentSlideId: string;
   manualSlideOverride: string | null;
   activeSlides: string[];
+  slidesOrder?: string[];
   allAvailableSlides?: string[];
   disabledSlides?: string[];
   customMediaList: CustomMedia[];
@@ -57,6 +58,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   currentSlideId,
   manualSlideOverride,
   activeSlides,
+  slidesOrder = [],
   allAvailableSlides = [],
   disabledSlides = [],
   customMediaList,
@@ -147,14 +149,24 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
   // Combina todos os slides conhecidos respeitando a ordem atual de slidesOrder
   const fullSlideList = useMemo(() => {
-    const list = [...activeSlides];
-    allAvailableSlides.forEach((id) => {
-      if (!list.includes(id)) {
-        list.push(id);
-      }
-    });
-    return list;
-  }, [activeSlides, allAvailableSlides]);
+    const available = [...new Set([...activeSlides, ...allAvailableSlides])];
+    return [...slidesOrder.filter(id => available.includes(id)), ...available.filter(id => !slidesOrder.includes(id))];
+  }, [activeSlides, allAvailableSlides, slidesOrder]);
+  const [draftOrder, setDraftOrder] = useState<string[] | null>(null);
+  const [editingBase, setEditingBase] = useState('');
+  const orderChangedElsewhere = draftOrder !== null && editingBase !== JSON.stringify(fullSlideList);
+  const beginEditing = () => {setDraftOrder([...fullSlideList]); setEditingBase(JSON.stringify(fullSlideList)); setFilterMode('all'); setSearchTerm('');};
+  const moveDraft = (id: string, direction: -1 | 1) => setDraftOrder(current => {
+    if (!current) return current;
+    const index = current.indexOf(id), target = index + direction;
+    if (index < 0 || target < 0 || target >= current.length) return current;
+    const next = [...current]; [next[index], next[target]] = [next[target], next[index]]; return next;
+  });
+  const applyOrder = () => {
+    if (!draftOrder || orderChangedElsewhere) return;
+    updateStateAndBroadcast('slidesOrder', JSON.stringify(draftOrder));
+    setDraftOrder(null); notify('Ordem aplicada neste operador.', 'success');
+  };
 
   const getSlideDetails = (slideId: string) => {
     let name = slideId;
@@ -322,385 +334,29 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   return (
     <div className="playlist-workspace flex flex-col gap-6 w-full">
       
-      {/* SEÇÃO DA FILA DE REPRODUÇÃO */}
-      <section aria-label="Playlists e Fila de Slides" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-        
-        {/* CABEÇALHO DA FILA */}
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#333] pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              <Layers className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider font-sans">Sequência de projeção</h2>
-                <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                  {activeSlides.length} ATIVOS • {formatTotalTime(totalLoopDuration)}
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Organize a sequência de exibição na projeção</p>
-            </div>
-          </div>
-
-          {/* CONTROLES DE MODO DE PROJEÇÃO */}
-          <div className="flex flex-wrap items-center gap-2">
-<details className="holy-disclosure queue-organizer"><summary>Organizar sequência</summary><div className="flex flex-wrap gap-2">            {handleReorderInterleaved && (
-              <button
-                type="button"
-                onClick={() => {
-                  handleReorderInterleaved();
-                  showAlert("Fila intercalada dinamicamente (1 slide por categoria por vez)", "success");
-                }}
-                title="Intercalar dinamicamente: 1 de cada categoria por vez"
-                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-amber-400 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Intercalar Categoria</span>
-              </button>
-            )}
-
-            {handleReorderGrouped && (
-              <button
-                type="button"
-                onClick={() => {
-                  handleReorderGrouped();
-                  showAlert("Fila reorganizada por categoria com sucesso", "info");
-                }}
-                title="Agrupar por categoria"
-                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-300 hover:text-white text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Agrupar por Tipo</span>
-              </button>
-            )}
-
-            {handleResetSlidesOrder && (
-              <button
-                type="button"
-                onClick={() => {
-                  showConfirm(
-                    "Restaurar Ordem Padrão",
-                    "Deseja restaurar a sequência recomendada original dos slides?",
-                    () => {
-                      handleResetSlidesOrder();
-                      showAlert("Ordem original restaurada", "success");
-                    }
-                  );
-                }}
-                title="Restaurar a sequência padrão de fábrica"
-                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-400 hover:text-zinc-200 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Restaurar Padrão</span>
-              </button>
-            )}
-
-</div></details>            {manualSlideOverride ? (
-              <button
-                type="button"
-                onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
-                title="Clique para destravar e voltar ao carrossel automático"
-                className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] active:translate-y-[1px] cursor-pointer min-h-[38px] shrink-0"
-              >
-                <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0" />
-                <span className="hidden sm:inline">Desfixar Slide</span>
-                <span className="sm:hidden">Voltar</span>
-              </button>
-            ) : (
-              <span className="bg-emerald-950/80 border border-emerald-900/50 text-emerald-400 text-[10px] font-mono font-bold px-3 py-1.5 rounded uppercase tracking-wider flex items-center gap-2 min-h-[32px] shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0" />
-                <span className="hidden sm:inline">LOOP AUTOMÁTICO ATIVO</span>
-                <span className="sm:hidden">LOOP ATIVO</span>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* BANNER INFORMATIVO QUANDO CONTEÚDO ESTÁ FIXADO */}
-        {manualSlideOverride && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-in fade-in duration-200">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-amber-500/20 border border-amber-500/30 rounded-lg text-amber-400 shrink-0">
-                <Pin className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
-                    Conteúdo Fixado Manualmente no Telão
-                  </span>
-                  <span className="bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded border border-amber-500/30 uppercase">
-                    Carrossel Pausado
-                  </span>
-                </div>
-                <p className="text-[11px] text-zinc-300 mt-0.5">
-                  Carrossel pausado. Clique ao lado para destravar e retomar a projeção automática.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
-              className="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-500/10 shrink-0 cursor-pointer w-full sm:w-auto active:scale-95"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Voltar ao Carrossel</span>
-            </button>
-          </div>
-        )}
-
-        {/* FERRAMENTAS DE BUSCA E FILTROS DA FILA */}
-        <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#030303] p-2.5 rounded-xl border border-[#222] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
-          
-          {/* CAMPO DE BUSCA */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar slide na fila..."
-              className="w-full bg-[#09090b] border border-[#27272a] text-zinc-100 text-xs font-sans font-medium pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/40 placeholder:text-zinc-600 transition-all"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs font-bold px-1 flex items-center justify-center"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* BOTÕES DE FILTRO */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 shrink-0">
-            <button
-              type="button"
-              onClick={() => setFilterMode('all')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'all'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Todos ({fullSlideList.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterMode('active')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'active'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Ativos ({activeSlides.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterMode('disabled')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'disabled'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Ocultos ({disabledSlides.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterMode('media')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'media'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Mídias ({customMediaList.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterMode('agenda')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'agenda'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Agendas
-            </button>
-          </div>
-        </div>
-
-        {/* CARDS DOS SLIDES NA FILA */}
-        {filteredSlides.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 text-zinc-400 text-xs text-center py-10 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
-            <Filter className="w-8 h-8 text-zinc-600 stroke-[1.5]" />
-            <p className="font-semibold text-zinc-300">Nenhum slide encontrado com este filtro.</p>
-            <p className="text-[11px] text-zinc-500">Tente ajustar o termo de pesquisa ou trocar de categoria.</p>
-          </div>
-        ) : (
-          <div className="queue-list">
-            {filteredSlides.slice(0, queueLimit).map((slideId) => {
-              const isActiveInLoop = activeSlides.includes(slideId);
-              const isCurrentOnAir = currentSlideId === slideId;
-              const isFixedOverride = manualSlideOverride === slideId;
-              const isDisabled = disabledSlides.includes(slideId);
-              const activeIndexInQueue = activeSlides.indexOf(slideId);
-              const { name, desc, category } = getSlideDetails(slideId);
-
-              return (
-                <div
-                  key={slideId}
-                  className={`queue-row p-4 rounded-xl border transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px] ${
-                    isDisabled
-                      ? "bg-[#050507] border-[#1f1f22] opacity-50"
-                      : isCurrentOnAir
-                        ? "bg-[#09090b] border-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.25)] ring-1 ring-amber-500/50"
-                        : "bg-[#030303] border-[#222] hover:border-[#333] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]"
-                  }`}
-                >
-                  <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-zinc-700/30 to-transparent"></div>
-                  
-                  {/* FLAG DE STATUS NA SAÍDA OU FIXADO */}
-                  <div className="flex items-center justify-between gap-2 border-b border-[#222] pb-2.5 mb-2.5">
-                    <div className="flex items-center gap-2">
-                      {/* POSIÇÃO NA FILA */}
-                      {isActiveInLoop ? (
-                        <span className="font-mono text-[10px] font-bold bg-amber-950/80 border border-amber-900/50 text-amber-500 px-2 py-0.5 rounded shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                          #{activeIndexInQueue + 1} NA FILA
-                        </span>
-                      ) : (
-                        <span className="font-mono text-[10px] font-bold bg-[#111113] border border-[#222] text-zinc-600 px-2 py-0.5 rounded shrink-0">
-                          OFF
-                        </span>
-                      )}
-
-
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {isCurrentOnAir && (
-                        <span className="bg-amber-500 text-black text-[9px] font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.6)] flex items-center gap-1 shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
-                          NA SAÍDA
-                        </span>
-                      )}
-                      
-                      {isFixedOverride && (
-                        <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase shrink-0">
-                          FIXADO
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* INFO DO SLIDE */}
-                  <div className="pr-2">
-                    <h3 className={`font-sans font-bold text-sm leading-snug ${isCurrentOnAir ? "text-amber-400 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" : isDisabled ? "text-zinc-600 line-through" : "text-zinc-100"}`}>
-                      {name}
-                    </h3>
-                    <p className="text-xs text-zinc-400 mt-1 leading-normal font-sans line-clamp-1">{desc}</p>
-                  </div>
-
-                  {/* CONTROLES E BOTÕES DE REORDENAÇÃO */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-[#222]">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono bg-[#111113] px-2.5 py-1 rounded border border-[#27272a] text-amber-400 text-[11px] font-bold shrink-0">
-                        {getSlideDuration(slideId, customMediaList) / 1000}s
-                      </span>
-
-                      {/* TOGGLE VISIBILIDADE / DESATIVAR SLIDE */}
-                      {handleToggleDisableSlide && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleDisableSlide(slideId)}
-                          aria-label={isDisabled ? "Ativar slide na fila" : "Ocultar slide da fila"}
-                          title={isDisabled ? "Ativar e incluir no loop" : "Ocultar e desativar do loop"}
-                          className={`p-1.5 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none ${
-                            isDisabled
-                              ? "bg-[#111113] border-[#222] text-zinc-600 hover:text-zinc-300"
-                              : "bg-[#111113] border-amber-900/50 text-amber-500 hover:bg-amber-950/50"
-                          }`}
-                        >
-                          {isDisabled ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* BOTÕES DE DIREÇÃO E PROJEÇÃO */}
-                    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                      
-                      {/* BOTÃO PROJETAR DADOS FIXOS */}
-                      <button
-                        type="button"
-                        onClick={() => updateStateAndBroadcast('manualSlideOverride', isFixedOverride ? null : slideId)}
-                        title={isFixedOverride ? "Desafixar e voltar ao automático" : "Projetar este slide imediatamente"}
-                        aria-label={`${isFixedOverride ? 'Desafixar' : 'Projetar'} ${name}`}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold border transition-all flex items-center gap-1.5 cursor-pointer focus-visible:outline-none ${
-                          isFixedOverride
-                            ? "bg-amber-500 border-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(245,158,11,0.5)]"
-                            : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-amber-500/50 text-amber-400 shadow-[0_2px_8px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
-                        }`}
-                      >
-                        <Send className="w-3 h-3" />
-                        <span >{isFixedOverride ? "Desafixar" : "Projetar"}</span>
-                      </button>
-
-                      <details className="queue-row-options"><summary aria-label={`Ordenar ${name}`}>Ordenar</summary><div>
-                      {/* SUBIR AO TOPO */}
-                      <button
-                        type="button"
-                        onClick={() => handleMoveSlide(slideId, 'top')}
-                        title="Subir para a 1ª Posição da Fila"
-                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
-                      >
-                        <ChevronsUp className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* SUBIR 1 */}
-                      <button
-                        type="button"
-                        onClick={() => handleMoveSlide(slideId, 'up')}
-                        title="Mover para Cima"
-                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
-                      >
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* DESCER 1 */}
-                      <button
-                        type="button"
-                        onClick={() => handleMoveSlide(slideId, 'down')}
-                        title="Mover para Baixo"
-                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
-                      >
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* ENVIAR PRO FIM */}
-                      <button
-                        type="button"
-                        onClick={() => handleMoveSlide(slideId, 'bottom')}
-                        title="Enviar para o Fim da Fila"
-                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
-                      >
-                        <ChevronsDown className="w-3.5 h-3.5" />
-                      </button>
-                      </div></details>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            {filteredSlides.length > queueLimit && <button type="button" className="queue-more" onClick={() => setQueueLimit(queueLimit + 8)}>Mostrar mais slides ({queueLimit} de {filteredSlides.length})</button>}
-          </div>
-        )}
+      <section className="operator-card sequence-console" aria-labelledby="sequence-title">
+        <header className="sequence-heading">
+          <div><span className="operator-eyebrow"><Layers size={16}/>Controle da reunião</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
+          {!draftOrder ? <button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
+        </header>
+        <div className="sequence-status"><span className="sequence-status-light"/><span>{manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{manualSlideOverride && <button onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}><RefreshCw size={15}/>Retomar</button>}</div>
+        {draftOrder ? <p className="sequence-guidance" role="status">{orderChangedElsewhere ? 'A sequência mudou em outro controle. Cancele e abra a edição novamente para usar a versão atual.' : 'Use as setas para mudar a ordem. O telão só recebe a nova ordem quando você salvar.'}</p> : <div className="sequence-tools"><label><Search size={17}/><input aria-label="Buscar na sequência" placeholder="Buscar na sequência" value={searchTerm} onChange={event => setSearchTerm(event.target.value)}/></label><select aria-label="Filtrar sequência" value={filterMode} onChange={event => setFilterMode(event.target.value as QueueFilterMode)}><option value="all">Todos</option><option value="active">Ativos</option><option value="disabled">Ocultos</option><option value="media">Mídias</option><option value="agenda">Agenda</option></select></div>}
+        <ol className="sequence-list" aria-label={draftOrder ? 'Editar ordem dos slides' : 'Slides da sequência'}>
+          {(draftOrder || filteredSlides.slice(0, queueLimit)).map((slideId, index, list) => {
+            const {name, desc} = getSlideDetails(slideId);
+            const isDisabled = disabledSlides.includes(slideId), isCurrent = currentSlideId === slideId, isFixed = manualSlideOverride === slideId;
+            return <li className={`sequence-item ${isCurrent ? 'sequence-item-current' : ''} ${isDisabled ? 'sequence-item-hidden' : ''}`} key={slideId} data-slide-id={slideId}>
+              <span className="sequence-position">{draftOrder ? index + 1 : fullSlideList.indexOf(slideId) + 1}</span>
+              <div className="sequence-item-text"><h3>{name}</h3><p>{draftOrder ? desc : `${getSlideDuration(slideId, customMediaList) / 1000}s${isDisabled ? ' · Fora da sequência' : ''}${isCurrent ? ' · Na saída do operador' : ''}`}</p></div>
+              <div className="sequence-item-actions">{draftOrder ? <><button disabled={index === 0 || orderChangedElsewhere} aria-label={`Subir ${name}`} onClick={() => moveDraft(slideId, -1)}><ArrowUp size={18}/></button><button disabled={index === list.length - 1 || orderChangedElsewhere} aria-label={`Descer ${name}`} onClick={() => moveDraft(slideId, 1)}><ArrowDown size={18}/></button></> : <>
+                {handleToggleDisableSlide && <button aria-label={`${isDisabled ? 'Ativar' : 'Ocultar'} ${name}`} title={isDisabled ? 'Incluir na sequência' : 'Retirar da sequência'} onClick={() => handleToggleDisableSlide(slideId)}>{isDisabled ? <EyeOff size={17}/> : <Eye size={17}/>}</button>}
+                <button className={isFixed ? 'sequence-primary' : 'sequence-project'} aria-label={`${isFixed ? 'Desafixar' : 'Projetar'} ${name}`} onClick={() => {if (!isFixed) {updateStateAndBroadcast('customVerseText', null); updateStateAndBroadcast('customVerseRef', null); updateStateAndBroadcast('activeVerseIndex', null);} updateStateAndBroadcast('manualSlideOverride', isFixed ? null : slideId);}}><Send size={16}/><span>{isFixed ? 'Retomar' : 'Projetar'}</span></button>
+              </>}</div>
+            </li>;
+          })}
+        </ol>
+        {!draftOrder && filteredSlides.length === 0 && <p className="operator-muted">Nenhum slide encontrado. Tente outra busca ou filtro.</p>}
+        {!draftOrder && filteredSlides.length > queueLimit && <button className="queue-more" onClick={() => setQueueLimit(queueLimit + 8)}>Mostrar mais slides ({queueLimit} de {filteredSlides.length})</button>}
       </section>
 
 <details className="holy-disclosure media-library"><summary>Biblioteca de mídias ({customMediaList.length})</summary>
