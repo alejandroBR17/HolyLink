@@ -159,3 +159,15 @@ html, body, #root {
 @media(max-width:650px) { .bible-picker form { grid-template-columns:1fr 1fr; } .bible-picker label:first-child { grid-column:1/-1; } .bible-picker button { grid-column:1/-1; } .bible-reference-form > div { flex-wrap:wrap; } .bible-reference-form input { flex:1 1 180px; } .bible-reference-form button { flex:1 1 70px; } }
 @media(max-width:360px) { .holy-brand { gap:6px; } .holy-brand img { width:28px; height:28px; } .holy-brand h1 { font-size:14px; } .holy-brand span { display:none; } }
 @media(max-height:500px) and (max-width:950px) { .holy-topbar { padding:6px 12px; } .holy-navigation { padding:4px 12px; } .holy-navigation button { min-height:44px; } .operator-quick-strip { padding:4px 12px; } .operator-quick-strip button { flex-direction:row; } }
+.bible-unified { display:block; }
+.bible-unified .bible-search .operator-section-heading { margin-bottom:16px; }
+.bible-unified .bible-search .operator-eyebrow { display:none; }
+.bible-unified .bible-search h3 { margin-top:0; font-size:23px; }
+.bible-unified .bible-passage:has(.bible-readable-text) { margin-top:18px; padding-top:18px; border-top:1px solid #45393c; }
+.bible-unified .bible-passage .operator-section-heading { margin-bottom:8px; align-items:center; }
+.bible-unified .bible-passage h3 { font-size:18px; font-weight:700; color:#efd0a0; }
+.bible-unified .bible-readable-text { margin-top:0; font-size:17px; line-height:1.7; }
+.bible-unified .bible-current { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.bible-unified .bible-current .operator-actions { margin-top:0; }
+.bible-unified .bible-recent li { max-width:100%; }
+@media(max-width:600px) { .bible-unified .bible-readable-text { font-size:16px; } }
