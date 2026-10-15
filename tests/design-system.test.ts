@@ -26,5 +26,5 @@ test('installed app chrome uses the same canvas and keeps its existing identity'
  assert.equal(manifest.id,'./');
  assert.equal(manifest.start_url,'./');
  assert.ok(readFileSync('index.html','utf8').includes('name="theme-color" content="#030305"'));
- assert.ok(readFileSync('src/hooks/usePWAIcons.ts','utf8').includes('setAttribute("content", "#030305")'));
+ assert.ok(readFileSync('public/pwa-bootstrap.js','utf8').includes('setAttribute("content", "#030305")'));
 });

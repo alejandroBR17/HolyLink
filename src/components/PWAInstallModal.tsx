@@ -17,17 +17,19 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
     isInIframe,
     hasUpdateAvailable,
     isUpdating,
+    isInstalling,
+    installMessage,
     triggerInstall,
     forceAppUpdate
   } = usePWAInstall();
 
-  const { iconType, setIconType, iconTheme, setIconTheme, getIconUrl } = usePWAIcons();
+  const { iconType, setIconType, iconTheme, setIconTheme, getIconUrl, downloadUrl, requiresReload, applyIcon } = usePWAIcons();
   const [deviceType, setDeviceType] = useState<'android' | 'ios' | 'desktop'>('desktop');
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(ua)) {
+    if (/iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
       setDeviceType('ios');
     } else if (/android/.test(ua)) {
       setDeviceType('android');
@@ -44,10 +46,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
   };
 
   const handleInstallClick = async () => {
-    const success = await triggerInstall();
-    if (success) {
-      onClose();
-    }
+    await triggerInstall();
   };
 
   const iconOptions: { id: PWAIconType; label: string }[] = [
@@ -59,7 +58,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
   const themeOptions: { id: PWAIconTheme; label: string; color: string }[] = [
     { id: 'dark', label: 'Escuro', color: '#030305' },
     { id: 'light', label: 'Claro', color: '#ffffff' },
-    { id: 'transparent', label: 'Invisível', color: 'transparent' },
+    { id: 'transparent', label: 'Sem fundo', color: 'transparent' },
   ];
 
   return (
@@ -69,7 +68,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          ref={dialogRef} role="dialog" aria-modal="true" aria-label="Aplicativo HolyLink" tabIndex={-1} className="holy-dialog relative w-full max-w-sm bg-hl-panel border border-hl-line rounded-3xl p-6 shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] text-hl-copy overflow-hidden my-auto"
+          ref={dialogRef} role="dialog" aria-modal="true" aria-label="Aplicativo HolyLink" tabIndex={-1} className="holy-dialog relative w-full max-w-sm bg-hl-panel border border-hl-line rounded-3xl p-6 shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] text-hl-copy max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain my-auto"
         >
           {/* Header Accent Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-gradient-to-b from-hl-gold/15 to-transparent blur-2xl pointer-events-none" />
@@ -77,7 +76,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-xl bg-hl-raised border border-hl-line text-hl-muted hover:text-white hover:border-hl-line transition-all z-10 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
+            className="absolute top-4 right-4 min-h-11 min-w-11 p-2 rounded-xl bg-hl-raised border border-hl-line text-hl-muted hover:text-white hover:border-hl-line transition-all z-10 cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
             title="Fechar"
           >
             <X className="w-5 h-5" />
@@ -86,7 +85,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
           {/* Settings Toggle */}
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`absolute top-4 left-4 p-2 rounded-xl transition-all z-10 cursor-pointer border shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px] ${
+            className={`absolute top-4 left-4 min-h-11 min-w-11 p-2 rounded-xl transition-all z-10 cursor-pointer border shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px] ${
               showSettings
                 ? 'bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)] font-black'
                 : 'bg-hl-raised border-hl-line text-hl-muted hover:text-white hover:border-hl-line'
@@ -117,7 +116,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
               <div>
                 <h3 className="text-xl font-extrabold text-white tracking-wide font-sans">Aplicativo HolyLink</h3>
                 <p className="text-xs text-hl-muted mt-1 leading-relaxed">
-                  Instale no celular ou computador para acesso instantâneo, modo tela cheia e operação offline.
+                  Instale no celular ou computador para acesso instantâneo, modo tela cheia e acesso aos recursos já carregados. Consultas novas e conexão entre aparelhos podem precisar de internet.
                 </p>
               </div>
             </div>
@@ -135,7 +134,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                     {isInstalled && (
                       <div className="p-3 rounded-xl bg-hl-gold-well/40 border border-hl-line-strong/60 text-hl-gold-bright text-xs flex items-start gap-2 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
                         <AlertTriangle className="w-4 h-4 text-hl-gold-bright shrink-0 mt-0.5" />
-                        <p>Como o app já está instalado, qualquer mudança exigirá que você <strong>desinstale o aplicativo</strong> e instale novamente para atualizar o ícone na tela inicial.</p>
+                        <p>O sistema controla a atualização do ícone já instalado. A escolha vale para a próxima instalação; a mudança pode não aparecer imediatamente no app existente.</p>
                       </div>
                     )}
 
@@ -145,6 +144,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                         {iconOptions.map((opt) => (
                           <button
                             key={opt.id}
+                            aria-pressed={iconType === opt.id}
                             onClick={() => setIconType(opt.id)}
                             className={`py-2 text-[10px] font-extrabold rounded-xl border transition-all cursor-pointer active:translate-y-[1px] ${
                               iconType === opt.id
@@ -164,6 +164,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                         {themeOptions.map((opt) => (
                           <button
                             key={opt.id}
+                            aria-pressed={iconTheme === opt.id}
                             onClick={() => setIconTheme(opt.id)}
                             className={`py-2 px-1 text-[10px] font-extrabold rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] ${
                               iconTheme === opt.id
@@ -189,6 +190,8 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
               )}
             </AnimatePresence>
 
+            <a href={downloadUrl} download={`HolyLink-${iconType}-${iconTheme}.png`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-hl-line bg-hl-raised px-3 py-3 text-sm text-hl-gold"><Download className="h-4 w-4" />Baixar imagem PNG</a>
+            {requiresReload && <div className="space-y-3 rounded-xl border border-hl-line p-3 text-xs text-hl-soft"><p>Para usar este ícone na instalação, aplique a escolha antes de instalar. O app será recarregado; faça isso fora da projeção ao vivo. O sistema pode acrescentar um fundo ao ícone transparente.</p><button onClick={applyIcon} className="min-h-11 w-full rounded-xl bg-hl-gold px-3 text-black font-bold">Aplicar ícone e recarregar</button></div>}
             {/* FORCE UPDATE BANNER */}
             {hasUpdateAvailable && (
               <div className="p-4 rounded-2xl bg-hl-gold-well/40 border border-hl-line-strong/60 text-hl-gold-bright space-y-3 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
@@ -210,6 +213,8 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
               </div>
             )}
 
+            <div className="flex gap-2" role="group" aria-label="Instruções por dispositivo">{([['android','Android'],['ios','iPhone / iPad'],['desktop','PC / Mac']] as const).map(([id,label]) => <button key={id} onClick={() => setDeviceType(id)} aria-pressed={deviceType === id} className={`min-h-11 flex-1 rounded-xl border px-1 text-xs ${deviceType === id ? 'border-hl-gold text-hl-gold bg-hl-gold/10' : 'border-hl-line text-hl-muted'}`}>{label}</button>)}</div>
+            {installMessage && <p role="status" className="rounded-xl border border-hl-line bg-hl-raised p-3 text-sm text-hl-soft">{installMessage}</p>}
             {/* Main Status Actions */}
             {isInstalled ? (
               <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-800/60 flex items-center gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
@@ -217,17 +222,18 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 <div>
                   <p className="font-extrabold text-sm text-emerald-300 font-mono uppercase">App Instalado</p>
                   <p className="text-xs text-emerald-400/80">
-                    Você já está executando no aplicativo nativo.
+                    Instalação confirmada pelo navegador ou execução em janela de aplicativo.
                   </p>
                 </div>
               </div>
-            ) : isInstallable ? (
+            ) : isInstallable && !requiresReload ? (
               <button
                 onClick={handleInstallClick}
+                disabled={isInstalling}
                 className="w-full py-3.5 px-5 rounded-2xl bg-hl-gold hover:bg-hl-gold-bright text-black font-black text-sm flex items-center justify-center gap-2.5 shadow-[0_0_20px_rgba(255,211,79,0.4)] transition-all cursor-pointer active:translate-y-[1px]"
               >
                 <Download className="w-5 h-5 stroke-[2.5]" />
-                <span>Instalar Aplicativo Nativo</span>
+                <span>Instalar HolyLink</span>
               </button>
             ) : isInIframe ? (
               <div className="p-4 rounded-2xl bg-hl-gold-well/40 border border-hl-line-strong/60 text-hl-gold-bright space-y-3 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">

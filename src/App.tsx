@@ -209,6 +209,9 @@ export default function App() {
 
   const [isSmartBooting, setIsSmartBooting] = useState<boolean>(true);
   const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
+  useEffect(() => {
+    try { if (sessionStorage.getItem('holylink_reopen_install')) { sessionStorage.removeItem('holylink_reopen_install'); setShowPwaModal(true); } } catch { /* optional */ }
+  }, []);
   const { isInstalled, hasUpdateAvailable, forceAppUpdate, isUpdating } = usePWAInstall();
 
   const [isScrolledDown, setIsScrolledDown] = useState<boolean>(false);
