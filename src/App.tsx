@@ -119,6 +119,7 @@ export default function App() {
 
   // Custom media management hook
   const {
+    remoteMediaList,
     customMediaList,
     isMediaLoaded,
     isUploading,
@@ -737,6 +738,7 @@ export default function App() {
                 allAvailableSlides={allAvailableSlides}
                 disabledSlides={disabledSlides}
                 customMediaList={customMediaList}
+                remoteMediaList={remoteMediaList}
                 getSlideDuration={getSlideDuration}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 handleMoveSlide={handleMoveSlide}

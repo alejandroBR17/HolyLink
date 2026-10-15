@@ -500,6 +500,8 @@ export function useProjectionState() {
       }
     };
 
+    const finishSync=()=>setSyncStatus(null);
+    window.addEventListener('projection_sync_finished',finishSync);
     window.addEventListener('projection_sync_update', handlePeerUpdate as EventListener);
     window.addEventListener('projection_full_sync_received', handleFullSync);
     window.addEventListener('projection_sync_progress', handleSyncProgress as EventListener);
@@ -508,6 +510,7 @@ export function useProjectionState() {
     return () => {
       if (bc) bc.close();
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('projection_sync_finished',finishSync);
       window.removeEventListener('projection_sync_update', handlePeerUpdate as EventListener);
       window.removeEventListener('projection_full_sync_received', handleFullSync);
       window.removeEventListener('projection_sync_progress', handleSyncProgress as EventListener);

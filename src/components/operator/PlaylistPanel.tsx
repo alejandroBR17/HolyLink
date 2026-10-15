@@ -1,3 +1,5 @@
+import {RemoteMediaLibrary} from './RemoteMediaLibrary';
+import type {MediaManifestItem} from '../../utils/media-manifest';
 import {useDialogFocus} from '../../hooks/useDialogFocus';
 import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
@@ -29,6 +31,7 @@ interface PlaylistPanelProps {
   allAvailableSlides?: string[];
   disabledSlides?: string[];
   customMediaList: CustomMedia[];
+  remoteMediaList?:MediaManifestItem[];
   getSlideDuration: (id: string, list: CustomMedia[]) => number;
   updateStateAndBroadcast: (key: string, value: any) => void;
   handleMoveSlide: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => void;
@@ -64,6 +67,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   allAvailableSlides = [],
   disabledSlides = [],
   customMediaList,
+  remoteMediaList = [],
   getSlideDuration,
   updateStateAndBroadcast,
   handleMoveSlide,
@@ -365,7 +369,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         {!draftOrder && filteredSlides.length > queueLimit && <button className="queue-more" onClick={() => setQueueLimit(queueLimit + 8)}>Mostrar mais slides ({queueLimit} de {filteredSlides.length})</button>}
       </section>
 
-<details ref={libraryRef} open={customMediaList.length > 0} className="holy-disclosure media-library console-settings-group"><summary><ConsoleGroupTitle icon={Film} title="Biblioteca de mídias" description="Suas imagens e vídeos, com enquadramento, som e duração." badge={`${customMediaList.length} arquivos`}/></summary>
+<details ref={libraryRef} open={customMediaList.length > 0 || remoteMediaList.length>0} className="holy-disclosure media-library console-settings-group"><summary><ConsoleGroupTitle icon={Film} title="Biblioteca de mídias" description="Suas imagens e vídeos, com enquadramento, som e duração." badge={`${customMediaList.length} arquivos`}/></summary>
       {/* GERENCIADOR DE MÍDIAS CUSTOMIZADAS */}
       <section aria-label="Gerenciador de Mídias Customizadas" className="relative bg-hl-panel border border-hl-line rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
@@ -418,6 +422,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           </div>
         </div>
 
+        <RemoteMediaLibrary items={remoteMediaList.filter(item=>!customMediaList.some(local=>local.id===item.id || item.sourceIds?.includes(local.id)))} showConfirm={showConfirm} notify={notify}/>
         {/* CONTROLES DE DURAÇÃO PADRÃO & DROPZONE */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-3">
 

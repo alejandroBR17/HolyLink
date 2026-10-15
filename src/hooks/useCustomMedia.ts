@@ -1,3 +1,6 @@
+import {readTransferMetadata} from '../utils/chunk-assembler';
+import {readMediaCatalog, describeMedia} from '../utils/media-manifest';
+import type {MediaManifestItem} from '../utils/media-manifest';
 import {sendPeerChunk} from '../utils/peer-send';
 import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { saveMediaItem, getAllMediaItems, deleteMediaItem } from '../utils';
@@ -22,6 +25,8 @@ export function useCustomMedia(
   updateStateAndBroadcast: (key: string, value: any) => void
 ) {
   const [customMediaList, setCustomMediaList] = useState<CustomMedia[]>([]);
+  const [remoteMediaList,setRemoteMediaList]=useState<MediaManifestItem[]>([]);
+  useEffect(()=>{const receive=(event:Event)=>{try {setRemoteMediaList(readMediaCatalog((event as CustomEvent).detail));} catch {}};window.addEventListener('holylink_remote_catalog',receive);return()=>window.removeEventListener('holylink_remote_catalog',receive);},[]);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -168,6 +173,13 @@ export function useCustomMedia(
 
       if (realBlob && realBlob.size > 0) {
         const mimeType = realBlob.type || 'application/octet-stream';
+        if(localStorage.getItem('projection_deviceRole')==='phone') {
+          readTransferMetadata({...item,mimeType,size:realBlob.size});
+          const manifest=await describeMedia([{...item,blob:realBlob}],()=>targets.some(conn=>conn.open));
+          await send({type:'SYNC_MANIFEST',version:1,localStorage:{},mediaManifest:manifest,scope:'media-only'});
+          return;
+        }
+
         await sendMediaInChunks(
           send,
           {
@@ -361,6 +373,7 @@ export function useCustomMedia(
   }, [broadcastMediaSave, updateStateAndBroadcast]);
 
   return {
+    remoteMediaList,
     customMediaList,
     isMediaLoaded,
     isUploading,

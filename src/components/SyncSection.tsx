@@ -1,3 +1,5 @@
+import {MEETINGS, CAMPAIGNS} from '../data';
+import {describeMedia, readMediaManifest, planMediaMerge, mapMediaReferences, readMediaCatalog} from '../utils/media-manifest';
 import {sendPeerChunk} from '../utils/peer-send';
 import {isSharedStateUpdate, readSharedStorage} from '../utils/shared-state';
 import {PairingApproval} from './PairingApproval';
@@ -54,6 +56,46 @@ async function blobToBase64(blobField: any): Promise<{ base64: string; mimeType:
 }
 
 const approvedConnections = new WeakSet<object>();
+
+const MEDIA_ALIASES_KEY = 'holylink_media_aliases_v1';
+function readMediaAliases(): Record<string,string> {
+  try {
+    const value = JSON.parse(localStorage.getItem(MEDIA_ALIASES_KEY) || '{}');
+    if (!value || Array.isArray(value) || typeof value !== 'object') return Object.create(null);
+    return Object.fromEntries(Object.entries(value).filter(([key,val])=>key.length<=200 && typeof val==='string' && val.length<=200).slice(-1000)) as Record<string,string>;
+  } catch {return Object.create(null);}
+}
+function resolveMediaId(id:string) {const aliases=readMediaAliases();return Object.hasOwn(aliases,id)?aliases[id]:id;}
+function clearRemoteCatalog() {window.dispatchEvent(new CustomEvent('holylink_remote_catalog',{detail:[]}));}
+async function sendMediaCatalog(conn:any) {
+  if (!conn.open || !approvedConnections.has(conn)) return;
+  const aliases=readMediaAliases();
+  const items = (await getAllMediaItems()).filter(item=>item.blob instanceof Blob && item.blob.size).slice(0,500).map(item=>({
+    id:item.id,type:item.type,name:item.name,duration:item.duration,enabledInLoop:item.enabledInLoop,
+    muted:item.muted,order:item.order,fit:item.fit,size:item.blob!.size,sourceIds:Object.keys(aliases).filter(id=>aliases[id]===item.id)
+  }));
+  if (conn.open && approvedConnections.has(conn)) conn.send({type:'MEDIA_CATALOG',mediaManifest:items,version:1});
+}
+export function requestRemoteMediaDelete(id:string):boolean {
+  const conn=getApprovedPeerConnections()[0];
+  if (!conn || typeof id!=='string' || !id.length || id.length>200) return false;
+  try {conn.send({type:'MEDIA_DELETE',id,version:1});return true;} catch {return false;}
+}
+export function setRemoteMediaEnabled(item:any,enabled:boolean):boolean {
+  const conn=getApprovedPeerConnections()[0];if(!conn)return false;
+  try {conn.send({type:'MEDIA_SAVE',version:1,mediaItem:{id:item.id,type:item.type,name:item.name,duration:item.duration,enabledInLoop:enabled,muted:item.muted,order:item.order,fit:item.fit}});return true;}catch{return false;}
+}
+export function projectRemoteMedia(id:string):boolean {
+  const conn=getApprovedPeerConnections()[0];
+  if (!conn || typeof id!=='string' || !id.length || id.length>200) return false;
+  try {
+  conn.send({type:'UPDATE_STATE',key:'activeVerseIndex',value:null,version:1});
+  conn.send({type:'UPDATE_STATE',key:'customVerseText',value:null,version:1});
+  conn.send({type:'UPDATE_STATE',key:'customVerseRef',value:null,version:1});
+  conn.send({type:'UPDATE_STATE',key:'manualSlideOverride',value:id,version:1});return true;
+  } catch {return false;}
+}
+
 
 export function registerPeerConn(conn: any) {
   if (!approvedConnections.has(conn)) return;
@@ -157,6 +199,7 @@ export const SyncSection = React.memo(function SyncSection({
     approvedConnections.add(pending.conn);
     registerPeerConn(pending.conn);
     pending.conn.send({type: 'PAIRING_APPROVED', challenge: pending.code});
+    void sendMediaCatalog(pending.conn).catch(()=>{});
     setDirectSyncStatus('success');
     setSyncMessage('Celular autorizado. Agenda e mídias preservadas.');
   };
@@ -418,6 +461,8 @@ export const SyncSection = React.memo(function SyncSection({
 
     peer.on('connection', (conn) => {
       connRef.current = conn;
+      const pendingMediaWrites=new Set<Promise<any>>();
+      let mediaTransferFailed=false;
       let session: PairingSession | null = null;
       // Merely opening a WebRTC transport grants no read/write/control access.
       const requestTimeout = setTimeout(() => {
@@ -442,11 +487,19 @@ export const SyncSection = React.memo(function SyncSection({
           return;
         }
         try {
+          if (data?.type==='REQUEST_MEDIA_CATALOG') {await sendMediaCatalog(conn);return;}
+          if (data?.type==='UPDATE_STATE' && isSharedStateUpdate(data.key,data.value)) data={...data,value:mapMediaReferences(data.key,data.value,readMediaAliases())};
+          if (data?.type==='MEDIA_SAVE' && typeof data.mediaItem?.id==='string') data={...data,mediaItem:{...data.mediaItem,id:resolveMediaId(data.mediaItem.id)}};
+          if (data?.type==='MEDIA_CHUNK_START' && typeof data.metadata?.id==='string') data={...data,metadata:{...data.metadata,id:resolveMediaId(data.metadata.id)}};
           if (data && (data.type === 'MEDIA_CHUNK_START' || data.type === 'MEDIA_CHUNK_DATA')) {
-            const res = await handleIncomingChunk(data, conn);
+            const write=handleIncomingChunk(data,conn);pendingMediaWrites.add(write);
+            let res;
+            try {res=await write;} catch(error){mediaTransferFailed=true;throw error;}
+            finally{pendingMediaWrites.delete(write);}
             if (res.complete) {
               window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
               setSyncMessage('Mídia recebida e salva com sucesso!');
+              await sendMediaCatalog(conn);
             }
             broadcastToPeers(data, conn);
             return;
@@ -469,8 +522,9 @@ export const SyncSection = React.memo(function SyncSection({
 
           if (data && data.type === 'MEDIA_SAVE') {
             const item = data.mediaItem;
+            if(!item?.base64 && !(await getAllMediaItems()).some(local=>local.id===item?.id && local.blob)){await sendMediaCatalog(conn);return;}
             setSyncMessage(`Salvando mídia: ${item.name}`);
-            window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Recebendo mídia: ${item.name}` } }));
+            if(item.base64)window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Recebendo mídia: ${item.name}` } }));
 
             const savePayload: any = {
               id: item.id,
@@ -502,11 +556,20 @@ export const SyncSection = React.memo(function SyncSection({
 
             // Relay to all other connected peers
             broadcastToPeers(data, conn);
+            await sendMediaCatalog(conn);
+            if(item.base64)window.dispatchEvent(new Event('projection_sync_finished'));
             return;
           }
 
           if (data && data.type === 'MEDIA_DELETE') {
-            await deleteMediaItem(data.id);
+            if (typeof data.id!=='string' || !data.id.length || data.id.length>200) return;
+            const canonical=resolveMediaId(data.id);
+            const aliases=readMediaAliases();
+            const related=[...new Set([canonical,data.id,...Object.keys(aliases).filter(id=>aliases[id]===canonical)])];
+            data={...data,id:canonical};
+            await deleteMediaItem(canonical);
+            for (const id of related) {delete aliases[id];broadcastToPeers({type:'MEDIA_DELETE',id,version:1});}
+            localStorage.setItem(MEDIA_ALIASES_KEY,JSON.stringify(aliases));
 
             const savedOrderStr = localStorage.getItem('projection_slidesOrder');
             if (savedOrderStr) {
@@ -530,83 +593,47 @@ export const SyncSection = React.memo(function SyncSection({
 
             // Relay to all other connected peers
             broadcastToPeers(data, conn);
+            await sendMediaCatalog(conn);
             return;
           }
 
           if (data && data.type === 'SYNC_MANIFEST') {
-            setSyncMessage('Comparando alterações com dados locais...');
-
-            // 1. Restore/Update localStorage keys (preserva chaves do próprio dispositivo)
-            if (data.localStorage) {
-              const currentRole = localStorage.getItem('projection_deviceRole') || 'pc';
-              const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
-
-              Object.entries(readSharedStorage(data.localStorage)).forEach(([key, val]) => {
-                if (
-                  key === 'projection_deviceRole' ||
-                  key === 'projection_myReceiverCode' ||
-                  key === 'projection_lastPairedPeerCode'
-                ) {
-                  return; // Preserva a identidade do próprio PC
-                }
-                localStorage.setItem(key, val as string);
-              });
-
-              localStorage.setItem('projection_deviceRole', currentRole);
-              if (currentReceiverCode) {
-                localStorage.setItem('projection_myReceiverCode', currentReceiverCode);
+            const manifestItems=readMediaManifest(data.mediaManifest);
+            mediaTransferFailed=false;
+            const storage=readSharedStorage(data.localStorage || {});
+            setSyncMessage('Conferindo conteúdo das mídias. Arquivos exclusivos do PC serão preservados...');
+            const localMedia=await getAllMediaItems();
+            const localManifest=await describeMedia(localMedia,()=>conn.open && !!session?.approved);
+            if (!conn.open || !session?.approved) return;
+            const plan=planMediaMerge(localManifest,manifestItems);
+            localStorage.setItem(MEDIA_ALIASES_KEY,JSON.stringify({...readMediaAliases(),...plan.aliases}));
+            for (const {remote,localId} of plan.reused) {
+              if (!conn.open || !session?.approved) return;
+              const {size:_size,contentHash:_hash,...metadata}=remote;
+              await saveMediaItem({...metadata,id:localId});
+            }
+            if(!conn.open || !session?.approved)return;
+            for (const [key,value] of Object.entries(storage)) {
+              const name=key.slice('projection_'.length);
+              let mapped=mapMediaReferences(name,value,plan.aliases);
+              if (name==='slidesOrder' || name==='disabledSlides') {
+                const incoming=JSON.parse(mapped);
+                const local=JSON.parse(localStorage.getItem(key)||'[]');
+                const sharedIds=new Set(Object.values(plan.aliases));
+                const preserved=Array.isArray(local)?local.filter(id=>!sharedIds.has(id)):[];
+                mapped=JSON.stringify([...new Set([...incoming,...preserved])]);
               }
+              localStorage.setItem(key,mapped);
             }
-
-            // 2. Compare local media items vs manifest
-            const localMedia = await getAllMediaItems();
-            const manifestItems = data.mediaManifest || [];
-            const manifestIds = new Set(manifestItems.map((m: any) => m.id));
-
-            // Remove local items that were deleted on the remote side
-            for (const localItem of localMedia) {
-              if (!manifestIds.has(localItem.id)) {
-                await deleteMediaItem(localItem.id);
-              }
+            window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+            await sendMediaCatalog(conn);
+            if (!plan.requested.length) {
+              setDirectSyncStatus('success');setSyncMessage('PC atualizado sem reenviar arquivos já existentes.');
+              conn.send({type:'SYNC_COMPLETE',version:1});
+            } else {
+              setSyncMessage(`Recebendo ${plan.requested.length} arquivo(s) novo(s) ou alterado(s)...`);
+              conn.send({type:'REQUEST_DELTA_MEDIA',ids:plan.requested,version:1});
             }
-
-            // Identify missing or changed items
-            const localMap = new Map(localMedia.map(item => [item.id, item]));
-            const missingIds: string[] = [];
-
-            for (const item of manifestItems) {
-              const local = localMap.get(item.id);
-              const localSize = local?.blob ? local.blob.size : 0;
-              if (!local || localSize !== item.size) {
-                missingIds.push(item.id);
-              } else {
-                // Local item exists with exact same blob size -> update metadata only
-                await saveMediaItem({
-                  id: item.id,
-                  type: item.type,
-                  name: item.name,
-                  duration: item.duration,
-                  enabledInLoop: item.enabledInLoop,
-                  muted: item.muted,
-                  order: item.order,
-                  fit: item.fit,
-                  blob: local.blob
-                });
-              }
-            }
-
-            if (missingIds.length === 0) {
-              // Zero missing items -> incremental sync complete!
-              window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
-              setDirectSyncStatus('success');
-              setSyncMessage('Tudo sincronizado instantaneamente! (Sem re-download de mídias)');
-              try { conn.send({ type: 'SYNC_COMPLETE', message: 'Tudo atualizado sem re-download' }); } catch (e) { console.warn("Failed to send SYNC_COMPLETE:", e); }
-              return;
-            }
-
-            // Request ONLY missing media items
-            setSyncMessage(`Sincronizando ${missingIds.length} alteração(ões) de mídia...`);
-            try { conn.send({ type: 'REQUEST_DELTA_MEDIA', ids: missingIds }); } catch (e) { console.warn("Failed to send REQUEST_DELTA_MEDIA:", e); }
             return;
           }
 
@@ -695,6 +722,10 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (data && data.type === 'SYNC_COMPLETE') {
+            await Promise.allSettled([...pendingMediaWrites]);
+            if(!conn.open || !session?.approved)return;
+            if(mediaTransferFailed){conn.send({type:'SYNC_FAILED',version:1});window.dispatchEvent(new Event('projection_sync_finished'));setSyncMessage('Alguma mídia não foi salva. Confira a conexão e sincronize novamente.');return;}
+            if(!data.ack)conn.send({type:'SYNC_COMPLETE',version:1,ack:true});
             window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
             setDirectSyncStatus('success');
             setSyncMessage('Dados sincronizados e prontos para uso.');
@@ -712,17 +743,7 @@ export const SyncSection = React.memo(function SyncSection({
               }
             }
             const mediaItems = await getAllMediaItems();
-            const mediaManifest = mediaItems.map(item => ({
-              id: item.id,
-              type: item.type,
-              name: item.name,
-              duration: item.duration,
-              enabledInLoop: item.enabledInLoop,
-              muted: item.muted,
-              order: item.order,
-              fit: item.fit,
-              size: item.blob ? item.blob.size : 0
-            }));
+            const mediaManifest = await describeMedia(mediaItems,()=>conn.open && approvedConnections.has(conn));
 
             conn.send({
               type: 'SYNC_MANIFEST',
@@ -821,6 +842,7 @@ export const SyncSection = React.memo(function SyncSection({
 
       conn.on('close', () => {
         clearTimeout(requestTimeout);
+        window.dispatchEvent(new Event('projection_sync_finished'));
         cancelIncomingTransfers(conn);
         session?.close();
         if (pendingPairingRef.current?.conn === conn) clearPendingPairing();
@@ -835,6 +857,7 @@ export const SyncSection = React.memo(function SyncSection({
 
       conn.on('error', (err) => {
         clearTimeout(requestTimeout);
+        window.dispatchEvent(new Event('projection_sync_finished'));
         cancelIncomingTransfers(conn);
         session?.close();
         if (pendingPairingRef.current?.conn === conn) clearPendingPairing();
@@ -914,6 +937,8 @@ export const SyncSection = React.memo(function SyncSection({
     peer.on('open', () => {
       const conn = peer.connect(`holyrics_${targetCode.toUpperCase().trim()}`);
       connRef.current = conn;
+      const pendingMediaWrites=new Set<Promise<any>>();
+      let mediaTransferFailed=false;
 
       const challenge = createPairingCode();
       const session = new PairingSession(challenge);
@@ -956,8 +981,15 @@ export const SyncSection = React.memo(function SyncSection({
           return;
         }
         try {
+          if (incomingData?.type==='MEDIA_CATALOG') {
+            const catalog=readMediaCatalog(incomingData.mediaManifest);
+            window.dispatchEvent(new CustomEvent('holylink_remote_catalog',{detail:catalog}));return;
+          }
           if (incomingData && (incomingData.type === 'MEDIA_CHUNK_START' || incomingData.type === 'MEDIA_CHUNK_DATA')) {
-            const res = await handleIncomingChunk(incomingData, conn);
+            const write=handleIncomingChunk(incomingData,conn);pendingMediaWrites.add(write);
+            let res;
+            try {res=await write;} catch(error){mediaTransferFailed=true;throw error;}
+            finally{pendingMediaWrites.delete(write);}
             if (res.complete) {
               window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
               setSyncMessage('Mídia recebida e salva com sucesso!');
@@ -1007,6 +1039,8 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (incomingData && incomingData.type === 'SYNC_MANIFEST') {
+            const receivedManifest=readMediaManifest(incomingData.mediaManifest);
+            mediaTransferFailed=false;
             setSyncMessage('Comparando alterações com dados do PC...');
             if (incomingData.localStorage) {
               const currentRole = localStorage.getItem('projection_deviceRole') || 'phone';
@@ -1030,7 +1064,9 @@ export const SyncSection = React.memo(function SyncSection({
             }
 
             const localMedia = await getAllMediaItems();
-            const manifestItems = incomingData.mediaManifest || [];
+            const manifestItems = receivedManifest;
+            const localManifest = await describeMedia(localMedia,()=>conn.open && session.approved);
+            const localHashes = new Map(localManifest.map(item=>[item.id,item.contentHash]));
             const manifestIds = new Set(manifestItems.map((m: any) => m.id));
 
             for (const localItem of localMedia) {
@@ -1045,7 +1081,7 @@ export const SyncSection = React.memo(function SyncSection({
             for (const item of manifestItems) {
               const local = localMap.get(item.id);
               const localSize = local?.blob ? local.blob.size : 0;
-              if (!local || localSize !== item.size) {
+              if (!local || localSize !== item.size || !item.contentHash || localHashes.get(item.id)!==item.contentHash) {
                 missingIds.push(item.id);
               } else {
                 await saveMediaItem({
@@ -1076,7 +1112,12 @@ export const SyncSection = React.memo(function SyncSection({
             return;
           }
 
+          if (incomingData?.type==='SYNC_FAILED') {setIsPulling(false);setIsPushing(false);window.dispatchEvent(new Event('projection_sync_finished'));setSyncMessage('O PC não conseguiu salvar todas as mídias. Seus arquivos locais foram preservados.');return;}
           if (incomingData && incomingData.type === 'SYNC_COMPLETE') {
+            setIsPushing(false);
+            await Promise.allSettled([...pendingMediaWrites]);
+            if(!conn.open || !session.approved)return;
+            if(mediaTransferFailed){window.dispatchEvent(new Event('projection_sync_finished'));setIsPulling(false);setSyncMessage('Alguma mídia não foi salva. Tente sincronizar novamente.');return;}
             window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
             setDirectSyncStatus('success');
             setSyncMessage('Sincronização de mídias concluída!');
@@ -1090,11 +1131,13 @@ export const SyncSection = React.memo(function SyncSection({
             bc.postMessage({ type: 'UPDATE_STATE', key: incomingData.key, value: incomingData.value });
             bc.close();
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: incomingData.key, value: incomingData.value } }));
+            if (incomingData.key==='mediaUpdateTrigger') conn.send({type:'REQUEST_MEDIA_CATALOG',version:1});
             return;
           }
 
           if (incomingData && incomingData.type === 'MEDIA_SAVE') {
             const item = incomingData.mediaItem;
+            if (!(await getAllMediaItems()).some(local=>local.id===item?.id && local.blob)) {conn.send({type:'REQUEST_MEDIA_CATALOG',version:1});return;}
 
             const savePayload: any = {
               id: item.id,
@@ -1232,6 +1275,8 @@ export const SyncSection = React.memo(function SyncSection({
         session.close();
         setIsPulling(false);
         setIsPushing(false);
+        clearRemoteCatalog();
+        window.dispatchEvent(new Event('projection_sync_finished'));
         console.log("Conexão com o PC fechada.");
         unregisterPeerConn(conn);
         if (pairingRejected) return;
@@ -1247,6 +1292,9 @@ export const SyncSection = React.memo(function SyncSection({
         clearTimeout(approvalTimeout);
         cancelIncomingTransfers(conn);
         session.close();
+        clearRemoteCatalog();
+        window.dispatchEvent(new Event('projection_sync_finished'));
+        setIsPushing(false);setIsPulling(false);
         console.error('Erro na conexão com o destino:', err);
         unregisterPeerConn(conn);
         if (pairingRejected) return;
@@ -1309,17 +1357,10 @@ export const SyncSection = React.memo(function SyncSection({
       }
 
       const mediaItems = await getAllMediaItems();
-      const mediaManifest = mediaItems.map(item => ({
-        id: item.id,
-        type: item.type,
-        name: item.name,
-        duration: item.duration,
-        enabledInLoop: item.enabledInLoop,
-        muted: item.muted,
-        order: item.order,
-        fit: item.fit,
-        size: item.blob ? item.blob.size : 0
-      }));
+      const mediaManifest = await describeMedia(mediaItems,()=>conn.open && approvedConnections.has(conn));
+      storageData.projection_customMeetings ??= JSON.stringify(MEETINGS);
+      storageData.projection_customCampaigns ??= JSON.stringify(CAMPAIGNS);
+      storageData.projection_disabledSlides ??= '[]';
 
       conn.send({
         type: 'SYNC_MANIFEST',
@@ -1330,10 +1371,10 @@ export const SyncSection = React.memo(function SyncSection({
 
       setSyncMessage("Manifesto transmitido ao PC. Atualizando deltas...");
     } catch (err) {
+      setIsPushing(false);
+      if(!conn.open || !approvedConnections.has(conn))return;
       console.error(err);
       setSyncMessage("Erro ao transmitir os dados.");
-    } finally {
-      setIsPushing(false);
     }
   };
 
@@ -1827,10 +1868,10 @@ export const SyncSection = React.memo(function SyncSection({
             {localStorage.getItem('projection_deviceRole') === 'phone' && <details className="holy-disclosure w-full text-left">
               <summary>Copiar agenda e mídias entre os aparelhos</summary>
               <p className="text-xs text-hl-muted my-3">A transferência entre aparelhos aceita até 128 MB por arquivo. Arquivos maiores podem continuar sendo usados localmente.</p>
-              <p className="text-xs text-hl-muted my-3">O controle funciona sem copiar os arquivos. Ao sincronizar, o aparelho de destino passa a usar a agenda, configurações e mídias da origem. Exporte um backup antes.</p>
+              <p className="text-xs text-hl-muted my-3">Use Enviar para o PC para levar a agenda e as configurações do celular. As mídias do PC são preservadas; arquivos iguais são reconhecidos pelo conteúdo. Receber do PC continua sendo uma opção separada.</p>
               <div className="flex flex-wrap gap-2">
                 <button type="button" disabled={isPushing || isPulling} onClick={() => showConfirm('Receber dados do PC?', 'A agenda, configurações e lista de mídias deste celular serão substituídas pelas do PC. Arquivos ausentes no PC serão removidos deste celular. Exporte um backup antes.', forcePullFromPC, 'danger')} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-soft disabled:opacity-50">{isPulling ? 'Recebendo...' : 'Receber do PC'}</button>
-                <button type="button" disabled={isPushing || isPulling} onClick={() => showConfirm('Enviar dados para o PC?', 'A agenda, configurações e lista de mídias do PC serão substituídas pelas deste celular. Arquivos ausentes no celular serão removidos do PC. Exporte um backup antes.', () => { void forcePushToPC(); }, 'danger')} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-gold disabled:opacity-50">{isPushing ? 'Enviando...' : 'Enviar para o PC'}</button>
+                <button type="button" disabled={isPushing || isPulling} onClick={() => showConfirm('Enviar dados para o PC?', 'A agenda e as configurações do celular serão usadas no PC. As mídias serão mescladas: arquivos exclusivos do PC permanecem e conteúdos iguais não são reenviados.', () => { void forcePushToPC(); }, 'danger')} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-gold disabled:opacity-50">{isPushing ? 'Enviando...' : 'Enviar para o PC'}</button>
               </div>
             </details>}
 

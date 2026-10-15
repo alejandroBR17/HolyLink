@@ -125,3 +125,8 @@ A consulta final de horário retornou `2026-10-15 10:42:03 UTC` (07h42 America/S
 Entregues três frentes: pareamento com aprovação real no PC, validação das configurações/comandos e transferências de mídia com isolamento, limites, controle de fila e cancelamento de gravação. Reduzido consumo de memória/rede, especialmente nas alterações de metadados. Mantidos design, efeitos, bibliotecas e produção.
 
 **Não está 100% concluído.** Próximo bloco prioritário: validar backups e envelopes legados antes de escrever/excluir dados, confirmar conclusão de sincronização e comandos recebidos, finalizar cache persistente/navegação da Bíblia e roteiros salvos. A lista detalhada de pendências acima continua válida. Testes físicos também são necessários antes de recomendar publicação.
+
+
+## Continuidade manual após o responsável acordar
+
+O responsável definiu a direção principal celular → PC, preservando arquivos exclusivos do PC, deduplicando conteúdo e permitindo excluir pelo celular conectado. Nova etapa documentada em `docs/sincronizacao-celular-pc.md`: mescla por assinatura, aliases sem duplicar arquivos do PC, catálogo remoto na mesma biblioteca, projetar/pausar/ativar/excluir pelo celular, comparação antes de novos uploads e confirmação de término após gravar mídia. 34 testes nativos e teste entre duas instâncias isoladas, mais UI responsiva, aprovados. Nenhuma automação foi reativada. Pareamento permanente continua pendente e não deve ser apresentado como pronto.
