@@ -7,8 +7,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#020617",
-  "theme_color": "#020617",
+  "background_color": "#030305",
+  "theme_color": "#030305",
   "icons": [
     {
       "src": "/pwa/local-symbol-dark-192.png",

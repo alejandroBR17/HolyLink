@@ -14,7 +14,7 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
     let height = canvas.height = 1080;
 
     const particles: any[] = [];
-    const colors = ['#dc2626', '#b91c1c', '#f59e0b', '#fbbf24']; // reds and yellows
+    const colors = ['#ffd34f', '#ffe797', '#dba824', '#fff3c6']; // shared black/gold atmosphere
     for (let i = 0; i < 15; i++) {
       particles.push({
         x: Math.random() * width,

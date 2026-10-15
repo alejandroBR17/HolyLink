@@ -94,11 +94,11 @@ export function broadcastToPeers(data: any, excludeConn?: any) {
   }
 }
 
-export const SyncSection = React.memo(function SyncSection({ 
+export const SyncSection = React.memo(function SyncSection({
   showToast,
-  showAlert, 
-  showConfirm 
-}: { 
+  showAlert,
+  showConfirm
+}: {
   showToast?: (message: string, type?: 'error' | 'success' | 'info') => void;
   showAlert: (message: string, type?: 'error' | 'success' | 'info') => void;
   showConfirm: (title: string, message: string, onConfirm: () => void, variant?: 'danger' | 'info') => void;
@@ -356,20 +356,20 @@ export const SyncSection = React.memo(function SyncSection({
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
     }
-    
+
     setDirectSyncStatus('initializing');
     setSyncMessage('Iniciando conexão segura...');
-    
+
     const savedCode = localStorage.getItem('projection_myReceiverCode');
     const code = savedCode || generateRandomCode();
     if (!savedCode) {
       localStorage.setItem('projection_myReceiverCode', code);
     }
     setSyncCode(code);
-    
+
     // Salva o papel do dispositivo como PC para reconexão automática ao recarregar
     localStorage.setItem('projection_deviceRole', 'pc');
-    
+
     const peerId = `holyrics_${code}`;
     const peer = new Peer(peerId);
     peerRef.current = peer;
@@ -404,10 +404,10 @@ export const SyncSection = React.memo(function SyncSection({
             const bc = new BroadcastChannel('holyrics_projection_sync');
             bc.postMessage({ type: 'UPDATE_STATE', key: data.key, value: data.value });
             bc.close();
-            
+
             // Dispatch custom event for App.tsx to catch if needed
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: data.key, value: data.value } }));
-            
+
             // Relay to all other connected peers
             broadcastToPeers({ type: 'UPDATE_STATE', key: data.key, value: data.value, version: 1 }, conn);
             return;
@@ -417,7 +417,7 @@ export const SyncSection = React.memo(function SyncSection({
             const item = data.mediaItem;
             setSyncMessage(`Salvando mídia: ${item.name}`);
             window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Recebendo mídia: ${item.name}` } }));
-            
+
             const savePayload: any = {
               id: item.id,
               type: item.type,
@@ -445,7 +445,7 @@ export const SyncSection = React.memo(function SyncSection({
 
             await saveMediaItem(savePayload);
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
-            
+
             // Relay to all other connected peers
             broadcastToPeers(data, conn);
             return;
@@ -453,7 +453,7 @@ export const SyncSection = React.memo(function SyncSection({
 
           if (data && data.type === 'MEDIA_DELETE') {
             await deleteMediaItem(data.id);
-            
+
             const savedOrderStr = localStorage.getItem('projection_slidesOrder');
             if (savedOrderStr) {
               try {
@@ -473,7 +473,7 @@ export const SyncSection = React.memo(function SyncSection({
             }
 
             window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
-            
+
             // Relay to all other connected peers
             broadcastToPeers(data, conn);
             return;
@@ -481,7 +481,7 @@ export const SyncSection = React.memo(function SyncSection({
 
           if (data && data.type === 'SYNC_MANIFEST') {
             setSyncMessage('Comparando alterações com dados locais...');
-            
+
             // 1. Restore/Update localStorage keys (preserva chaves do próprio dispositivo)
             if (data.localStorage) {
               const currentRole = localStorage.getItem('projection_deviceRole') || 'pc';
@@ -560,7 +560,7 @@ export const SyncSection = React.memo(function SyncSection({
             const requestedIds = new Set(data.ids || []);
             const allMedia = await getAllMediaItems();
             const mediaToTransfer = allMedia.filter(item => requestedIds.has(item.id));
-            
+
             for (let i = 0; i < mediaToTransfer.length; i++) {
               const item = mediaToTransfer[i];
               const realBlob = getRealBlob(item.blob);
@@ -583,8 +583,8 @@ export const SyncSection = React.memo(function SyncSection({
                   },
                   realBlob,
                   (progress) => {
-                    window.dispatchEvent(new CustomEvent('projection_sync_progress', { 
-                      detail: { message: `Enviando alteração (${i + 1}/${mediaToTransfer.length}): ${item.name} (${progress}%)`, progress } 
+                    window.dispatchEvent(new CustomEvent('projection_sync_progress', {
+                      detail: { message: `Enviando alteração (${i + 1}/${mediaToTransfer.length}): ${item.name} (${progress}%)`, progress }
                     }));
                   }
                 );
@@ -604,10 +604,10 @@ export const SyncSection = React.memo(function SyncSection({
             for (let i = 0; i < items.length; i++) {
               const item = items[i];
               const progress = Math.round(((i + 1) / items.length) * 100);
-              window.dispatchEvent(new CustomEvent('projection_sync_progress', { 
-                detail: { message: `Recebendo alteração (${i + 1}/${items.length}): ${item.name}`, progress } 
+              window.dispatchEvent(new CustomEvent('projection_sync_progress', {
+                detail: { message: `Recebendo alteração (${i + 1}/${items.length}): ${item.name}`, progress }
               }));
-              
+
               let blob: Blob | undefined = undefined;
               if (item.base64 && item.base64.trim().length > 0) {
                 try {
@@ -717,7 +717,7 @@ export const SyncSection = React.memo(function SyncSection({
               const item = data.mediaItems[i];
               const progress = Math.round(10 + (i / total) * 85);
               window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Restaurando mídia (${i+1}/${total}): ${item.name}`, progress } }));
-              
+
               let blob: Blob | undefined = undefined;
               if (item.base64 && item.base64.trim().length > 0) {
                 try {
@@ -755,7 +755,7 @@ export const SyncSection = React.memo(function SyncSection({
           window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: 'Sincronização concluída!', progress: 100 } }));
           setDirectSyncStatus('success');
           setSyncMessage('Dados recebidos! Aplicativo sincronizado e controle remoto ativo.');
-          
+
           // Notify App.tsx to reload states from localStorage without refreshing the page
           window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
 
@@ -816,7 +816,7 @@ export const SyncSection = React.memo(function SyncSection({
       if (role === 'pc') {
         setDirectSyncStatus('initializing');
         setSyncMessage('Rede instável. Tentando restabelecer conexão...');
-        
+
         reconnectTimeoutRef.current = setTimeout(() => {
           startReceiver();
         }, 5000);
@@ -832,7 +832,7 @@ export const SyncSection = React.memo(function SyncSection({
   // Initialize as Sender (usually on Mobile/Celular) and send data to the receiver ID
   const connectAndSendData = async (targetCode: string) => {
     if (!targetCode) return;
-    
+
     if (peerRef.current) {
       peerRef.current.destroy();
     }
@@ -866,7 +866,7 @@ export const SyncSection = React.memo(function SyncSection({
             const requestedIds = new Set(incomingData.ids || []);
             const allMedia = await getAllMediaItems();
             const mediaToTransfer = allMedia.filter(item => requestedIds.has(item.id));
-            
+
             for (let i = 0; i < mediaToTransfer.length; i++) {
               const item = mediaToTransfer[i];
               const realBlob = getRealBlob(item.blob);
@@ -889,8 +889,8 @@ export const SyncSection = React.memo(function SyncSection({
                   },
                   realBlob,
                   (progress) => {
-                    window.dispatchEvent(new CustomEvent('projection_sync_progress', { 
-                      detail: { message: `Enviando mídia (${i + 1}/${mediaToTransfer.length}): ${item.name} (${progress}%)`, progress } 
+                    window.dispatchEvent(new CustomEvent('projection_sync_progress', {
+                      detail: { message: `Enviando mídia (${i + 1}/${mediaToTransfer.length}): ${item.name} (${progress}%)`, progress }
                     }));
                   }
                 );
@@ -992,7 +992,7 @@ export const SyncSection = React.memo(function SyncSection({
 
           if (incomingData && incomingData.type === 'MEDIA_SAVE') {
             const item = incomingData.mediaItem;
-            
+
             const savePayload: any = {
               id: item.id,
               type: item.type,
@@ -1132,7 +1132,7 @@ export const SyncSection = React.memo(function SyncSection({
           if (mediaItems.length === 0 && !hasCustomMeetings && !hasCustomCampaigns) {
             setSyncMessage('Celular limpo. Importando agenda, eventos e mídias do PC...');
             conn.send({ type: 'REQUEST_FULL_SYNC', version: 1 });
-            
+
             // Save globally for real-time control
             registerPeerConn(conn);
 
@@ -1234,7 +1234,7 @@ export const SyncSection = React.memo(function SyncSection({
       } else {
         console.warn('PeerJS remetente (Aviso/Erro):', err.type || err);
       }
-      
+
       const role = localStorage.getItem('projection_deviceRole');
       if (role === 'phone') {
         setDirectSyncStatus('connecting');
@@ -1489,7 +1489,7 @@ export const SyncSection = React.memo(function SyncSection({
 
         setBackupMessage({ type: 'success', text: 'Backup importado! Reiniciando...' });
         notify('Backup importado com sucesso! Reiniciando aplicação...', 'success');
-        
+
         setTimeout(() => {
           window.location.reload();
         }, 1500);
@@ -1510,23 +1510,23 @@ export const SyncSection = React.memo(function SyncSection({
   };
 
   return (
-    <div className="sync-workspace console-area bg-[#08080a] border border-[#27272a] rounded-3xl p-5 flex flex-col gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)]">
+    <div className="sync-workspace console-area bg-hl-panel border border-hl-line rounded-3xl p-5 flex flex-col gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)]">
       <ConsoleIntro icon={Smartphone} title="Conexão e backup" eyebrow="O PC projeta. O celular controla." description="Use o código do computador para conectar o celular e levar o controle da reunião com você." stats={[{label:'Este aparelho',value:localStorage.getItem('projection_deviceRole') === 'phone' ? 'Celular · controle' : 'PC · projeção'},{label:'Sincronização',value:({idle:'Aguardando',initializing:'Preparando',listening:'Aguardando celular',connecting:'Aguardando código',sending:'Enviando',receiving:'Recebendo',success:'Dados sincronizados',error:'Verificar conexão'})[directSyncStatus]}]}/>
       <ol className="console-connection-path" aria-label="Como conectar"><li><span>01</span><Laptop size={21}/><strong>PC no telão</strong><small>Abra a projeção na segunda tela.</small></li><li><span>02</span><Smartphone size={21}/><strong>Celular no controle</strong><small>Use o código ou QR do computador.</small></li><li><span>03</span><CheckCircle2 size={21}/><strong>Confira a conexão</strong><small>Verifique a exibição no PC e no telão.</small></li></ol>
 <details className="holy-disclosure sync-diagnostics"><summary>Diagnóstico de conexão</summary>      {/* BOTÃO DE DIAGNÓSTICO E TESTE AUTOMÁTICO */}
-      <div className="bg-[#030304] border border-[#222] rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
+      <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <FlaskConical className="w-4 h-4 text-amber-400" />
+            <FlaskConical className="w-4 h-4 text-hl-gold-bright" />
             <div>
-              <span className="text-xs font-bold text-zinc-200 block font-sans">Diagnóstico do Sistema & Rede</span>
-              <span className="text-[10px] text-zinc-500">Validação da rede local, banco de dados e sinalização P2P</span>
+              <span className="text-xs font-bold text-hl-soft block font-sans">Diagnóstico do Sistema & Rede</span>
+              <span className="text-[10px] text-hl-dim">Validação da rede local, banco de dados e sinalização P2P</span>
             </div>
           </div>
           <button
             onClick={runDiagnosticTest}
             disabled={isTesting}
-            className="bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-black px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.3)] active:translate-y-[1px] disabled:opacity-50"
+            className="bg-hl-gold hover:bg-hl-gold-bright text-black text-[11px] font-black px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-[0_0_12px_rgba(255,211,79,0.3)] active:translate-y-[1px] disabled:opacity-50"
             title="Executa teste interno para validar comunicação de rede"
           >
             {isTesting ? (
@@ -1542,8 +1542,8 @@ export const SyncSection = React.memo(function SyncSection({
         </div>
 
         {showTestPanel && (
-          <div className="flex flex-col gap-2 mt-1 bg-[#09090c] p-3 rounded-xl border border-[#222] text-xs animate-fadeIn shadow-[inset_0_1px_4px_rgba(0,0,0,0.8)]">
-            <div className="flex items-center justify-between text-[11px] font-bold text-zinc-400 border-b border-[#222] pb-2 font-mono">
+          <div className="flex flex-col gap-2 mt-1 bg-hl-panel p-3 rounded-xl border border-hl-line-soft text-xs animate-fadeIn shadow-[inset_0_1px_4px_rgba(0,0,0,0.8)]">
+            <div className="flex items-center justify-between text-[11px] font-bold text-hl-muted border-b border-hl-line-soft pb-2 font-mono">
               <span>Resultado da Simulação do Sistema:</span>
               {testSummary && (
                 <span className={`px-2 py-0.5 rounded-full font-black text-[10px] flex items-center gap-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] ${
@@ -1566,18 +1566,18 @@ export const SyncSection = React.memo(function SyncSection({
 
             <div className="flex flex-col gap-1.5 pt-1">
               {testSteps.map((step) => (
-                <div key={step.id} className="flex flex-col gap-0.5 bg-[#030304] p-2.5 rounded-lg border border-[#222]">
+                <div key={step.id} className="flex flex-col gap-0.5 bg-hl-canvas p-2.5 rounded-lg border border-hl-line-soft">
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-zinc-300 text-[11px]">{step.name}</span>
+                    <span className="font-extrabold text-hl-soft text-[11px]">{step.name}</span>
                     <span className="shrink-0">
-                      {step.status === 'pending' && <span className="text-zinc-600 text-[10px] font-mono">Aguardando</span>}
-                      {step.status === 'running' && <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />}
+                      {step.status === 'pending' && <span className="text-hl-dim text-[10px] font-mono">Aguardando</span>}
+                      {step.status === 'running' && <RefreshCw className="w-3.5 h-3.5 text-hl-gold-bright animate-spin" />}
                       {step.status === 'ok' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                       {step.status === 'fail' && <XCircle className="w-3.5 h-3.5 text-red-500" />}
                     </span>
                   </div>
                   {step.detail && (
-                    <span className={`text-[10px] ${step.status === 'fail' ? 'text-red-400 font-mono' : 'text-zinc-400'}`}>
+                    <span className={`text-[10px] ${step.status === 'fail' ? 'text-red-400 font-mono' : 'text-hl-muted'}`}>
                       {step.detail}
                     </span>
                   )}
@@ -1605,38 +1605,38 @@ export const SyncSection = React.memo(function SyncSection({
 
 </details>
       {/* OPÇÃO 1: SINCRONIZAÇÃO DIRETA SEM FIO */}
-      <div className="border border-[#222] bg-[#030304] rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
-        <div className="flex items-center justify-between border-b border-[#222] pb-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-zinc-200">
-            <Zap className="w-4 h-4 text-amber-400" />
+      <div className="border border-hl-line-soft bg-hl-canvas rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
+        <div className="flex items-center justify-between border-b border-hl-line-soft pb-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-hl-soft">
+            <Zap className="w-4 h-4 text-hl-gold-bright" />
             <span>Sincronização P2P Sem Fio</span>
           </div>
-          <span className="text-[9px] bg-amber-950/80 text-amber-400 border border-amber-800/80 px-2.5 py-0.5 rounded-full font-mono font-bold shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
+          <span className="text-[9px] bg-hl-gold-well/80 text-hl-gold-bright border border-hl-line-strong/80 px-2.5 py-0.5 rounded-full font-mono font-bold shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
             PC ↔ Celular
           </span>
         </div>
 
         {directSyncStatus === 'idle' && (
           <div className="flex flex-col gap-3">
-            <p className="text-[11px] text-zinc-400 leading-normal">
+            <p className="text-[11px] text-hl-muted leading-normal">
               Selecione a função deste dispositivo para parear com o sistema:
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={startReceiver}
-                className="bg-[#0f0f12] border border-[#27272a] hover:border-amber-500/60 hover:bg-[#141418] text-zinc-200 text-[11px] font-bold py-3 px-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-24 group shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px]"
+                className="bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-24 group shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px]"
               >
-                <Laptop className="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span className="text-zinc-100 font-black">RECEPTOR (PC)</span>
-                <span className="text-[8px] text-zinc-500 uppercase tracking-tighter font-mono">Projeta mídias no telão</span>
+                <Laptop className="w-6 h-6 text-hl-gold-bright group-hover:scale-110 transition-transform" />
+                <span className="text-hl-copy font-black">RECEPTOR (PC)</span>
+                <span className="text-[8px] text-hl-dim uppercase tracking-tighter font-mono">Projeta mídias no telão</span>
               </button>
               <button
                 onClick={() => setDirectSyncStatus('connecting')}
-                className="bg-[#0f0f12] border border-[#27272a] hover:border-amber-500/60 hover:bg-[#141418] text-zinc-200 text-[11px] font-bold py-3 px-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-24 group shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px]"
+                className="bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-24 group shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px]"
               >
-                <Smartphone className="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span className="text-zinc-100 font-black">CONTROLE (CELULAR)</span>
-                <span className="text-[8px] text-zinc-500 uppercase tracking-tighter font-mono">Controla transmissão</span>
+                <Smartphone className="w-6 h-6 text-hl-gold-bright group-hover:scale-110 transition-transform" />
+                <span className="text-hl-copy font-black">CONTROLE (CELULAR)</span>
+                <span className="text-[8px] text-hl-dim uppercase tracking-tighter font-mono">Controla transmissão</span>
               </button>
             </div>
 
@@ -1654,8 +1654,8 @@ export const SyncSection = React.memo(function SyncSection({
             )}
 
             {localStorage.getItem('projection_myReceiverCode') && (
-              <div className="text-[10px] text-zinc-500 text-center mt-1 font-mono">
-                Código de Pareamento deste PC: <span className="font-mono text-amber-400 font-black bg-[#0f0f12] px-2.5 py-0.5 rounded-lg border border-[#27272a] shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">{localStorage.getItem('projection_myReceiverCode')}</span>
+              <div className="text-[10px] text-hl-dim text-center mt-1 font-mono">
+                Código de Pareamento deste PC: <span className="font-mono text-hl-gold-bright font-black bg-hl-raised px-2.5 py-0.5 rounded-lg border border-hl-line shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">{localStorage.getItem('projection_myReceiverCode')}</span>
               </div>
             )}
           </div>
@@ -1663,8 +1663,8 @@ export const SyncSection = React.memo(function SyncSection({
 
         {/* RECEIVER STATE (PC IS WAITING) */}
         {(directSyncStatus === 'initializing' || directSyncStatus === 'listening' || directSyncStatus === 'receiving') && (
-          <div className="flex flex-col items-center gap-3 py-3 bg-[#0a0a0d] p-4 rounded-2xl border border-[#222] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-            <span className="text-[11px] text-amber-400 font-bold flex items-center gap-2 font-mono">
+          <div className="flex flex-col items-center gap-3 py-3 bg-hl-panel p-4 rounded-2xl border border-hl-line-soft shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+            <span className="text-[11px] text-hl-gold-bright font-bold flex items-center gap-2 font-mono">
               <RefreshCw className="w-4 h-4 animate-spin" />
               {syncMessage}
             </span>
@@ -1681,13 +1681,13 @@ export const SyncSection = React.memo(function SyncSection({
                 </div>
 
                 <div className="text-center">
-                  <span className="text-[10px] text-zinc-400 block mb-1 uppercase tracking-wider font-mono font-bold">Código PIN para digitação manual:</span>
-                  <span className="font-mono text-xl font-black text-amber-400 bg-[#030304] border border-[#27272a] px-4 py-1.5 rounded-xl tracking-widest shadow-[inset_0_2px_6px_rgba(0,0,0,1)] inline-block">
+                  <span className="text-[10px] text-hl-muted block mb-1 uppercase tracking-wider font-mono font-bold">Código PIN para digitação manual:</span>
+                  <span className="font-mono text-xl font-black text-hl-gold-bright bg-hl-canvas border border-hl-line px-4 py-1.5 rounded-xl tracking-widest shadow-[inset_0_2px_6px_rgba(0,0,0,1)] inline-block">
                     {syncCode}
                   </span>
                 </div>
 
-                <div className="text-[10px] text-zinc-300 bg-[#030304] p-3 rounded-xl text-center leading-normal border border-[#222] max-w-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                <div className="text-[10px] text-hl-soft bg-hl-canvas p-3 rounded-xl text-center leading-normal border border-hl-line-soft max-w-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
                   <strong>Instruções:</strong> Aponte a câmera do celular para o QR Code acima para conectar.
                 </div>
               </div>
@@ -1699,7 +1699,7 @@ export const SyncSection = React.memo(function SyncSection({
                 if (peerRef.current) peerRef.current.destroy();
                 setDirectSyncStatus('idle');
               }}
-              className="text-zinc-500 hover:text-zinc-300 text-[10px] underline cursor-pointer mt-1"
+              className="text-hl-dim hover:text-hl-soft text-[10px] underline cursor-pointer mt-1"
             >
               Alterar Função ou Cancelar
             </button>
@@ -1708,15 +1708,15 @@ export const SyncSection = React.memo(function SyncSection({
 
         {/* SENDER STATE (MOBILE CONNECTING/TYPING CODE) */}
         {(directSyncStatus === 'connecting' || directSyncStatus === 'sending') && (
-          <div className="flex flex-col gap-3 py-3 bg-[#0a0a0d] p-4 rounded-2xl border border-[#222] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-            <span className="text-[11px] text-amber-400 font-bold flex items-center gap-2 self-center font-mono">
+          <div className="flex flex-col gap-3 py-3 bg-hl-panel p-4 rounded-2xl border border-hl-line-soft shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+            <span className="text-[11px] text-hl-gold-bright font-bold flex items-center gap-2 self-center font-mono">
               <RefreshCw className="w-4 h-4 animate-spin" />
               {syncMessage}
             </span>
 
             {directSyncStatus === 'connecting' && (
               <div className="flex flex-col gap-2.5 w-full">
-                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider font-mono">Código PIN do PC:</label>
+                <label className="text-[10px] text-hl-muted font-bold uppercase tracking-wider font-mono">Código PIN do PC:</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -1724,17 +1724,17 @@ export const SyncSection = React.memo(function SyncSection({
                     aria-label="Código do computador" value={syncInputCode}
                     onChange={(e) => setSyncInputCode(e.target.value.toUpperCase())}
                     maxLength={6}
-                    className="bg-[#030304] border border-[#27272a] rounded-xl px-3 py-2 text-sm font-mono font-bold text-amber-400 flex-1 focus:outline-none focus:border-amber-500/60 text-center uppercase tracking-widest shadow-[inset_0_2px_6px_rgba(0,0,0,1)]"
+                    className="bg-hl-canvas border border-hl-line rounded-xl px-3 py-2 text-sm font-mono font-bold text-hl-gold-bright flex-1 focus:outline-none focus:border-hl-gold/60 text-center uppercase tracking-widest shadow-[inset_0_2px_6px_rgba(0,0,0,1)]"
                   />
                   <button
                     onClick={() => connectAndSendData(syncInputCode)}
                     disabled={!syncInputCode || syncInputCode.length !== 6}
-                    className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-4 py-2 rounded-xl disabled:opacity-50 transition-all cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.3)] active:translate-y-[1px]"
+                    className="bg-hl-gold hover:bg-hl-gold-bright text-black text-xs font-black px-4 py-2 rounded-xl disabled:opacity-50 transition-all cursor-pointer shadow-[0_0_12px_rgba(255,211,79,0.3)] active:translate-y-[1px]"
                   >
                     Conectar
                   </button>
                 </div>
-                <p className="text-[10px] text-zinc-500 leading-normal font-mono">
+                <p className="text-[10px] text-hl-dim leading-normal font-mono">
                   Digite o código de 6 letras exibido na tela do computador.
                 </p>
               </div>
@@ -1746,7 +1746,7 @@ export const SyncSection = React.memo(function SyncSection({
                 if (peerRef.current) peerRef.current.destroy();
                 setDirectSyncStatus('idle');
               }}
-              className="text-zinc-500 hover:text-zinc-300 text-[10px] underline cursor-pointer mt-1 self-center"
+              className="text-hl-dim hover:text-hl-soft text-[10px] underline cursor-pointer mt-1 self-center"
             >
               Voltar ao Menu
             </button>
@@ -1761,26 +1761,26 @@ export const SyncSection = React.memo(function SyncSection({
             </div>
             <div className="text-center">
               <span className="text-xs font-black text-emerald-400 block uppercase tracking-wider font-mono">Dispositivos Conectados!</span>
-              <p className="text-[11px] text-zinc-300 mt-2 max-w-sm mx-auto leading-relaxed">
+              <p className="text-[11px] text-hl-soft mt-2 max-w-sm mx-auto leading-relaxed">
                 Sincronização realizada com sucesso.
               </p>
-              <p className="text-[10px] text-zinc-400 mt-1 max-w-sm mx-auto leading-relaxed">
+              <p className="text-[10px] text-hl-muted mt-1 max-w-sm mx-auto leading-relaxed">
                 Comandos enviados pelo celular refletem instantaneamente na projeção.
               </p>
             </div>
 
             {localStorage.getItem('projection_deviceRole') === 'phone' && syncMessage && (
-              <div className="w-full bg-[#030304] border border-[#222] p-2.5 rounded-xl text-center mt-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-                <span className="text-[10px] text-amber-400 font-mono font-medium tracking-wide block leading-normal">
+              <div className="w-full bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl text-center mt-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
+                <span className="text-[10px] text-hl-gold-bright font-mono font-medium tracking-wide block leading-normal">
                   Status: {syncMessage}
                 </span>
               </div>
             )}
 
-            <div className="flex gap-4 justify-center items-center mt-1 border-t border-[#222] pt-3 w-full">
+            <div className="flex gap-4 justify-center items-center mt-1 border-t border-hl-line-soft pt-3 w-full">
               <button
                 onClick={() => setDirectSyncStatus('idle')}
-                className="text-zinc-200 hover:text-white text-[10px] bg-[#111114] border border-[#27272a] px-3.5 py-1.5 rounded-xl cursor-pointer transition-all font-bold shadow-[0_2px_6px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
+                className="text-hl-soft hover:text-white text-[10px] bg-hl-raised border border-hl-line px-3.5 py-1.5 rounded-xl cursor-pointer transition-all font-bold shadow-[0_2px_6px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
               >
                 Voltar
               </button>
@@ -1790,7 +1790,7 @@ export const SyncSection = React.memo(function SyncSection({
                   if (peerRef.current) peerRef.current.destroy();
                   setDirectSyncStatus('idle');
                 }}
-                className="text-zinc-500 hover:text-red-400 text-[10px] underline cursor-pointer"
+                className="text-hl-dim hover:text-red-400 text-[10px] underline cursor-pointer"
               >
                 Desconectar
               </button>
@@ -1805,7 +1805,7 @@ export const SyncSection = React.memo(function SyncSection({
               <XCircle className="w-5 h-5 text-red-400" />
             </div>
             <span className="text-xs font-black text-red-400 font-mono">Falha na Conexão</span>
-            <p className="text-[11px] text-zinc-400 leading-snug">
+            <p className="text-[11px] text-hl-muted leading-snug">
               {syncMessage}
             </p>
             <div className="flex flex-col gap-1.5 items-center mt-1 w-full">
@@ -1818,7 +1818,7 @@ export const SyncSection = React.memo(function SyncSection({
                     setDirectSyncStatus('connecting');
                   }
                 }}
-                className="w-full bg-[#111114] border border-[#27272a] text-zinc-200 hover:border-amber-500/60 text-[10px] font-bold py-2 px-3 rounded-xl cursor-pointer transition-all active:translate-y-[1px]"
+                className="w-full bg-hl-raised border border-hl-line text-hl-soft hover:border-hl-gold/60 text-[10px] font-bold py-2 px-3 rounded-xl cursor-pointer transition-all active:translate-y-[1px]"
               >
                 Reconectar
               </button>
@@ -1828,7 +1828,7 @@ export const SyncSection = React.memo(function SyncSection({
                   if (peerRef.current) peerRef.current.destroy();
                   setDirectSyncStatus('idle');
                 }}
-                className="text-zinc-500 hover:text-zinc-300 text-[10px] underline cursor-pointer mt-1"
+                className="text-hl-dim hover:text-hl-soft text-[10px] underline cursor-pointer mt-1"
               >
                 Alterar Função
               </button>
@@ -1838,16 +1838,16 @@ export const SyncSection = React.memo(function SyncSection({
       </div>
 
       {/* OPÇÃO 2: BACKUP MANUAL VIA ARQUIVOS (.JSON) */}
-      <div className="border border-[#222] bg-[#030304] rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
-        <div className="flex items-center justify-between border-b border-[#222] pb-2">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-mono flex items-center gap-1.5">
-            <Download className="w-3.5 h-3.5 text-amber-400" />
+      <div className="border border-hl-line-soft bg-hl-canvas rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
+        <div className="flex items-center justify-between border-b border-hl-line-soft pb-2">
+          <span className="text-[10px] font-bold text-hl-muted uppercase tracking-wider font-mono flex items-center gap-1.5">
+            <Download className="w-3.5 h-3.5 text-hl-gold-bright" />
             Backup & Restauração (.json)
           </span>
-          <span className="text-[9px] text-zinc-500 font-mono">Arquivo JSON</span>
+          <span className="text-[9px] text-hl-dim font-mono">Arquivo JSON</span>
         </div>
-        
-        <p className="text-[11px] text-zinc-400 leading-relaxed">
+
+        <p className="text-[11px] text-hl-muted leading-relaxed">
           Exporte ou restaure um arquivo de segurança (.json) com todas as mídias, dados e configurações.
         </p>
 
@@ -1855,16 +1855,16 @@ export const SyncSection = React.memo(function SyncSection({
           <button
             onClick={handleExportBackup}
             disabled={isExporting || isImporting}
-            className="bg-[#0f0f12] border border-[#27272a] hover:border-amber-500/60 hover:bg-[#141418] text-zinc-200 text-[11px] font-bold py-3 px-3 rounded-2xl cursor-pointer flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px] disabled:opacity-50"
+            className="bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl cursor-pointer flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px] disabled:opacity-50"
           >
-            <Download className={`w-4 h-4 text-amber-400 ${isExporting ? 'animate-bounce' : ''}`} />
+            <Download className={`w-4 h-4 text-hl-gold-bright ${isExporting ? 'animate-bounce' : ''}`} />
             {isExporting ? "Gerando Backup..." : "Exportar Backup (.json)"}
           </button>
 
           <label
-            className={`bg-[#0f0f12] border border-[#27272a] hover:border-amber-500/60 hover:bg-[#141418] text-zinc-200 text-[11px] font-bold py-3 px-3 rounded-2xl cursor-pointer flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px] disabled:opacity-50 ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl cursor-pointer flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px] disabled:opacity-50 ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}
           >
-            <Upload className={`w-4 h-4 text-amber-400 ${isImporting ? 'animate-pulse' : ''}`} />
+            <Upload className={`w-4 h-4 text-hl-gold-bright ${isImporting ? 'animate-pulse' : ''}`} />
             {isImporting ? "Restauração..." : "Restaurar Backup (.json)"}
             <input
               type="file"
@@ -1878,8 +1878,8 @@ export const SyncSection = React.memo(function SyncSection({
 
         {backupMessage && (
           <div className={`text-[11px] p-2.5 rounded-xl border text-center font-bold shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
-            backupMessage.type === 'success' 
-              ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-400' 
+            backupMessage.type === 'success'
+              ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-400'
               : 'bg-red-950/40 border-red-800/60 text-red-400'
           }`}>
             {backupMessage.text}

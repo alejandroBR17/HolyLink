@@ -1,4 +1,4 @@
-const CACHE_NAME = 'holylink-pwa-v10-local-images';
+const CACHE_NAME = 'holylink-pwa-v11-design-system';
 const urlsToCache = ['/', '/index.html', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/local-symbol-dark-192.png', '/pwa/local-symbol-dark-512.png'];
 
 self.addEventListener('message', (event) => {

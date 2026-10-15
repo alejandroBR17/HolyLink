@@ -22,7 +22,7 @@ interface MonitorPanelProps {
   blackoutEnabled: boolean;
   clearContentEnabled: boolean;
   currentSlideId: string;
-  
+
   hoursStr: string;
   minutesStr: string;
   diffSeconds: number;
@@ -64,7 +64,7 @@ export function MonitorPanel({
   blackoutEnabled,
   clearContentEnabled,
   currentSlideId,
-  
+
   hoursStr,
   minutesStr,
   diffSeconds,
@@ -168,12 +168,12 @@ export function MonitorPanel({
         id: 'verse_next',
         title: customVerseRef ? `Próximo Versículo (${customVerseRef})` : 'Versículo Bíblico em Exibição',
         typeLabel: 'Texto Sagrado',
-        icon: <BookOpen className="w-4 h-4 text-amber-500" />
+        icon: <BookOpen className="w-4 h-4 text-hl-gold" />
       };
     }
 
     if (!activeSlides || activeSlides.length === 0) {
-      return { id: null, title: 'Nenhum slide na fila', typeLabel: 'Vazio', icon: <Monitor className="w-4 h-4 text-zinc-500" /> };
+      return { id: null, title: 'Nenhum slide na fila', typeLabel: 'Vazio', icon: <Monitor className="w-4 h-4 text-hl-dim" /> };
     }
 
     const currentIndex = activeSlides.indexOf(currentSlideId);
@@ -185,13 +185,13 @@ export function MonitorPanel({
     } else if (nextId === 'world_god') {
       return { id: nextId, title: 'Onde Tem Igreja Universal', typeLabel: 'Card Institucional', icon: <BookOpen className="w-4 h-4 text-emerald-400" /> };
     } else if (nextId === 'donation') {
-      return { id: nextId, title: 'Dízimos e Ofertas (PIX)', typeLabel: 'Chave PIX', icon: <Heart className="w-4 h-4 text-yellow-400" /> };
+      return { id: nextId, title: 'Dízimos e Ofertas (PIX)', typeLabel: 'Chave PIX', icon: <Heart className="w-4 h-4 text-hl-gold-bright" /> };
     } else if (nextId?.startsWith('campaign_')) {
       const index = parseInt(nextId.replace('campaign_', ''), 10);
       const camp = customCampaigns[index];
       return { id: nextId, title: camp?.title || 'Campanha de Fé', typeLabel: 'Campanha', icon: <Heart className="w-4 h-4 text-red-400" /> };
     } else if (nextId?.startsWith('meeting_')) {
-      return { id: nextId, title: 'Próximo Evento da Reunião', typeLabel: 'Evento', icon: <Calendar className="w-4 h-4 text-amber-400" /> };
+      return { id: nextId, title: 'Próximo Evento da Reunião', typeLabel: 'Evento', icon: <Calendar className="w-4 h-4 text-hl-gold-bright" /> };
     } else {
       const media = customMediaList.find(m => m.id === nextId);
       if (media) {
@@ -204,32 +204,32 @@ export function MonitorPanel({
       }
     }
 
-    return { id: nextId, title: 'Próximo Slide', typeLabel: 'Slide', icon: <Monitor className="w-4 h-4 text-amber-500" /> };
+    return { id: nextId, title: 'Próximo Slide', typeLabel: 'Slide', icon: <Monitor className="w-4 h-4 text-hl-gold" /> };
   };
 
   const nextMedia = getNextMediaInfo();
 
   return (
     <div className="monitor-workspace console-area flex flex-col gap-5 w-full text-left">
-      
+
       {/* MONITOR CANVAS CONTAINER - COMPLEX SKEUOMORPHIC MONITOR FRAME */}
-      <section aria-label="Monitor de Transmissão" className="console-monitor-card relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden flex flex-col gap-4 group">
+      <section aria-label="Monitor de Transmissão" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden flex flex-col gap-4 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         {/* CABEÇALHO DO MONITOR */}
-        <div className="relative z-10 flex items-center justify-between border-b border-[#333] pb-3 gap-2 flex-wrap">
+        <div className="relative z-10 flex items-center justify-between border-b border-hl-line pb-3 gap-2 flex-wrap">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] relative">
-              <Monitor className="w-4 h-4 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <div className="p-2 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] relative">
+              <Monitor className="w-4 h-4 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Monitor da saída</h3>
-                <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Monitor da saída</h3>
+                <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
                   Composição 16:9
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">A composição da sua reunião, com a próxima tela logo abaixo. Confira também o telão.</p>
+              <p className="text-[11px] text-hl-muted font-medium mt-0.5">A composição da sua reunião, com a próxima tela logo abaixo. Confira também o telão.</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
@@ -237,19 +237,19 @@ export function MonitorPanel({
               <button
                 type="button"
                 onClick={() => setShowPwaModal(true)}
-                className="p-1.5 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-amber-400 rounded-xl text-xs font-bold flex items-center justify-center transition-all active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] cursor-pointer"
+                className="p-1.5 bg-gradient-to-b from-hl-raised to-hl-raised border border-hl-line hover:border-hl-gold/50 text-hl-gold-bright rounded-xl text-xs font-bold flex items-center justify-center transition-all active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] cursor-pointer"
                 title="Instalar App HolyLink (PWA)"
               >
-                <Download className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <Download className="w-3.5 h-3.5 text-hl-gold shrink-0" />
               </button>
             )}
             <button
               type="button"
               onClick={() => setShowShortcutsModal(!showShortcutsModal)}
-              className="px-2.5 py-1.5 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-300 hover:text-white rounded-xl text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+              className="px-2.5 py-1.5 bg-gradient-to-b from-hl-raised to-hl-raised border border-hl-line hover:border-hl-line-strong text-hl-soft hover:text-white rounded-xl text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-all active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
               title="Atalhos e Comandos"
             >
-              <Keyboard className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <Keyboard className="w-3.5 h-3.5 text-hl-gold shrink-0" />
               <span className="font-sans">Atalhos</span>
             </button>
             <span className="bg-emerald-950/80 border border-emerald-900/60 text-emerald-400 text-[9px] font-mono font-bold px-2 py-1 rounded uppercase tracking-wider flex items-center gap-1 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
@@ -259,31 +259,31 @@ export function MonitorPanel({
         </div>
 
         {/* PHYSICAL MONITOR FRAME WITH BEZEL, REFLECTION AND LED STATUS */}
-        <div className="relative z-10 bg-[#050507] p-3 sm:p-4 rounded-2xl border-2 border-[#1f1f22] shadow-[0_20px_50px_rgba(0,0,0,1),inset_0_2px_8px_rgba(255,255,255,0.04)]">
-          
+        <div className="relative z-10 bg-hl-canvas p-3 sm:p-4 rounded-2xl border-2 border-hl-line-soft shadow-[0_20px_50px_rgba(0,0,0,1),inset_0_2px_8px_rgba(255,255,255,0.04)]">
+
           {/* BEZEL TOP BAR WITH PHYSICAL LOGO & POWER LED */}
-          <div className="flex items-center justify-between px-2 pb-2.5 mb-1 text-[10px] text-zinc-500 font-mono border-b border-[#18181b]">
+          <div className="flex items-center justify-between px-2 pb-2.5 mb-1 text-[10px] text-hl-dim font-mono border-b border-hl-line-soft">
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-zinc-400 tracking-widest">Saída preparada · 16:9</span>
+              <span className="font-extrabold text-hl-muted tracking-widest">Saída preparada · 16:9</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-zinc-400">{Math.round(fps)} FPS locais</span>
+              <span className="hidden sm:inline text-hl-muted">{Math.round(fps)} FPS locais</span>
               <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-500/80" />
+                <div className="w-1.5 h-1.5 rounded-full bg-hl-gold/80" />
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               </div>
             </div>
           </div>
 
           {/* Scaled Preview Frame with TV Bezel */}
-          <div 
+          <div
             ref={containerRef}
-            className="w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] border border-[#222]"
+            className="w-full aspect-video bg-black rounded-lg overflow-hidden relative shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] border border-hl-line-soft"
           >
             {/* Screen Glass Surface Reflection */}
             <div className="absolute inset-0 pointer-events-none z-30 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.06]" />
 
-            <div 
+            <div
               className="console-projection-surface absolute origin-top-left pointer-events-none"
               style={{
                 width: '1920px',
@@ -301,7 +301,7 @@ export function MonitorPanel({
                 blackoutEnabled={blackoutEnabled}
                 clearContentEnabled={clearContentEnabled}
                 currentSlideId={currentSlideId}
-                
+
                 hoursStr={hoursStr}
                 minutesStr={minutesStr}
                 diffSeconds={diffSeconds}
@@ -338,37 +338,37 @@ export function MonitorPanel({
       </section>
 
       {/* PRÓXIMA MÍDIA / A SEGUIR CARD - DESIGN SKEUOMÓRFICO TÁTICO */}
-      <section aria-label="A Seguir na Fila" className="console-monitor-card relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 group">
+      <section aria-label="A Seguir na Fila" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-        <div className="relative z-10 flex items-center justify-between border-b border-[#333] pb-3 gap-2 flex-wrap">
+        <div className="relative z-10 flex items-center justify-between border-b border-hl-line pb-3 gap-2 flex-wrap">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-2 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              <SkipForward className="w-4 h-4 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <div className="p-2 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <SkipForward className="w-4 h-4 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
             </div>
             <div className="min-w-0">
-              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans leading-snug">A Seguir na Fila</h4>
-              <p className="text-[10px] text-zinc-400 font-medium leading-tight mt-0.5">
+              <h4 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans leading-snug">A Seguir na Fila</h4>
+              <p className="text-[10px] text-hl-muted font-medium leading-tight mt-0.5">
                 {activeSlides.length > 0
                   ? `Posição ${(activeSlides.indexOf(currentSlideId) + 2) > activeSlides.length ? 1 : activeSlides.indexOf(currentSlideId) + 2} de ${activeSlides.length}`
                   : 'Aguardando mídias'}
               </p>
             </div>
           </div>
-          <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
+          <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
             {nextMedia.typeLabel}
           </span>
         </div>
 
-        <div className="relative z-10 bg-[#030303] border border-[#222] rounded-xl p-3 sm:p-3.5 flex flex-col gap-3 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+        <div className="relative z-10 bg-hl-canvas border border-hl-line-soft rounded-xl p-3 sm:p-3.5 flex flex-col gap-3 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
           <div className="flex items-start gap-2.5 min-w-0 w-full">
-            <div className="p-2.5 bg-[#111113] rounded-xl border border-[#27272a] shrink-0 text-amber-500 flex items-center justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+            <div className="p-2.5 bg-hl-raised rounded-xl border border-hl-line shrink-0 text-hl-gold flex items-center justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
               {nextMedia.icon}
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <span className="text-[9px] font-mono font-extrabold text-amber-500 uppercase tracking-widest block mb-0.5">PRÓXIMO CONTEÚDO</span>
-              <p className="text-xs sm:text-sm font-sans font-extrabold text-zinc-100 leading-snug break-words">{nextMedia.title}</p>
-              <p className="text-[11px] text-zinc-400 font-medium leading-relaxed mt-0.5 break-words">
+              <span className="text-[9px] font-mono font-extrabold text-hl-gold uppercase tracking-widest block mb-0.5">PRÓXIMO CONTEÚDO</span>
+              <p className="text-xs sm:text-sm font-sans font-extrabold text-hl-copy leading-snug break-words">{nextMedia.title}</p>
+              <p className="text-[11px] text-hl-muted font-medium leading-relaxed mt-0.5 break-words">
                 {customVerseText ? 'Aguardando encerramento do versículo ativo' : 'Pronto na fila do projetor'}
               </p>
             </div>
@@ -378,7 +378,7 @@ export function MonitorPanel({
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('advanceToSlide', nextMedia.id)}
-              className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2 active:translate-y-[1px] w-full min-h-[40px]"
+              className="bg-hl-gold hover:bg-hl-gold-bright text-black text-xs font-black px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-[0_0_15px_rgba(255,211,79,0.3)] flex items-center justify-center gap-2 active:translate-y-[1px] w-full min-h-[40px]"
             >
               <SkipForward className="w-3.5 h-3.5 shrink-0" />
               <span>Avançar Slide</span>
@@ -389,30 +389,30 @@ export function MonitorPanel({
 
 <details className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Gauge} title="Ajuda de projeção e diagnóstico" description="Atalhos, desempenho e orientações para cada aparelho." badge={`${Math.round(fps)} FPS locais`}/></summary><div>
       {/* HARDWARE DIAGNOSTIC & AUTOMATIC OPTIMIZATION BANNER */}
-      <section aria-label="Desempenho e Memória" className="console-monitor-card relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 text-left group">
+      <section aria-label="Desempenho e Memória" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 text-left group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <div className="relative z-10 flex items-start gap-3 min-w-0 w-full">
-          <div className="p-2 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-            <Gauge className="w-4 h-4 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+          <div className="p-2 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+            <Gauge className="w-4 h-4 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Desempenho & Memória</h4>
+              <h4 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Desempenho & Memória</h4>
               <span className={`text-[9px] font-mono px-2 py-0.5 rounded font-bold border shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] ${
                 effectiveMode === 'light'
-                  ? 'bg-amber-950/80 border-amber-900/50 text-amber-400'
+                  ? 'bg-hl-gold-well/80 border-hl-line-strong/50 text-hl-gold-bright'
                   : effectiveMode === 'balanced'
                   ? 'bg-blue-950/80 border-blue-900/50 text-blue-400'
                   : 'bg-emerald-950/80 border-emerald-900/50 text-emerald-400'
               }`}>
                 {fps} FPS ({effectiveMode === 'light' ? 'Anti-Lag' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Máxima Qualidade'})
               </span>
-              <span className="text-[9px] font-mono bg-[#030303] px-2 py-0.5 rounded border border-[#222] text-amber-400 font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <span className="text-[9px] font-mono bg-hl-canvas px-2 py-0.5 rounded border border-hl-line-soft text-hl-gold-bright font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
                 RAM: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
               </span>
             </div>
-            <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed font-medium">
+            <p className="text-[10px] text-hl-muted mt-1 leading-relaxed font-medium">
               Otimização contínua de GPU, CPU ({report?.cpuCores || 4} cores) e memória de vídeo.
             </p>
           </div>
@@ -425,18 +425,18 @@ export function MonitorPanel({
             className={`text-xs font-bold px-3 py-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] active:translate-y-[1px] ${
               ramCleared
                 ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300'
-                : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-[#444] text-zinc-200'
+                : 'bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line hover:border-hl-line-strong text-hl-soft'
             }`}
             title="Limpa cache de vídeos e imagens armazenados na RAM"
           >
-            <HardDrive className={`w-3.5 h-3.5 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-amber-500'}`} />
+            <HardDrive className={`w-3.5 h-3.5 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-hl-gold'}`} />
             <span className="truncate">{ramCleared ? 'RAM Liberada!' : 'Limpar RAM'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowBenchmarkModal(true)}
-            className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-3 py-2 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.3)] min-h-[38px] active:translate-y-[1px]"
+            className="bg-hl-gold hover:bg-hl-gold-bright text-black text-xs font-black px-3 py-2 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(255,211,79,0.3)] min-h-[38px] active:translate-y-[1px]"
           >
             <Zap className="w-3.5 h-3.5 shrink-0 fill-current" />
             <span className="truncate">Testar & Otimizar</span>
@@ -453,41 +453,41 @@ export function MonitorPanel({
 
       {/* SHORTCUTS & INTERACTIVE COMMANDS MODAL OVERLAY */}
       {showShortcutsModal && (
-        <div className="holy-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div ref={shortcutsRef} role="dialog" aria-modal="true" aria-label="Atalhos da projeção" tabIndex={-1} className="holy-dialog bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.95)] max-w-lg w-full flex flex-col gap-4 relative">
-            <div className="flex items-center justify-between border-b border-[#333] pb-3.5">
-              <h4 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider font-sans flex items-center gap-2">
-                <Keyboard className="w-5 h-5 text-amber-500 shrink-0 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+        <div className="holy-theme holy-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div ref={shortcutsRef} role="dialog" aria-modal="true" aria-label="Atalhos da projeção" tabIndex={-1} className="holy-dialog bg-hl-panel border border-hl-line rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.95)] max-w-lg w-full flex flex-col gap-4 relative">
+            <div className="flex items-center justify-between border-b border-hl-line pb-3.5">
+              <h4 className="text-hl-copy font-extrabold text-sm uppercase tracking-wider font-sans flex items-center gap-2">
+                <Keyboard className="w-5 h-5 text-hl-gold shrink-0 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
                 Atalhos de Teclado & Comandos
               </h4>
               <button
                 type="button"
                 onClick={() => setShowShortcutsModal(false)}
-                aria-label="Fechar atalhos" className="p-1.5 text-zinc-400 hover:text-white bg-[#111113] hover:bg-[#1f1f22] border border-[#333] rounded-lg cursor-pointer transition-all"
+                aria-label="Fechar atalhos" className="p-1.5 text-hl-muted hover:text-white bg-hl-raised hover:bg-hl-raised border border-hl-line rounded-lg cursor-pointer transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-zinc-400 leading-relaxed font-medium">
+            <p className="text-xs text-hl-muted leading-relaxed font-medium">
               No computador, você pode pressionar as teclas diretamente. No celular ou tablet, pode tocar em qualquer comando abaixo:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
               <button
                 type="button"
                 onClick={() => { updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled); setShowShortcutsModal(false); }}
-                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
+                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200 font-sans">Blackout (Ocultar Tela)</span>
-                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">B</kbd>
+                <span className="font-bold text-hl-soft font-sans">Blackout (Ocultar Tela)</span>
+                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">B</kbd>
               </button>
 
               <button
                 type="button"
                 onClick={() => { updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled); setShowShortcutsModal(false); }}
-                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
+                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200 font-sans">Limpar Texto/Versículo</span>
-                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">C</kbd>
+                <span className="font-bold text-hl-soft font-sans">Limpar Texto/Versículo</span>
+                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">C</kbd>
               </button>
 
               <button
@@ -500,10 +500,10 @@ export function MonitorPanel({
                   }
                   setShowShortcutsModal(false);
                 }}
-                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
+                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200 font-sans">Próximo Slide da Fila</span>
-                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">Espaço / →</kbd>
+                <span className="font-bold text-hl-soft font-sans">Próximo Slide da Fila</span>
+                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">Espaço / →</kbd>
               </button>
 
               <button
@@ -516,10 +516,10 @@ export function MonitorPanel({
                   }
                   setShowShortcutsModal(false);
                 }}
-                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
+                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200 font-sans">Slide Anterior</span>
-                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">←</kbd>
+                <span className="font-bold text-hl-soft font-sans">Slide Anterior</span>
+                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">←</kbd>
               </button>
 
               <button
@@ -534,10 +534,10 @@ export function MonitorPanel({
                   if (activeAlert) updateStateAndBroadcast('activeAlert', null);
                   setShowShortcutsModal(false);
                 }}
-                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
+                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200 font-sans">Resetar / Seguir Fila</span>
-                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">Esc</kbd>
+                <span className="font-bold text-hl-soft font-sans">Resetar / Seguir Fila</span>
+                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">Esc</kbd>
               </button>
 
               <button
@@ -546,10 +546,10 @@ export function MonitorPanel({
                   updateStateAndBroadcast('volume', volume > 0 ? 0 : 0.5);
                   setShowShortcutsModal(false);
                 }}
-                className="bg-[#030303] hover:bg-[#111113] p-3 rounded-xl border border-[#222] hover:border-[#333] flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
+                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
               >
-                <span className="font-bold text-zinc-200 font-sans">Mudo / Ativar Som</span>
-                <kbd className="bg-[#111113] border border-[#333] px-2 py-0.5 rounded text-[10px] font-mono text-amber-400 font-bold">M</kbd>
+                <span className="font-bold text-hl-soft font-sans">Mudo / Ativar Som</span>
+                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">M</kbd>
               </button>
             </div>
           </div>
@@ -557,50 +557,50 @@ export function MonitorPanel({
       )}
 
       {/* SMART DEVICE GUIDANCE CARD */}
-      <section aria-label="Modo de Dispositivo" className="console-monitor-card relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden text-left group">
+      <section aria-label="Modo de Dispositivo" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden text-left group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-        <div className="relative z-10 flex items-center justify-between mb-3 gap-2 border-b border-[#333] pb-3">
-          <h4 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans flex items-center gap-2 min-w-0">
+        <div className="relative z-10 flex items-center justify-between mb-3 gap-2 border-b border-hl-line pb-3">
+          <h4 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans flex items-center gap-2 min-w-0">
             {isMobileDevice ? (
-              <Smartphone className="w-4 h-4 text-amber-500 animate-pulse shrink-0" />
+              <Smartphone className="w-4 h-4 text-hl-gold animate-pulse shrink-0" />
             ) : (
-              <Laptop className="w-4 h-4 text-amber-500 shrink-0" />
+              <Laptop className="w-4 h-4 text-hl-gold shrink-0" />
             )}
             <span className="truncate">Modo: {isMobileDevice ? 'Celular / Tablet' : 'Computador / Mesa'}</span>
           </h4>
-          <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[9px] font-mono px-2.5 py-1 rounded uppercase tracking-wider font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
+          <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[9px] font-mono px-2.5 py-1 rounded uppercase tracking-wider font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
             {isMobileDevice ? 'Controle Remoto' : 'HDMI + Teclado'}
           </span>
         </div>
 
         {isMobileDevice ? (
-          <div className="relative z-10 text-[11px] text-zinc-400 space-y-2 leading-relaxed">
+          <div className="relative z-10 text-[11px] text-hl-muted space-y-2 leading-relaxed">
             <p className="flex items-start gap-2">
-              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
               <span>Seu celular opera como <strong>Controle Remoto Sem Fio</strong> do projetor.</span>
             </p>
             <p className="flex items-start gap-2">
-              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
               <span>Abra este mesmo link no PC da igreja conectado à TV/HDMI.</span>
             </p>
             <p className="flex items-start gap-2">
-              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
               <span>Use os botões <strong>BLACKOUT</strong>, <strong>LIMPAR TEXTO</strong> e a <strong>FILA DE TRANSMISSÃO</strong> para controlar tudo em tempo real!</span>
             </p>
           </div>
         ) : (
-          <div className="relative z-10 text-[11px] text-zinc-400 space-y-2 leading-relaxed">
+          <div className="relative z-10 text-[11px] text-hl-muted space-y-2 leading-relaxed">
             <p className="flex items-start gap-2">
-              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
               <span>Conecte a TV ou Projetor na saída HDMI do computador.</span>
             </p>
             <p className="flex items-start gap-2">
-              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
               <span>Clique em <strong>"Projetar na 2ª Tela (HDMI)"</strong>.</span>
             </p>
             <p className="flex items-start gap-2">
-              <span className="font-mono bg-[#030303] border border-[#222] px-2 py-0.5 rounded text-amber-500 text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
+              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
               <span>Atalhos: <strong>B</strong> (Blackout), <strong>C</strong> (Limpar), <strong>Espaço</strong> (Próximo) e <strong>ESC</strong> (Resetar).</span>
             </p>
           </div>

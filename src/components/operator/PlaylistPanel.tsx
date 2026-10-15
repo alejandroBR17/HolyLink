@@ -2,8 +2,8 @@ import {useDialogFocus} from '../../hooks/useDialogFocus';
 import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2, 
+import {
+  BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2,
   Maximize, Zap, Minimize, Send, Trash2, Image as ImageIcon, AlertTriangle,
   Eye, EyeOff, Search, Layers, ChevronsUp, ChevronsDown, Filter, Sparkles, Check,
   CalendarDays, LayoutGrid, List, Edit3, Maximize2, X, Clock, Pin, Layout
@@ -40,7 +40,7 @@ interface PlaylistPanelProps {
   isUploading: boolean;
   uploadError: string | null;
   videoPinBehavior: 'loop' | 'unpin';
-  
+
   finalMinuteDisplayMode?: 'split' | 'full_video';
   verseDisplayPriority?: 'verse_over_video' | 'video_over_verse';
   handleMoveMedia: (id: string, direction: 'up' | 'down') => void;
@@ -75,7 +75,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   isUploading,
   uploadError,
   videoPinBehavior,
-  
+
   finalMinuteDisplayMode = 'split',
   verseDisplayPriority = 'verse_over_video',
   handleMoveMedia,
@@ -337,7 +337,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
   return (
     <div className="playlist-workspace flex flex-col gap-6 w-full">
-      
+
       <section className="operator-card sequence-console" aria-labelledby="sequence-title">
         <header className="sequence-heading">
           <div><span className="operator-eyebrow"><Layers size={16}/>Controle da reunião</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
@@ -367,37 +367,37 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
 <details ref={libraryRef} open={customMediaList.length > 0} className="holy-disclosure media-library console-settings-group"><summary><ConsoleGroupTitle icon={Film} title="Biblioteca de mídias" description="Suas imagens e vídeos, com enquadramento, som e duração." badge={`${customMediaList.length} arquivos`}/></summary>
       {/* GERENCIADOR DE MÍDIAS CUSTOMIZADAS */}
-      <section aria-label="Gerenciador de Mídias Customizadas" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
+      <section aria-label="Gerenciador de Mídias Customizadas" className="relative bg-hl-panel border border-hl-line rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-        
+
         {/* CABEÇALHO DA SEÇÃO DE MÍDIAS */}
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#333] pb-3.5">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hl-line pb-3.5">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              <Film className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <div className="p-2.5 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <Film className="w-5 h-5 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
             </div>
             <div>
-              <h2 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Central de Mídias & Arquivos</h2>
-              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Envio, enquadramento e gestão de vídeos e imagens</p>
+              <h2 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Central de Mídias & Arquivos</h2>
+              <p className="text-[11px] text-hl-muted font-medium mt-0.5">Envio, enquadramento e gestão de vídeos e imagens</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {/* BADGE COM CONTAGEM */}
-            <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-3 py-1.5 rounded uppercase tracking-wider shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+            <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[10px] font-mono font-bold px-3 py-1.5 rounded uppercase tracking-wider shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
               {customMediaList.length} MÍDIAS ({customMediaList.filter(m => m.type === 'image').length} IMG • {customMediaList.filter(m => m.type === 'video').length} VID)
             </span>
 
             {/* SELETOR DE MODO DE VISÃO (GRADE X LISTA) */}
-            <div className="bg-[#030303] p-1 rounded-xl border border-[#222] flex items-center gap-1 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+            <div className="bg-hl-canvas p-1 rounded-xl border border-hl-line-soft flex items-center gap-1 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
               <button
                 type="button"
                 onClick={() => setMediaViewMode('list')}
                 title="Modo de exibição em Lista detalhada"
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   mediaViewMode === 'list'
-                    ? "bg-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-hl-gold text-black font-bold shadow-[0_0_10px_rgba(255,211,79,0.5)]"
+                    : "text-hl-muted hover:text-hl-soft"
                 }`}
               >
                 <List className="w-4 h-4" />
@@ -408,8 +408,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                 title="Modo de exibição em Grade (Galeria)"
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   mediaViewMode === 'grid'
-                    ? "bg-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-hl-gold text-black font-bold shadow-[0_0_10px_rgba(255,211,79,0.5)]"
+                    : "text-hl-muted hover:text-hl-soft"
                 }`}
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -420,9 +420,9 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
         {/* CONTROLES DE DURAÇÃO PADRÃO & DROPZONE */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-3">
-          
+
           {/* DROPZONE DE UPLOAD */}
-          <div 
+          <div
             tabIndex={0}
             role="button"
             aria-label="Adicionar arquivos de mídia"
@@ -432,7 +432,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                 fileInputRef.current?.click();
               }
             }}
-            className="lg:col-span-2 relative border-2 border-dashed border-[#333] hover:border-amber-500/60 focus-visible:border-amber-500 focus-visible:outline-none rounded-2xl p-4 sm:p-5 transition-all bg-[#030303] text-center group cursor-pointer flex flex-col items-center justify-center min-h-[110px] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]"
+            className="lg:col-span-2 relative border-2 border-dashed border-hl-line hover:border-hl-gold/60 focus-visible:border-hl-gold focus-visible:outline-none rounded-2xl p-4 sm:p-5 transition-all bg-hl-canvas text-center group cursor-pointer flex flex-col items-center justify-center min-h-[110px] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]"
           >
             <input
               ref={fileInputRef}
@@ -444,20 +444,20 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               aria-label="Upload de imagem ou vídeo"
             />
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl group-hover:scale-105 transition-transform shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                <Plus className="w-5 h-5 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+              <div className="p-2.5 bg-hl-raised border border-hl-line-strong/50 rounded-xl group-hover:scale-105 transition-transform shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                <Plus className="w-5 h-5 text-hl-gold drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
               </div>
               <div className="text-left">
-                <p className="text-xs font-sans font-bold text-zinc-100">Clique ou arraste Imagens e Vídeos para adicionar</p>
-                <p className="text-[11px] text-zinc-400 mt-0.5">PNG, JPG, WEBP, MP4, WEBM (salvo localmente e sincronizado via PeerJS)</p>
+                <p className="text-xs font-sans font-bold text-hl-copy">Clique ou arraste Imagens e Vídeos para adicionar</p>
+                <p className="text-[11px] text-hl-muted mt-0.5">PNG, JPG, WEBP, MP4, WEBM (salvo localmente e sincronizado via PeerJS)</p>
               </div>
             </div>
           </div>
 
           {/* DURAÇÃO PADRÃO NOVAS IMAGENS */}
-          <div className="bg-[#030303] p-3.5 rounded-2xl border border-[#222] flex flex-col justify-between gap-2 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
-            <div className="flex items-center gap-1.5 text-zinc-300 text-[11px] font-sans font-bold uppercase tracking-wider">
-              <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <div className="bg-hl-canvas p-3.5 rounded-2xl border border-hl-line-soft flex flex-col justify-between gap-2 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+            <div className="flex items-center gap-1.5 text-hl-soft text-[11px] font-sans font-bold uppercase tracking-wider">
+              <Clock className="w-3.5 h-3.5 text-hl-gold shrink-0" />
               <span>Duração Padrão (Imagens):</span>
             </div>
 
@@ -469,8 +469,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   onClick={() => handleDefaultImgDurationChange(sec)}
                   className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     defaultImgSeconds === sec
-                      ? "bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.5)] font-black"
-                      : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-white"
+                      ? "bg-hl-gold text-black shadow-[0_0_10px_rgba(255,211,79,0.5)] font-black"
+                      : "bg-hl-raised border border-hl-line-soft text-hl-muted hover:text-white"
                   }`}
                 >
                   {sec}s
@@ -481,8 +481,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         </div>
 
         {isUploading && (
-          <div className="flex items-center justify-center gap-2.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl font-medium animate-pulse">
-            <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
+          <div className="flex items-center justify-center gap-2.5 text-xs text-hl-gold-bright bg-hl-gold/10 border border-hl-gold/20 p-3.5 rounded-xl font-medium animate-pulse">
+            <RefreshCw className="w-4 h-4 animate-spin text-hl-gold-bright" />
             <span>Processando, salvando e enviando arquivo de mídia...</span>
           </div>
         )}
@@ -495,23 +495,23 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         )}
 
         {/* FERRAMENTAS DE BUSCA E FILTROS DE MÍDIA */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
-          
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-hl-canvas/60 p-2.5 rounded-xl border border-hl-line/80">
+
           {/* BUSCA DE MÍDIAS POR NOME */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-hl-dim absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={mediaSearchTerm}
               onChange={(e) => setMediaSearchTerm(e.target.value)}
               placeholder="Buscar mídia por nome..."
-              className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-amber-500 placeholder-zinc-500 transition-all"
+              className="w-full bg-hl-panel border border-hl-line text-hl-copy text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-hl-gold placeholder-zinc-500 transition-all"
             />
             {mediaSearchTerm && (
               <button
                 type="button"
                 onClick={() => setMediaSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs font-bold px-1 flex items-center justify-center"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hl-dim hover:text-hl-soft text-xs font-bold px-1 flex items-center justify-center"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -525,8 +525,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               onClick={() => setMediaTypeFilter('all')}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 mediaTypeFilter === 'all'
-                  ? "bg-amber-500 text-black font-extrabold shadow-sm"
-                  : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-hl-gold text-black font-extrabold shadow-sm"
+                  : "bg-hl-panel border border-hl-line text-hl-muted hover:text-hl-soft"
               }`}
             >
               Todas ({customMediaList.length})
@@ -536,8 +536,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               onClick={() => setMediaTypeFilter('image')}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 mediaTypeFilter === 'image'
-                  ? "bg-amber-500 text-black font-extrabold shadow-sm"
-                  : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-hl-gold text-black font-extrabold shadow-sm"
+                  : "bg-hl-panel border border-hl-line text-hl-muted hover:text-hl-soft"
               }`}
             >
               Imagens
@@ -547,8 +547,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               onClick={() => setMediaTypeFilter('video')}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 mediaTypeFilter === 'video'
-                  ? "bg-amber-500 text-black font-extrabold shadow-sm"
-                  : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-hl-gold text-black font-extrabold shadow-sm"
+                  : "bg-hl-panel border border-hl-line text-hl-muted hover:text-hl-soft"
               }`}
             >
               Vídeos
@@ -558,16 +558,16 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
 <details className="holy-disclosure"><summary>Comportamento de vídeos e textos</summary><div>
         {/* COMPORTAMENTO VÍDEO FIXO */}
-        <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Ação ao Término de Vídeos Fixados:</span>
+        <div className="bg-hl-canvas/70 p-3 rounded-xl border border-hl-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <span className="text-hl-soft text-[11px] font-bold uppercase tracking-wider">Ação ao Término de Vídeos Fixados:</span>
           <div className="grid grid-cols-2 gap-2 max-w-sm w-full">
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('videoPinBehavior', 'loop')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 videoPinBehavior === 'loop'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
             >
               <RefreshCw className="w-3.5 h-3.5 shrink-0" />
@@ -576,10 +576,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('videoPinBehavior', 'unpin')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 videoPinBehavior === 'unpin'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
             >
               <Minimize className="w-3.5 h-3.5 shrink-0" />
@@ -589,19 +589,19 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         </div>
 
         {/* MODO DOS 60 SEGUNDOS FINAIS */}
-        <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="bg-hl-canvas/70 p-3 rounded-xl border border-hl-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex flex-col">
-            <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Últimos 60s (Vídeo em Reprodução):</span>
-            <span className="text-zinc-500 text-[10px] font-normal">Exibir dividindo tela ou apenas o vídeo</span>
+            <span className="text-hl-soft text-[11px] font-bold uppercase tracking-wider">Últimos 60s (Vídeo em Reprodução):</span>
+            <span className="text-hl-dim text-[10px] font-normal">Exibir dividindo tela ou apenas o vídeo</span>
           </div>
           <div className="grid grid-cols-2 gap-2 max-w-sm w-full">
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('finalMinuteDisplayMode', 'split')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 finalMinuteDisplayMode === 'split'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
               title="Exibe a contagem de 60s em um lado e o vídeo rodando ao lado"
             >
@@ -611,10 +611,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('finalMinuteDisplayMode', 'full_video')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 finalMinuteDisplayMode === 'full_video'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
               title="Mantém o vídeo em tela cheia ignorando o cronômetro do último minuto"
             >
@@ -625,19 +625,19 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         </div>
 
         {/* PRIORIDADE QUANDO VERSÍCULO É EXIBIDO */}
-        <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="bg-hl-canvas/70 p-3 rounded-xl border border-hl-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex flex-col">
-            <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Versículos Durante o Cronômetro:</span>
-            <span className="text-zinc-500 text-[10px] font-normal">Prioridade de exibição se um versículo for clicado</span>
+            <span className="text-hl-soft text-[11px] font-bold uppercase tracking-wider">Versículos Durante o Cronômetro:</span>
+            <span className="text-hl-dim text-[10px] font-normal">Prioridade de exibição se um versículo for clicado</span>
           </div>
           <div className="grid grid-cols-2 gap-2 max-w-sm w-full">
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('verseDisplayPriority', 'verse_over_video')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 verseDisplayPriority === 'verse_over_video'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
               title="Aparece sobre o vídeo/cronômetro se selecionado"
             >
@@ -647,10 +647,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('verseDisplayPriority', 'video_over_verse')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 verseDisplayPriority === 'video_over_verse'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
               title="Aparece apenas após o término do cronômetro"
             >
@@ -663,10 +663,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 </div></details>
         {/* LISTA OU GRADE DE MÍDIAS LOCAIS */}
         {filteredCustomMedia.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 text-zinc-400 text-xs text-center py-10 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
-            <ImageIcon className="w-8 h-8 text-zinc-600 stroke-[1.5]" />
-            <p className="font-semibold text-zinc-300">Nenhuma mídia encontrada nesta busca ou categoria.</p>
-            <p className="text-[11px] text-zinc-500">Envie novos arquivos acima para utilizá-los no telão.</p>
+          <div className="flex flex-col items-center justify-center gap-2 text-hl-muted text-xs text-center py-10 border border-dashed border-hl-line rounded-xl bg-hl-canvas/30">
+            <ImageIcon className="w-8 h-8 text-hl-dim stroke-[1.5]" />
+            <p className="font-semibold text-hl-soft">Nenhuma mídia encontrada nesta busca ou categoria.</p>
+            <p className="text-[11px] text-hl-dim">Envie novos arquivos acima para utilizá-los no telão.</p>
           </div>
         ) : mediaViewMode === 'grid' ? (
           /* EXIBIÇÃO EM GRADE (GALERIA) */
@@ -681,8 +681,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   key={media.id}
                   className={`rounded-xl border transition-all flex flex-col justify-between overflow-hidden relative group ${
                     isSlideActive
-                      ? "bg-amber-950/20 border-amber-500/80 shadow-md ring-1 ring-amber-500/40"
-                      : "bg-zinc-950/80 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900"
+                      ? "bg-hl-gold-well/20 border-hl-gold/80 shadow-md ring-1 ring-hl-gold/40"
+                      : "bg-hl-canvas/80 border-hl-line hover:border-hl-line hover:bg-hl-panel"
                   }`}
                 >
                   {/* PREVIEW EM DESTAQUE NA GRADE */}
@@ -699,7 +699,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         type="button"
                         onClick={() => setPreviewMedia(media)}
                         title="Pré-visualizar Mídia em Tela Cheia"
-                        className="p-2 rounded-xl bg-amber-500 text-black hover:bg-amber-400 font-bold transition-transform hover:scale-105 cursor-pointer"
+                        className="p-2 rounded-xl bg-hl-gold text-black hover:bg-hl-gold-bright font-bold transition-transform hover:scale-105 cursor-pointer"
                       >
                         <Maximize2 className="w-4 h-4" />
                       </button>
@@ -710,8 +710,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         title={isSlideOverridden ? "Desafixar do Telão" : "Projetar no Telão Agora"}
                         className={`p-2 rounded-xl font-bold transition-transform hover:scale-105 cursor-pointer ${
                           isSlideOverridden
-                            ? "bg-amber-500 text-black"
-                            : "bg-zinc-900 border border-zinc-700 text-amber-400 hover:bg-amber-500/20"
+                            ? "bg-hl-gold text-black"
+                            : "bg-hl-panel border border-hl-line text-hl-gold-bright hover:bg-hl-gold/20"
                         }`}
                       >
                         <Send className="w-4 h-4" />
@@ -720,13 +720,13 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
                     {/* BADGES NO TOPO DA MINIATURA */}
                     <div className="absolute top-2 left-2 flex items-center gap-1">
-                      <span className="bg-black/75 backdrop-blur-md text-[9px] font-black uppercase px-2 py-0.5 rounded text-amber-400 border border-zinc-800">
+                      <span className="bg-black/75 backdrop-blur-md text-[9px] font-black uppercase px-2 py-0.5 rounded text-hl-gold-bright border border-hl-line">
                         {media.type}
                       </span>
                     </div>
 
                     <div className="absolute top-2 right-2 flex items-center gap-1">
-                      <span className="bg-black/75 backdrop-blur-md text-[10px] font-mono font-bold text-zinc-200 px-2 py-0.5 rounded border border-zinc-800">
+                      <span className="bg-black/75 backdrop-blur-md text-[10px] font-mono font-bold text-hl-soft px-2 py-0.5 rounded border border-hl-line">
                         {media.duration / 1000}s
                       </span>
                     </div>
@@ -745,26 +745,26 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                             if (e.key === 'Escape') setEditingMediaId(null);
                           }}
                           autoFocus
-                          className="w-full bg-zinc-900 border border-amber-500 text-zinc-100 text-xs px-2 py-1 rounded focus:outline-none"
+                          className="w-full bg-hl-panel border border-hl-gold text-hl-copy text-xs px-2 py-1 rounded focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => handleSaveRename(media)}
-                          className="p-1 bg-amber-500 text-black rounded hover:bg-amber-400 font-bold shrink-0"
+                          className="p-1 bg-hl-gold text-black rounded hover:bg-hl-gold-bright font-bold shrink-0"
                         >
                           <Check className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between gap-1">
-                        <h4 className="text-zinc-100 font-bold text-xs truncate max-w-[140px]" title={media.name}>
+                        <h4 className="text-hl-copy font-bold text-xs truncate max-w-[140px]" title={media.name}>
                           {media.name}
                         </h4>
                         <button
                           type="button"
                           onClick={() => handleStartRename(media)}
                           title="Renomear mídia"
-                          className="text-zinc-500 hover:text-amber-400 p-0.5 cursor-pointer"
+                          className="text-hl-dim hover:text-hl-gold-bright p-0.5 cursor-pointer"
                         >
                           <Edit3 className="w-3 h-3" />
                         </button>
@@ -772,11 +772,11 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                     )}
 
                     {/* CONTROLES RÁPIDOS */}
-                    <div className="flex items-center justify-between gap-1 pt-2 border-t border-zinc-800/80 text-[10px]">
+                    <div className="flex items-center justify-between gap-1 pt-2 border-t border-hl-line/80 text-[10px]">
                       <button
                         type="button"
                         onClick={() => handleCycleFit(media)}
-                        className="bg-zinc-900 border border-zinc-800 px-2 py-1 rounded text-zinc-300 hover:text-white uppercase font-bold"
+                        className="bg-hl-panel border border-hl-line px-2 py-1 rounded text-hl-soft hover:text-white uppercase font-bold"
                       >
                         {media.fit || 'contain'}
                       </button>
@@ -786,7 +786,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                           type="button"
                           onClick={() => handleMoveMedia(media.id, 'up')}
                           disabled={index === 0}
-                          className="p-1 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 rounded"
+                          className="p-1 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded"
                         >
                           <ArrowUp className="w-3 h-3" />
                         </button>
@@ -794,14 +794,14 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                           type="button"
                           onClick={() => handleMoveMedia(media.id, 'down')}
                           disabled={index === customMediaList.length - 1}
-                          className="p-1 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 rounded"
+                          className="p-1 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded"
                         >
                           <ArrowDown className="w-3 h-3" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRemoveMedia(media)}
-                          className="p-1 bg-zinc-900 border border-zinc-800 hover:bg-red-950 hover:text-red-400 text-zinc-400 rounded"
+                          className="p-1 bg-hl-panel border border-hl-line hover:bg-red-950 hover:text-red-400 text-hl-muted rounded"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -825,16 +825,16 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   key={media.id}
                   className={`p-3.5 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
                     isSlideActive
-                      ? "bg-amber-950/20 border-amber-500/80 shadow-md"
-                      : "bg-zinc-950/70 border-zinc-800 hover:bg-zinc-850"
+                      ? "bg-hl-gold-well/20 border-hl-gold/80 shadow-md"
+                      : "bg-hl-canvas/70 border-hl-line hover:bg-hl-raised"
                   }`}
                 >
                   <div className="flex items-center gap-3 overflow-hidden w-full sm:w-auto">
                     {/* PREVIEW DA MÍDIA COM AÇÃO DE PREVIEW EXPANDIDO */}
-                    <div 
+                    <div
                       onClick={() => setPreviewMedia(media)}
                       title="Clique para ver o preview em tela cheia"
-                      className="w-14 h-14 rounded-lg bg-black border border-zinc-800 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer"
+                      className="w-14 h-14 rounded-lg bg-black border border-hl-line overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer"
                     >
                       {media.type === 'video' ? (
                         <video src={media.url} className={`w-full h-full object-${media.fit || 'contain'}`} muted />
@@ -842,7 +842,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         <img src={media.url} alt={media.name} className={`w-full h-full object-${media.fit || 'contain'}`} />
                       )}
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Maximize2 className="w-4 h-4 text-amber-400" />
+                        <Maximize2 className="w-4 h-4 text-hl-gold-bright" />
                       </div>
                     </div>
 
@@ -859,61 +859,61 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                               if (e.key === 'Escape') setEditingMediaId(null);
                             }}
                             autoFocus
-                            className="bg-zinc-900 border border-amber-500 text-zinc-100 text-xs px-2 py-1 rounded focus:outline-none max-w-xs"
+                            className="bg-hl-panel border border-hl-gold text-hl-copy text-xs px-2 py-1 rounded focus:outline-none max-w-xs"
                           />
                           <button
                             type="button"
                             onClick={() => handleSaveRename(media)}
-                            className="p-1 bg-amber-500 text-black rounded hover:bg-amber-400 font-bold shrink-0"
+                            className="p-1 bg-hl-gold text-black rounded hover:bg-hl-gold-bright font-bold shrink-0"
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <h4 className="text-zinc-100 font-bold text-xs truncate max-w-[200px] sm:max-w-xs" title={media.name}>
+                          <h4 className="text-hl-copy font-bold text-xs truncate max-w-[200px] sm:max-w-xs" title={media.name}>
                             {media.name}
                           </h4>
                           <button
                             type="button"
                             onClick={() => handleStartRename(media)}
                             title="Renomear mídia"
-                            className="text-zinc-500 hover:text-amber-400 p-0.5 cursor-pointer"
+                            className="text-hl-dim hover:text-hl-gold-bright p-0.5 cursor-pointer"
                           >
                             <Edit3 className="w-3 h-3" />
                           </button>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-amber-400 shrink-0">
+                          <span className="text-[9px] font-black uppercase px-2 py-0.5 bg-hl-panel border border-hl-line rounded text-hl-gold-bright shrink-0">
                             {media.type}
                           </span>
                         </div>
                       )}
 
                       {/* AJUSTES RÁPIDOS DE DURAÇÃO, FIT E ÁUDIO */}
-                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-zinc-400">
+                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-hl-muted">
                         {/* DURAÇÃO */}
                         {media.type === 'video' ? (
-                          <div 
-                            className="flex items-center gap-1 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 text-[10px] text-zinc-400 font-bold"
+                          <div
+                            className="flex items-center gap-1 bg-hl-panel px-2 py-0.5 rounded border border-hl-line text-[10px] text-hl-muted font-bold"
                             title="O carrossel avança automaticamente assim que o vídeo termina de tocar"
                           >
-                            <Clock className="w-3 h-3 text-amber-500" />
+                            <Clock className="w-3 h-3 text-hl-gold" />
                             <span>Duração Nativa (Auto)</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800" title="Tempo em segundos que esta imagem permanece na tela no carrossel automático">
-                            <span className="text-[10px] uppercase text-zinc-500 font-bold">Tempo:</span>
+                          <div className="flex items-center gap-1.5 bg-hl-panel px-2 py-0.5 rounded border border-hl-line" title="Tempo em segundos que esta imagem permanece na tela no carrossel automático">
+                            <span className="text-[10px] uppercase text-hl-dim font-bold">Tempo:</span>
                             <button
                               type="button"
                               onClick={() => handleAdjustDuration(media, -1000)}
-                              className="w-4 h-4 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                              className="w-4 h-4 rounded bg-hl-raised hover:bg-hl-raised text-white flex items-center justify-center text-xs font-bold cursor-pointer"
                             >
                               -
                             </button>
-                            <span className="font-mono text-zinc-200 font-bold">{media.duration / 1000}s</span>
+                            <span className="font-mono text-hl-soft font-bold">{media.duration / 1000}s</span>
                             <button
                               type="button"
                               onClick={() => handleAdjustDuration(media, 1000)}
-                              className="w-4 h-4 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                              className="w-4 h-4 rounded bg-hl-raised hover:bg-hl-raised text-white flex items-center justify-center text-xs font-bold cursor-pointer"
                             >
                               +
                             </button>
@@ -925,9 +925,9 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                           type="button"
                           onClick={() => handleCycleFit(media)}
                           title="Alternar enquadramento (contain, cover, fill)"
-                          className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-[10px] font-bold text-zinc-300 hover:text-white uppercase flex items-center gap-1 cursor-pointer"
+                          className="bg-hl-panel border border-hl-line px-2 py-0.5 rounded text-[10px] font-bold text-hl-soft hover:text-white uppercase flex items-center gap-1 cursor-pointer"
                         >
-                          <Maximize className="w-3 h-3 text-amber-500" />
+                          <Maximize className="w-3 h-3 text-hl-gold" />
                           <span>{media.fit || 'contain'}</span>
                         </button>
 
@@ -952,13 +952,13 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
                   {/* AÇÕES DA MÍDIA */}
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    
+
                     {/* BOTAO DE PRÉ-VISUALIZAR */}
                     <button
                       type="button"
                       onClick={() => setPreviewMedia(media)}
                       title="Pré-visualizar em Tela Cheia"
-                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg border border-hl-line bg-hl-panel text-hl-soft hover:bg-hl-raised hover:text-white transition-all flex items-center justify-center cursor-pointer"
                     >
                       <Maximize2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
@@ -969,22 +969,22 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       onClick={() => updateStateAndBroadcast('manualSlideOverride', isSlideOverridden ? null : media.id)}
                       aria-label={isSlideOverridden ? "Desafixar mídia" : "Projetar esta mídia"}
                       title={isSlideOverridden ? "Desafixar mídia do telão" : "Projetar esta mídia imediatamente"}
-                      className={`w-9 h-9 sm:w-8 sm:h-8 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                      className={`w-9 h-9 sm:w-8 sm:h-8 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold ${
                         isSlideOverridden
-                          ? "bg-amber-500 border-amber-500 text-black hover:bg-amber-400 font-bold"
-                          : "bg-zinc-900 border-zinc-800 hover:bg-amber-500/20 hover:border-amber-500/40 text-amber-400"
+                          ? "bg-hl-gold border-hl-gold text-black hover:bg-hl-gold-bright font-bold"
+                          : "bg-hl-panel border-hl-line hover:bg-hl-gold/20 hover:border-hl-gold/40 text-hl-gold-bright"
                       }`}
                     >
                       <Send className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
-                    
+
                     {/* MOVER PRA CIMA */}
                     <button
                       type="button"
                       onClick={() => handleMoveMedia(media.id, 'up')}
                       disabled={index === 0}
                       title="Mover mídia para cima na lista"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded-lg transition-all flex items-center justify-center cursor-pointer"
                     >
                       <ArrowUp className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
@@ -995,7 +995,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       onClick={() => handleMoveMedia(media.id, 'down')}
                       disabled={index === customMediaList.length - 1}
                       title="Mover mídia para baixo na lista"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded-lg transition-all flex items-center justify-center cursor-pointer"
                     >
                       <ArrowDown className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
@@ -1006,7 +1006,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       aria-label={`Excluir mídia ${media.name}`}
                       title="Excluir mídia permanentemente"
                       onClick={() => handleRemoveMedia(media)}
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-zinc-900 border border-zinc-800 hover:bg-red-950/60 hover:border-red-800/60 text-zinc-400 hover:text-red-400 rounded-lg transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-hl-panel border border-hl-line hover:bg-red-950/60 hover:border-red-800/60 text-hl-muted hover:text-red-400 rounded-lg transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                     >
                       <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
@@ -1021,20 +1021,20 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
       {/* MODAL DE PRÉ-VISUALIZAÇÃO EXPANDIDA */}
       {previewMedia && (
-        <div 
-          className="holy-overlay fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+        <div
+          className="holy-theme holy-overlay fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setPreviewMedia(null)}
         >
-          <div 
-            ref={previewDialogRef} role="dialog" aria-modal="true" aria-label="Prévia da mídia" tabIndex={-1} className="holy-dialog bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-w-4xl w-full max-h-[90vh] flex flex-col gap-4 shadow-2xl relative overflow-hidden"
+          <div
+            ref={previewDialogRef} role="dialog" aria-modal="true" aria-label="Prévia da mídia" tabIndex={-1} className="holy-dialog bg-hl-panel border border-hl-line rounded-2xl p-4 max-w-4xl w-full max-h-[90vh] flex flex-col gap-4 shadow-2xl relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+            <div className="flex items-center justify-between border-b border-hl-line pb-3">
               <div className="flex items-center gap-2">
-                {previewMedia.type === 'video' ? <Film className="w-5 h-5 text-amber-500" /> : <ImageIcon className="w-5 h-5 text-amber-500" />}
+                {previewMedia.type === 'video' ? <Film className="w-5 h-5 text-hl-gold" /> : <ImageIcon className="w-5 h-5 text-hl-gold" />}
                 <div>
-                  <h3 className="font-extrabold text-sm text-zinc-100">{previewMedia.name}</h3>
-                  <span className="text-[10px] text-zinc-400 font-mono">
+                  <h3 className="font-extrabold text-sm text-hl-copy">{previewMedia.name}</h3>
+                  <span className="text-[10px] text-hl-muted font-mono">
                     {previewMedia.type.toUpperCase()} • {previewMedia.duration / 1000}s • Enquadramento: {previewMedia.fit || 'contain'}
                   </span>
                 </div>
@@ -1042,32 +1042,32 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               <button
                 type="button"
                 onClick={() => setPreviewMedia(null)}
-                aria-label="Fechar prévia" className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer"
+                aria-label="Fechar prévia" className="p-2 rounded-xl bg-hl-raised hover:bg-hl-raised text-hl-soft hover:text-white transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 bg-zinc-950 rounded-xl border border-zinc-800/80 overflow-hidden flex items-center justify-center p-3 min-h-[300px] max-h-[60vh] relative shadow-inner">
+            <div className="flex-1 bg-hl-canvas rounded-xl border border-hl-line/80 overflow-hidden flex items-center justify-center p-3 min-h-[300px] max-h-[60vh] relative shadow-inner">
               {previewMedia.type === 'video' ? (
-                <video 
-                  src={previewMedia.url} 
-                  controls 
-                  autoPlay 
+                <video
+                  src={previewMedia.url}
+                  controls
+                  autoPlay
                   playsInline
-                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl" 
+                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl"
                 />
               ) : (
-                <img 
-                  src={previewMedia.url} 
-                  alt={previewMedia.name} 
-                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl" 
+                <img
+                  src={previewMedia.url}
+                  alt={previewMedia.name}
+                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl"
                 />
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-zinc-800/80">
-              <span className="text-xs text-zinc-400">Pré-visualização técnica do operador (não afeta o telão ao vivo)</span>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-hl-line/80">
+              <span className="text-xs text-hl-muted">Pré-visualização técnica do operador (não afeta o telão ao vivo)</span>
               <button
                 type="button"
                 onClick={() => {
@@ -1078,7 +1078,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   setPreviewMedia(null);
                   showAlert(`Mídia "${previewMedia.name}" enviada. Confira o telão.`, 'success');
                 }}
-                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                className="w-full sm:w-auto bg-hl-gold hover:bg-hl-gold-bright text-black font-extrabold text-xs px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
               >
                 <Send className="w-4 h-4" />
                 <span>Projetar Agora no Telão</span>

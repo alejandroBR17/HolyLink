@@ -3,8 +3,8 @@ import { useSlideManager } from "./hooks/useSlideManager";
 import { useWakeLock } from "./hooks/useWakeLock";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen, 
+import {
+  Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen,
   CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download, Sparkles,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, EyeOff, Eye
 } from 'lucide-react';
@@ -99,7 +99,7 @@ export default function App() {
     countdownPaused,
     countdownOffset,
     dismissedJustStarted,
-    
+
     videoPinBehavior,
     finalMinuteDisplayMode,
     verseDisplayPriority,
@@ -214,7 +214,7 @@ export default function App() {
   const handleMainScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
     const currentScrollTop = e.currentTarget.scrollTop;
     const delta = currentScrollTop - lastScrollTopRef.current;
-    
+
     // Auto-collapse header on mobile when scrolling down, restore when scrolling up or at top
     if (currentScrollTop > 40 && delta > 8) {
       setIsScrolledDown(true);
@@ -253,7 +253,7 @@ export default function App() {
 
   let isJustStarted = isJustStartedRaw && !dismissedJustStarted;
   let diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
-  
+
   if (countdownPaused && pausedSeconds !== null) {
     diffSeconds = pausedSeconds;
   }
@@ -481,13 +481,13 @@ export default function App() {
   useEffect(() => {
     if (isProjectionView) {
       updateStateAndBroadcast('isProjectionOpen', true);
-      
+
       const handleBeforeUnload = () => {
         updateStateAndBroadcast('isProjectionOpen', false);
       };
-      
+
       window.addEventListener('beforeunload', handleBeforeUnload);
-      
+
       return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
       };
@@ -496,7 +496,7 @@ export default function App() {
 
   const { width, height } = dimensions;
   const shouldRotate = manualRotateMode === 'auto' && height > width;
-  
+
   let scale = 1;
   if (shouldRotate) {
     scale = Math.min(height / 1920, width / 1080);
@@ -582,49 +582,49 @@ export default function App() {
 
   if (isSmartBooting) {
     return (
-      <SmartSplashLoader 
-        customMediaList={customMediaList} 
-        onComplete={() => setIsSmartBooting(false)} 
+      <SmartSplashLoader
+        customMediaList={customMediaList}
+        onComplete={() => setIsSmartBooting(false)}
       />
     );
   }
 
   if (!isProjectionView && !isLocalProjection) {
     return (
-      <div className="operator-shell w-full h-full text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
-        
+      <div className="holy-theme operator-shell w-full h-full text-hl-copy flex flex-col font-sans select-none overflow-hidden">
+
         {/* GLOBAL SYNC OVERLAY */}
         <AnimatePresence>
           {syncStatus?.active && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
+              className="holy-theme holy-sync-progress fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
             >
               <div className="relative w-24 h-24 mb-8">
-                <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
-                <motion.div 
+                <div className="absolute inset-0 border-4 border-hl-gold/20 rounded-full" />
+                <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                   className="absolute inset-0 border-4 border-transparent border-t-amber-500 rounded-full"
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <RefreshCw className="w-8 h-8 text-amber-500 animate-pulse" />
+                  <RefreshCw className="w-8 h-8 text-hl-gold animate-pulse" />
                 </div>
               </div>
-              
+
               <h2 className="text-2xl font-black text-white uppercase tracking-[0.2em] mb-2">Sincronizando Dados</h2>
-              <p className="text-zinc-400 font-medium tracking-wide max-w-md mx-auto leading-relaxed">
+              <p className="text-hl-muted font-medium tracking-wide max-w-md mx-auto leading-relaxed">
                 {syncStatus.message}
               </p>
-              
+
               {syncStatus.progress !== undefined && (
-                <div className="w-full max-w-xs bg-zinc-900 h-1.5 rounded-full mt-6 overflow-hidden border border-zinc-800">
-                  <motion.div 
+                <div className="w-full max-w-xs bg-hl-panel h-1.5 rounded-full mt-6 overflow-hidden border border-hl-line">
+                  <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${syncStatus.progress}%` }}
-                    className="h-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                    className="h-full bg-hl-gold shadow-[0_0_10px_rgba(255,211,79,0.5)]"
                   />
                 </div>
               )}
@@ -634,15 +634,15 @@ export default function App() {
 
         {/* PWA UPDATE NOTIFICATION BANNER */}
         {hasUpdateAvailable && (
-          <div className="bg-amber-500 text-zinc-950 px-4 py-2 flex items-center justify-between text-xs font-bold shrink-0 z-50 shadow-md">
+          <div className="bg-hl-gold text-hl-ink px-4 py-2 flex items-center justify-between text-xs font-bold shrink-0 z-50 shadow-md">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-zinc-950 animate-bounce" />
+              <Sparkles className="w-4 h-4 text-hl-ink animate-bounce" />
               <span>Nova versão do HolyLink disponível! Atualize para ter acesso aos recursos mais recentes.</span>
             </div>
             <button
               onClick={forceAppUpdate}
               disabled={isUpdating}
-              className="bg-zinc-950 hover:bg-zinc-900 text-amber-400 px-3 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer shadow flex items-center gap-1.5"
+              className="bg-hl-canvas hover:bg-hl-panel text-hl-gold-bright px-3 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer shadow flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isUpdating ? 'animate-spin' : ''}`} />
               <span>{isUpdating ? 'Atualizando...' : 'Atualizar PWA Agora'}</span>
@@ -674,9 +674,9 @@ export default function App() {
               ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:py-2.5 lg:border-b lg:opacity-100 lg:pointer-events-auto'
               : 'max-h-40 py-2.5 border-b opacity-100'
           } ${
-            dismissedJustStarted 
-              ? "bg-emerald-950/40 border-emerald-800/50 text-emerald-400" 
-              : "bg-amber-950/40 border-amber-800/50 text-amber-400"
+            dismissedJustStarted
+              ? "bg-emerald-950/40 border-emerald-800/50 text-emerald-400"
+              : "bg-hl-gold-well/40 border-hl-line-strong/50 text-hl-gold-bright"
           }`}>
             <div className="flex items-center gap-2 text-xs font-bold font-sans">
               {dismissedJustStarted ? (
@@ -689,18 +689,18 @@ export default function App() {
                 </>
               ) : (
                 <>
-                  <BookOpen className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+                  <BookOpen className="w-4 h-4 text-hl-gold-bright animate-pulse shrink-0" />
                   <span><strong>Modo Reunião Ativo:</strong> Exibindo Bíblia (Carrossel Pausado).</span>
                 </>
               )}
             </div>
-            
+
             <button
               onClick={() => updateStateAndBroadcast('dismissedJustStarted', !dismissedJustStarted)}
               className={`text-xs font-black px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.5)] shrink-0 w-full md:w-auto text-center active:translate-y-[1px] ${
-                dismissedJustStarted 
-                  ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.3)]" 
-                  : "bg-amber-500 hover:bg-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                dismissedJustStarted
+                  ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.3)]"
+                  : "bg-hl-gold hover:bg-hl-gold-bright text-black shadow-[0_0_12px_rgba(255,211,79,0.3)]"
               }`}
             >
               {dismissedJustStarted ? "Exibir Bíblia" : "Liberar Carrossel"}
@@ -717,7 +717,7 @@ export default function App() {
         </nav>
         {/* MAIN PANEL CONTENT GRID */}
         <div className="operator-workspace flex-1 flex flex-col overflow-hidden min-h-0">
-          
+
 
           {/* ACTIVE CONTENT WORKSPACE */}
           <nav className="operator-quick-strip" aria-label="Controles essenciais da projeção">
@@ -726,7 +726,7 @@ export default function App() {
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(-1)}><ChevronLeft size={18} aria-hidden="true" />Slide anterior</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
           </nav>          <main onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">
-            
+
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (
               <PlaylistPanel
@@ -843,7 +843,7 @@ export default function App() {
                 customVerseRef={customVerseRef}
                 activeVerseIndex={activeVerseIndex}
                 customMediaList={customMediaList}
-                
+
                 videoPinBehavior={videoPinBehavior}
                 finalMinuteDisplayMode={finalMinuteDisplayMode}
                 verseDisplayPriority={verseDisplayPriority}
@@ -869,7 +869,7 @@ export default function App() {
 
         </div>
 
-        <CustomModal 
+        <CustomModal
           isOpen={modalConfig.isOpen}
           title={modalConfig.title}
           message={modalConfig.message}
@@ -877,15 +877,15 @@ export default function App() {
           onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
           variant={modalConfig.variant}
         />
-        <CustomToast 
+        <CustomToast
           isVisible={toastConfig.isVisible}
           message={toastConfig.message}
           type={toastConfig.type}
           onClose={() => setToastConfig(prev => ({ ...prev, isVisible: false }))}
         />
-        <PWAInstallModal 
-          isOpen={showPwaModal} 
-          onClose={() => setShowPwaModal(false)} 
+        <PWAInstallModal
+          isOpen={showPwaModal}
+          onClose={() => setShowPwaModal(false)}
         />
       </div>
     );
@@ -893,14 +893,14 @@ export default function App() {
 
   // MAIN HDMI 16:9 DUAL-SCREEN VIEWPORT
   return (
-    <div 
+    <div
       onClick={async () => {
         if (!isCurrentlyFullscreen) {
           try {
             if ('getScreenDetails' in window) {
               const screenDetails = await (window as any).getScreenDetails();
               const secondaryScreen = screenDetails.screens.find((s: any) => s.isExtended || !s.isPrimary);
-              
+
               if (secondaryScreen) {
                 await (document.documentElement as any).requestFullscreen({ screen: secondaryScreen });
                 return;
@@ -912,19 +912,19 @@ export default function App() {
           document.documentElement.requestFullscreen().catch(() => {});
         }
       }}
-      className={`w-screen h-screen bg-black overflow-hidden relative select-none font-sans flex items-center justify-center ${isCurrentlyFullscreen ? 'cursor-none' : 'cursor-pointer'}`}
+      className={`holy-theme holy-projection-window w-screen h-screen bg-black overflow-hidden relative select-none font-sans flex items-center justify-center ${isCurrentlyFullscreen ? 'cursor-none' : 'cursor-pointer'}`}
     >
-      
+
       {!isCurrentlyFullscreen && (
-        <div className="absolute inset-0 z-[200] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white p-10 text-center animate-in fade-in duration-500">
-          <div className="bg-amber-500 text-black p-6 rounded-full mb-6 shadow-[0_0_50px_rgba(245,158,11,0.4)] animate-bounce">
+        <div className="holy-fullscreen-prompt absolute inset-0 z-[200] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white p-10 text-center animate-in fade-in duration-500">
+          <div className="bg-hl-gold text-black p-6 rounded-2xl mb-6 shadow-[0_0_50px_rgba(255,211,79,0.25)]">
             <Maximize className="w-12 h-12" />
           </div>
           <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Ativar tela cheia no telão</h2>
-          <p className="text-zinc-300 text-xl font-medium">Abra esta janela no telão ligado por HDMI e clique para entrar em tela cheia.</p>
+          <p className="text-hl-soft text-xl font-medium">Abra esta janela no telão ligado por HDMI e clique para entrar em tela cheia.</p>
         </div>
       )}
-      
+
       {/* 16:9 PROJECTION FRAME */}
       <div
         id="painel-16-9"
@@ -936,7 +936,7 @@ export default function App() {
           left: '50%',
           top: '50%',
         }}
-        className="bg-[#050000] text-white shadow-[0_0_250px_rgba(0,0,0,0.99)] overflow-hidden flex flex-col z-10"
+        className="bg-hl-canvas text-white shadow-[0_0_250px_rgba(0,0,0,0.99)] overflow-hidden flex flex-col z-10"
       >
         <ProjectionContent
           currentTime={currentTime}
@@ -959,7 +959,7 @@ export default function App() {
           churchInfo={CHURCH_INFO}
           alerts={ALERTS}
           customMediaList={customMediaList}
-          
+
           videoPinBehavior={videoPinBehavior}
           finalMinuteDisplayMode={finalMinuteDisplayMode}
           verseDisplayPriority={verseDisplayPriority}
@@ -986,20 +986,20 @@ export default function App() {
           if (!media.url) return null;
           if (media.type === 'image') {
             return (
-              <img 
-                key={`preload-${media.id}`} 
-                src={media.url} 
-                alt="" 
-                referrerPolicy="no-referrer" 
+              <img
+                key={`preload-${media.id}`}
+                src={media.url}
+                alt=""
+                referrerPolicy="no-referrer"
               />
             );
           } else {
             return (
-              <video 
-                key={`preload-${media.id}`} 
-                src={media.url} 
-                preload="auto" 
-                muted 
+              <video
+                key={`preload-${media.id}`}
+                src={media.url}
+                preload="auto"
+                muted
               />
             );
           }
@@ -1007,28 +1007,28 @@ export default function App() {
       </div>
 
       {shouldRotate && (
-        <div className="absolute top-6 left-6 z-50 bg-black/95 text-white border border-zinc-800 rounded-xl px-5 py-3 text-sm flex items-center gap-2 font-medium pointer-events-none tracking-wide shadow-xl backdrop-blur-md animate-pulse">
-          <Tv className="w-5 h-5 text-amber-500" />
+        <div className="absolute top-6 left-6 z-50 bg-black/95 text-white border border-hl-line rounded-xl px-5 py-3 text-sm flex items-center gap-2 font-medium pointer-events-none tracking-wide shadow-xl backdrop-blur-md animate-pulse">
+          <Tv className="w-5 h-5 text-hl-gold" />
           <span>Modo Widescreen Bloqueado. Deite a tela.</span>
         </div>
       )}
 
       <button
         onClick={toggleFullscreen}
-        className="absolute top-6 right-6 z-50 bg-black/80 hover:bg-black/95 text-white border border-zinc-800 hover:border-zinc-600 rounded-full p-4 shadow-xl backdrop-blur-md transition-all cursor-pointer flex items-center justify-center gap-2 group lg:hidden"
+        className="absolute top-6 right-6 z-50 bg-black/80 hover:bg-black/95 text-white border border-hl-line hover:border-hl-line-strong rounded-full p-4 shadow-xl backdrop-blur-md transition-all cursor-pointer flex items-center justify-center gap-2 group lg:hidden"
         aria-label="Alternar Tela Cheia"
       >
         {isFullscreen ? (
-          <Minimize className="w-6 h-6 text-amber-500" />
+          <Minimize className="w-6 h-6 text-hl-gold" />
         ) : (
-          <Maximize className="w-6 h-6 text-amber-500" />
+          <Maximize className="w-6 h-6 text-hl-gold" />
         )}
-        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap text-zinc-200 text-sm font-semibold pr-0 group-hover:pr-2">
+        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap text-hl-soft text-sm font-semibold pr-0 group-hover:pr-2">
           {isFullscreen ? "Sair" : "Tela Cheia"}
         </span>
       </button>
 
-      <CustomModal 
+      <CustomModal
         isOpen={modalConfig.isOpen}
         title={modalConfig.title}
         message={modalConfig.message}
@@ -1036,7 +1036,7 @@ export default function App() {
         onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
         variant={modalConfig.variant}
       />
-      <CustomToast 
+      <CustomToast
         isVisible={toastConfig.isVisible}
         message={toastConfig.message}
         type={toastConfig.type}

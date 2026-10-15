@@ -10,16 +10,16 @@
 .console-facts dt { font-size:10px; font-family:var(--font-mono); color:#8f8c9c; margin-bottom:5px; }
 .console-facts dd { font-size:13px; font-weight:650; color:#f5dda0; margin:0; }
 .console-area { min-width:0; }
-.operator-shell .console-area :is(section,[class~="bg-[#09090b]"],[class~="bg-[#0a0a0d]"]):not(.console-projection-surface *) { background:linear-gradient(145deg,#141319,#09090d 60%); border-color:#3c3741; border-radius:14px; box-shadow:inset 0 1px #ffdf6812,0 12px 32px #0005; }
+.operator-shell .console-area :is(section,[class~="bg-hl-panel"],[class~="bg-hl-panel"]):not(.console-projection-surface *) { background:linear-gradient(145deg,#141319,#09090d 60%); border-color:#3c3741; border-radius:14px; box-shadow:inset 0 1px #ffdf6812,0 12px 32px #0005; }
 .operator-shell .console-area :is(button,input,select,textarea,summary):not(.console-projection-surface *) { min-height:44px; }
 .operator-shell .console-area :is(input,select,textarea):not(.console-projection-surface *) { border-color:#3d3947; background-color:#050507; max-width:100%; min-width:0; font-size:13px; }
 .operator-shell .console-area :is(input,textarea):not(.console-projection-surface *) { user-select:text; }
 .operator-shell .console-area :is(h3,h4):not(.console-projection-surface *) { font-size:15px; line-height:1.45; }
 .operator-shell .console-area [class~="text-[9px]"]:not(.console-projection-surface *),.operator-shell .console-area [class~="text-[10px]"]:not(.console-projection-surface *) { font-size:11px; }
-.operator-shell .console-area [class~="text-zinc-500"]:not(.console-projection-surface *) { color:#9a96a9; }
-.operator-shell .console-area [class~="text-zinc-600"]:not(.console-projection-surface *) { color:#878291; }
+.operator-shell .console-area [class~="text-hl-dim"]:not(.console-projection-surface *) { color:#9a96a9; }
+.operator-shell .console-area [class~="text-hl-dim"]:not(.console-projection-surface *) { color:#878291; }
 .operator-shell .console-area :is(button,summary):hover { border-color:#d9ac4166; }
-.operator-shell .console-area button[class*="bg-amber-500"] { background:linear-gradient(155deg,#ffe99a,#ffc927 75%); color:#181000; border-color:#ffe17a; }
+.operator-shell .console-area button[class~="bg-hl-gold"] { background:linear-gradient(155deg,#ffe99a,#ffc927 75%); color:#181000; border-color:#ffe17a; }
 .console-group-icon { display:grid; place-items:center; width:42px; height:42px; border:1px solid #ffd34f40; border-radius:10px; background:linear-gradient(140deg,#ffd34f20,#0b0b11); color:#ffe07a; flex-shrink:0; }
 .console-group-copy { flex:1; min-width:0; text-align:left; }
 .console-group-copy strong { display:block; font-size:15px; font-weight:650; color:#f2eddf; line-height:1.45; }

@@ -41,13 +41,12 @@ export function usePWAIcons() {
       icon512.href = '/pwa/local-'+type+'-'+theme+'-512.png';
     }
 
-    // Dynamic theme color update
+    // Application chrome stays consistent when customizing the icon background.
     const themeColor = document.querySelector('meta[name="theme-color"]');
     if (themeColor) {
-      themeColor.setAttribute("content", iconTheme === "light" ? "#ffffff" : "#020617");
+      themeColor.setAttribute("content", "#030305");
     }
   }, [iconType, iconTheme]);
 
   return { iconType, setIconType, iconTheme, setIconTheme, getIconUrl: () => '/pwa/local-'+(['symbol','full','text'].includes(iconType)?iconType:'symbol')+'-'+(['dark','light','transparent'].includes(iconTheme)?iconTheme:'transparent')+'-192.png' };
 }
-
