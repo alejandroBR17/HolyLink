@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Waves, Wind, CircleDot, Sparkles, CircleOff, WandSparkles, Eye, Gauge} from 'lucide-react';
+import {Waves, Wind, CircleDot, Sparkles, CircleOff, WandSparkles, Eye, Gauge} from '../ui/icons';
 import {ThreeBackground3D, type BackgroundStyleOption} from '../ThreeBackground3D';
 import {ParticlesBackground} from '../ParticlesBackground';
 const styles = [

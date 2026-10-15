@@ -1,4 +1,4 @@
-const CACHE_NAME = 'holylink-pwa-v12-controlled-updates';
+const CACHE_NAME = 'holylink-pwa-v13-install-layout';
 const MAX_ENTRIES = 120;
 const urlsToCache = ['/', '/index.html', '/pwa-bootstrap.js', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/local-symbol-dark-192.png', '/pwa/local-symbol-dark-512.png'];
 self.addEventListener('message', event => {

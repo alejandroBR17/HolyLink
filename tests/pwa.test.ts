@@ -28,7 +28,7 @@ test('icon variants preserve application identity and point to their actual loca
  }
 });
 test('offline navigation tries the root fallback and returns an explicit failure if no shell exists',async()=>{
- const w=worker(async()=>{throw Error('offline');},{'holylink-pwa-v12-controlled-updates':new Map([['/',new Response('shell')]])});
+ const w=worker(async()=>{throw Error('offline');},{'holylink-pwa-v13-install-layout':new Map([['/',new Response('shell')]])});
  const request={method:'GET',url:'https://holy.test/operator',mode:'navigate'};
  assert.equal(await (await w.dispatch('fetch',{request}))!.text(),'shell');
  const empty=worker(async()=>{throw Error('offline');});
@@ -53,7 +53,7 @@ test('navigation caching never retains query strings or share tokens',async()=>{
 
 test('runtime cache remains bounded even when icon requests carry changing queries',async()=>{
  const entries=new Map(Array.from({length:135},(_,i)=>[`https://holy.test/pwa/local-symbol-dark-192.png?v=${i}`,new Response('old')] as [string,Response]));
- const w=worker(async()=>new Response('new'),{'holylink-pwa-v12-controlled-updates':entries});
+ const w=worker(async()=>new Response('new'),{'holylink-pwa-v13-install-layout':entries});
  await w.dispatch('fetch',{request:{method:'GET',mode:'cors',url:'https://holy.test/pwa/local-symbol-dark-192.png?v=next'}});
  assert.ok([...w.stores.values()][0].size<=120);
 });

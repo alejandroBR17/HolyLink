@@ -1,3 +1,4 @@
+import {AppUpdateNotice} from './components/AppUpdateNotice';
 import {selectProjectionVerse} from './utils/verse-selection';
 import {isYouthProjection} from './utils/projection-theme';
 import { useSlideManager } from "./hooks/useSlideManager";
@@ -8,7 +9,7 @@ import {
   Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen,
   CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download, Sparkles,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, EyeOff, Eye
-} from 'lucide-react';
+} from './components/ui/icons';
 import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS, VERSES } from './data';
 import { getNextMeeting, getSlideDuration } from './utils';
 import { mediaPreloader } from './utils/preloader';
@@ -644,23 +645,7 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* PWA UPDATE NOTIFICATION BANNER */}
-        {hasUpdateAvailable && (
-          <div className="bg-hl-gold text-hl-ink px-4 py-2 flex items-center justify-between text-xs font-bold shrink-0 z-50 shadow-md">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-hl-ink animate-bounce" />
-              <span>Nova versão do HolyLink disponível! Atualize para ter acesso aos recursos mais recentes.</span>
-            </div>
-            <button
-              onClick={forceAppUpdate}
-              disabled={isUpdating}
-              className="bg-hl-canvas hover:bg-hl-panel text-hl-gold-bright px-3 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer shadow flex items-center gap-1.5"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isUpdating ? 'animate-spin' : ''}`} />
-              <span>{isUpdating ? 'Atualizando...' : 'Atualizar PWA Agora'}</span>
-            </button>
-          </div>
-        )}
+        {hasUpdateAvailable && <AppUpdateNotice updating={isUpdating} onUpdate={forceAppUpdate}/>}
 
         <header className="holy-topbar">
           <div className="holy-brand"><img src={LOGO_URLS.symbol} alt="Símbolo HolyLink" width={44} height={44} /><div><h1>HolyLink</h1><span>Projeção · 16:9</span></div></div>

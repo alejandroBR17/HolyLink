@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import {AlertTriangle,CheckCircle2,HardDrive,LoaderCircle,Monitor,RefreshCw,ShieldCheck,Volume2} from 'lucide-react';
+import {AlertTriangle,CheckCircle2,HardDrive,LoaderCircle,Monitor,RefreshCw,ShieldCheck,Volume2} from './ui/icons';
 import {checkAllPermissions,requestSinglePermission,type PermissionStatusItem} from '../utils/permissions';
 import {subscribeWakeLock} from '../utils/wakeLock';
 

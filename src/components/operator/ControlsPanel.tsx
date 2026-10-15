@@ -3,7 +3,7 @@ import {BrowserPermissions} from '../BrowserPermissions';
 import {ShortcutsGuide} from './ShortcutsGuide';
 import {ConsoleIntro, ConsoleGroupTitle} from './ConsoleIntro';
 import React, { FormEvent, useState, useEffect, useRef } from 'react';
-import {ExternalLink, X, EyeOff, Plus, Minus, Play, Pause, SlidersHorizontal, Eye, Eraser, ListVideo, Hand, Timer, RotateCcw, Waves, MessageSquareText, Keyboard, Bell, Trash2, Send, VolumeX, Volume2, Megaphone, Gauge, HardDrive, Monitor, Download, Baby, Car, Key, CloudRain, Droplets, ArrowRightLeft} from 'lucide-react';
+import {ExternalLink, X, EyeOff, Plus, Minus, Play, Pause, SlidersHorizontal, Eye, Eraser, ListVideo, Hand, Timer, RotateCcw, Waves, MessageSquareText, Keyboard, Bell, Trash2, Send, VolumeX, Volume2, Megaphone, Gauge, HardDrive, Monitor, Download, Baby, Car, Key, CloudRain, Droplets, ArrowRightLeft} from '../ui/icons';
 import { ALERTS } from '../../data';
 import { Meeting } from '../../types';
 import { getSetting, saveSetting } from '../../utils';
