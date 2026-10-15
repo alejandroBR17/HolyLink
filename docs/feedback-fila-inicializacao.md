@@ -53,3 +53,13 @@ Persistência não é permissão para ler/gravar a biblioteca: é proteção ext
 Validação desta correção: TypeScript/build e 40 testes nativos aprovados; navegador em 320/390/768/1365 px com concessão e recusa simuladas; casos adicionais de exceção, timeout, todas concedidas, reconsulta após recusa e entrada sem bloqueio. Nenhuma concessão simulada foi usada como evidência do aparelho físico.
 
 Validação atual: 40 testes nativos, TypeScript/build, revisão das seis áreas em sete tamanhos e teste dedicado em 320/390/768/1365: solicitações e estados por APIs simuladas, recusa/ausência sem falso sucesso, continuação disponível, faixa atual compacta, ícone dentro do padding e contraste visual dos controles com rótulos estáveis. Capturas foram inspecionadas; não foi um ensaio no celular físico do responsável.
+
+## Revisão funcional da Sequência
+
+Filtros Ativos/Ocultos e estado de cada linha agora seguem a fila efetiva: arquivos com `enabledInLoop=false` também estão fora dela, mesmo sem constar em `disabledSlides`. Ativar uma mídia grava sua participação e retira o bloqueio anterior quando existente; ocultar preserva o arquivo e o retira apenas do ciclo. Há bloqueio de cliques concorrentes enquanto essa gravação acontece e erro explícito se falhar.
+
+Projetar pela lista da fila, biblioteca em lista/galeria ou prévia ampliada limpa o versículo manual anterior de forma consistente. Retomar também remove a passagem sobreposta e o slide fixado. Blackout e ocultação de conteúdo continuam sob seus controles próprios; projetar uma mídia não os desliga silenciosamente. O status da fila identifica uma passagem bíblica sobreposta.
+
+Setas da biblioteca usam a posição na coleção completa, não o índice dos resultados de busca. A galeria deixou de esconder ações sob hover e de sobrepô-las aos selos da miniatura; no celular pequeno isso impedia tocar em Projetar. Ações de prévia/projeção ficam abaixo da imagem com 44 px e rótulos acessíveis; grade usa uma coluna nas telas estreitas.
+
+Ensaios em quatro larguras com IndexedDB descartável: mídia com ambos os bloqueios, ativar/ocultar e filtros, mover sob busca, substituir passagem pelos três caminhos de biblioteca, retomar, cancelar edição e salvar/reabrir ordem. TypeScript/build e 40 testes nativos; revisão geral das seis áreas em sete viewports. Sem dados reais, pareamento físico ou HDMI. A aba Bíblia é a próxima frente; sua revisão funcional completa não está incluída nesta etapa.

@@ -109,6 +109,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   const libraryRef = useRef<HTMLDetailsElement>(null);
   const [filterMode, setFilterMode] = useState<QueueFilterMode>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [changingQueueMedia, setChangingQueueMedia] = useState<string|null>(null);
+  const queueMediaBusy = useRef(false);
   const [queueLimit, setQueueLimit] = useState(() => window.innerWidth < 600 ? 5 : 8);
   useEffect(() => {if (!locateCurrent) setQueueLimit(window.innerWidth < 600 ? 5 : 8);}, [filterMode, searchTerm]);
 
@@ -254,7 +256,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   const filteredSlides = useMemo(() => {
     return fullSlideList.filter((slideId) => {
       const { name, desc, category } = getSlideDetails(slideId);
-      const isDisabled = disabledSlides.includes(slideId);
+      const isDisabled = !activeSlides.includes(slideId);
       const isMedia = slideId.startsWith('custom_');
 
       if (searchTerm) {
@@ -270,7 +272,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
       if (filterMode === 'agenda') return category === 'agenda' || category === 'evento';
       return true;
     });
-  }, [fullSlideList, disabledSlides, searchTerm, filterMode, customMeetings, customMediaList]);
+  }, [fullSlideList, activeSlides, searchTerm, filterMode, customMeetings, customMediaList]);
 
   // Duração total do loop ativo
   const totalLoopDuration = useMemo(() => {
@@ -314,10 +316,34 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   };
 
   const handleToggleLoopEnable = async (media: CustomMedia, checked: boolean) => {
-    const updatedMedia = { ...media, enabledInLoop: checked };
-    await saveMediaItem(updatedMedia);
-    broadcastMediaSave(updatedMedia);
-    updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+    if (queueMediaBusy.current) return;
+    queueMediaBusy.current = true; setChangingQueueMedia(media.id);
+    try {
+      const updatedMedia = { ...media, enabledInLoop: checked };
+      await saveMediaItem(updatedMedia);
+      broadcastMediaSave(updatedMedia);
+      if (checked && disabledSlides.includes(media.id)) handleToggleDisableSlide?.(media.id);
+      updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+    } catch {notify('Não foi possível alterar a participação da mídia na sequência.', 'error');}
+    finally {queueMediaBusy.current = false; setChangingQueueMedia(null);}
+  };
+
+  const resumeSequence = () => {
+    updateStateAndBroadcast('customVerseText', null);
+    updateStateAndBroadcast('customVerseRef', null);
+    updateStateAndBroadcast('activeVerseIndex', null);
+    updateStateAndBroadcast('manualSlideOverride', null);
+  };
+  const projectSlide = (id: string) => {
+    updateStateAndBroadcast('customVerseText', null);
+    updateStateAndBroadcast('customVerseRef', null);
+    updateStateAndBroadcast('activeVerseIndex', null);
+    updateStateAndBroadcast('manualSlideOverride', id);
+  };
+  const toggleQueueSlide = (id: string) => {
+    const media = customMediaList.find(item => item.id === id);
+    if (media) void handleToggleLoopEnable(media, !activeSlides.includes(id));
+    else handleToggleDisableSlide?.(id);
   };
 
   // Exclusão segura de mídia sincronizada em tempo real
@@ -369,7 +395,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           <div><span className="operator-eyebrow"><Layers size={16}/>Controle da reunião</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
           {!draftOrder ? <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => {if (libraryRef.current) libraryRef.current.open = true; fileInputRef.current?.click();}}><Plus size={17}/>Adicionar mídia</button><button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button></div> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
         </header>
-        <div className="sequence-status"><span className="sequence-status-light"/><span>{manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{manualSlideOverride && <button onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}><RefreshCw size={15}/>Retomar</button>}</div>
+        <div className="sequence-status"><span className="sequence-status-light"/><span>{liveVerse ? 'Passagem bíblica sobre a fila' : manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{(manualSlideOverride || liveVerse) && <button onClick={resumeSequence}><RefreshCw size={15}/>Retomar</button>}</div>
+        {changingQueueMedia && <p className="operator-notice" role="status">Salvando participação na sequência…</p>}
         <section className="sequence-now" aria-label="Conteúdo atual do operador">
           <span className={blackoutEnabled ? 'sequence-now-dot is-blackout' : 'sequence-now-dot'} aria-hidden="true"/>
           <div className="sequence-now-brief"><span>Agora{manualSlideOverride ? ' · fixado' : ''}</span><h3>{liveTitle}</h3></div>
@@ -381,13 +408,13 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             const {name, desc, category} = getSlideDetails(slideId);
             const media = customMediaList.find(item => item.id === slideId);
             const Icon = slideId.startsWith('verse_') ? BookOpen : category === 'agenda' || category === 'evento' ? CalendarDays : category === 'midia' ? Film : category === 'campanha' ? Sparkles : Layout;
-            const isDisabled = disabledSlides.includes(slideId), isCurrent = slideIsVisible && currentSlideId === slideId, isFixed = manualSlideOverride === slideId;
+            const isDisabled = !activeSlides.includes(slideId), isCurrent = slideIsVisible && currentSlideId === slideId, isFixed = manualSlideOverride === slideId;
             return <li className={`sequence-item ${isCurrent ? 'sequence-item-current' : ''} ${isDisabled ? 'sequence-item-hidden' : ''}`} key={slideId} data-slide-id={slideId}>
               <span className={`sequence-art sequence-art-${category}`} aria-hidden="true">{media?.type === 'image' ? <img src={media.url} alt="" loading="lazy"/> : <Icon size={24}/>}<span className="sequence-position">{draftOrder ? index + 1 : fullSlideList.indexOf(slideId) + 1}</span></span>
               <div className="sequence-item-text"><h3>{name}{isCurrent && <span className="sequence-live-label"><span aria-hidden="true"/>Exibindo</span>}</h3><p className="sequence-description">{desc}</p><p>{draftOrder ? 'Editando a posição' : `${getSlideDuration(slideId, customMediaList) / 1000}s${isDisabled ? ' · Fora da sequência' : ''}`}</p></div>
               <div className="sequence-item-actions">{draftOrder ? <><button disabled={index === 0 || orderChangedElsewhere} aria-label={`Subir ${name}`} onClick={() => moveDraft(slideId, -1)}><ArrowUp size={18}/></button><button disabled={index === list.length - 1 || orderChangedElsewhere} aria-label={`Descer ${name}`} onClick={() => moveDraft(slideId, 1)}><ArrowDown size={18}/></button></> : <>
-                {handleToggleDisableSlide && <button aria-label={`${isDisabled ? 'Ativar' : 'Ocultar'} ${name}`} title={isDisabled ? 'Incluir na sequência' : 'Retirar da sequência'} onClick={() => handleToggleDisableSlide(slideId)}>{isDisabled ? <EyeOff size={17}/> : <Eye size={17}/>}</button>}
-                <button className={isFixed ? 'sequence-primary' : 'sequence-project'} aria-label={`${isFixed ? 'Desafixar' : 'Projetar'} ${name}`} onClick={() => {if (!isFixed) {updateStateAndBroadcast('customVerseText', null); updateStateAndBroadcast('customVerseRef', null); updateStateAndBroadcast('activeVerseIndex', null);} updateStateAndBroadcast('manualSlideOverride', isFixed ? null : slideId);}}><Send size={16}/><span>{isFixed ? 'Retomar' : 'Projetar'}</span></button>
+                {handleToggleDisableSlide && <button disabled={changingQueueMedia!==null} aria-label={`${isDisabled ? 'Ativar' : 'Ocultar'} ${name}`} title={isDisabled ? 'Incluir na sequência' : 'Retirar da sequência'} onClick={() => toggleQueueSlide(slideId)}>{isDisabled ? <EyeOff size={17}/> : <Eye size={17}/>}</button>}
+                <button className={isFixed ? 'sequence-primary' : 'sequence-project'} aria-label={`${isFixed ? 'Desafixar' : 'Projetar'} ${name}`} onClick={() => isFixed ? resumeSequence() : projectSlide(slideId)}><Send size={16}/><span>{isFixed ? 'Retomar' : 'Projetar'}</span></button>
               </>}</div>
             </li>;
           })}
@@ -702,9 +729,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           </div>
         ) : mediaViewMode === 'grid' ? (
           /* EXIBIÇÃO EM GRADE (GALERIA) */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {filteredCustomMedia.map((media, index) => {
-              const isSlideActive = currentSlideId === media.id;
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filteredCustomMedia.map((media) => {
+              const mediaIndex = customMediaList.findIndex(item => item.id === media.id);
+              const isSlideActive = slideIsVisible && currentSlideId === media.id;
               const isSlideOverridden = manualSlideOverride === media.id;
               const isEditing = editingMediaId === media.id;
 
@@ -725,31 +753,6 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       <img src={media.url} alt={media.name} className={`w-full h-full object-${media.fit || 'contain'}`} />
                     )}
 
-                    {/* OVERLAY COM BOTÃO DE PRÉ-VISUALIZAR */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
-                      <button
-                        type="button"
-                        onClick={() => setPreviewMedia(media)}
-                        title="Pré-visualizar Mídia em Tela Cheia"
-                        className="p-2 rounded-xl bg-hl-gold text-black hover:bg-hl-gold-bright font-bold transition-transform hover:scale-105 cursor-pointer"
-                      >
-                        <Maximize2 className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => updateStateAndBroadcast('manualSlideOverride', isSlideOverridden ? null : media.id)}
-                        title={isSlideOverridden ? "Desafixar do Telão" : "Projetar no Telão Agora"}
-                        className={`p-2 rounded-xl font-bold transition-transform hover:scale-105 cursor-pointer ${
-                          isSlideOverridden
-                            ? "bg-hl-gold text-black"
-                            : "bg-hl-panel border border-hl-line text-hl-gold-bright hover:bg-hl-gold/20"
-                        }`}
-                      >
-                        <Send className="w-4 h-4" />
-                      </button>
-                    </div>
-
                     {/* BADGES NO TOPO DA MINIATURA */}
                     <div className="absolute top-2 left-2 flex items-center gap-1">
                       <span className="bg-black/75 backdrop-blur-md text-[9px] font-black uppercase px-2 py-0.5 rounded text-hl-gold-bright border border-hl-line">
@@ -763,6 +766,32 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       </span>
                     </div>
                   </div>
+
+                    {/* AÇÕES SEM SOBREPOR A MINIATURA */}
+                    <div className="flex items-center justify-center gap-2 p-2 border-b border-hl-line bg-hl-panel">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewMedia(media)}
+                        title="Pré-visualizar Mídia em Tela Cheia"
+                        className="min-h-11 min-w-11 p-2 rounded-xl bg-hl-gold text-black hover:bg-hl-gold-bright font-bold transition-transform hover:scale-105 cursor-pointer"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => isSlideOverridden ? resumeSequence() : projectSlide(media.id)}
+                        aria-label={isSlideOverridden ? 'Desafixar mídia' : 'Projetar esta mídia'}
+                        title={isSlideOverridden ? "Desafixar do Telão" : "Projetar no Telão Agora"}
+                        className={`min-h-11 min-w-11 p-2 rounded-xl font-bold transition-transform hover:scale-105 cursor-pointer ${
+                          isSlideOverridden
+                            ? "bg-hl-gold text-black"
+                            : "bg-hl-panel border border-hl-line text-hl-gold-bright hover:bg-hl-gold/20"
+                        }`}
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
 
                   {/* CONTEÚDO E RENOMEAÇÃO NA GRADE */}
                   <div className="p-3 flex flex-col gap-2">
@@ -817,7 +846,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         <button
                           type="button"
                           onClick={() => handleMoveMedia(media.id, 'up')}
-                          disabled={index === 0}
+                          aria-label={`Subir mídia ${media.name}`}
+                          disabled={mediaIndex === 0}
                           className="p-1 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded"
                         >
                           <ArrowUp className="w-3 h-3" />
@@ -825,7 +855,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         <button
                           type="button"
                           onClick={() => handleMoveMedia(media.id, 'down')}
-                          disabled={index === customMediaList.length - 1}
+                          aria-label={`Descer mídia ${media.name}`}
+                          disabled={mediaIndex === customMediaList.length - 1}
                           className="p-1 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded"
                         >
                           <ArrowDown className="w-3 h-3" />
@@ -833,6 +864,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         <button
                           type="button"
                           onClick={() => handleRemoveMedia(media)}
+                          aria-label={`Excluir mídia ${media.name}`}
                           className="p-1 bg-hl-panel border border-hl-line hover:bg-red-950 hover:text-red-400 text-hl-muted rounded"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -847,8 +879,9 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         ) : (
           /* EXIBIÇÃO EM LISTA DETALHADA */
           <div className="flex flex-col gap-3">
-            {filteredCustomMedia.map((media, index) => {
-              const isSlideActive = currentSlideId === media.id;
+            {filteredCustomMedia.map((media) => {
+              const mediaIndex = customMediaList.findIndex(item => item.id === media.id);
+              const isSlideActive = slideIsVisible && currentSlideId === media.id;
               const isSlideOverridden = manualSlideOverride === media.id;
               const isEditing = editingMediaId === media.id;
 
@@ -998,7 +1031,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                     {/* ENVIAR / PROJETAR */}
                     <button
                       type="button"
-                      onClick={() => updateStateAndBroadcast('manualSlideOverride', isSlideOverridden ? null : media.id)}
+                      onClick={() => isSlideOverridden ? resumeSequence() : projectSlide(media.id)}
                       aria-label={isSlideOverridden ? "Desafixar mídia" : "Projetar esta mídia"}
                       title={isSlideOverridden ? "Desafixar mídia do telão" : "Projetar esta mídia imediatamente"}
                       className={`w-9 h-9 sm:w-8 sm:h-8 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold ${
@@ -1014,7 +1047,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                     <button
                       type="button"
                       onClick={() => handleMoveMedia(media.id, 'up')}
-                      disabled={index === 0}
+                      disabled={mediaIndex === 0}
                       title="Mover mídia para cima na lista"
                       className="w-9 h-9 sm:w-8 sm:h-8 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded-lg transition-all flex items-center justify-center cursor-pointer"
                     >
@@ -1025,7 +1058,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                     <button
                       type="button"
                       onClick={() => handleMoveMedia(media.id, 'down')}
-                      disabled={index === customMediaList.length - 1}
+                      disabled={mediaIndex === customMediaList.length - 1}
                       title="Mover mídia para baixo na lista"
                       className="w-9 h-9 sm:w-8 sm:h-8 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded-lg transition-all flex items-center justify-center cursor-pointer"
                     >
@@ -1103,10 +1136,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               <button
                 type="button"
                 onClick={() => {
-                  updateStateAndBroadcast('customVerseText', null);
-                  updateStateAndBroadcast('customVerseRef', null);
-                  updateStateAndBroadcast('activeVerseIndex', null);
-                  updateStateAndBroadcast('manualSlideOverride', previewMedia.id);
+                  projectSlide(previewMedia.id);
                   setPreviewMedia(null);
                   showAlert(`Mídia "${previewMedia.name}" enviada. Confira o telão.`, 'success');
                 }}

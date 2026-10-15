@@ -164,3 +164,9 @@ Investigado relato de clique sem retorno: o navegador podia recusar persistênci
 Validação local: lint/build e 40 testes nativos aprovados. Ensaios de navegador em 320/390/768/1365 px; cenários concedido, recusado, API ausente, exceção, timeout, todos concedidos e reconsulta. Captura da recusa em 320 px inspecionada. APIs simuladas, sem alegar teste no celular físico. Detalhes em docs/feedback-fila-inicializacao.md.
 
 Entrega `931699667a0b4fe88d3a4775b34cff2069e3bc6d`, Preview READY `dpl_yt95ZixfVyvk16hNL5mQKPY2fvY5`, alias da branch conferido. PR #1 atualizada e mantida em rascunho. Revisão online das seis áreas aprovada em 390×844 e 1365×900. Produção conferida sem alteração (`dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi`). Servidor local encerrado; checkpoint documental local para não gerar deploy redundante.
+
+### Continuidade manual — operação da Sequência
+
+Encontrados problemas reais ainda nesta aba: participação de mídia desativada no próprio arquivo não refletida em filtros/ícones; ativar não corrigia o bloqueio duplo; projetar pela biblioteca não limpava passagem anterior; setas sob busca dependiam do índice filtrado. Corrigidos seguindo a fila efetiva, persistência antes de sincronização e ações comuns de projetar/retomar. Retomar remove passagem manual e fixação, sem alterar Blackout/ocultação deliberados.
+
+Teste móvel revelou selo de duração interceptando o botão Projetar na galeria. Ações passaram para faixa própria, sempre visíveis, fora da imagem, com área de toque de 44 px e rótulos acessíveis; grade adaptada às telas estreitas. Preservados arquivos, design, produção/main e outros projetos. Detalhes em docs/feedback-fila-inicializacao.md. Próxima frente: Bíblia, particularmente coerência entre referência preparada/selecionada e resposta tardia de consulta; não declarar a revisão integral dessa aba concluída.
