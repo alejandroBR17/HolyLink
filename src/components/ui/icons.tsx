@@ -1,3 +1,9 @@
+import {Lightning as PhLightning} from '@phosphor-icons/react/dist/csr/Lightning';
+import {Flask as PhFlask} from '@phosphor-icons/react/dist/csr/Flask';
+import {XCircle as PhXCircle} from '@phosphor-icons/react/dist/csr/XCircle';
+import {Pulse as PhPulse} from '@phosphor-icons/react/dist/csr/Pulse';
+import {Laptop as PhLaptop} from '@phosphor-icons/react/dist/csr/Laptop';
+import {UploadSimple as PhUploadSimple} from '@phosphor-icons/react/dist/csr/UploadSimple';
 import {Broom as PhBroom} from '@phosphor-icons/react/dist/csr/Broom';
 import {ArrowSquareUp as PhArrowSquareUp} from '@phosphor-icons/react/dist/csr/ArrowSquareUp';
 import type {Icon, IconProps} from '@phosphor-icons/react';
@@ -124,3 +130,15 @@ export const PanelLeftOpen = themed(PhSidebarSimple);
 export const Share = themed(PhArrowSquareUp);
 
 export const Broom = themed(PhBroom);
+
+export const Upload = themed(PhUploadSimple);
+
+export const Laptop = themed(PhLaptop);
+
+export const Activity = themed(PhPulse);
+
+export const XCircle = themed(PhXCircle);
+
+export const FlaskConical = themed(PhFlask);
+
+export const Zap = themed(PhLightning);

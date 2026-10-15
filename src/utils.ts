@@ -117,6 +117,19 @@ export async function saveMediaItem(item: DBMediaItem, signal?: AbortSignal): Pr
   });
 }
 
+/** All restored files commit together; an aborted batch leaves the old library intact. */
+export async function saveMediaBatch(items:DBMediaItem[]):Promise<void> {
+  if(!items.length)return;
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction(STORE_NAME,'readwrite');const store=transaction.objectStore(STORE_NAME);
+    transaction.oncomplete=()=>{db.close();resolve();};
+    transaction.onabort=()=>{db.close();reject(transaction.error||new Error('Restauração de mídias cancelada.'));};
+    transaction.onerror=()=>{ /* IndexedDB aborts the entire transaction. */ };
+    for(const item of items){const request=store.get(item.id);request.onsuccess=()=>{try{const current=request.result;store.put(current?{...current,...item,blob:item.blob??current.blob}:item);}catch{transaction.abort();}};}
+  });
+}
+
 export async function getAllMediaItems(): Promise<DBMediaItem[]> {
   try {
     const db = await openDB();
@@ -133,14 +146,15 @@ export async function getAllMediaItems(): Promise<DBMediaItem[]> {
   }
 }
 
-export async function deleteMediaItem(id: string): Promise<void> {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(id);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+export async function deleteMediaItem(id:string,signal?:AbortSignal):Promise<void> {
+  signal?.throwIfAborted();const db=await openDB();if(signal?.aborted){db.close();signal.throwIfAborted();}
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction(STORE_NAME,'readwrite');
+    const abort=()=>{try{transaction.abort();}catch{}};const cleanup=()=>{signal?.removeEventListener('abort',abort);db.close();};
+    signal?.addEventListener('abort',abort,{once:true});transaction.oncomplete=()=>{cleanup();resolve();};
+    transaction.onabort=()=>{cleanup();reject(signal?.reason||transaction.error||new Error('Exclusão cancelada.'));};
+    transaction.onerror=()=>{ /* Default IndexedDB abort rolls this operation back. */ };
+    if(signal?.aborted){abort();return;}transaction.objectStore(STORE_NAME).delete(id);
   });
 }
 

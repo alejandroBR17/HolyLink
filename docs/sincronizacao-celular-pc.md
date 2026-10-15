@@ -11,7 +11,7 @@ O celular envia agenda/configurações e mescla mídias com o PC. A ausência de
 - Os identificadores do celular são associados ao identificador canônico do arquivo existente no PC. As referências da sequência e os comandos seguintes são traduzidos sem renomear, apagar ou duplicar o arquivo já armazenado.
 - Enviar novamente o mesmo conjunto não solicita novos blocos. Um upload feito no celular conectado também consulta primeiro o PC por manifesto de mídia, antes de enviar bytes.
 - Metadados da versão do celular prevalecem nos arquivos compartilhados. Agenda/campanhas padrão são incluídas mesmo quando ainda não foram personalizadas. Sequência e pausas de arquivos exclusivos do PC são mantidas na mescla.
-- A opção rara Receber do PC continua separada, com aviso de substituição dos dados do celular. Sua comparação também deixa de considerar tamanho igual suficiente.
+- Receber do PC exige confirmação e aplica agenda/configurações recebidas, mas preserva mídias exclusivas do celular. Sua comparação também deixa de considerar tamanho igual suficiente.
 - Catálogo de arquivos do PC via conexão autorizada, sem baixar vídeos/imagens para o celular. A biblioteca mostra os arquivos que ainda não estão representados na biblioteca local; referências equivalentes são ocultadas para evitar linhas duplicadas.
 - Na mesma biblioteca: projetar, pausar/ativar e excluir arquivo do PC. Pausar preserva o arquivo; excluir requer confirmação e remove possíveis cópias nos aparelhos conectados. Exclusão por um alias resolve para o arquivo real e informa todos os aliases aos aparelhos conectados.
 - Catálogo limpo ao desconectar; ações recusadas sem conexão autorizada. Mensagem de exclusão é solicitação, sem afirmar sucesso antes da atualização do catálogo.
@@ -29,10 +29,23 @@ O celular envia agenda/configurações e mescla mídias com o PC. A ausência de
 
 ## Limitações e próximo bloco
 
-- Pareamento permanente/reconexão automática de aparelhos já autorizados ainda precisa de implementação própria; não enfraquecer a aprovação atual apenas por lembrar o código.
+- Pareamento lembrado/reconexão implementados nesta revisão, conforme seção abaixo. A autorização pertence ao navegador/origem; limpar dados ou mudar a origem exige novo pareamento.
 - Assinaturas são calculadas durante a comparação; grandes bibliotecas podem exigir tempo de leitura. Não há cache persistente de assinatura nesta etapa, evitando reutilizar um hash desatualizado.
 - Exclusões alcançam aparelhos atualmente conectados; não há diário distribuído para dispositivos offline. Uma cópia de outro dispositivo offline poderá reaparecer se for enviada posteriormente.
 - IDs distintos com bytes iguais são tratados como o mesmo arquivo do PC; seus nomes/duração/configurações seguem a última versão enviada do celular. Isso não cria entradas distintas para executar o mesmo arquivo com metadados conflitantes.
-- Confirmação de gravação de mídia não comprova imagem física no telão nem cobre todos os caminhos legados do protocolo. Backups completos e envelopes legados permanecem na auditoria.
+- Confirmação de gravação de mídia não comprova imagem física no telão nem cobre todos os caminhos legados do protocolo. Envelopes antigos de mídia em base64 monolítico são recusados com orientação para atualizar ambos os aparelhos.
 
 Entrega restrita à prévia do projeto Vercel holylink e à draft PR #1; produção e main preservadas.
+
+
+## Revisão de Conexão — autorização lembrada e backup
+
+O PC mantém seu código ao recarregar. Na primeira conexão, o operador compara os códigos, pode nomear o celular e escolher lembrar a autorização. A reconexão exige provas HMAC-SHA256 mútuas com identidades, código e nonces novos nas duas direções; a credencial não é reenviada. Guardar só o código não libera controle. A lista permite esquecer um aparelho, fechando sua conexão e impedindo reutilização. Gerar outro código exige confirmação e interrompe conexões, preservando arquivos.
+
+Queda/recarga tenta reconectar com espera crescente, somente com autorização guardada; parar/desconectar persiste a pausa. Nenhuma agenda ou mídia é copiada automaticamente ao conectar. A interface distingue convite, comparação, autorização e transferência. Os convites para novos aparelhos expiram em dez minutos e podem ser renovados sem trocar o código. Aparelhos lembrados usam verificação própria.
+
+Backups JSON v1 e v2 são inspecionados por inteiro antes de qualquer escrita, com resumo e confirmação. Exportação exclui identidade, autorizações e preferências privadas. Limites técnicos: 500 mídias, 128 MiB somados de mídia e arquivo JSON de até 192 MiB. Arquivos ausentes no backup são preservados; IDs coincidentes são atualizados. As mídias são gravadas em uma transação IndexedDB. Falha reverte configurações ainda iguais às aplicadas, sem sobrescrever edições concorrentes; não se promete atomicidade contra encerramento abrupto entre localStorage e IndexedDB. A restauração suspende transferências/conexões durante a aplicação.
+
+Recebimento do PC só aceita manifesto após solicitação explícita; manifesto não solicitado, confirmação prematura, pacote incompleto e formatos monolíticos antigos não anunciam sucesso. Transferências de mídia continuam incrementais: arquivos já concluídos podem permanecer após interrupção; não há transação global de toda a sincronização. Atualize ambos os aparelhos antes do teste.
+
+Verificação desta etapa: 70 testes nativos; bancos IndexedDB reais em contextos descartáveis com PeerJS simulado para aprovação, HMAC, recarga dos dois aparelhos, queda, revogação, pausa persistida, mescla/deduplicação e exclusão. Backup exercitado em 320/390/768/1365 px, incluindo arquivo corrompido, cancelar, preservar exclusivos e falha de quota com rollback. HDMI, rede entre aparelhos físicos e instalação real permanecem para teste do responsável. Exclusões offline continuam sem diário distribuído.

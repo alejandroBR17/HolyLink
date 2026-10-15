@@ -1,3 +1,8 @@
+import {readTransferMetadata} from '../utils/chunk-assembler';
+import {BackupPanel} from './operator/BackupPanel';
+import {prepareBackup,inspectBackup,applyPreparedBackup,MAX_BACKUP_FILE_BYTES,MAX_BACKUP_MEDIA_BYTES,type PreparedBackup} from '../utils/backup';
+import {ConnectionPanel} from './operator/ConnectionPanel';
+import {TRUST_KEY,getDeviceIdentity,createTrustSecret,createTrustNonce,isDeviceId,isTrustNonce,readTrustedDevices,saveTrustedDevice,removeTrustedDevice,findTrustedController,findTrustedReceiver,signResumeProof,verifyResumeProof,reconnectDelay,type ResumeContext,type TrustedDevice} from '../utils/trusted-pairing';
 import {Smartphone} from './ui/icons';
 import {MEETINGS, CAMPAIGNS} from '../data';
 import {describeMedia, readMediaManifest, planMediaMerge, mapMediaReferences, readMediaCatalog} from '../utils/media-manifest';
@@ -9,9 +14,9 @@ import {ConsoleIntro} from './operator/ConsoleIntro';
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { Peer } from 'peerjs';
 import QRCode from "react-qr-code";
-import { Download, Upload, Laptop, RefreshCw, Activity, CheckCircle2, XCircle, FlaskConical, Zap, ShieldCheck, Play } from 'lucide-react';
+import { Download, Upload, Laptop, RefreshCw, Activity, CheckCircle2, XCircle, FlaskConical, Zap, ShieldCheck, Play } from './ui/icons';
 import { format } from 'date-fns';
-import { getAllMediaItems, saveMediaItem, deleteMediaItem } from '../utils';
+import { getAllMediaItems, saveMediaItem, saveMediaBatch, deleteMediaItem } from '../utils';
 import { sendMediaInChunks, handleIncomingChunk, cancelIncomingTransfers } from '../utils/webrtcChunking';
 
 function getRealBlob(blobInput: any): Blob | null {
@@ -57,6 +62,7 @@ async function blobToBase64(blobField: any): Promise<{ base64: string; mimeType:
 }
 
 const approvedConnections = new WeakSet<object>();
+const connectionTrust = new WeakMap<object,TrustedDevice>();
 
 const MEDIA_ALIASES_KEY = 'holylink_media_aliases_v1';
 function readMediaAliases(): Record<string,string> {
@@ -111,6 +117,7 @@ export function registerPeerConn(conn: any) {
 
 export function unregisterPeerConn(conn: any) {
   approvedConnections.delete(conn);
+  connectionTrust.delete(conn);
   if (!conn) return;
   const list: any[] = (window as any).holyrics_peer_conns || [];
   const filtered = list.filter(c => c !== conn && c.open);
@@ -162,6 +169,8 @@ export const SyncSection = React.memo(function SyncSection({
   // States for local backup and restore (import/export)
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const backupInputRef=useRef<HTMLInputElement|null>(null);
+  const [preparedBackup,setPreparedBackup]=useState<PreparedBackup|null>(null);
   const [backupMessage, setBackupMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // States for direct wireless synchronization (PeerJS)
@@ -170,7 +179,7 @@ export const SyncSection = React.memo(function SyncSection({
   const [syncInputCode, setSyncInputCode] = useState(''); // Input value for manually typing the code
   const [syncMessage, setSyncMessage] = useState<string>('');
   const [syncProgress, setSyncProgress] = useState<number | undefined>(undefined);
-  const [pendingPairing, setPendingPairing] = useState<{conn: any; session: PairingSession; code: string} | null>(null);
+  const [pendingPairing, setPendingPairing] = useState<{conn: any; session: PairingSession; code: string; deviceId?:string; requestNonce?:string} | null>(null);
   const pendingPairingRef = useRef<typeof pendingPairing>(null);
   const pairingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
@@ -190,26 +199,74 @@ export const SyncSection = React.memo(function SyncSection({
     pending.conn.close();
     setSyncMessage('Solicitação recusada ou expirada. Aguardando outro celular.');
   };
-  const approvePairing = () => {
-    const pending = pendingPairingRef.current;
-    if (!pending || !pending.conn.open || !pending.session.approve(pending.code)) {
-      rejectPairing();
-      return;
-    }
+  const approvePairing = (remember=false,label='Celular autorizado') => {
+    const pending=pendingPairingRef.current;
+    if(!pending||!pending.conn.open||!pending.session.approve(pending.code)){rejectPairing();return;}
     clearPendingPairing();
-    approvedConnections.add(pending.conn);
-    registerPeerConn(pending.conn);
-    pending.conn.send({type: 'PAIRING_APPROVED', challenge: pending.code});
+    let trust:TrustedDevice|undefined;
+    const identity=getDeviceIdentity();
+    if(remember&&identity.persistent&&crypto.subtle&&isDeviceId(pending.deviceId)&&isTrustNonce(pending.requestNonce)) {
+      const now=Date.now();
+      const record:TrustedDevice={role:'controller',id:pending.deviceId,secret:createTrustSecret(),code:syncCode,label:label.trim().slice(0,48)||'Celular autorizado',createdAt:now,lastUsedAt:now};
+      if(saveTrustedDevice(record)){trust=record;blockedTrustRef.current.delete(record.id);connectionTrust.set(pending.conn,record);}
+      else setTrustMessage('Controle permitido nesta sessão, mas não foi possível guardar a autorização.');
+    }
+    if(!remember&&pending.deviceId)removeTrustedDevice('controller',pending.deviceId);
+    approvedConnections.add(pending.conn);registerPeerConn(pending.conn);
+    pending.conn.send({type:'PAIRING_APPROVED',challenge:pending.code,...(trust?{trust:{receiverId:identity.id,controllerId:pending.deviceId,secret:trust.secret,code:syncCode,nonce:pending.requestNonce}}:{})});
     void sendMediaCatalog(pending.conn).catch(()=>{});
-    setDirectSyncStatus('success');
-    setSyncMessage('Celular autorizado. Agenda e mídias preservadas.');
+    setTrustVersion(value=>value+1);setDirectSyncStatus('success');setSyncMessage(trust?'Celular autorizado e lembrado para as próximas conexões.':'Celular autorizado nesta sessão. Agenda e mídias preservadas.');
   };
 
   const [isPushing, setIsPushing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
+  const pendingPullRef=useRef<{conn:any;manifestReceived:boolean;comparing:boolean;expected:Set<string>}|null>(null);
   const peerRef = useRef<any>(null);
   const connRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<any>(null);
+  const generationRef=useRef(0),retryAttemptRef=useRef(0),autoReconnectEnabledRef=useRef(true),blockedTrustRef=useRef(new Set<string>());
+  const retryActionRef=useRef<(()=>void)|null>(null);
+  const [trustVersion,setTrustVersion]=useState(0);
+  const [trustMessage,setTrustMessage]=useState('');
+  const [connectionBusy,setConnectionBusy]=useState(false);
+  const [retryAttempt,setRetryAttempt]=useState(0);
+  const invitationExpiresRef=useRef(0);const [invitationExpiresAt,setInvitationExpiresAt]=useState(0);
+  const renewInvitation=()=>{const expires=Date.now()+600000;invitationExpiresRef.current=expires;setInvitationExpiresAt(expires);};
+  const resetTransport=()=>{
+    const generation=++generationRef.current;
+    if(reconnectTimeoutRef.current)clearTimeout(reconnectTimeoutRef.current);
+    reconnectTimeoutRef.current=null;
+    rejectPairing();
+    for(const conn of getApprovedPeerConnections()){unregisterPeerConn(conn);cancelIncomingTransfers(conn);try{conn.close();}catch{}}
+    if(connRef.current){unregisterPeerConn(connRef.current);cancelIncomingTransfers(connRef.current);try{connRef.current.close();}catch{}}
+    const previous=peerRef.current;peerRef.current=null;connRef.current=null;
+    previous?.destroy();clearRemoteCatalog();pendingPullRef.current=null;setIsPushing(false);setIsPulling(false);setVerificationCode('');setConnectionBusy(false);setTrustVersion(value=>value+1);
+    window.dispatchEvent(new Event('projection_sync_finished'));
+    return generation;
+  };
+  const stopConnection=()=>{
+    autoReconnectEnabledRef.current=false;retryActionRef.current=null;resetTransport();
+    localStorage.removeItem('projection_deviceRole');localStorage.removeItem('projection_lastPairedPeerCode');
+    try{localStorage.setItem('holylink_connection_paused','true');}catch{/* Session pause remains active. */}
+    setDirectSyncStatus('idle');setSyncMessage('Conexão interrompida. Seus arquivos e autorizações lembradas foram preservados.');
+  };
+  const allowReconnect=()=>{autoReconnectEnabledRef.current=true;try{localStorage.removeItem('holylink_connection_paused');}catch{/* Optional persistence. */}};
+  const revokeTrust=(device:TrustedDevice)=>{
+    if(device.role==='controller')blockedTrustRef.current.add(device.id);
+    const saved=removeTrustedDevice(device.role,device.id);
+    if(device.role==='receiver'&&localStorage.getItem('projection_lastPairedPeerCode')===device.code)stopConnection();
+    for(const conn of getApprovedPeerConnections()){const record=connectionTrust.get(conn);if(record?.role===device.role&&record.id===device.id){unregisterPeerConn(conn);cancelIncomingTransfers(conn);conn.close();}}
+    setTrustVersion(value=>value+1);setTrustMessage(saved?'Autorização removida. Uma nova conexão exigirá aprovação.':'Conexão encerrada, mas o navegador não conseguiu salvar a remoção da autorização.');
+  };
+  const queueReconnect=(action:()=>void)=>{
+    if(!autoReconnectEnabledRef.current)return;
+    retryActionRef.current=action;
+    if(reconnectTimeoutRef.current)clearTimeout(reconnectTimeoutRef.current);
+    if(!navigator.onLine||document.visibilityState==='hidden'){setConnectionBusy(false);setSyncMessage(!navigator.onLine?'Sem internet. A reconexão espera a rede voltar.':'Reconexão pausada enquanto esta aba está oculta.');return;}
+    const attempt=retryAttemptRef.current++;setRetryAttempt(attempt+1);
+    reconnectTimeoutRef.current=setTimeout(()=>{reconnectTimeoutRef.current=null;if(autoReconnectEnabledRef.current&&navigator.onLine&&document.visibilityState!=='hidden'){retryActionRef.current=null;action();}},reconnectDelay(attempt));
+  };
+
 
   // States for automated diagnostic test simulation
   const [isTesting, setIsTesting] = useState(false);
@@ -406,6 +463,8 @@ export const SyncSection = React.memo(function SyncSection({
   // Cleanup peer and timeouts on unmount
   useEffect(() => {
     return () => {
+      generationRef.current++;autoReconnectEnabledRef.current=false;
+      for(const conn of getApprovedPeerConnections()){unregisterPeerConn(conn);cancelIncomingTransfers(conn);}
       if (pairingTimerRef.current) clearTimeout(pairingTimerRef.current);
       pendingPairingRef.current?.session.close();
       if (peerRef.current) {
@@ -417,34 +476,29 @@ export const SyncSection = React.memo(function SyncSection({
     };
   }, []);
 
-  const triggerAutoReconnect = (targetCode: string) => {
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-    const savedRole = localStorage.getItem('projection_deviceRole');
-    if (savedRole === 'phone') {
-      reconnectTimeoutRef.current = setTimeout(() => {
-        console.log("Tentando reconectar automaticamente ao PC...");
-        connectAndSendData(targetCode);
-      }, 4000); // Tenta reconectar a cada 4 segundos se perder conexão
-    }
+  const triggerAutoReconnect=(targetCode:string)=>{
+    if(localStorage.getItem('projection_deviceRole')==='phone'&&findTrustedReceiver(targetCode))queueReconnect(()=>{void connectAndSendData(targetCode);});
+    else {setConnectionBusy(false);setDirectSyncStatus('error');setSyncMessage('A sessão terminou. Conecte novamente e confirme a aprovação no PC.');}
   };
+  useEffect(()=>{
+    const resume=()=>{if(!autoReconnectEnabledRef.current)return;if(navigator.onLine&&document.visibilityState!=='hidden'&&retryActionRef.current){const action=retryActionRef.current;queueReconnect(action);}else if(!navigator.onLine||document.visibilityState==='hidden'){if(reconnectTimeoutRef.current)clearTimeout(reconnectTimeoutRef.current);reconnectTimeoutRef.current=null;}};
+    const changed=()=>{for(const conn of getApprovedPeerConnections()){const trust=connectionTrust.get(conn);if(trust&&!readTrustedDevices().some(item=>item.role===trust.role&&item.id===trust.id&&item.secret===trust.secret&&item.code===trust.code)){unregisterPeerConn(conn);cancelIncomingTransfers(conn);conn.close();}}setTrustVersion(value=>value+1);};
+    const storage=(event:StorageEvent)=>{if(event.key===TRUST_KEY||event.key===null)changed();};
+    window.addEventListener('online',resume);window.addEventListener('offline',resume);document.addEventListener('visibilitychange',resume);window.addEventListener('storage',storage);
+    return()=>{window.removeEventListener('online',resume);window.removeEventListener('offline',resume);document.removeEventListener('visibilitychange',resume);window.removeEventListener('storage',storage);};
+  },[]);
 
   // Initialize as Receiver (usually on PC)
   const startReceiver = (newCode = false) => {
-    if (peerRef.current) {
-      peerRef.current.destroy();
-    }
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-
+    allowReconnect();const generation=resetTransport();
     setDirectSyncStatus('initializing');
     setSyncMessage('Iniciando conexão segura...');
 
     rejectPairing();
-    const code = (!newCode && syncCode) || createPairingCode();
+    const savedCode=localStorage.getItem('projection_myReceiverCode');
+    const code=(!newCode&&isPairingCode(savedCode)?savedCode:undefined)||createPairingCode();
     const codeExpiresAt = Date.now() + 10 * 60_000;
+    invitationExpiresRef.current=codeExpiresAt;setInvitationExpiresAt(codeExpiresAt);
     localStorage.setItem('projection_myReceiverCode', code);
     setSyncCode(code);
 
@@ -456,35 +510,60 @@ export const SyncSection = React.memo(function SyncSection({
     peerRef.current = peer;
 
     peer.on('open', () => {
-      setDirectSyncStatus('listening');
-      setSyncMessage('Aguardando conexão do celular...');
+      if(generation!==generationRef.current||peerRef.current!==peer)return;
+      retryAttemptRef.current=0;setRetryAttempt(0);retryActionRef.current=null;
+      const live=getApprovedPeerConnections().length;setDirectSyncStatus(live?'success':'listening');
+      setSyncMessage(live?'Sinalização retomada. O controle permanece conectado.':'Aguardando conexão do celular...');
     });
 
     peer.on('connection', (conn) => {
+      if(generation!==generationRef.current||peerRef.current!==peer){conn.close();return;}
       connRef.current = conn;
       const pendingMediaWrites=new Set<Promise<any>>();
+      const connectionAbort=new AbortController();
       let mediaTransferFailed=false;
       let session: PairingSession | null = null;
+      let resume:{context:ResumeContext;trust:TrustedDevice;expiresAt:number;busy:boolean}|null=null;
       // Merely opening a WebRTC transport grants no read/write/control access.
       const requestTimeout = setTimeout(() => {
         if (!session?.approved) conn.close();
       }, 65_000);
       conn.on('data', async (data: any) => {
+        if(generation!==generationRef.current||peerRef.current!==peer||!conn.open)return;
         if (!session?.approved) {
-          if (data?.type !== 'REQUEST_PAIRING' || !isPairingCode(data.challenge)) return;
-          if (Date.now() >= codeExpiresAt) {
-            try { conn.send({type: 'PAIRING_REJECTED'}); } catch {}
-            conn.close();
-            setSyncMessage('O código expirou. Gere um novo código para conectar outro celular.');
-            return;
-          }
-          if (session || pendingPairingRef.current) { conn.close(); return; }
-          session = new PairingSession(data.challenge);
-          const pending = {conn, session, code: data.challenge};
-          pendingPairingRef.current = pending;
-          setPendingPairing(pending);
-          setSyncMessage('Confira a solicitação de controle neste computador.');
-          pairingTimerRef.current = setTimeout(rejectPairing, 60_000);
+          try {
+            if(data?.type==='REQUEST_TRUSTED_RECONNECT') {
+              if(session||resume||!isDeviceId(data.deviceId)||!isTrustNonce(data.nonce))return;
+              const trust=findTrustedController(data.deviceId,code);
+              if(!trust||blockedTrustRef.current.has(data.deviceId)){conn.send({type:'PAIRING_REQUIRED'});conn.close();return;}
+              const identity=getDeviceIdentity();
+              if(!identity.persistent){conn.send({type:'PAIRING_REQUIRED'});conn.close();return;}
+              const context:ResumeContext={receiverId:identity.id,controllerId:trust.id,code,clientNonce:data.nonce,serverNonce:createTrustNonce()};
+              resume={context,trust,expiresAt:Date.now()+30000,busy:false};
+              const proof=await signResumeProof(trust.secret,'receiver',context);
+              if(generation!==generationRef.current||!conn.open||findTrustedController(trust.id,code)?.secret!==trust.secret||blockedTrustRef.current.has(trust.id))return;
+              conn.send({type:'TRUSTED_RECONNECT_CHALLENGE',...context,proof,version:1});return;
+            }
+            if(data?.type==='TRUSTED_RECONNECT_PROOF'&&resume) {
+              if(resume.busy||Date.now()>=resume.expiresAt)return;
+              resume.busy=true;
+              const attempt=resume;
+              const valid=await verifyResumeProof(attempt.trust.secret,'controller',attempt.context,data.proof);
+              if(!valid||Date.now()>=attempt.expiresAt||generation!==generationRef.current||!conn.open||blockedTrustRef.current.has(attempt.trust.id)||findTrustedController(attempt.trust.id,code)?.secret!==attempt.trust.secret){conn.close();return;}
+              const proof=await signResumeProof(attempt.trust.secret,'approved',attempt.context);
+              if(Date.now()>=attempt.expiresAt||generation!==generationRef.current||!conn.open||blockedTrustRef.current.has(attempt.trust.id)||findTrustedController(attempt.trust.id,code)?.secret!==attempt.trust.secret){conn.close();return;}
+              const challenge=createPairingCode();session=new PairingSession(challenge);session.approve(challenge);
+              approvedConnections.add(conn);connectionTrust.set(conn,attempt.trust);registerPeerConn(conn);
+              conn.send({type:'TRUSTED_RECONNECT_APPROVED',proof,version:1});
+              void sendMediaCatalog(conn).catch(()=>{});setTrustVersion(value=>value+1);setDirectSyncStatus('success');setSyncMessage('Celular lembrado reconectado. Nenhum arquivo foi copiado automaticamente.');return;
+            }
+            if(data?.type!=='REQUEST_PAIRING'||!isPairingCode(data.challenge))return;
+            if(Date.now()>=invitationExpiresRef.current){conn.send({type:'PAIRING_REJECTED'});conn.close();setSyncMessage('O convite expirou para novos celulares. Renove o convite neste PC.');return;}
+            if(session||resume||pendingPairingRef.current){conn.close();return;}
+            session=new PairingSession(data.challenge);
+            const pending={conn,session,code:data.challenge,...(isDeviceId(data.deviceId)&&isTrustNonce(data.nonce)?{deviceId:data.deviceId,requestNonce:data.nonce}:{})};
+            pendingPairingRef.current=pending;setPendingPairing(pending);setSyncMessage('Confira a solicitação de controle neste computador.');pairingTimerRef.current=setTimeout(rejectPairing,60000);
+          } catch {conn.close();}
           return;
         }
         try {
@@ -499,6 +578,7 @@ export const SyncSection = React.memo(function SyncSection({
             try {res=await write;} catch(error){mediaTransferFailed=true;throw error;}
             finally{pendingMediaWrites.delete(write);}
             if (res.complete) {
+              if(pendingPullRef.current?.conn===conn&&res.item)pendingPullRef.current.expected.delete(res.item.id);
               window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
               setSyncMessage('Mídia recebida e salva com sucesso!');
               await sendMediaCatalog(conn);
@@ -523,44 +603,15 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (data && data.type === 'MEDIA_SAVE') {
-            const item = data.mediaItem;
-            if(!item?.base64 && !(await getAllMediaItems()).some(local=>local.id===item?.id && local.blob)){await sendMediaCatalog(conn);return;}
-            setSyncMessage(`Salvando mídia: ${item.name}`);
-            if(item.base64)window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Recebendo mídia: ${item.name}` } }));
-
-            const savePayload: any = {
-              id: item.id,
-              type: item.type,
-              name: item.name,
-              duration: item.duration,
-              enabledInLoop: item.enabledInLoop,
-              muted: item.muted,
-              order: item.order,
-              fit: item.fit
-            };
-
-            if (item.base64) {
-              try {
-                const byteCharacters = atob(item.base64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                savePayload.blob = new Blob([byteArray], { type: item.mimeType });
-              } catch (err) {
-                console.error("Erro ao decodificar base64:", item.name, err);
-              }
-            }
-
-            await saveMediaItem(savePayload);
-            window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
-
-            // Relay to all other connected peers
-            broadcastToPeers(data, conn);
-            await sendMediaCatalog(conn);
-            if(item.base64)window.dispatchEvent(new Event('projection_sync_finished'));
-            return;
+            const item=data.mediaItem;
+            if(item?.base64)throw Error('Atualize os dois aparelhos: arquivos agora são transferidos por blocos.');
+            const existing=(await getAllMediaItems()).find(local=>local.id===item?.id&&local.blob);
+            if(!conn.open||!session?.approved)return;
+            if(!existing){await sendMediaCatalog(conn);return;}
+            const {size:_size,mimeType:_mime,...safe}=readTransferMetadata({...item,size:existing.blob!.size,mimeType:existing.blob!.type||'application/octet-stream'});
+            await saveMediaItem(safe,connectionAbort.signal);
+            if(!conn.open||!session?.approved)return;
+            window.dispatchEvent(new CustomEvent('projection_sync_update',{detail:{key:'mediaUpdateTrigger',value:Date.now().toString()}}));broadcastToPeers(data,conn);await sendMediaCatalog(conn);return;
           }
 
           if (data && data.type === 'MEDIA_DELETE') {
@@ -613,7 +664,7 @@ export const SyncSection = React.memo(function SyncSection({
             for (const {remote,localId} of plan.reused) {
               if (!conn.open || !session?.approved) return;
               const {size:_size,contentHash:_hash,...metadata}=remote;
-              await saveMediaItem({...metadata,id:localId});
+              await saveMediaItem({...metadata,id:localId},connectionAbort.signal);
             }
             if(!conn.open || !session?.approved)return;
             for (const [key,value] of Object.entries(storage)) {
@@ -641,7 +692,8 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (data && data.type === 'REQUEST_DELTA_MEDIA') {
-            const requestedIds = new Set(data.ids || []);
+            if(!Array.isArray(data.ids)||data.ids.length>500||!data.ids.every((id:unknown)=>typeof id==='string'&&id.length>0&&id.length<=200))throw Error('Lista de arquivos solicitados inválida.');
+            const requestedIds = new Set(data.ids);
             const allMedia = await getAllMediaItems();
             const mediaToTransfer = allMedia.filter(item => requestedIds.has(item.id));
 
@@ -681,48 +733,7 @@ export const SyncSection = React.memo(function SyncSection({
             return;
           }
 
-          if (data && data.type === 'DELTA_MEDIA_ITEMS') {
-            const items = data.mediaItems || [];
-            for (let i = 0; i < items.length; i++) {
-              const item = items[i];
-              const progress = Math.round(((i + 1) / items.length) * 100);
-              window.dispatchEvent(new CustomEvent('projection_sync_progress', {
-                detail: { message: `Recebendo alteração (${i + 1}/${items.length}): ${item.name}`, progress }
-              }));
-
-              let blob: Blob | undefined = undefined;
-              if (item.base64 && item.base64.trim().length > 0) {
-                try {
-                  const byteCharacters = atob(item.base64);
-                  const byteNumbers = new Array(byteCharacters.length);
-                  for (let j = 0; j < byteCharacters.length; j++) {
-                    byteNumbers[j] = byteCharacters.charCodeAt(j);
-                  }
-                  const byteArray = new Uint8Array(byteNumbers);
-                  blob = new Blob([byteArray], { type: item.mimeType || 'application/octet-stream' });
-                } catch (e) {
-                  console.error("Erro ao decodificar base64:", item.name, e);
-                }
-              }
-
-              await saveMediaItem({
-                id: item.id,
-                type: item.type,
-                name: item.name,
-                duration: item.duration,
-                enabledInLoop: item.enabledInLoop,
-                muted: item.muted,
-                order: item.order,
-                fit: item.fit,
-                blob
-              });
-            }
-
-            window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
-            setDirectSyncStatus('success');
-            setSyncMessage('Sincronização incremental de mídias concluída!');
-            return;
-          }
+          if(data?.type==='DELTA_MEDIA_ITEMS'){conn.send({type:'SYNC_FAILED',version:1,message:'Formato antigo de transferência. Atualize o HolyLink nos dois aparelhos.'});setSyncMessage('Transferência antiga recusada. Arquivos preservados; atualize os dois aparelhos.');return;}
 
           if (data && data.type === 'SYNC_COMPLETE') {
             await Promise.allSettled([...pendingMediaWrites]);
@@ -757,83 +768,7 @@ export const SyncSection = React.memo(function SyncSection({
             return;
           }
 
-          if (!data || data.version !== 1) {
-            throw new Error('Formato de dados inválido.');
-          }
-
-          setSyncMessage('Dados recebidos! Gravando e aplicando configurações...');
-          window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: 'Gravando configurações no PC...', progress: 10 } }));
-
-          // 1. Restore localStorage (preservando chaves de identidade do PC)
-          if (data.localStorage) {
-            const currentRole = localStorage.getItem('projection_deviceRole') || 'pc';
-            const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
-
-            Object.entries(readSharedStorage(data.localStorage)).forEach(([key, val]) => {
-              if (
-                key === 'projection_deviceRole' ||
-                key === 'projection_myReceiverCode' ||
-                key === 'projection_lastPairedPeerCode'
-              ) {
-                return;
-              }
-              localStorage.setItem(key, val as string);
-            });
-
-            localStorage.setItem('projection_deviceRole', currentRole);
-            if (currentReceiverCode) {
-              localStorage.setItem('projection_myReceiverCode', currentReceiverCode);
-            }
-          }
-
-          // 2. Restore IndexedDB media files
-          if (data.mediaItems && Array.isArray(data.mediaItems)) {
-            const total = data.mediaItems.length;
-            for (let i = 0; i < total; i++) {
-              const item = data.mediaItems[i];
-              const progress = Math.round(10 + (i / total) * 85);
-              window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: `Restaurando mídia (${i+1}/${total}): ${item.name}`, progress } }));
-
-              let blob: Blob | undefined = undefined;
-              if (item.base64 && item.base64.trim().length > 0) {
-                try {
-                  const byteCharacters = atob(item.base64);
-                  const byteNumbers = new Array(byteCharacters.length);
-                  for (let j = 0; j < byteCharacters.length; j++) {
-                    byteNumbers[j] = byteCharacters.charCodeAt(j);
-                  }
-                  const byteArray = new Uint8Array(byteNumbers);
-                  blob = new Blob([byteArray], { type: item.mimeType || 'application/octet-stream' });
-                } catch (e) {
-                  console.error("Erro ao decodificar base64:", item.name, e);
-                }
-              }
-
-              const savePayload: any = {
-                id: item.id,
-                type: item.type,
-                name: item.name,
-                duration: item.duration,
-                enabledInLoop: item.enabledInLoop,
-                muted: item.muted,
-                order: item.order,
-                fit: item.fit
-              };
-
-              if (blob) {
-                savePayload.blob = blob;
-              }
-
-              await saveMediaItem(savePayload);
-            }
-          }
-
-          window.dispatchEvent(new CustomEvent('projection_sync_progress', { detail: { message: 'Sincronização concluída!', progress: 100 } }));
-          setDirectSyncStatus('success');
-          setSyncMessage('Dados recebidos! Aplicativo sincronizado e controle remoto ativo.');
-
-          // Notify App.tsx to reload states from localStorage without refreshing the page
-          window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
+          if(data?.mediaItems||data?.type==='FULL_SYNC') {conn.send({type:'SYNC_FAILED',version:1,message:'Formato antigo de transferência. Atualize o HolyLink nos dois aparelhos.'});setSyncMessage('Formato antigo recusado. Arquivos e configurações preservados.');}
 
         } catch (err) {
           if (!conn.open || !session?.approved) return;
@@ -848,93 +783,60 @@ export const SyncSection = React.memo(function SyncSection({
       });
 
       conn.on('close', () => {
-        clearTimeout(requestTimeout);
+        connectionAbort.abort();clearTimeout(requestTimeout);
         window.dispatchEvent(new Event('projection_sync_finished'));
         cancelIncomingTransfers(conn);
         session?.close();
         if (pendingPairingRef.current?.conn === conn) clearPendingPairing();
+        if(generation!==generationRef.current||peerRef.current!==peer){unregisterPeerConn(conn);return;}
         console.log("Conexão com o celular fechada.");
         unregisterPeerConn(conn);
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'pc') {
-          setDirectSyncStatus('listening');
-          setSyncMessage('Celular desconectado. Aguardando nova conexão...');
+          setTrustVersion(value=>value+1);setDirectSyncStatus(getApprovedPeerConnections().length?'success':'listening');
+          setSyncMessage('Celular desconectado. Aparelhos lembrados podem se reconectar.');
         }
       });
 
       conn.on('error', (err) => {
-        clearTimeout(requestTimeout);
+        connectionAbort.abort();clearTimeout(requestTimeout);
         window.dispatchEvent(new Event('projection_sync_finished'));
         cancelIncomingTransfers(conn);
         session?.close();
         if (pendingPairingRef.current?.conn === conn) clearPendingPairing();
+        if(generation!==generationRef.current||peerRef.current!==peer){unregisterPeerConn(conn);return;}
         console.error('Erro na conexão com celular:', err);
         unregisterPeerConn(conn);
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'pc') {
-          setDirectSyncStatus('listening');
+          setTrustVersion(value=>value+1);setDirectSyncStatus(getApprovedPeerConnections().length?'success':'listening');
           setSyncMessage('Conexão perdida com celular. Aguardando reconexão...');
         }
       });
     });
 
-    peer.on('error', (err: any) => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-
-      if (err.type === 'unavailable-id') {
-        console.warn('PeerJS (Aviso): ID já está em uso no servidor. Gerando novo código de receptor...');
-        localStorage.removeItem('projection_myReceiverCode');
-        const role = localStorage.getItem('projection_deviceRole');
-        if (role === 'pc') {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            startReceiver();
-          }, 1500);
-        }
-        return;
-      }
-
-      // Evita logs excessivos para erros comuns de conexão
-      if (err.type === 'peer-unavailable' || err.type === 'disconnected' || err.type === 'network') {
-        console.warn('PeerJS (Aviso): Conexão temporariamente indisponível.', err.type);
-      } else {
-        console.error('Erro no receptor PeerJS:', err);
-      }
-
-      const role = localStorage.getItem('projection_deviceRole');
-      if (role === 'pc') {
-        setDirectSyncStatus('initializing');
-        setSyncMessage('Rede instável. Tentando restabelecer conexão...');
-
-        reconnectTimeoutRef.current = setTimeout(() => {
-          startReceiver();
-        }, 5000);
-      }
+    peer.on('error',(err:any)=>{
+      if(generation!==generationRef.current||peerRef.current!==peer||!autoReconnectEnabledRef.current)return;
+      if(err.type==='unavailable-id'){setDirectSyncStatus('error');setSyncMessage('Este código já está aberto em outra janela. Use a janela original ou gere outro código.');return;}
+      if(getApprovedPeerConnections().length){setSyncMessage('Controle conectado. A sinalização será retomada quando a rede voltar.');queueReconnect(()=>{if(peerRef.current===peer&&peer.disconnected)peer.reconnect();});return;}
+      setDirectSyncStatus('initializing');setSyncMessage('Rede instável. Tentando restabelecer este mesmo código...');queueReconnect(()=>startReceiver());
     });
-
-    peer.on('disconnected', () => {
-      console.log("PeerJS: Desconectado do servidor. Tentando reconectar...");
-      peer.reconnect();
-    });
+    peer.on('disconnected',()=>{if(generation!==generationRef.current||peerRef.current!==peer)return;queueReconnect(()=>{if(peerRef.current===peer&&peer.disconnected)peer.reconnect();});});
   };
 
   // Initialize as Sender (usually on Mobile/Celular) and send data to the receiver ID
-  const connectAndSendData = async (targetCode: string) => {
+  const connectAndSendData = async (targetCode: string,forceManual=false) => {
     targetCode = targetCode.toUpperCase().trim();
     if (!isPairingCode(targetCode)) {
       notify('Confira o código atual exibido no computador.', 'error');
       return;
     }
 
-    if (peerRef.current) {
-      peerRef.current.destroy();
-    }
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-
+    allowReconnect();const generation=resetTransport();
+    const remembered=forceManual?undefined:findTrustedReceiver(targetCode);
+    const identity=getDeviceIdentity();
+    const clientNonce=createTrustNonce();
+    localStorage.setItem('projection_deviceRole','phone');setConnectionBusy(true);
     setDirectSyncStatus('connecting');
     setSyncMessage('Conectando ao outro dispositivo...');
 
@@ -942,17 +844,22 @@ export const SyncSection = React.memo(function SyncSection({
     peerRef.current = peer;
 
     peer.on('open', () => {
+      if(generation!==generationRef.current||peerRef.current!==peer)return;
+      if(connRef.current?.open){retryActionRef.current=null;retryAttemptRef.current=0;setRetryAttempt(0);return;}
+      if(reconnectTimeoutRef.current)clearTimeout(reconnectTimeoutRef.current);retryActionRef.current=null;
       const conn = peer.connect(`holyrics_${targetCode.toUpperCase().trim()}`);
       connRef.current = conn;
       const pendingMediaWrites=new Set<Promise<any>>();
+      const connectionAbort=new AbortController();
       let mediaTransferFailed=false;
 
       const challenge = createPairingCode();
       const session = new PairingSession(challenge);
       let pairingRejected = false;
+      let resumeContext:ResumeContext|null=null;let checkingResume=false;let resumeVerified=false;
       const approvalTimeout = setTimeout(() => {
-        if (!session.approved) {
-          pairingRejected = true;
+        if (!session.approved&&generation===generationRef.current) {
+          pairingRejected = true;setConnectionBusy(false);
           session.close();
           conn.close();
           setDirectSyncStatus('error');
@@ -961,31 +868,44 @@ export const SyncSection = React.memo(function SyncSection({
       }, 65_000);
 
       // Listen to data from PC (for both full sync and real-time state updates)
+      const finishApproval=()=>{
+        clearTimeout(approvalTimeout);approvedConnections.add(conn);registerPeerConn(conn);
+        localStorage.setItem('projection_lastPairedPeerCode',targetCode);localStorage.setItem('projection_deviceRole','phone');
+        retryAttemptRef.current=0;setRetryAttempt(0);retryActionRef.current=null;setConnectionBusy(false);setVerificationCode('');setDirectSyncStatus('success');setTrustVersion(value=>value+1);
+        setSyncMessage('Controle autorizado. Agenda e mídias preservadas nos dois aparelhos. Sincronize somente se precisar copiar os dados.');
+        const url=new URL(window.location.href);url.searchParams.delete('syncCode');window.history.replaceState({},document.title,url.pathname+url.search+url.hash);
+      };
       conn.on('data', async (incomingData: any) => {
-        if (incomingData?.type === 'PAIRING_REJECTED') {
-          pairingRejected = true;
-          clearTimeout(approvalTimeout);
-          session.close();
-          unregisterPeerConn(conn);
-          conn.close();
-          setDirectSyncStatus('error');
-          setSyncMessage('O PC recusou a solicitação ou o prazo expirou.');
-          return;
+        if(generation!==generationRef.current||peerRef.current!==peer||!conn.open)return;
+        if(incomingData?.type==='PAIRING_REQUIRED'||incomingData?.type==='PAIRING_REJECTED') {
+          pairingRejected=true;clearTimeout(approvalTimeout);session.close();unregisterPeerConn(conn);conn.close();setConnectionBusy(false);setDirectSyncStatus('error');
+          setSyncMessage(incomingData.type==='PAIRING_REQUIRED'?'Este PC exige uma nova autorização. Confira o código e conecte novamente.':'O PC recusou a solicitação ou o prazo expirou.');return;
         }
-        if (!session.approved) {
-          if (incomingData?.type !== 'PAIRING_APPROVED' || !session.approve(incomingData.challenge)) return;
-          clearTimeout(approvalTimeout);
-          approvedConnections.add(conn);
-          registerPeerConn(conn);
-          localStorage.setItem('projection_lastPairedPeerCode', targetCode);
-          localStorage.setItem('projection_deviceRole', 'phone');
-          setVerificationCode('');
-          setDirectSyncStatus('success');
-          setSyncMessage('Controle autorizado. Agenda e mídias preservadas nos dois aparelhos. Sincronize somente se precisar copiar os dados.');
-          const url = new URL(window.location.href);
-          url.searchParams.delete('syncCode');
-          window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
-          return;
+        if(!session.approved) {
+          try {
+            if(remembered&&incomingData?.type==='TRUSTED_RECONNECT_CHALLENGE') {
+              if(checkingResume||resumeContext)return;checkingResume=true;
+              const context:ResumeContext={receiverId:incomingData.receiverId,controllerId:incomingData.controllerId,code:incomingData.code,clientNonce:incomingData.clientNonce,serverNonce:incomingData.serverNonce};
+              const valid=context.receiverId===remembered.id&&context.controllerId===identity.id&&context.code===targetCode&&context.clientNonce===clientNonce&&await verifyResumeProof(remembered.secret,'receiver',context,incomingData.proof);
+              if(!valid){pairingRejected=true;conn.close();setConnectionBusy(false);setDirectSyncStatus('error');setSyncMessage('Não foi possível confirmar a identidade do PC. A conexão foi bloqueada.');return;}
+              const proof=await signResumeProof(remembered.secret,'controller',context);
+              if(generation!==generationRef.current||!conn.open||findTrustedReceiver(targetCode)?.secret!==remembered.secret)return;
+              resumeContext=context;conn.send({type:'TRUSTED_RECONNECT_PROOF',proof,version:1});return;
+            }
+            if(remembered&&resumeContext&&incomingData?.type==='TRUSTED_RECONNECT_APPROVED'&&!resumeVerified) {
+              resumeVerified=true;
+              if(!await verifyResumeProof(remembered.secret,'approved',resumeContext,incomingData.proof)||generation!==generationRef.current||!conn.open||findTrustedReceiver(targetCode)?.secret!==remembered.secret){pairingRejected=true;conn.close();return;}
+              if(!session.approve(challenge))return;
+              connectionTrust.set(conn,remembered);finishApproval();return;
+            }
+            if(remembered||incomingData?.type!=='PAIRING_APPROVED'||!session.approve(incomingData.challenge))return;
+            const enrollment=incomingData.trust;
+            if(enrollment&&identity.persistent&&enrollment.controllerId===identity.id&&enrollment.code===targetCode&&enrollment.nonce===clientNonce&&isDeviceId(enrollment.receiverId)&&isTrustNonce(enrollment.secret)) {
+              const now=Date.now();const record:TrustedDevice={role:'receiver',id:enrollment.receiverId,secret:enrollment.secret,code:targetCode,label:`PC ${targetCode}`,createdAt:now,lastUsedAt:now};
+              if(saveTrustedDevice(record))connectionTrust.set(conn,record);else setTrustMessage('Conectado nesta sessão. Este navegador não conseguiu guardar a autorização.');
+            } else {const previous=findTrustedReceiver(targetCode);if(previous)removeTrustedDevice('receiver',previous.id);}
+            finishApproval();return;
+          } catch {pairingRejected=true;conn.close();setConnectionBusy(false);setDirectSyncStatus('error');setSyncMessage('Não foi possível verificar a autorização deste aparelho.');return;}
         }
         try {
           if (incomingData?.type==='MEDIA_CATALOG') {
@@ -993,11 +913,14 @@ export const SyncSection = React.memo(function SyncSection({
             window.dispatchEvent(new CustomEvent('holylink_remote_catalog',{detail:catalog}));return;
           }
           if (incomingData && (incomingData.type === 'MEDIA_CHUNK_START' || incomingData.type === 'MEDIA_CHUNK_DATA')) {
+            const pulling=pendingPullRef.current;
+            if(pulling?.conn===conn&&incomingData.type==='MEDIA_CHUNK_START'&&!pulling.expected.has(incomingData.metadata?.id))throw Error('Arquivo não solicitado recusado.');
             const write=handleIncomingChunk(incomingData,conn);pendingMediaWrites.add(write);
             let res;
             try {res=await write;} catch(error){mediaTransferFailed=true;throw error;}
             finally{pendingMediaWrites.delete(write);}
             if (res.complete) {
+              if(pendingPullRef.current?.conn===conn&&res.item)pendingPullRef.current.expected.delete(res.item.id);
               window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
               setSyncMessage('Mídia recebida e salva com sucesso!');
             }
@@ -1005,7 +928,8 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (incomingData && incomingData.type === 'REQUEST_DELTA_MEDIA') {
-            const requestedIds = new Set(incomingData.ids || []);
+            if(!Array.isArray(incomingData.ids)||incomingData.ids.length>500||!incomingData.ids.every((id:unknown)=>typeof id==='string'&&id.length>0&&id.length<=200))throw Error('Lista de arquivos solicitados inválida.');
+            const requestedIds = new Set(incomingData.ids);
             const allMedia = await getAllMediaItems();
             const mediaToTransfer = allMedia.filter(item => requestedIds.has(item.id));
 
@@ -1046,85 +970,43 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (incomingData && incomingData.type === 'SYNC_MANIFEST') {
-            const receivedManifest=readMediaManifest(incomingData.mediaManifest);
-            mediaTransferFailed=false;
-            setSyncMessage('Comparando alterações com dados do PC...');
-            if (incomingData.localStorage) {
-              const currentRole = localStorage.getItem('projection_deviceRole') || 'phone';
-              const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
-
-              Object.entries(readSharedStorage(incomingData.localStorage)).forEach(([key, val]) => {
-                if (
-                  key === 'projection_deviceRole' ||
-                  key === 'projection_myReceiverCode' ||
-                  key === 'projection_lastPairedPeerCode'
-                ) {
-                  return;
-                }
-                localStorage.setItem(key, val as string);
-              });
-
-              localStorage.setItem('projection_deviceRole', currentRole);
-              if (currentPairedCode) {
-                localStorage.setItem('projection_lastPairedPeerCode', currentPairedCode);
+            const pending=pendingPullRef.current;
+            if(!pending||pending.conn!==conn||pending.manifestReceived){setSyncMessage('Recebimento não solicitado recusado. Seus dados foram preservados.');return;}
+            const receivedManifest=readMediaManifest(incomingData.mediaManifest);const storage=readSharedStorage(incomingData.localStorage||{});
+            pending.manifestReceived=true;mediaTransferFailed=false;setSyncMessage('Comparando dados do PC. Arquivos exclusivos deste celular serão preservados...');
+            const localMedia=await getAllMediaItems();const localManifest=await describeMedia(localMedia,()=>conn.open&&session.approved);
+            if(!conn.open||!session.approved||pendingPullRef.current!==pending)return;
+            const localHashes=new Map(localManifest.map(item=>[item.id,item.contentHash]));const manifestIds=new Set(receivedManifest.map(item=>item.id));
+            const exclusiveIds=new Set(localMedia.filter(item=>!manifestIds.has(item.id)).map(item=>item.id));
+            const localMap=new Map(localMedia.map(item=>[item.id,item]));const missingIds:string[]=[];
+            for(const item of receivedManifest){
+              if(!conn.open||!session.approved)return;
+              const local=localMap.get(item.id);
+              if(!local?.blob||local.blob.size!==item.size||!item.contentHash||localHashes.get(item.id)!==item.contentHash)missingIds.push(item.id);
+              else {const {size:_size,contentHash:_hash,...safe}=item;await saveMediaItem({...safe,blob:local.blob},connectionAbort.signal);}
+            }
+            if(!conn.open||!session.approved||pendingPullRef.current!==pending)return;
+            for(const[key,value]of Object.entries(storage)){
+              let next=value;
+              if(key==='projection_slidesOrder'||key==='projection_disabledSlides'){
+                const incoming=JSON.parse(value);let current:string[]=[];try{const parsed=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(parsed))current=parsed.filter(id=>exclusiveIds.has(id));}catch{/* Ignore only corrupt old order metadata. */}
+                next=JSON.stringify([...new Set([...incoming,...current])]);
               }
+              localStorage.setItem(key,next);
             }
-
-            const localMedia = await getAllMediaItems();
-            const manifestItems = receivedManifest;
-            const localManifest = await describeMedia(localMedia,()=>conn.open && session.approved);
-            const localHashes = new Map(localManifest.map(item=>[item.id,item.contentHash]));
-            const manifestIds = new Set(manifestItems.map((m: any) => m.id));
-
-            for (const localItem of localMedia) {
-              if (!manifestIds.has(localItem.id)) {
-                await deleteMediaItem(localItem.id);
-              }
-            }
-
-            const localMap = new Map(localMedia.map(item => [item.id, item]));
-            const missingIds: string[] = [];
-
-            for (const item of manifestItems) {
-              const local = localMap.get(item.id);
-              const localSize = local?.blob ? local.blob.size : 0;
-              if (!local || localSize !== item.size || !item.contentHash || localHashes.get(item.id)!==item.contentHash) {
-                missingIds.push(item.id);
-              } else {
-                await saveMediaItem({
-                  id: item.id,
-                  type: item.type,
-                  name: item.name,
-                  duration: item.duration,
-                  enabledInLoop: item.enabledInLoop,
-                  muted: item.muted,
-                  order: item.order,
-                  fit: item.fit,
-                  blob: local.blob
-                });
-              }
-            }
-
-            if (missingIds.length === 0) {
-              window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
-              setDirectSyncStatus('success');
-              setSyncMessage('Tudo sincronizado!');
-              setIsPulling(false);
-              try { conn.send({ type: 'SYNC_COMPLETE' }); } catch (e) {}
-              return;
-            }
-
-            setSyncMessage(`Sincronizando ${missingIds.length} alteração(ões)...`);
-            try { conn.send({ type: 'REQUEST_DELTA_MEDIA', ids: missingIds }); } catch (e) {}
-            return;
+            pending.expected=new Set(missingIds);pending.comparing=false;
+            if(!missingIds.length){pendingPullRef.current=null;window.dispatchEvent(new CustomEvent('projection_full_sync_received'));setDirectSyncStatus('success');setIsPulling(false);setSyncMessage('Dados do PC recebidos. Seus arquivos exclusivos foram preservados.');conn.send({type:'SYNC_COMPLETE',version:1});return;}
+            setSyncMessage(`Recebendo ${missingIds.length} arquivo(s) novo(s) ou alterado(s)...`);conn.send({type:'REQUEST_DELTA_MEDIA',ids:missingIds,version:1});return;
           }
 
-          if (incomingData?.type==='SYNC_FAILED') {setIsPulling(false);setIsPushing(false);window.dispatchEvent(new Event('projection_sync_finished'));setSyncMessage(typeof incomingData.message==='string'?incomingData.message.slice(0,500):'O PC não conseguiu salvar todas as mídias. Seus arquivos locais foram preservados.');return;}
+          if (incomingData?.type==='SYNC_FAILED') {pendingPullRef.current=null;setIsPulling(false);setIsPushing(false);window.dispatchEvent(new Event('projection_sync_finished'));setSyncMessage(typeof incomingData.message==='string'?incomingData.message.slice(0,500):'O PC não conseguiu salvar todas as mídias. Seus arquivos locais foram preservados.');return;}
           if (incomingData && incomingData.type === 'SYNC_COMPLETE') {
+            if(pendingPullRef.current?.conn===conn&&pendingPullRef.current.comparing){mediaTransferFailed=true;throw Error('Confirmação recebida antes da comparação dos arquivos. Tente novamente.');}
             setIsPushing(false);
             await Promise.allSettled([...pendingMediaWrites]);
             if(!conn.open || !session.approved)return;
-            if(mediaTransferFailed){window.dispatchEvent(new Event('projection_sync_finished'));setIsPulling(false);setSyncMessage('Alguma mídia não foi salva. Tente sincronizar novamente.');return;}
+            if(mediaTransferFailed||pendingPullRef.current?.expected.size){pendingPullRef.current=null;window.dispatchEvent(new Event('projection_sync_finished'));setIsPulling(false);setSyncMessage('A transferência ficou incompleta. Arquivos locais preservados; tente novamente.');return;}
+            pendingPullRef.current=null;
             window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
             setDirectSyncStatus('success');
             setSyncMessage('Sincronização de mídias concluída!');
@@ -1143,41 +1025,19 @@ export const SyncSection = React.memo(function SyncSection({
           }
 
           if (incomingData && incomingData.type === 'MEDIA_SAVE') {
-            const item = incomingData.mediaItem;
-            if (!(await getAllMediaItems()).some(local=>local.id===item?.id && local.blob)) {conn.send({type:'REQUEST_MEDIA_CATALOG',version:1});return;}
-
-            const savePayload: any = {
-              id: item.id,
-              type: item.type,
-              name: item.name,
-              duration: item.duration,
-              enabledInLoop: item.enabledInLoop,
-              muted: item.muted,
-              order: item.order,
-              fit: item.fit
-            };
-
-            if (item.base64 && item.base64.trim().length > 0) {
-              try {
-                const byteCharacters = atob(item.base64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                savePayload.blob = new Blob([byteArray], { type: item.mimeType || 'application/octet-stream' });
-              } catch (err) {
-                console.error("Erro ao decodificar base64 no sender:", item.name, err);
-              }
-            }
-
-            await saveMediaItem(savePayload);
-            window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
-            return;
+            const item=incomingData.mediaItem;
+            if(item?.base64)throw Error('Atualize os dois aparelhos: arquivos agora são transferidos por blocos.');
+            const existing=(await getAllMediaItems()).find(local=>local.id===item?.id&&local.blob);
+            if(!conn.open||!session.approved)return;
+            if(!existing){conn.send({type:'REQUEST_MEDIA_CATALOG',version:1});return;}
+            const {size:_size,mimeType:_mime,...safe}=readTransferMetadata({...item,size:existing.blob!.size,mimeType:existing.blob!.type||'application/octet-stream'});
+            await saveMediaItem(safe,connectionAbort.signal);
+            if(!conn.open||!session.approved)return;
+            window.dispatchEvent(new CustomEvent('projection_sync_update',{detail:{key:'mediaUpdateTrigger',value:Date.now().toString()}}));return;
           }
 
           if (incomingData && incomingData.type === 'MEDIA_DELETE') {
-            await deleteMediaItem(incomingData.id);
+            await deleteMediaItem(incomingData.id,connectionAbort.signal);
 
             const savedOrderStr = localStorage.getItem('projection_slidesOrder');
             if (savedOrderStr) {
@@ -1201,87 +1061,29 @@ export const SyncSection = React.memo(function SyncSection({
             return;
           }
 
-          if (incomingData && incomingData.type === 'FULL_SYNC') {
-            setSyncMessage('Dados recebidos do PC! Sincronizando celular...');
-            if (incomingData.localStorage) {
-              const currentRole = localStorage.getItem('projection_deviceRole') || 'phone';
-              const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
+          if(incomingData?.type==='FULL_SYNC'||incomingData?.type==='DELTA_MEDIA_ITEMS'){pendingPullRef.current=null;setIsPulling(false);setSyncMessage('Transferência antiga recusada. Atualize o HolyLink nos dois aparelhos; arquivos preservados.');return;}
 
-              Object.entries(readSharedStorage(incomingData.localStorage)).forEach(([key, val]) => {
-                if (
-                  key === 'projection_deviceRole' ||
-                  key === 'projection_myReceiverCode' ||
-                  key === 'projection_lastPairedPeerCode'
-                ) {
-                  return;
-                }
-                localStorage.setItem(key, val as string);
-              });
-
-              localStorage.setItem('projection_deviceRole', currentRole);
-              if (currentPairedCode) {
-                localStorage.setItem('projection_lastPairedPeerCode', currentPairedCode);
-              }
-            }
-            if (incomingData.mediaItems && Array.isArray(incomingData.mediaItems)) {
-              for (const item of incomingData.mediaItems) {
-                let blob: Blob | undefined = undefined;
-                if (item.base64 && item.base64.trim().length > 0) {
-                  try {
-                    const byteCharacters = atob(item.base64);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {
-                      byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    blob = new Blob([byteArray], { type: item.mimeType || 'application/octet-stream' });
-                  } catch (e) {
-                    console.error("Erro ao decodificar base64 do PC:", item.name, e);
-                  }
-                }
-
-                const savePayload: any = {
-                  id: item.id,
-                  type: item.type,
-                  name: item.name,
-                  duration: item.duration,
-                  enabledInLoop: item.enabledInLoop,
-                  muted: item.muted,
-                  order: item.order,
-                  fit: item.fit
-                };
-
-                if (blob) {
-                  savePayload.blob = blob;
-                }
-
-                await saveMediaItem(savePayload);
-              }
-            }
-            setDirectSyncStatus('success');
-            setSyncMessage('Sincronizado! Dados importados do PC com sucesso.');
-            setIsPulling(false);
-            window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
-          }
         } catch (e) {
           if (!conn.open || !session.approved) return;
-          setIsPushing(false);setIsPulling(false);window.dispatchEvent(new Event('projection_sync_finished'));
+          pendingPullRef.current=null;setIsPushing(false);setIsPulling(false);window.dispatchEvent(new Event('projection_sync_finished'));
           setSyncMessage(e instanceof Error?e.message:'Falha ao sincronizar com o PC.');
           console.error("Erro ao processar dados recebidos do PC:", e);
         }
       });
 
-      conn.on('open', () => {
+      conn.on('open',()=>{
+        if(generation!==generationRef.current||peerRef.current!==peer||!conn.open)return;
         setDirectSyncStatus('sending');
-        setVerificationCode(challenge);
-        setSyncMessage('Confira o código e permita o controle no computador.');
-        conn.send({type: 'REQUEST_PAIRING', challenge});
+        if(remembered){setVerificationCode('');setSyncMessage('Confirmando a autorização lembrada deste PC...');conn.send({type:'REQUEST_TRUSTED_RECONNECT',deviceId:identity.id,nonce:clientNonce,version:1});}
+        else {setVerificationCode(challenge);setSyncMessage('Confira o código e permita o controle no computador.');conn.send({type:'REQUEST_PAIRING',challenge,...(identity.persistent&&crypto.subtle?{deviceId:identity.id,nonce:clientNonce}:{} )});}
       });
 
       conn.on('close', () => {
-        clearTimeout(approvalTimeout);
+        connectionAbort.abort();if(pendingPullRef.current?.conn===conn)pendingPullRef.current=null;clearTimeout(approvalTimeout);
         cancelIncomingTransfers(conn);
-        session.close();
+        session.close();unregisterPeerConn(conn);
+        if(generation!==generationRef.current||peerRef.current!==peer)return;
+        setConnectionBusy(false);
         setIsPulling(false);
         setIsPushing(false);
         clearRemoteCatalog();
@@ -1298,9 +1100,11 @@ export const SyncSection = React.memo(function SyncSection({
       });
 
       conn.on('error', (err) => {
-        clearTimeout(approvalTimeout);
+        connectionAbort.abort();if(pendingPullRef.current?.conn===conn)pendingPullRef.current=null;clearTimeout(approvalTimeout);
         cancelIncomingTransfers(conn);
-        session.close();
+        session.close();unregisterPeerConn(conn);
+        if(generation!==generationRef.current||peerRef.current!==peer)return;
+        setConnectionBusy(false);
         clearRemoteCatalog();
         window.dispatchEvent(new Event('projection_sync_finished'));
         setIsPushing(false);setIsPulling(false);
@@ -1321,6 +1125,9 @@ export const SyncSection = React.memo(function SyncSection({
     });
 
     peer.on('error', (err: any) => {
+      if(generation!==generationRef.current||peerRef.current!==peer||!autoReconnectEnabledRef.current)return;
+      setConnectionBusy(false);
+      if(connRef.current?.open){setConnectionBusy(!getApprovedPeerConnections().length);setSyncMessage('Canal aberto. Restabelecendo a sinalização quando a rede voltar.');queueReconnect(()=>{if(peerRef.current===peer&&peer.disconnected)peer.reconnect();});return;}
       if (err.type === 'peer-unavailable' || err.type === 'disconnected' || err.type === 'network' || err.type === 'socket-error' || err.type === 'socket-closed') {
         console.warn('PeerJS remetente (Aviso): Conexão indisponível ou instável.', err.type || err);
       } else {
@@ -1340,7 +1147,7 @@ export const SyncSection = React.memo(function SyncSection({
     });
 
     peer.on('disconnected', () => {
-      peer.reconnect();
+      if(generation===generationRef.current&&peerRef.current===peer)queueReconnect(()=>{if(peerRef.current===peer&&peer.disconnected)peer.reconnect();});
     });
   };
 
@@ -1393,218 +1200,79 @@ export const SyncSection = React.memo(function SyncSection({
       notify("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
-    setIsPulling(true);
+    if(pendingPullRef.current)return;
+    pendingPullRef.current={conn,manifestReceived:false,comparing:true,expected:new Set()};setIsPulling(true);
     setSyncMessage("Solicitando dados completos do PC...");
     conn.send({ type: 'REQUEST_FULL_SYNC', version: 1 });
   };
 
-  // Auto-connect / Auto-start on load if previously selected a device role
-  useEffect(() => {
-    const savedRole = localStorage.getItem('projection_deviceRole');
-    const params = new URLSearchParams(window.location.search);
-    const codeFromUrl = params.get('syncCode');
-    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+  // Startup respects a deliberate disconnect and never promotes an old code to trust.
+  useEffect(()=>{
+    const paused=localStorage.getItem('holylink_connection_paused')==='true';autoReconnectEnabledRef.current=!paused;
+    const role=localStorage.getItem('projection_deviceRole');const codeFromUrl=new URLSearchParams(window.location.search).get('syncCode');
+    if(codeFromUrl){const timer=setTimeout(()=>{void connectAndSendData(codeFromUrl);},500);return()=>clearTimeout(timer);}
+    if(paused){setDirectSyncStatus('idle');return;}
+    if(role==='pc'||(!role&&window.innerWidth>=768)){const timer=setTimeout(()=>startReceiver(),500);return()=>clearTimeout(timer);}
+    localStorage.setItem('projection_deviceRole','phone');
+    const last=localStorage.getItem('projection_lastPairedPeerCode');setDirectSyncStatus('connecting');setSyncMessage('Digite o código exibido no computador.');
+    if(last&&isPairingCode(last)){setSyncInputCode(last);if(findTrustedReceiver(last)){const timer=setTimeout(()=>{void connectAndSendData(last);},500);return()=>clearTimeout(timer);}setSyncMessage('Código anterior preenchido. Toque em Conectar para pedir uma nova autorização.');}
+  },[]);
 
-    if (codeFromUrl) {
-      // Se possui código na URL (escaneado via QR code), assume o papel de Celular automaticamente e conecta
-      localStorage.setItem('projection_deviceRole', 'phone');
-      const timer = setTimeout(() => {
-        connectAndSendData(codeFromUrl);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (savedRole === 'pc' || (!savedRole && isDesktop)) {
-      // Em computadores (PC / Desktop) ou quando não há papel definido, inicia receptor (PC) imediatamente
-      localStorage.setItem('projection_deviceRole', 'pc');
-      const timer = setTimeout(() => {
-        startReceiver();
-      }, 500);
-      return () => clearTimeout(timer);
-    } else if (savedRole === 'phone') {
-      // Se for celular com papel de controle remoto, tenta reconectar ao PC pareado
-      const lastPaired = localStorage.getItem('projection_lastPairedPeerCode');
-      if (lastPaired) {
-        setSyncInputCode(lastPaired);
-        const timer = setTimeout(() => {
-          connectAndSendData(lastPaired);
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
-      setDirectSyncStatus('connecting');
-      setSyncMessage('Digite o código exibido no computador.');
-    } else {
-      localStorage.setItem('projection_deviceRole', 'phone');
-      setDirectSyncStatus('connecting');
-      setSyncMessage('Digite o código exibido no computador.');
-    }
-  }, []);
-
-  const handleExportBackup = async () => {
-    setIsExporting(true);
-    setBackupMessage(null);
+  const handleExportBackup=async()=>{
+    setIsExporting(true);setBackupMessage(null);
     try {
-      // 1. Gather localStorage keys starting with "projection_"
-      const storageData: Record<string, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('projection_')) {
-          const val = localStorage.getItem(key);
-          if (val !== null) {
-            storageData[key] = val;
-          }
-        }
-      }
-
-      // 2. Gather media items from IndexedDB
-      const mediaItems = await getAllMediaItems();
-      const serializedMedia = await Promise.all(
-        mediaItems.map(async (item) => {
-          const base64 = await new Promise<string>((resolve, reject) => {
-            if (!(item.blob instanceof Blob)) {
-              resolve('');
-              return;
-            }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const res = reader.result as string;
-              resolve(res.split(',')[1] || '');
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(item.blob);
-          });
-
-          return {
-            id: item.id,
-            type: item.type,
-            name: item.name,
-            duration: item.duration,
-            enabledInLoop: item.enabledInLoop,
-            muted: item.muted,
-            order: item.order,
-            mimeType: (item.blob instanceof Blob) ? item.blob.type : 'application/octet-stream',
-            base64: base64
-          };
-        })
-      );
-
-      const backupObj = {
-        version: 1,
-        timestamp: Date.now(),
-        localStorage: storageData,
-        mediaItems: serializedMedia
-      };
-
-      const blob = new Blob([JSON.stringify(backupObj)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const dateStr = format(new Date(), 'yyyy-MM-dd_HH-mm');
-      a.href = url;
-      a.download = `holyrics_backup_${dateStr}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      setBackupMessage({ type: 'success', text: 'Backup exportado com sucesso!' });
-      notify('Backup exportado com sucesso!', 'success');
-    } catch (err) {
-      console.error('Erro ao exportar backup:', err);
-      setBackupMessage({ type: 'error', text: 'Falha ao exportar backup. Tente novamente.' });
-      notify('Falha ao exportar backup. Tente novamente.', 'error');
-    } finally {
-      setIsExporting(false);
-    }
+      const storageData:Record<string,string>={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key?.startsWith('projection_')){const value=localStorage.getItem(key);if(value!==null)storageData[key]=value;}}
+      storageData.projection_customMeetings??=JSON.stringify(MEETINGS);storageData.projection_customCampaigns??=JSON.stringify(CAMPAIGNS);
+      const storage=readSharedStorage(storageData);const items=await getAllMediaItems();
+      if(items.length>500||items.some(item=>!(item.blob instanceof Blob)||!item.blob.size))throw Error('Há mídias locais sem arquivo ou a biblioteca excede 500 itens. Confira a biblioteca antes de exportar.');
+      if(items.reduce((sum,item)=>sum+item.blob!.size,0)>MAX_BACKUP_MEDIA_BYTES)throw Error('A biblioteca excede os 128 MB de mídias aceitos pelo backup JSON. Preserve também os arquivos originais.');
+      const serialized=[];
+      // Sequential encoding avoids loading all media binaries at the same time.
+      for(const item of items){const {base64,mimeType}=await blobToBase64(item.blob);if(!base64)throw Error('Uma mídia não pôde ser lida. O backup não foi gerado.');serialized.push({id:item.id,type:item.type,name:item.name,duration:item.duration,enabledInLoop:item.enabledInLoop,muted:item.muted,order:item.order,fit:item.fit,mimeType,base64});}
+      const backup={version:2,product:'holylink',timestamp:Date.now(),localStorage:storage,mediaItems:serialized};
+      // Use the same validation as restoration before offering a supposedly complete file.
+      inspectBackup(backup);
+      const blob=new Blob([JSON.stringify(backup)],{type:'application/json'});if(blob.size>MAX_BACKUP_FILE_BYTES)throw Error('O arquivo de backup ultrapassa o limite de 192 MB.');
+      const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`holylink_backup_${format(new Date(),'yyyy-MM-dd_HH-mm')}.json`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+      setBackupMessage({type:'success',text:'Arquivo de backup gerado. Guarde-o em um lugar seguro.'});
+    } catch(error){setBackupMessage({type:'error',text:error instanceof Error?error.message:'Não foi possível gerar o backup.'});}
+    finally{setIsExporting(false);}
   };
-
-  const handleImportBackup = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsImporting(true);
-    setBackupMessage(null);
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const text = event.target?.result as string;
-        const data = JSON.parse(text);
-
-        if (!data || data.version !== 1) {
-          throw new Error('Arquivo de backup inválido.');
-        }
-
-        // 1. Restore localStorage keys (preserva papel de PC/Celular do dispositivo atual)
-        if (data.localStorage) {
-          const currentRole = localStorage.getItem('projection_deviceRole');
-          const currentReceiverCode = localStorage.getItem('projection_myReceiverCode');
-          const currentPairedCode = localStorage.getItem('projection_lastPairedPeerCode');
-
-          Object.entries(readSharedStorage(data.localStorage)).forEach(([key, val]) => {
-            if (
-              key === 'projection_deviceRole' ||
-              key === 'projection_myReceiverCode' ||
-              key === 'projection_lastPairedPeerCode'
-            ) {
-              return;
-            }
-            localStorage.setItem(key, val as string);
-          });
-
-          if (currentRole) localStorage.setItem('projection_deviceRole', currentRole);
-          if (currentReceiverCode) localStorage.setItem('projection_myReceiverCode', currentReceiverCode);
-          if (currentPairedCode) localStorage.setItem('projection_lastPairedPeerCode', currentPairedCode);
-        }
-
-        // 2. Restore media items to IndexedDB
-        if (data.mediaItems && Array.isArray(data.mediaItems)) {
-          for (const item of data.mediaItems) {
-            const byteCharacters = atob(item.base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: item.mimeType });
-
-            await saveMediaItem({
-              id: item.id,
-              type: item.type,
-              name: item.name,
-              duration: item.duration,
-              enabledInLoop: item.enabledInLoop,
-              muted: item.muted,
-              order: item.order,
-              blob: blob
-            });
-          }
-        }
-
-        setBackupMessage({ type: 'success', text: 'Backup importado! Reiniciando...' });
-        notify('Backup importado com sucesso! Reiniciando aplicação...', 'success');
-
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-
-      } catch (err) {
-        console.error('Erro ao importar backup:', err);
-        setBackupMessage({ type: 'error', text: 'Falha ao importar o arquivo. Verifique se o arquivo está correto.' });
-        notify('Falha ao importar backup. O arquivo selecionado é inválido ou corrompido.', 'error');
-        setIsImporting(false);
-      }
-    };
-    reader.onerror = () => {
-      setBackupMessage({ type: 'error', text: 'Erro ao ler arquivo.' });
-      notify('Erro ao ler o arquivo de backup.', 'error');
-      setIsImporting(false);
-    };
-    reader.readAsText(file);
+  const handleImportBackup=async(event:ChangeEvent<HTMLInputElement>)=>{
+    const file=event.target.files?.[0];event.target.value='';if(!file)return;
+    setIsImporting(true);setPreparedBackup(null);setBackupMessage(null);
+    try {
+      if(file.size>MAX_BACKUP_FILE_BYTES)throw Error('Escolha um backup JSON de até 192 MB.');
+      const prepared=prepareBackup(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));
+      setPreparedBackup(prepared);setBackupMessage({type:'success',text:'Arquivo conferido. Revise os dados antes de aplicar.'});
+    } catch(error){setBackupMessage({type:'error',text:error instanceof SyntaxError?'O arquivo não contém um backup JSON válido.':error instanceof Error?error.message:'Não foi possível verificar o backup.'});}
+    finally{setIsImporting(false);}
+  };
+  const applyBackup=async()=>{
+    if(!preparedBackup||isImporting||isExporting)return;
+    const role=localStorage.getItem('projection_deviceRole'),target=localStorage.getItem('projection_lastPairedPeerCode'),wasRunning=!!peerRef.current;
+    autoReconnectEnabledRef.current=false;retryActionRef.current=null;const generation=resetTransport();setDirectSyncStatus('idle');setIsImporting(true);setBackupMessage(null);
+    try {await applyPreparedBackup(preparedBackup,saveMediaBatch);setPreparedBackup(null);window.dispatchEvent(new CustomEvent('projection_full_sync_received'));setBackupMessage({type:'success',text:'Backup aplicado. Os demais arquivos deste aparelho foram preservados.'});}
+    catch(error){setBackupMessage({type:'error',text:error instanceof Error?error.message:'Não foi possível aplicar o backup.'});}
+    finally{setIsImporting(false);if(generation===generationRef.current&&wasRunning&&localStorage.getItem('projection_deviceRole')===role){if(role==='pc')startReceiver();else if(role==='phone'&&target&&findTrustedReceiver(target))void connectAndSendData(target);else{setDirectSyncStatus('connecting');setSyncMessage('Restauração concluída ou cancelada. Conecte novamente quando quiser.');}}}
   };
 
   return (
     <div className="sync-workspace console-area bg-hl-panel border border-hl-line rounded-3xl p-5 flex flex-col gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)]">
-      {pendingPairing && <PairingApproval code={pendingPairing.code} onApprove={approvePairing} onReject={rejectPairing}/>}
-      <ConsoleIntro icon={Smartphone} title="Conexão e backup" eyebrow="O PC projeta. O celular controla." description="Use o código do computador para conectar o celular e levar o controle da reunião com você." stats={[{label:'Este aparelho',value:localStorage.getItem('projection_deviceRole') === 'phone' ? 'Celular · controle' : 'PC · projeção'},{label:'Sincronização',value:({idle:'Aguardando',initializing:'Preparando',listening:'Aguardando celular',connecting:'Aguardando código',sending:'Enviando',receiving:'Recebendo',success:'Dados sincronizados',error:'Verificar conexão'})[directSyncStatus]}]}/>
+      {pendingPairing && <PairingApproval code={pendingPairing.code} canRemember={!!pendingPairing.deviceId&&!!crypto.subtle} onApprove={approvePairing} onReject={rejectPairing}/>}
+      <ConsoleIntro icon={Smartphone} title="Conexão e backup" eyebrow="O PC projeta. O celular controla." description="Use o código do computador para conectar o celular e levar o controle da reunião com você." stats={[{label:'Este aparelho',value:localStorage.getItem('projection_deviceRole') === 'phone' ? 'Celular · controle' : 'PC · projeção'},{label:'Conexão',value:({idle:'Pausada',initializing:'Preparando',listening:'Aguardando celular',connecting:connectionBusy?'Conectando':'Pronto para conectar',sending:'Autorizando',receiving:'Recebendo',success:'Conectado',error:'Verificar conexão'})[directSyncStatus]}]}/>
       <ol className="console-connection-path" aria-label="Como conectar"><li><span>01</span><Laptop size={21}/><strong>PC no telão</strong><small>Abra a projeção na segunda tela.</small></li><li><span>02</span><Smartphone size={21}/><strong>Celular no controle</strong><small>Use o código ou QR do computador.</small></li><li><span>03</span><CheckCircle2 size={21}/><strong>Confira a conexão</strong><small>Verifique a exibição no PC e no telão.</small></li></ol>
+
+      <ConnectionPanel role={localStorage.getItem('projection_deviceRole')} code={syncCode} inputCode={syncInputCode} onInputCode={setSyncInputCode} status={directSyncStatus} message={syncMessage} verificationCode={verificationCode} busy={connectionBusy||directSyncStatus==='initializing'} connectedCount={getApprovedPeerConnections().length} attempt={retryAttempt} invitationExpiresAt={invitationExpiresAt}
+        onReceiver={()=>startReceiver()} onController={()=>{stopConnection();allowReconnect();localStorage.setItem('projection_deviceRole','phone');setSyncInputCode('');setDirectSyncStatus('connecting');setSyncMessage('Digite o código exibido no computador.');}} onConnect={()=>{void connectAndSendData(syncInputCode,true);}} onStop={stopConnection} onRenew={renewInvitation}
+        onNewCode={()=>showConfirm('Gerar outro código?', 'Os celulares conectados serão desconectados. O novo código precisará ser informado novamente; seus arquivos continuam salvos.',()=>startReceiver(true),'info')}
+        isPushing={isPushing} isPulling={isPulling}
+        onPush={()=>showConfirm('Enviar dados para o PC?','A agenda e as configurações do celular serão usadas no PC. As mídias serão mescladas: arquivos exclusivos do PC permanecem e conteúdos iguais não são reenviados.',()=>{void forcePushToPC();},'danger')}
+        onPull={()=>showConfirm('Receber dados do PC?','A agenda e as configurações do PC serão usadas neste celular. As mídias serão mescladas; arquivos exclusivos deste celular permanecem. Exporte um backup se quiser guardar a configuração anterior.',forcePullFromPC,'danger')}
+        trusted={readTrustedDevices()} trustMessage={trustMessage}
+        onReconnect={device=>{setSyncInputCode(device.code);void connectAndSendData(device.code);}}
+        onRevoke={device=>showConfirm('Esquecer aparelho?',`A autorização de ${device.label} será removida e sua conexão atual será encerrada. Nenhum arquivo será apagado.`,()=>revokeTrust(device),'danger')}/>
+
 <details className="holy-disclosure sync-diagnostics"><summary>Diagnóstico de conexão</summary>      {/* BOTÃO DE DIAGNÓSTICO E TESTE AUTOMÁTICO */}
       <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
         <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1612,7 +1280,7 @@ export const SyncSection = React.memo(function SyncSection({
             <FlaskConical className="w-4 h-4 text-hl-gold-bright" />
             <div>
               <span className="text-xs font-bold text-hl-soft block font-sans">Diagnóstico do Sistema & Rede</span>
-              <span className="text-[10px] text-hl-dim">Validação da rede local, banco de dados e sinalização P2P</span>
+              <span className="text-[10px] text-hl-dim">Testes deste navegador, armazenamento e servidor de sinalização</span>
             </div>
           </div>
           <button
@@ -1636,7 +1304,7 @@ export const SyncSection = React.memo(function SyncSection({
         {showTestPanel && (
           <div className="flex flex-col gap-2 mt-1 bg-hl-panel p-3 rounded-xl border border-hl-line-soft text-xs animate-fadeIn shadow-[inset_0_1px_4px_rgba(0,0,0,0.8)]">
             <div className="flex items-center justify-between text-[11px] font-bold text-hl-muted border-b border-hl-line-soft pb-2 font-mono">
-              <span>Resultado da Simulação do Sistema:</span>
+              <span>Resultado dos testes neste aparelho:</span>
               {testSummary && (
                 <span className={`px-2 py-0.5 rounded-full font-black text-[10px] flex items-center gap-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] ${
                   testSummary.success ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/80' : 'bg-red-950/80 text-red-400 border border-red-800/80'
@@ -1696,319 +1364,9 @@ export const SyncSection = React.memo(function SyncSection({
       </div>
 
 </details>
-      {/* OPÇÃO 1: SINCRONIZAÇÃO DIRETA SEM FIO */}
-      <div className="border border-hl-line-soft bg-hl-canvas rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
-        <div className="flex items-center justify-between border-b border-hl-line-soft pb-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-hl-soft">
-            <Zap className="w-4 h-4 text-hl-gold-bright" />
-            <span>Sincronização P2P Sem Fio</span>
-          </div>
-          <span className="text-[9px] bg-hl-gold-well/80 text-hl-gold-bright border border-hl-line-strong/80 px-2.5 py-0.5 rounded-full font-mono font-bold shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
-            PC ↔ Celular
-          </span>
-        </div>
+      <BackupPanel busy={isExporting||isImporting} exporting={isExporting} importing={isImporting} onExport={()=>{void handleExportBackup();}} onSelect={()=>backupInputRef.current?.click()} onApply={()=>{void applyBackup();}} onCancel={()=>{setPreparedBackup(null);setBackupMessage(null);}} summary={preparedBackup?{files:preparedBackup.mediaItems.length,settings:Object.keys(preparedBackup.localStorage).length,bytes:preparedBackup.totalBytes}:null} message={backupMessage}/>
+      <input ref={backupInputRef} id="backup-file-input" type="file" accept=".json,application/json" aria-label="Selecionar arquivo de backup" onChange={handleImportBackup} disabled={isExporting||isImporting} className="sr-only"/>
 
-        {directSyncStatus === 'idle' && (
-          <div className="flex flex-col gap-3">
-            <p className="text-[11px] text-hl-muted leading-normal">
-              Selecione a função deste dispositivo para parear com o sistema:
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => startReceiver()}
-                className="bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-24 group shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px]"
-              >
-                <Laptop className="w-6 h-6 text-hl-gold-bright group-hover:scale-110 transition-transform" />
-                <span className="text-hl-copy font-black">RECEPTOR (PC)</span>
-                <span className="text-[8px] text-hl-dim uppercase tracking-tighter font-mono">Projeta mídias no telão</span>
-              </button>
-              <button
-                onClick={() => setDirectSyncStatus('connecting')}
-                className="bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-24 group shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px]"
-              >
-                <Smartphone className="w-6 h-6 text-hl-gold-bright group-hover:scale-110 transition-transform" />
-                <span className="text-hl-copy font-black">CONTROLE (CELULAR)</span>
-                <span className="text-[8px] text-hl-dim uppercase tracking-tighter font-mono">Controla transmissão</span>
-              </button>
-            </div>
-
-            {localStorage.getItem('projection_lastPairedPeerCode') && (
-              <button
-                onClick={() => {
-                  const code = localStorage.getItem('projection_lastPairedPeerCode');
-                  if (code) connectAndSendData(code);
-                }}
-                className="w-full bg-emerald-950/40 border border-emerald-800/60 hover:bg-emerald-900/50 text-emerald-400 text-[10px] font-black py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer mt-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Reconectar ao último PC ({localStorage.getItem('projection_lastPairedPeerCode')})
-              </button>
-            )}
-
-            {localStorage.getItem('projection_myReceiverCode') && (
-              <div className="text-[10px] text-hl-dim text-center mt-1 font-mono">
-                Código de Pareamento deste PC: <span className="font-mono text-hl-gold-bright font-black bg-hl-raised px-2.5 py-0.5 rounded-lg border border-hl-line shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">{localStorage.getItem('projection_myReceiverCode')}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* RECEIVER STATE (PC IS WAITING) */}
-        {(directSyncStatus === 'initializing' || directSyncStatus === 'listening' || directSyncStatus === 'receiving') && (
-          <div className="flex flex-col items-center gap-3 py-3 bg-hl-panel p-4 rounded-2xl border border-hl-line-soft shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-            <span className="text-[11px] text-hl-gold-bright font-bold flex items-center gap-2 font-mono">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              {syncMessage}
-            </span>
-
-            {syncCode && (
-              <div className="flex flex-col items-center gap-3 w-full">
-                {/* QR CODE FOR PHONE SCANNING */}
-                <div className="bg-white p-3 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-white">
-                  <QRCode
-                    value={`${window.location.origin}${window.location.pathname}?syncCode=${syncCode}`}
-                    size={130}
-                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                  />
-                </div>
-
-                <div className="text-center">
-                  <span className="text-[10px] text-hl-muted block mb-1 uppercase tracking-wider font-mono font-bold">Código PIN para digitação manual:</span>
-                  <span className="font-mono text-xl font-black text-hl-gold-bright bg-hl-canvas border border-hl-line px-4 py-1.5 rounded-xl tracking-widest shadow-[inset_0_2px_6px_rgba(0,0,0,1)] inline-block">
-                    {syncCode}
-                  </span>
-                </div>
-
-                <div className="text-[10px] text-hl-soft bg-hl-canvas p-3 rounded-xl text-center leading-normal border border-hl-line-soft max-w-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-                  <strong>Instruções:</strong> Aponte a câmera do celular para o QR Code acima para conectar.
-                  <span className="block mt-2">Código válido por 10 minutos. O PC ainda pedirá sua aprovação.</span>
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={() => {
-                localStorage.removeItem('projection_deviceRole');
-                localStorage.removeItem('projection_lastPairedPeerCode');
-                if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-                rejectPairing();
-                if (connRef.current) unregisterPeerConn(connRef.current);
-                if (peerRef.current) peerRef.current.destroy();
-                setDirectSyncStatus('idle');
-              }}
-              className="text-hl-dim hover:text-hl-soft text-[10px] underline cursor-pointer mt-1"
-            >
-              Alterar Função ou Cancelar
-            </button>
-          </div>
-        )}
-
-        {verificationCode && directSyncStatus === 'sending' && <div className="rounded-2xl border border-hl-line-strong bg-hl-canvas p-4 text-center"><p className="text-sm text-hl-soft">Compare este código com o PC antes de permitir:</p><strong className="block py-3 text-2xl font-mono tracking-widest text-hl-gold">{verificationCode}</strong><p className="text-xs text-hl-muted">Nenhum dado é enviado antes da aprovação.</p></div>}
-
-        {syncCode && localStorage.getItem('projection_deviceRole') === 'pc' && <button type="button" onClick={() => startReceiver(true)} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-gold">Gerar novo código e desconectar celulares</button>}
-
-        {/* SENDER STATE (MOBILE CONNECTING/TYPING CODE) */}
-        {(directSyncStatus === 'connecting' || directSyncStatus === 'sending') && (
-          <div className="flex flex-col gap-3 py-3 bg-hl-panel p-4 rounded-2xl border border-hl-line-soft shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-            <span className="text-[11px] text-hl-gold-bright font-bold flex items-center gap-2 self-center font-mono">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              {syncMessage}
-            </span>
-
-            {directSyncStatus === 'connecting' && (
-              <div className="flex flex-col gap-2.5 w-full">
-                <label className="text-[10px] text-hl-muted font-bold uppercase tracking-wider font-mono">Código PIN do PC:</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="CÓDIGO"
-                    aria-label="Código do computador" value={syncInputCode}
-                    onChange={(e) => setSyncInputCode(e.target.value.toUpperCase())}
-                    maxLength={6}
-                    className="bg-hl-canvas border border-hl-line rounded-xl px-3 py-2 text-sm font-mono font-bold text-hl-gold-bright flex-1 focus:outline-none focus:border-hl-gold/60 text-center uppercase tracking-widest shadow-[inset_0_2px_6px_rgba(0,0,0,1)]"
-                  />
-                  <button
-                    onClick={() => connectAndSendData(syncInputCode)}
-                    disabled={!isPairingCode(syncInputCode)}
-                    className="bg-hl-gold hover:bg-hl-gold-bright text-black text-xs font-black px-4 py-2 rounded-xl disabled:opacity-50 transition-all cursor-pointer shadow-[0_0_12px_rgba(255,211,79,0.3)] active:translate-y-[1px]"
-                  >
-                    Conectar
-                  </button>
-                </div>
-                <p className="text-[10px] text-hl-dim leading-normal font-mono">
-                  Digite os 6 caracteres do código atual exibido no computador.
-                </p>
-              </div>
-            )}
-
-            <button
-              onClick={() => {
-                localStorage.removeItem('projection_deviceRole');
-                localStorage.removeItem('projection_lastPairedPeerCode');
-                if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-                rejectPairing();
-                if (connRef.current) unregisterPeerConn(connRef.current);
-                if (peerRef.current) peerRef.current.destroy();
-                setDirectSyncStatus('idle');
-              }}
-              className="text-hl-dim hover:text-hl-soft text-[10px] underline cursor-pointer mt-1 self-center"
-            >
-              Voltar ao Menu
-            </button>
-          </div>
-        )}
-
-        {/* SUCCESS STATE */}
-        {directSyncStatus === 'success' && (
-          <div className="flex flex-col items-center gap-3.5 py-4 bg-emerald-950/20 border border-emerald-800/60 rounded-2xl p-4 text-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500 text-emerald-400 font-bold text-xl animate-bounce shadow-[0_0_15px_rgba(52,211,153,0.4)]">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-            </div>
-            <div className="text-center">
-              <span className="text-xs font-black text-emerald-400 block uppercase tracking-wider font-mono">Dispositivos Conectados!</span>
-              <p className="text-[11px] text-hl-soft mt-2 max-w-sm mx-auto leading-relaxed">
-                Acesso autorizado pelo computador.
-              </p>
-              <p className="text-[10px] text-hl-muted mt-1 max-w-sm mx-auto leading-relaxed">
-                Controle autorizado. Confira a projeção no telão; a conexão não confirma a imagem física do HDMI.
-              </p>
-            </div>
-
-            {localStorage.getItem('projection_deviceRole') === 'phone' && <details className="holy-disclosure w-full text-left">
-              <summary>Copiar agenda e mídias entre os aparelhos</summary>
-              <p className="text-xs text-hl-muted my-3">A transferência entre aparelhos aceita até 128 MB por arquivo. Arquivos maiores podem continuar sendo usados localmente.</p>
-              <p className="text-xs text-hl-muted my-3">Use Enviar para o PC para levar a agenda e as configurações do celular. As mídias do PC são preservadas; arquivos iguais são reconhecidos pelo conteúdo. Receber do PC continua sendo uma opção separada.</p>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" disabled={isPushing || isPulling} onClick={() => showConfirm('Receber dados do PC?', 'A agenda, configurações e lista de mídias deste celular serão substituídas pelas do PC. Arquivos ausentes no PC serão removidos deste celular. Exporte um backup antes.', forcePullFromPC, 'danger')} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-soft disabled:opacity-50">{isPulling ? 'Recebendo...' : 'Receber do PC'}</button>
-                <button type="button" disabled={isPushing || isPulling} onClick={() => showConfirm('Enviar dados para o PC?', 'A agenda e as configurações do celular serão usadas no PC. As mídias serão mescladas: arquivos exclusivos do PC permanecem e conteúdos iguais não são reenviados.', () => { void forcePushToPC(); }, 'danger')} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-gold disabled:opacity-50">{isPushing ? 'Enviando...' : 'Enviar para o PC'}</button>
-              </div>
-            </details>}
-
-            {localStorage.getItem('projection_deviceRole') === 'phone' && syncMessage && (
-              <div className="w-full bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl text-center mt-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-                <span className="text-[10px] text-hl-gold-bright font-mono font-medium tracking-wide block leading-normal">
-                  Status: {syncMessage}
-                </span>
-              </div>
-            )}
-
-            <div className="flex gap-4 justify-center items-center mt-1 border-t border-hl-line-soft pt-3 w-full">
-              <button
-                onClick={() => setDirectSyncStatus('idle')}
-                className="text-hl-soft hover:text-white text-[10px] bg-hl-raised border border-hl-line px-3.5 py-1.5 rounded-xl cursor-pointer transition-all font-bold shadow-[0_2px_6px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
-              >
-                Voltar
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.removeItem('projection_deviceRole');
-                  localStorage.removeItem('projection_lastPairedPeerCode');
-                  if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-                  rejectPairing();
-                  if (connRef.current) unregisterPeerConn(connRef.current);
-                  if (peerRef.current) peerRef.current.destroy();
-                  setDirectSyncStatus('idle');
-                }}
-                className="text-hl-dim hover:text-red-400 text-[10px] underline cursor-pointer"
-              >
-                Desconectar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ERROR STATE */}
-        {directSyncStatus === 'error' && (
-          <div className="flex flex-col items-center gap-2.5 py-3.5 bg-red-950/20 border border-red-800/60 rounded-2xl p-4 text-center shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
-            <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500 text-red-400 font-bold text-lg shadow-[0_0_12px_rgba(239,68,68,0.4)]">
-              <XCircle className="w-5 h-5 text-red-400" />
-            </div>
-            <span className="text-xs font-black text-red-400 font-mono">Falha na Conexão</span>
-            <p className="text-[11px] text-hl-muted leading-snug">
-              {syncMessage}
-            </p>
-            <div className="flex flex-col gap-1.5 items-center mt-1 w-full">
-              <button
-                onClick={() => {
-                  const lastPaired = localStorage.getItem('projection_lastPairedPeerCode');
-                  if (lastPaired) {
-                    connectAndSendData(lastPaired);
-                  } else {
-                    setDirectSyncStatus('connecting');
-                  }
-                }}
-                className="w-full bg-hl-raised border border-hl-line text-hl-soft hover:border-hl-gold/60 text-[10px] font-bold py-2 px-3 rounded-xl cursor-pointer transition-all active:translate-y-[1px]"
-              >
-                Reconectar
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.removeItem('projection_deviceRole');
-                  localStorage.removeItem('projection_lastPairedPeerCode');
-                  if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-                  rejectPairing();
-                  if (connRef.current) unregisterPeerConn(connRef.current);
-                  if (peerRef.current) peerRef.current.destroy();
-                  setDirectSyncStatus('idle');
-                }}
-                className="text-hl-dim hover:text-hl-soft text-[10px] underline cursor-pointer mt-1"
-              >
-                Alterar Função
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* OPÇÃO 2: BACKUP MANUAL VIA ARQUIVOS (.JSON) */}
-      <div className="border border-hl-line-soft bg-hl-canvas rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
-        <div className="flex items-center justify-between border-b border-hl-line-soft pb-2">
-          <span className="text-[10px] font-bold text-hl-muted uppercase tracking-wider font-mono flex items-center gap-1.5">
-            <Download className="w-3.5 h-3.5 text-hl-gold-bright" />
-            Backup & Restauração (.json)
-          </span>
-          <span className="text-[9px] text-hl-dim font-mono">Arquivo JSON</span>
-        </div>
-
-        <p className="text-[11px] text-hl-muted leading-relaxed">
-          Exporte ou restaure um arquivo de segurança (.json) com todas as mídias, dados e configurações.
-        </p>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          <button
-            onClick={handleExportBackup}
-            disabled={isExporting || isImporting}
-            className="bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl cursor-pointer flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px] disabled:opacity-50"
-          >
-            <Download className={`w-4 h-4 text-hl-gold-bright ${isExporting ? 'animate-bounce' : ''}`} />
-            {isExporting ? "Gerando Backup..." : "Exportar Backup (.json)"}
-          </button>
-
-          <label
-            className={`bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl cursor-pointer flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px] disabled:opacity-50 ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}
-          >
-            <Upload className={`w-4 h-4 text-hl-gold-bright ${isImporting ? 'animate-pulse' : ''}`} />
-            {isImporting ? "Restauração..." : "Restaurar Backup (.json)"}
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImportBackup}
-              disabled={isExporting || isImporting}
-              className="hidden"
-            />
-          </label>
-        </div>
-
-        {backupMessage && (
-          <div className={`text-[11px] p-2.5 rounded-xl border text-center font-bold shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
-            backupMessage.type === 'success'
-              ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-400'
-              : 'bg-red-950/40 border-red-800/60 text-red-400'
-          }`}>
-            {backupMessage.text}
-          </div>
-        )}
-      </div>
     </div>
   );
 });
