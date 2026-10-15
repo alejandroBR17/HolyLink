@@ -71,6 +71,15 @@ Validação desta etapa:
 5. Roteiros nomeados persistidos e backup validado antes de qualquer escrita. Preservar arquivos/configurações existentes. Conferir também cópia de configurações padrão não persistidas: manifesto atual envia somente as chaves salvas, então defaults ausentes não substituem uma customização antiga no destino. Definir cópia/mescla claramente antes de alterar a regra.
 6. Revisão visual dos fluxos novos e consolidar relatório final às 06h50, excluindo a automação.
 
-## Publicação e limites
+## Publicação e checkpoint às 00h12
 
-Etapas restritas à branch de prévia. Não fazer merge nem promover produção. Consultar o Git/Vercel para obter o SHA/deployment desta etapa; o alias de prévia permanece o registrado acima. Atualizar este bloco na retomada após confirmar o deployment. Nenhuma credencial deve entrar neste relatório.
+- Código atual publicado na prévia: `d47d1679249b534e95deea764e8e445054779df4` (`fix: validate shared projection state before applying remote data`).
+- Preview READY: `dpl_sPqQKBPr4skEAjVwPYyZaPeHRFZh`. Alias: `https://holylink-git-feat-first-p-a549d7-alesobralcortes-9387s-projects.vercel.app/`.
+- Acesso de teste já preparado fora do repositório: `../data/holylink-overnight-access.private.json`. Não publicar seu conteúdo. O alias continua protegido; não alterar proteção.
+- Conferência online da segunda etapa aprovada nas seis áreas em 390×844 e 1365×900, formulários, foco/Escape e ausência de overflow.
+- Produção conferida e preservada em `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi`. Nenhum merge/promote realizado.
+- Draft PR #1 atualizada até o código `d47d167`; continua rascunho.
+- Servidor local 3012 encerrado após os testes. Bibliotecas/configurações dos testes são descartáveis e não usam o perfil real do usuário.
+- Este checkpoint documental ficará em commit local para ser incluído junto da próxima etapa no próximo push, evitando outra implantação só para documentação. Nenhuma alteração de código pendente. A próxima rodada deve começar pelas transferências/mídias e backup, conforme a lista acima, sem repetir o que já passou.
+
+Retomadas continuam às 00h50–06h50, incluindo 04h50 após a renovação prevista para 04h41. Não consumir créditos de reset. Novo contexto automático do ambiente não é retorno humano; mensagens humanas de pausa/retorno prevalecem. Finalizar/excluir automação na rodada final.
