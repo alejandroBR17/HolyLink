@@ -1,3 +1,4 @@
+import {selectProjectionVerse} from '../utils/verse-selection';
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {ProjectionText} from './ProjectionText';
@@ -32,27 +33,7 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
   const isLightMode = propIsLightMode !== undefined ? propIsLightMode : diag.isLightModeActive;
   const isHighMode = effectiveMode === 'high';
 
-  let verse = { text: "", ref: "" };
-  let keyId = "verse";
-
-  if (customVerseText) {
-    verse = { text: customVerseText, ref: customVerseRef || "Mensagem" };
-    keyId = "custom";
-  } else if (activeVerseIndex !== null && activeVerseIndex !== undefined) {
-    const safeIdx = Math.max(0, Math.min(activeVerseIndex, VERSES.length - 1));
-    verse = VERSES[safeIdx];
-    keyId = `idx_${safeIdx}`;
-  } else {
-    let verseIdx = 0;
-    if (loopIteration !== undefined) {
-      verseIdx = (loopIteration + verseIndexOffset) % VERSES.length;
-    } else {
-      const baseVerseIdx = Math.floor(currentTime.getTime() / 15000);
-      verseIdx = (baseVerseIdx + verseIndexOffset) % VERSES.length;
-    }
-    verse = VERSES[verseIdx];
-    keyId = `auto_${verseIdx}`;
-  }
+  const {verse,keyId}=selectProjectionVerse(VERSES,{text:customVerseText,ref:customVerseRef,index:activeVerseIndex,loop:loopIteration,offset:verseIndexOffset,timeMs:currentTime.getTime()});
 
   // Performance-based animation configuration (Anti-Lag uses silky 0.35s GPU-friendly cross-fade)
   const motionProps = isLightMode

@@ -1,11 +1,11 @@
 /**
  * Media Preloader Service - Aggressive 2-Slot Lazy Loading
- * Ensures only the current slide and immediate next slide reside in RAM.
+ * Warms the current/next custom media with bounded caches; browser memory remains browser-managed.
  * Previous and non-adjacent slides are aggressively purged from browser memory
- * to guarantee optimal performance on 4GB RAM PCs and mobile devices.
+ * This reduces repeated loading but cannot guarantee smooth playback on every device.
  */
 
-class MediaPreloaderService {
+export class MediaPreloaderService {
   private imageCache: Map<string, HTMLImageElement> = new Map();
   private videoCache: Map<string, HTMLVideoElement> = new Map();
   private preloadedUrls: Set<string> = new Set();
@@ -16,6 +16,7 @@ class MediaPreloaderService {
    */
   public evictUrl(url: string) {
     if (!url || this.staticAssetUrls.has(url)) return;
+    this.pending.get(url)?.cancel();
 
     if (this.videoCache.has(url)) {
       const video = this.videoCache.get(url);
@@ -44,111 +45,47 @@ class MediaPreloaderService {
     this.preloadedUrls.delete(url);
   }
 
-  /**
-   * Preload and asynchronously decode an image bitmap into memory.
-   * Maintains strict RAM cap (maximum 2 non-static image buffers).
-   */
-  public preloadImage(url: string): Promise<void> {
-    if (!url || this.preloadedUrls.has(url)) {
-      return Promise.resolve();
-    }
+  private pending = new Map<string,{promise:Promise<boolean>;cancel:()=>void}>();
 
-    // Strict RAM Limit: Evict oldest image if limit reached
-    if (this.imageCache.size >= 2) {
-      for (const key of this.imageCache.keys()) {
-        if (!this.staticAssetUrls.has(key)) {
-          this.evictUrl(key);
-          break;
-        }
-      }
-    }
-
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = url;
-      img.referrerPolicy = "no-referrer";
-      
-      const onLoaded = async () => {
-        try {
-          if ('decode' in img && typeof img.decode === 'function') {
-            await img.decode();
-          }
-        } catch (e) {
-          // Decode fallback if format is unusual
-        }
-        this.imageCache.set(url, img);
-        this.preloadedUrls.add(url);
-        resolve();
-      };
-
-      if (img.complete) {
-        onLoaded();
-      } else {
-        img.onload = onLoaded;
-        img.onerror = () => {
-          // Resolve anyway to prevent hanging transitions
-          resolve();
-        };
-      }
-
-      // Safety timeout
-      setTimeout(resolve, 2500);
-    });
+  private load(url:string,type:'image'|'video'):Promise<boolean> {
+    if (!url) return Promise.resolve(false);
+    if (this.preloadedUrls.has(url)) return Promise.resolve(true);
+    const existing=this.pending.get(url); if(existing) return existing.promise;
+    const cache=type === 'image' ? this.imageCache : this.videoCache;
+    const occupied=[...cache.keys()].filter(key => !this.staticAssetUrls.has(key));
+    if (!this.staticAssetUrls.has(url) && occupied.length >= 2) this.evictUrl(occupied[0]);
+    let resolveResult!:(ok:boolean)=>void;
+    const promise=new Promise<boolean>(resolve => {resolveResult=resolve;});
+    const element=type === 'image' ? new Image() : document.createElement('video');
+    let settled=false;
+    const clean=()=>{element.removeEventListener('load',onLoaded);element.removeEventListener('loadeddata',onLoaded);element.removeEventListener('canplay',onLoaded);element.removeEventListener('error',onError);};
+    const finish=(ok:boolean)=>{
+      if(settled) return; settled=true; clearTimeout(timer);clean();this.pending.delete(url);
+      if(ok){if(type === 'image')this.imageCache.set(url,element as HTMLImageElement);else this.videoCache.set(url,element as HTMLVideoElement);this.preloadedUrls.add(url);}
+      else {if(type === 'video'){try{(element as HTMLVideoElement).pause();}catch{}}element.removeAttribute('src');if(type === 'video'){try{(element as HTMLVideoElement).load();}catch{}}}
+      resolveResult(ok);
+    };
+    const onLoaded=async()=>{
+      if(type === 'image'){
+        const img=element as HTMLImageElement;
+        try{await img.decode();}catch{ /* onload/naturalWidth remain a valid fallback for decoders without decode(). */ }
+        finish(img.naturalWidth>0);
+      }else finish((element as HTMLVideoElement).readyState>=2);
+    };
+    const onError=()=>finish(false);
+    const timer=setTimeout(()=>finish(false),type === 'image'?2500:3000);
+    this.pending.set(url,{promise,cancel:()=>finish(false)});
+    element.addEventListener(type === 'image'?'load':'loadeddata',onLoaded);
+    if(type === 'video'){const video=element as HTMLVideoElement;video.preload='auto';video.muted=true;video.playsInline=true;video.addEventListener('canplay',onLoaded);}
+    else (element as HTMLImageElement).referrerPolicy='no-referrer';
+    element.addEventListener('error',onError);
+    element.src=url;
+    if(type === 'image' && (element as HTMLImageElement).complete) void onLoaded();
+    return promise;
   }
 
-  /**
-   * Preload a video URL with metadata and auto buffering.
-   * Strict RAM safety limit: max 2 buffered video decoders in memory.
-   */
-  public preloadVideo(url: string): Promise<void> {
-    if (!url || this.preloadedUrls.has(url)) {
-      return Promise.resolve();
-    }
-
-    // Strict RAM limit: Evict oldest video decoder immediately
-    if (this.videoCache.size >= 2) {
-      const oldestKey = this.videoCache.keys().next().value;
-      if (oldestKey) {
-        this.evictUrl(oldestKey);
-      }
-    }
-
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.preload = 'auto';
-      video.src = url;
-      video.muted = true;
-      video.playsInline = true;
-
-      const onCanPlay = () => {
-        this.videoCache.set(url, video);
-        this.preloadedUrls.add(url);
-        cleanup();
-        resolve();
-      };
-
-      const onError = () => {
-        cleanup();
-        resolve();
-      };
-
-      const cleanup = () => {
-        video.removeEventListener('canplay', onCanPlay);
-        video.removeEventListener('loadeddata', onCanPlay);
-        video.removeEventListener('error', onError);
-      };
-
-      video.addEventListener('canplay', onCanPlay, { once: true });
-      video.addEventListener('loadeddata', onCanPlay, { once: true });
-      video.addEventListener('error', onError, { once: true });
-
-      // Timeout fallback in case video buffering takes too long
-      setTimeout(() => {
-        cleanup();
-        resolve();
-      }, 3000);
-    });
-  }
+  public preloadImage(url:string):Promise<boolean>{return this.load(url,'image');}
+  public preloadVideo(url:string):Promise<boolean>{return this.load(url,'video');}
 
   /**
    * Prune unused media objects from cache without deleting underlying files
@@ -175,7 +112,7 @@ class MediaPreloaderService {
    * Preload media for a specific list of custom media items
    */
   public async preloadMediaItems(items: Array<{ id: string; type: 'image' | 'video'; url: string }>): Promise<void> {
-    const promises: Promise<void>[] = [];
+    const promises: Promise<boolean>[] = [];
     for (const item of items) {
       if (!item.url) continue;
       if (item.type === 'image') {
@@ -200,9 +137,9 @@ class MediaPreloaderService {
     }
 
     let completed = 0;
-    const total = items.length;
+    const total = Math.min(items.length,2);
 
-    for (const item of items) {
+    for (const item of items.slice(0,2)) {
       if (item.url) {
         if (item.type === 'image') {
           await this.preloadImage(item.url);
@@ -245,7 +182,7 @@ class MediaPreloaderService {
     const activeUrls = new Set<string>(itemsToKeep.map(m => m.url));
 
     // Aggressive eviction: purge anything in RAM that is NOT in the 2-slot active set
-    const allCachedUrls = new Set([...this.imageCache.keys(), ...this.videoCache.keys()]);
+    const allCachedUrls = new Set([...this.imageCache.keys(), ...this.videoCache.keys(), ...this.pending.keys()]);
     for (const cachedUrl of allCachedUrls) {
       if (!activeUrls.has(cachedUrl) && !this.staticAssetUrls.has(cachedUrl)) {
         this.evictUrl(cachedUrl);
@@ -263,7 +200,18 @@ class MediaPreloaderService {
     this.staticAssetUrls.forEach(url => this.preloadImage(url));
   }
 
+  public async prepareStartup(currentId:string,order:string[],items:Array<{id:string;type:'image'|'video';url:string}>,onProgress?:(completed:number,total:number)=>void):Promise<{checked:number;failed:number}> {
+    const index=order.indexOf(currentId);
+    const ids=index<0?[currentId,...order.slice(0,1)]:[currentId,order[(index+1)%order.length]];
+    const media=[...new Set(ids)].map(id=>items.find(m=>m.id===id)).filter((m):m is typeof items[number]=>Boolean(m?.url));
+    const tasks=[...[...this.staticAssetUrls].map(url=>()=>this.preloadImage(url)),...media.map(m=>()=>m.type==='image'?this.preloadImage(m.url):this.preloadVideo(m.url))];
+    let checked=0,failed=0;onProgress?.(0,tasks.length);
+    for(const task of tasks){if(!await task()) failed++;checked++;onProgress?.(checked,tasks.length);}
+    return {checked,failed};
+  }
+
   public clearCache() {
+    for(const task of [...this.pending.values()]) task.cancel();
     const urls = [...this.preloadedUrls];
     urls.forEach(url => this.evictUrl(url));
     this.imageCache.clear();

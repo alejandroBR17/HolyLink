@@ -1,3 +1,4 @@
+import {selectProjectionVerse} from './utils/verse-selection';
 import {isYouthProjection} from './utils/projection-theme';
 import { useSlideManager } from "./hooks/useSlideManager";
 import { useWakeLock } from "./hooks/useWakeLock";
@@ -8,7 +9,7 @@ import {
   CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download, Sparkles,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, EyeOff, Eye
 } from 'lucide-react';
-import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS } from './data';
+import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS, VERSES } from './data';
 import { getNextMeeting, getSlideDuration } from './utils';
 import { mediaPreloader } from './utils/preloader';
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -122,6 +123,7 @@ export default function App() {
     remoteMediaList,
     customMediaList,
     isMediaLoaded,
+    mediaLoadError,
     isUploading,
     uploadError,
     handleFileUpload,
@@ -584,6 +586,10 @@ export default function App() {
   if (isSmartBooting) {
     return (
       <SmartSplashLoader
+        mediaReady={isMediaLoaded}
+        mediaLoadError={mediaLoadError}
+        currentSlideId={currentSlideId}
+        activeSlides={activeSlides}
         customMediaList={customMediaList}
         onComplete={() => setIsSmartBooting(false)}
       />
@@ -722,8 +728,8 @@ export default function App() {
 
           {/* ACTIVE CONTENT WORKSPACE */}
           <nav className="operator-quick-strip" aria-label="Controles essenciais da projeção">
-            <button type="button" aria-pressed={blackoutEnabled} onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}><EyeOff size={18} aria-hidden="true" />{blackoutEnabled ? 'Restaurar tela' : 'Blackout'}</button>
-            <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />{clearContentEnabled ? 'Mostrar texto' : 'Limpar texto'}</button>
+            <button type="button" aria-pressed={blackoutEnabled} onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}><EyeOff size={18} aria-hidden="true" />{blackoutEnabled ? 'Restaurar tela' : 'Blackout'}<small className="quick-control-state">{blackoutEnabled ? 'Ativo' : 'Inativo'}</small></button>
+            <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />{clearContentEnabled ? 'Mostrar texto' : 'Limpar texto'}<small className="quick-control-state">{clearContentEnabled ? 'Ativo' : 'Inativo'}</small></button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(-1)}><ChevronLeft size={18} aria-hidden="true" />Slide anterior</button>
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
           </nav>          <main onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">
@@ -731,6 +737,12 @@ export default function App() {
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (
               <PlaylistPanel
+                blackoutEnabled={blackoutEnabled}
+                clearContentEnabled={clearContentEnabled}
+                currentVerse={currentSlideId.startsWith('verse_') ? selectProjectionVerse(VERSES,{text:customVerseText,ref:customVerseRef,index:activeVerseIndex,loop:loopIteration,offset:Number(currentSlideId.replace('verse_',''))||0,timeMs:currentTime.getTime()}).verse : null}
+                liveVerse={Boolean(customVerseText && (verseDisplayPriority === 'verse_over_video' || !(isFinalMinute || isFinalFiveMinutes))) ? {text:customVerseText!,ref:customVerseRef || 'Passagem bíblica'} : null}
+                countdownMode={isFinalMinute ? 'Contagem final · último minuto' : isFinalFiveMinutes ? 'Contagem final · últimos cinco minutos' : isJustStarted ? 'A reunião vai começar' : null}
+                onOpenMonitor={() => setActiveMobileTab('monitor')}
                 slidesOrder={slidesOrder}
                 currentSlideId={currentSlideId}
                 manualSlideOverride={manualSlideOverride}

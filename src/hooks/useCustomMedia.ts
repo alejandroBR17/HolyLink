@@ -28,6 +28,7 @@ export function useCustomMedia(
   const [remoteMediaList,setRemoteMediaList]=useState<MediaManifestItem[]>([]);
   useEffect(()=>{const receive=(event:Event)=>{try {setRemoteMediaList(readMediaCatalog((event as CustomEvent).detail));} catch {}};window.addEventListener('holylink_remote_catalog',receive);return()=>window.removeEventListener('holylink_remote_catalog',receive);},[]);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+  const [mediaLoadError,setMediaLoadError]=useState<string|null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -119,10 +120,10 @@ export function useCustomMedia(
             } catch (e) {}
           });
         }, 1000);
-        if (active) setIsMediaLoaded(true);
+        if (active) {setMediaLoadError(null);setIsMediaLoaded(true);}
       } catch (err) {
         console.error("Failed to load custom media from DB", err);
-        if (active) setIsMediaLoaded(true);
+        if (active) {setMediaLoadError('Não foi possível ler a biblioteca local.');setIsMediaLoaded(true);}
       }
     };
 
@@ -376,6 +377,7 @@ export function useCustomMedia(
     remoteMediaList,
     customMediaList,
     isMediaLoaded,
+    mediaLoadError,
     isUploading,
     uploadError,
     handleFileUpload,

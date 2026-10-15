@@ -24,6 +24,12 @@ interface CustomMedia {
 }
 
 interface PlaylistPanelProps {
+  blackoutEnabled?:boolean;
+  clearContentEnabled?:boolean;
+  liveVerse?:{text:string;ref:string}|null;
+  currentVerse?:{text:string;ref:string}|null;
+  countdownMode?:string|null;
+  onOpenMonitor?:()=>void;
   currentSlideId: string;
   manualSlideOverride: string | null;
   activeSlides: string[];
@@ -60,6 +66,12 @@ interface PlaylistPanelProps {
 type QueueFilterMode = 'all' | 'active' | 'disabled' | 'media' | 'agenda';
 
 export const PlaylistPanel = React.memo(function PlaylistPanel({
+  blackoutEnabled=false,
+  clearContentEnabled=false,
+  liveVerse=null,
+  currentVerse=null,
+  countdownMode=null,
+  onOpenMonitor,
   currentSlideId,
   manualSlideOverride,
   activeSlides,
@@ -98,7 +110,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   const [filterMode, setFilterMode] = useState<QueueFilterMode>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [queueLimit, setQueueLimit] = useState(() => window.innerWidth < 600 ? 5 : 8);
-  useEffect(() => setQueueLimit(window.innerWidth < 600 ? 5 : 8), [filterMode, searchTerm]);
+  useEffect(() => {if (!locateCurrent) setQueueLimit(window.innerWidth < 600 ? 5 : 8);}, [filterMode, searchTerm]);
 
   // Estados para a central de gestão de mídias
   const [mediaViewMode, setMediaViewMode] = useState<'list' | 'grid'>('list');
@@ -228,6 +240,16 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
     return { name, desc, category };
   };
 
+  const slideIsVisible = !blackoutEnabled && !liveVerse && !clearContentEnabled && !countdownMode;
+  const liveTitle = blackoutEnabled ? 'Blackout ativo' : liveVerse ? liveVerse.ref : countdownMode || (clearContentEnabled ? 'Conteúdo da fila oculto' : currentVerse?.ref || getSlideDetails(currentSlideId).name);
+  const [locateCurrent,setLocateCurrent] = useState(false);
+  useEffect(() => {
+    if (!locateCurrent) return;
+    const frame = requestAnimationFrame(() => {document.querySelector(`[data-slide-id="${CSS.escape(currentSlideId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'}); setLocateCurrent(false);});
+    return () => cancelAnimationFrame(frame);
+  },[locateCurrent,currentSlideId]);
+  const revealCurrent = () => {setFilterMode('all'); setSearchTerm(''); setQueueLimit(Math.max(8,fullSlideList.indexOf(currentSlideId)+1)); setLocateCurrent(true);};
+
   // Filtra e pesquisa a lista de slides
   const filteredSlides = useMemo(() => {
     return fullSlideList.filter((slideId) => {
@@ -348,16 +370,22 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           {!draftOrder ? <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => {if (libraryRef.current) libraryRef.current.open = true; fileInputRef.current?.click();}}><Plus size={17}/>Adicionar mídia</button><button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button></div> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
         </header>
         <div className="sequence-status"><span className="sequence-status-light"/><span>{manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{manualSlideOverride && <button onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}><RefreshCw size={15}/>Retomar</button>}</div>
+        <section className="sequence-now" aria-label="Conteúdo atual do operador">
+          <div className="sequence-now-label"><span className={blackoutEnabled ? 'sequence-now-dot is-blackout' : 'sequence-now-dot'}/>{blackoutEnabled ? 'Saída ocultada' : 'Agora no operador'}{manualSlideOverride && <span className="sequence-now-tag">Fixado</span>}</div>
+          <div className="sequence-now-content">{slideIsVisible && customMediaList.find(m => m.id === currentSlideId)?.type === 'image' && <img src={customMediaList.find(m => m.id === currentSlideId)!.url} alt=""/>}<div><h3>{liveTitle}</h3><p>{blackoutEnabled ? 'A tela preta cobre a saída. A fila continua ao fundo.' : liveVerse ? liveVerse.text : countdownMode ? 'A contagem está sobre a programação. Confira a composição no Monitor.' : clearContentEnabled ? 'O slide continua na fila, mas seu conteúdo foi ocultado.' : currentVerse?.text || getSlideDetails(currentSlideId).desc}</p></div></div>
+          <p className="sequence-now-context">Slide da fila: {getSlideDetails(currentSlideId).name}{fullSlideList.includes(currentSlideId) ? ` · posição ${fullSlideList.indexOf(currentSlideId)+1} de ${fullSlideList.length}` : ' · fora da fila atual'}. Estado local; confira a saída no PC conectado.</p>
+          <div className="sequence-now-actions">{!draftOrder && fullSlideList.includes(currentSlideId) && <button onClick={revealCurrent}><Eye size={17}/>Localizar na fila</button>}{onOpenMonitor && <button onClick={onOpenMonitor}><Maximize2 size={17}/>Ver no Monitor</button>}</div>
+        </section>
         {draftOrder ? <p className="sequence-guidance" role="status">{orderChangedElsewhere ? 'A sequência mudou em outro controle. Cancele e abra a edição novamente para usar a versão atual.' : 'Use as setas para mudar a ordem. O telão só recebe a nova ordem quando você salvar.'}</p> : <div className="sequence-tools"><label><Search size={17}/><input aria-label="Buscar na sequência" placeholder="Buscar na sequência" value={searchTerm} onChange={event => setSearchTerm(event.target.value)}/></label><select aria-label="Filtrar sequência" value={filterMode} onChange={event => setFilterMode(event.target.value as QueueFilterMode)}><option value="all">Todos</option><option value="active">Ativos</option><option value="disabled">Ocultos</option><option value="media">Mídias</option><option value="agenda">Agenda</option></select></div>}
         <ol className="sequence-list" aria-label={draftOrder ? 'Editar ordem dos slides' : 'Slides da sequência'}>
           {(draftOrder || filteredSlides.slice(0, queueLimit)).map((slideId, index, list) => {
             const {name, desc, category} = getSlideDetails(slideId);
             const media = customMediaList.find(item => item.id === slideId);
             const Icon = slideId.startsWith('verse_') ? BookOpen : category === 'agenda' || category === 'evento' ? CalendarDays : category === 'midia' ? Film : category === 'campanha' ? Sparkles : Layout;
-            const isDisabled = disabledSlides.includes(slideId), isCurrent = currentSlideId === slideId, isFixed = manualSlideOverride === slideId;
+            const isDisabled = disabledSlides.includes(slideId), isCurrent = slideIsVisible && currentSlideId === slideId, isFixed = manualSlideOverride === slideId;
             return <li className={`sequence-item ${isCurrent ? 'sequence-item-current' : ''} ${isDisabled ? 'sequence-item-hidden' : ''}`} key={slideId} data-slide-id={slideId}>
               <span className={`sequence-art sequence-art-${category}`} aria-hidden="true">{media?.type === 'image' ? <img src={media.url} alt="" loading="lazy"/> : <Icon size={24}/>}<span className="sequence-position">{draftOrder ? index + 1 : fullSlideList.indexOf(slideId) + 1}</span></span>
-              <div className="sequence-item-text"><h3>{name}</h3><p className="sequence-description">{desc}</p><p>{draftOrder ? 'Editando a posição' : `${getSlideDuration(slideId, customMediaList) / 1000}s${isDisabled ? ' · Fora da sequência' : ''}${isCurrent ? ' · Na saída do operador' : ''}`}</p></div>
+              <div className="sequence-item-text"><h3>{name}</h3><p className="sequence-description">{desc}</p><p>{draftOrder ? 'Editando a posição' : `${getSlideDuration(slideId, customMediaList) / 1000}s${isDisabled ? ' · Fora da sequência' : ''}${isCurrent ? ' · EXIBINDO AGORA' : ''}`}</p></div>
               <div className="sequence-item-actions">{draftOrder ? <><button disabled={index === 0 || orderChangedElsewhere} aria-label={`Subir ${name}`} onClick={() => moveDraft(slideId, -1)}><ArrowUp size={18}/></button><button disabled={index === list.length - 1 || orderChangedElsewhere} aria-label={`Descer ${name}`} onClick={() => moveDraft(slideId, 1)}><ArrowDown size={18}/></button></> : <>
                 {handleToggleDisableSlide && <button aria-label={`${isDisabled ? 'Ativar' : 'Ocultar'} ${name}`} title={isDisabled ? 'Incluir na sequência' : 'Retirar da sequência'} onClick={() => handleToggleDisableSlide(slideId)}>{isDisabled ? <EyeOff size={17}/> : <Eye size={17}/>}</button>}
                 <button className={isFixed ? 'sequence-primary' : 'sequence-project'} aria-label={`${isFixed ? 'Desafixar' : 'Projetar'} ${name}`} onClick={() => {if (!isFixed) {updateStateAndBroadcast('customVerseText', null); updateStateAndBroadcast('customVerseRef', null); updateStateAndBroadcast('activeVerseIndex', null);} updateStateAndBroadcast('manualSlideOverride', isFixed ? null : slideId);}}><Send size={16}/><span>{isFixed ? 'Retomar' : 'Projetar'}</span></button>
