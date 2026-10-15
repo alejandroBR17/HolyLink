@@ -1,3 +1,4 @@
+import {ConsoleIntro} from './ConsoleIntro';
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
@@ -64,8 +65,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
   const [editingCampId, setEditingCampId] = useState<string | null>(null);
 
-  const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(false);
-  const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(false);
+  const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(true);
+  const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(true);
 
   const daysMap = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
@@ -251,7 +252,9 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 w-full items-start animate-in fade-in duration-200">
+    <div className="agenda-workspace console-area">
+      <ConsoleIntro icon={CalendarDays} title="Agenda da igreja" eyebrow="Encontros e propósitos" description="Reuniões da semana e campanhas que fazem parte da projeção." stats={[{label:'Semana',value:customMeetings.filter(m => !m.date).length + ' reuniões'},{label:'Pontuais',value:customMeetings.filter(m => m.date).length + ' eventos'},{label:'Campanhas',value:customCampaigns.length}]}/>
+      <div className="agenda-columns">
       
       {/* MEETS COLUMN */}
       <section aria-label="Agenda e Reuniões" className={`transition-all duration-300 bg-[#09090b] border border-[#27272a] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col h-fit ${
@@ -263,15 +266,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       }`}>
         <button
           type="button"
-          onClick={() => {
-            if (!isMeetingPanelOpen) {
-              setIsMeetingPanelOpen(true);
-              setIsCampaignPanelOpen(false);
-            } else {
-              setIsMeetingPanelOpen(false);
-            }
-          }}
-          className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#111113] transition-colors group"
+          onClick={() => setIsMeetingPanelOpen(value => !value)} aria-expanded={isMeetingPanelOpen} aria-controls="agenda-meetings-content" className="agenda-section-toggle w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#111113] transition-colors group"
         >
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
@@ -288,7 +283,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
         </button>
 
         {isMeetingPanelOpen && (
-          <div className="p-5 border-t border-[#222] bg-[#030303] flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+          <div id="agenda-meetings-content" className="p-5 border-t border-[#222] bg-[#030303] flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
             
             {!showAddMeetingForm ? (
               <div className="flex flex-col gap-3">
@@ -310,7 +305,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </button>
 
                 {/* Modelos Prontos de Reuniões */}
-                <div className="flex flex-col gap-2 pt-3 border-t border-[#222]">
+                <details className="console-templates"><summary>Modelos de reuniões</summary><div className="flex flex-col gap-2 pt-3 border-t border-[#222]">
                   <span className="text-[10px] font-mono font-extrabold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Adicionar Rápido:
                   </span>
@@ -327,7 +322,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       </button>
                     ))}
                   </div>
-                </div>
+                </div></details>
               </div>
             ) : (
               <div className="bg-[#09090b] border border-[#27272a] p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
@@ -345,10 +340,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Tema do Culto / Evento</label>
+                  <label htmlFor="meeting-theme" className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Tema do Culto / Evento</label>
                   <input
                     type="text"
-                    value={newMeetTheme}
+                    id="meeting-theme" value={newMeetTheme}
                     onChange={(e) => setNewMeetTheme(e.target.value)}
                     placeholder="Ex: Noite da Salvação, Corrente da Vitória..."
                     className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
@@ -385,9 +380,9 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 
                 {newMeetType === 'weekly' ? (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Dia da Semana</label>
+                    <label htmlFor="meeting-day" className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Dia da Semana</label>
                     <select
-                      value={newMeetWeeklyDay}
+                      id="meeting-day" value={newMeetWeeklyDay}
                       onChange={(e) => setNewMeetWeeklyDay(parseInt(e.target.value, 10))}
                       className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                     >
@@ -398,10 +393,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   </div>
                 ) : (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Data Limite</label>
+                    <label htmlFor="meeting-date" className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Data do evento</label>
                     <input
                       type="date"
-                      value={newMeetDate}
+                      id="meeting-date" value={newMeetDate}
                       onChange={(e) => setNewMeetDate(e.target.value)}
                       className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                     />
@@ -409,10 +404,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 )}
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Horário</label>
+                  <label htmlFor="meeting-time" className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Horário</label>
                   <input
                     type="time"
-                    value={newMeetTime}
+                    id="meeting-time" value={newMeetTime}
                     onChange={(e) => setNewMeetTime(e.target.value)}
                     className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
@@ -572,15 +567,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       }`}>
         <button
           type="button"
-          onClick={() => {
-            if (!isCampaignPanelOpen) {
-              setIsCampaignPanelOpen(true);
-              setIsMeetingPanelOpen(false);
-            } else {
-              setIsCampaignPanelOpen(false);
-            }
-          }}
-          className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#111113] transition-colors group"
+          onClick={() => setIsCampaignPanelOpen(value => !value)} aria-expanded={isCampaignPanelOpen} aria-controls="agenda-campaigns-content" className="agenda-section-toggle w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#111113] transition-colors group"
         >
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
@@ -597,7 +584,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
         </button>
 
         {isCampaignPanelOpen && (
-          <div className="p-5 border-t border-[#222] bg-[#030303] flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+          <div id="agenda-campaigns-content" className="p-5 border-t border-[#222] bg-[#030303] flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
             
             {!showAddCampaignForm ? (
               <div className="flex flex-col gap-3 w-full">
@@ -618,7 +605,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </button>
 
                 {/* Modelos Prontos de Campanhas */}
-                <div className="flex flex-col gap-2 pt-3 border-t border-[#222]">
+                <details className="console-templates"><summary>Modelos de campanhas</summary><div className="flex flex-col gap-2 pt-3 border-t border-[#222]">
                   <span className="text-[10px] font-mono font-extrabold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Modelos Rápidos:
                   </span>
@@ -635,7 +622,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       </button>
                     ))}
                   </div>
-                </div>
+                </div></details>
 
                 {onResetCampaigns && (
                   <button
@@ -666,10 +653,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Nome da Campanha</label>
+                  <label htmlFor="campaign-title" className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Nome da Campanha</label>
                   <input
                     type="text"
-                    value={newCampTitle}
+                    id="campaign-title" value={newCampTitle}
                     onChange={(e) => setNewCampTitle(e.target.value)}
                     placeholder="Ex: Jejum de Daniel, Fogueira Santa..."
                     className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
@@ -677,10 +664,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Duração (Exibição)</label>
+                  <label htmlFor="campaign-duration" className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Duração (Exibição)</label>
                   <input
                     type="text"
-                    value={newCampDuration}
+                    id="campaign-duration" value={newCampDuration}
                     onChange={(e) => setNewCampDuration(e.target.value)}
                     placeholder="Ex: De 11 a 31 de Outubro, 21 Dias..."
                     className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
@@ -742,10 +729,10 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Data Limite (Opcional)</label>
+                  <label htmlFor="campaign-end" className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Data Limite (Opcional)</label>
                   <input
                     type="date"
-                    value={newCampEndDate}
+                    id="campaign-end" value={newCampEndDate}
                     onChange={(e) => setNewCampEndDate(e.target.value)}
                     className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
@@ -864,6 +851,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
         )}
       </section>
 
+      </div>
     </div>
   );
 });

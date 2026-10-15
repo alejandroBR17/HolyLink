@@ -1,3 +1,4 @@
+import {useDialogFocus} from '../hooks/useDialogFocus';
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertTriangle, CheckCircle2, XCircle, Info, X } from 'lucide-react';
@@ -23,10 +24,12 @@ export const CustomModal: React.FC<ModalProps> = ({
   onCancel,
   variant = 'info'
 }) => {
+  const dialogRef = useDialogFocus(isOpen, onCancel);
+  const titleId = React.useId();
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="holy-overlay fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -38,14 +41,14 @@ export const CustomModal: React.FC<ModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md bg-stone-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden"
+            ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="holy-dialog relative w-full max-w-md bg-stone-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden"
           >
             <div className="p-8">
               <div className="flex items-center gap-4 mb-6">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${variant === 'danger' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}>
                   <AlertTriangle className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-bold text-white uppercase tracking-wider">{title}</h3>
+                <h3 id={titleId} className="text-2xl font-bold text-white uppercase tracking-wider">{title}</h3>
               </div>
               
               <p className="text-stone-400 text-lg leading-relaxed mb-8">
@@ -74,7 +77,7 @@ export const CustomModal: React.FC<ModalProps> = ({
             
             <button 
               onClick={onCancel}
-              className="absolute top-4 right-4 p-2 text-stone-500 hover:text-white transition-colors"
+              aria-label="Fechar confirmação" className="absolute top-4 right-4 p-2 text-stone-500 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -107,7 +110,7 @@ export const CustomToast: React.FC<ToastProps> = ({ message, isVisible, onClose,
           initial={{ opacity: 0, y: 50, x: '-50%' }}
           animate={{ opacity: 1, y: 0, x: '-50%' }}
           exit={{ opacity: 0, y: 20, x: '-50%' }}
-          className="fixed bottom-10 left-1/2 z-[10000] min-w-[320px] max-w-md"
+          role="status" aria-live={type === 'error' ? 'assertive' : 'polite'} className={`holy-toast holy-toast-${type} fixed bottom-10 left-1/2 z-[10000] max-w-md`}
         >
           <div className={`flex items-center gap-4 p-5 rounded-2xl border backdrop-blur-xl shadow-2xl ${
             type === 'error' 
@@ -121,7 +124,7 @@ export const CustomToast: React.FC<ToastProps> = ({ message, isVisible, onClose,
             {type === 'info' && <Info className="w-6 h-6 shrink-0 text-amber-400" />}
             
             <p className="flex-1 font-semibold text-sm tracking-wide text-stone-100">{message}</p>
-            <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-stone-400 hover:text-white">
+            <button onClick={onClose} aria-label="Fechar aviso" className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-stone-400 hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>

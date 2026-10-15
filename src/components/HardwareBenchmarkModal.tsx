@@ -1,3 +1,4 @@
+import {useDialogFocus} from '../hooks/useDialogFocus';
 import React from 'react';
 import {
   Cpu,
@@ -39,6 +40,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
 
   const [cacheCleared, setCacheCleared] = React.useState(false);
 
+  const dialogRef = useDialogFocus(isOpen, onClose);
   if (!isOpen) return null;
 
   const handleClearCache = () => {
@@ -60,8 +62,8 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
   };
 
   return (
-    <div className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-[#08080a] border border-[#27272a] rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] overflow-hidden text-left relative">
+    <div className="holy-overlay fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Diagnóstico do aparelho" tabIndex={-1} className="holy-dialog bg-[#08080a] border border-[#27272a] rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] overflow-hidden text-left relative">
         
         {/* HEADER */}
         <div className="p-5 border-b border-[#222] flex items-center justify-between bg-[#040405] relative z-10">
@@ -80,7 +82,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white rounded-xl bg-[#111114] border border-[#27272a] hover:border-[#333] transition-all cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
+            aria-label="Fechar diagnóstico" className="p-2 text-zinc-400 hover:text-white rounded-xl bg-[#111114] border border-[#27272a] hover:border-[#333] transition-all cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
           >
             <X className="w-5 h-5" />
           </button>

@@ -1,3 +1,5 @@
+import {useDialogFocus} from '../../hooks/useDialogFocus';
+import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useRef, useState, useEffect } from 'react';
 import { Monitor, Tv, ExternalLink, X, SkipForward, Film, Image as ImageIcon, BookOpen, Calendar, Heart, Keyboard, Smartphone, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, Cpu, HardDrive, CheckCircle2, Download } from 'lucide-react';
 import { ProjectionContent } from '../ProjectionContent';
@@ -95,6 +97,7 @@ export function MonitorPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.15);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const shortcutsRef = useDialogFocus(showShortcutsModal, () => setShowShortcutsModal(false));
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
   const [showPwaModal, setShowPwaModal] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
@@ -207,10 +210,10 @@ export function MonitorPanel({
   const nextMedia = getNextMediaInfo();
 
   return (
-    <div className="flex flex-col gap-5 w-full animate-in fade-in duration-200 text-left">
+    <div className="monitor-workspace console-area flex flex-col gap-5 w-full text-left">
       
       {/* MONITOR CANVAS CONTAINER - COMPLEX SKEUOMORPHIC MONITOR FRAME */}
-      <section aria-label="Monitor de Transmissão" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden flex flex-col gap-4 group">
+      <section aria-label="Monitor de Transmissão" className="console-monitor-card relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden flex flex-col gap-4 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         {/* CABEÇALHO DO MONITOR */}
@@ -226,7 +229,7 @@ export function MonitorPanel({
                   Composição 16:9
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Prévia neste aparelho. Confira a exibição no telão.</p>
+              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">A composição da sua reunião, com a próxima tela logo abaixo. Confira também o telão.</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
@@ -281,7 +284,7 @@ export function MonitorPanel({
             <div className="absolute inset-0 pointer-events-none z-30 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.06]" />
 
             <div 
-              className="absolute origin-top-left pointer-events-none"
+              className="console-projection-surface absolute origin-top-left pointer-events-none"
               style={{
                 width: '1920px',
                 height: '1080px',
@@ -335,7 +338,7 @@ export function MonitorPanel({
       </section>
 
       {/* PRÓXIMA MÍDIA / A SEGUIR CARD - DESIGN SKEUOMÓRFICO TÁTICO */}
-      <section aria-label="A Seguir na Fila" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 group">
+      <section aria-label="A Seguir na Fila" className="console-monitor-card relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <div className="relative z-10 flex items-center justify-between border-b border-[#333] pb-3 gap-2 flex-wrap">
@@ -384,9 +387,9 @@ export function MonitorPanel({
         </div>
       </section>
 
-<details className="holy-disclosure"><summary>Ajuda de projeção e diagnóstico</summary><div>
+<details className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Gauge} title="Ajuda de projeção e diagnóstico" description="Atalhos, desempenho e orientações para cada aparelho." badge={`${Math.round(fps)} FPS locais`}/></summary><div>
       {/* HARDWARE DIAGNOSTIC & AUTOMATIC OPTIMIZATION BANNER */}
-      <section aria-label="Desempenho e Memória" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 text-left group">
+      <section aria-label="Desempenho e Memória" className="console-monitor-card relative bg-[#09090b] border border-[#27272a] rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 text-left group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <div className="relative z-10 flex items-start gap-3 min-w-0 w-full">
@@ -450,8 +453,8 @@ export function MonitorPanel({
 
       {/* SHORTCUTS & INTERACTIVE COMMANDS MODAL OVERLAY */}
       {showShortcutsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.95)] max-w-lg w-full flex flex-col gap-4 relative">
+        <div className="holy-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div ref={shortcutsRef} role="dialog" aria-modal="true" aria-label="Atalhos da projeção" tabIndex={-1} className="holy-dialog bg-[#09090b] border border-[#27272a] rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.95)] max-w-lg w-full flex flex-col gap-4 relative">
             <div className="flex items-center justify-between border-b border-[#333] pb-3.5">
               <h4 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider font-sans flex items-center gap-2">
                 <Keyboard className="w-5 h-5 text-amber-500 shrink-0 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
@@ -460,7 +463,7 @@ export function MonitorPanel({
               <button
                 type="button"
                 onClick={() => setShowShortcutsModal(false)}
-                className="p-1.5 text-zinc-400 hover:text-white bg-[#111113] hover:bg-[#1f1f22] border border-[#333] rounded-lg cursor-pointer transition-all"
+                aria-label="Fechar atalhos" className="p-1.5 text-zinc-400 hover:text-white bg-[#111113] hover:bg-[#1f1f22] border border-[#333] rounded-lg cursor-pointer transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -554,7 +557,7 @@ export function MonitorPanel({
       )}
 
       {/* SMART DEVICE GUIDANCE CARD */}
-      <section aria-label="Modo de Dispositivo" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden text-left group">
+      <section aria-label="Modo de Dispositivo" className="console-monitor-card relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden text-left group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <div className="relative z-10 flex items-center justify-between mb-3 gap-2 border-b border-[#333] pb-3">

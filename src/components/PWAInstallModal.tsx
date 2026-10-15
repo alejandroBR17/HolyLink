@@ -1,3 +1,4 @@
+import {useDialogFocus} from '../hooks/useDialogFocus';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, ExternalLink, X, Smartphone, Monitor, Share, CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, Palette, ImageIcon } from 'lucide-react';
@@ -35,6 +36,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
     }
   }, []);
 
+  const dialogRef = useDialogFocus(isOpen, onClose);
   if (!isOpen) return null;
 
   const handleOpenNewTab = () => {
@@ -62,12 +64,12 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+      <div className="holy-overlay fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-sm bg-[#08080a] border border-[#27272a] rounded-3xl p-6 shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] text-zinc-100 overflow-hidden my-auto"
+          ref={dialogRef} role="dialog" aria-modal="true" aria-label="Aplicativo HolyLink" tabIndex={-1} className="holy-dialog relative w-full max-w-sm bg-[#08080a] border border-[#27272a] rounded-3xl p-6 shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] text-zinc-100 overflow-hidden my-auto"
         >
           {/* Header Accent Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-gradient-to-b from-amber-500/15 to-transparent blur-2xl pointer-events-none" />

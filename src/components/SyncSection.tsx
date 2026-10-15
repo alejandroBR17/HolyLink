@@ -1,3 +1,4 @@
+import {ConsoleIntro} from './operator/ConsoleIntro';
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { Peer } from 'peerjs';
 import QRCode from "react-qr-code";
@@ -1509,33 +1510,10 @@ export const SyncSection = React.memo(function SyncSection({
   };
 
   return (
-    <div className="bg-[#08080a] border border-[#27272a] rounded-3xl p-5 flex flex-col gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)]">
-      {/* HEADER SECTION */}
-      <div className="border-b border-[#222] pb-3 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2.5 bg-[#0f0f12] border border-amber-900/40 rounded-2xl text-amber-500 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-            <Smartphone className="w-4 h-4 text-amber-500" />
-          </div>
-          <div>
-            <h2 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans flex items-center gap-2">
-              Conexão Sem Fio & Backup
-            </h2>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
-              Sincronização P2P em tempo real (Celular & PC) e backup em arquivo JSON.
-            </p>
-          </div>
-        </div>
-
-        {/* CURRENT ROLE BADGE */}
-        <div className="flex items-center gap-2 bg-[#030304] px-3 py-1.5 rounded-xl border border-[#222] shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse" />
-          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">
-            Papel: <strong className="text-amber-400 font-black">{localStorage.getItem('projection_deviceRole') === 'phone' ? 'Celular (Controle)' : 'PC (Receptor)'}</strong>
-          </span>
-        </div>
-      </div>
-
-      {/* BOTÃO DE DIAGNÓSTICO E TESTE AUTOMÁTICO */}
+    <div className="sync-workspace console-area bg-[#08080a] border border-[#27272a] rounded-3xl p-5 flex flex-col gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)]">
+      <ConsoleIntro icon={Smartphone} title="Conexão e backup" eyebrow="O PC projeta. O celular controla." description="Use o código do computador para conectar o celular e levar o controle da reunião com você." stats={[{label:'Este aparelho',value:localStorage.getItem('projection_deviceRole') === 'phone' ? 'Celular · controle' : 'PC · projeção'},{label:'Sincronização',value:({idle:'Aguardando',initializing:'Preparando',listening:'Aguardando celular',connecting:'Aguardando código',sending:'Enviando',receiving:'Recebendo',success:'Dados sincronizados',error:'Verificar conexão'})[directSyncStatus]}]}/>
+      <ol className="console-connection-path" aria-label="Como conectar"><li><span>01</span><Laptop size={21}/><strong>PC no telão</strong><small>Abra a projeção na segunda tela.</small></li><li><span>02</span><Smartphone size={21}/><strong>Celular no controle</strong><small>Use o código ou QR do computador.</small></li><li><span>03</span><CheckCircle2 size={21}/><strong>Confira a conexão</strong><small>Verifique a exibição no PC e no telão.</small></li></ol>
+<details className="holy-disclosure sync-diagnostics"><summary>Diagnóstico de conexão</summary>      {/* BOTÃO DE DIAGNÓSTICO E TESTE AUTOMÁTICO */}
       <div className="bg-[#030304] border border-[#222] rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
@@ -1574,7 +1552,7 @@ export const SyncSection = React.memo(function SyncSection({
                   {testSummary.success ? (
                     <>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                      <span>100% OPERACIONAL</span>
+                      <span>TESTE CONCLUÍDO</span>
                     </>
                   ) : (
                     <>
@@ -1625,6 +1603,7 @@ export const SyncSection = React.memo(function SyncSection({
         )}
       </div>
 
+</details>
       {/* OPÇÃO 1: SINCRONIZAÇÃO DIRETA SEM FIO */}
       <div className="border border-[#222] bg-[#030304] rounded-2xl p-4 flex flex-col gap-3 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
         <div className="flex items-center justify-between border-b border-[#222] pb-2">
@@ -1633,7 +1612,7 @@ export const SyncSection = React.memo(function SyncSection({
             <span>Sincronização P2P Sem Fio</span>
           </div>
           <span className="text-[9px] bg-amber-950/80 text-amber-400 border border-amber-800/80 px-2.5 py-0.5 rounded-full font-mono font-bold shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
-            Rede Local
+            PC ↔ Celular
           </span>
         </div>
 
@@ -1742,7 +1721,7 @@ export const SyncSection = React.memo(function SyncSection({
                   <input
                     type="text"
                     placeholder="CÓDIGO"
-                    value={syncInputCode}
+                    aria-label="Código do computador" value={syncInputCode}
                     onChange={(e) => setSyncInputCode(e.target.value.toUpperCase())}
                     maxLength={6}
                     className="bg-[#030304] border border-[#27272a] rounded-xl px-3 py-2 text-sm font-mono font-bold text-amber-400 flex-1 focus:outline-none focus:border-amber-500/60 text-center uppercase tracking-widest shadow-[inset_0_2px_6px_rgba(0,0,0,1)]"

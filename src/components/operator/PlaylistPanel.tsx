@@ -1,10 +1,12 @@
+import {useDialogFocus} from '../../hooks/useDialogFocus';
+import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2, 
   Maximize, Zap, Minimize, Send, Trash2, Image as ImageIcon, AlertTriangle,
   Eye, EyeOff, Search, Layers, ChevronsUp, ChevronsDown, Filter, Sparkles, Check,
-  LayoutGrid, List, Edit3, Maximize2, X, Clock, Pin, Layout
+  CalendarDays, LayoutGrid, List, Edit3, Maximize2, X, Clock, Pin, Layout
 } from 'lucide-react';
 
 interface CustomMedia {
@@ -88,6 +90,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 }: PlaylistPanelProps) {
   const notify = showToast || showAlert;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const libraryRef = useRef<HTMLDetailsElement>(null);
   const [filterMode, setFilterMode] = useState<QueueFilterMode>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [queueLimit, setQueueLimit] = useState(() => window.innerWidth < 600 ? 5 : 8);
@@ -100,6 +103,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   const [editingMediaId, setEditingMediaId] = useState<string | null>(null);
   const [editingMediaName, setEditingMediaName] = useState('');
   const [previewMedia, setPreviewMedia] = useState<CustomMedia | null>(null);
+  const previewDialogRef = useDialogFocus(Boolean(previewMedia), () => setPreviewMedia(null));
   const [defaultImgSeconds, setDefaultImgSeconds] = useState<number>(() => {
     const customDefDur = Number(localStorage.getItem('projection_default_img_duration'));
     return (customDefDur && customDefDur >= 2000) ? Math.round(customDefDur / 1000) : 10;
@@ -337,17 +341,19 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
       <section className="operator-card sequence-console" aria-labelledby="sequence-title">
         <header className="sequence-heading">
           <div><span className="operator-eyebrow"><Layers size={16}/>Controle da reunião</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
-          {!draftOrder ? <button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
+          {!draftOrder ? <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => {if (libraryRef.current) libraryRef.current.open = true; fileInputRef.current?.click();}}><Plus size={17}/>Adicionar mídia</button><button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button></div> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
         </header>
         <div className="sequence-status"><span className="sequence-status-light"/><span>{manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{manualSlideOverride && <button onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}><RefreshCw size={15}/>Retomar</button>}</div>
         {draftOrder ? <p className="sequence-guidance" role="status">{orderChangedElsewhere ? 'A sequência mudou em outro controle. Cancele e abra a edição novamente para usar a versão atual.' : 'Use as setas para mudar a ordem. O telão só recebe a nova ordem quando você salvar.'}</p> : <div className="sequence-tools"><label><Search size={17}/><input aria-label="Buscar na sequência" placeholder="Buscar na sequência" value={searchTerm} onChange={event => setSearchTerm(event.target.value)}/></label><select aria-label="Filtrar sequência" value={filterMode} onChange={event => setFilterMode(event.target.value as QueueFilterMode)}><option value="all">Todos</option><option value="active">Ativos</option><option value="disabled">Ocultos</option><option value="media">Mídias</option><option value="agenda">Agenda</option></select></div>}
         <ol className="sequence-list" aria-label={draftOrder ? 'Editar ordem dos slides' : 'Slides da sequência'}>
           {(draftOrder || filteredSlides.slice(0, queueLimit)).map((slideId, index, list) => {
-            const {name, desc} = getSlideDetails(slideId);
+            const {name, desc, category} = getSlideDetails(slideId);
+            const media = customMediaList.find(item => item.id === slideId);
+            const Icon = slideId.startsWith('verse_') ? BookOpen : category === 'agenda' || category === 'evento' ? CalendarDays : category === 'midia' ? Film : category === 'campanha' ? Sparkles : Layout;
             const isDisabled = disabledSlides.includes(slideId), isCurrent = currentSlideId === slideId, isFixed = manualSlideOverride === slideId;
             return <li className={`sequence-item ${isCurrent ? 'sequence-item-current' : ''} ${isDisabled ? 'sequence-item-hidden' : ''}`} key={slideId} data-slide-id={slideId}>
-              <span className="sequence-position">{draftOrder ? index + 1 : fullSlideList.indexOf(slideId) + 1}</span>
-              <div className="sequence-item-text"><h3>{name}</h3><p>{draftOrder ? desc : `${getSlideDuration(slideId, customMediaList) / 1000}s${isDisabled ? ' · Fora da sequência' : ''}${isCurrent ? ' · Na saída do operador' : ''}`}</p></div>
+              <span className={`sequence-art sequence-art-${category}`} aria-hidden="true">{media?.type === 'image' ? <img src={media.url} alt="" loading="lazy"/> : <Icon size={24}/>}<span className="sequence-position">{draftOrder ? index + 1 : fullSlideList.indexOf(slideId) + 1}</span></span>
+              <div className="sequence-item-text"><h3>{name}</h3><p className="sequence-description">{desc}</p><p>{draftOrder ? 'Editando a posição' : `${getSlideDuration(slideId, customMediaList) / 1000}s${isDisabled ? ' · Fora da sequência' : ''}${isCurrent ? ' · Na saída do operador' : ''}`}</p></div>
               <div className="sequence-item-actions">{draftOrder ? <><button disabled={index === 0 || orderChangedElsewhere} aria-label={`Subir ${name}`} onClick={() => moveDraft(slideId, -1)}><ArrowUp size={18}/></button><button disabled={index === list.length - 1 || orderChangedElsewhere} aria-label={`Descer ${name}`} onClick={() => moveDraft(slideId, 1)}><ArrowDown size={18}/></button></> : <>
                 {handleToggleDisableSlide && <button aria-label={`${isDisabled ? 'Ativar' : 'Ocultar'} ${name}`} title={isDisabled ? 'Incluir na sequência' : 'Retirar da sequência'} onClick={() => handleToggleDisableSlide(slideId)}>{isDisabled ? <EyeOff size={17}/> : <Eye size={17}/>}</button>}
                 <button className={isFixed ? 'sequence-primary' : 'sequence-project'} aria-label={`${isFixed ? 'Desafixar' : 'Projetar'} ${name}`} onClick={() => {if (!isFixed) {updateStateAndBroadcast('customVerseText', null); updateStateAndBroadcast('customVerseRef', null); updateStateAndBroadcast('activeVerseIndex', null);} updateStateAndBroadcast('manualSlideOverride', isFixed ? null : slideId);}}><Send size={16}/><span>{isFixed ? 'Retomar' : 'Projetar'}</span></button>
@@ -359,7 +365,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         {!draftOrder && filteredSlides.length > queueLimit && <button className="queue-more" onClick={() => setQueueLimit(queueLimit + 8)}>Mostrar mais slides ({queueLimit} de {filteredSlides.length})</button>}
       </section>
 
-<details className="holy-disclosure media-library"><summary>Biblioteca de mídias ({customMediaList.length})</summary>
+<details ref={libraryRef} open={customMediaList.length > 0} className="holy-disclosure media-library console-settings-group"><summary><ConsoleGroupTitle icon={Film} title="Biblioteca de mídias" description="Suas imagens e vídeos, com enquadramento, som e duração." badge={`${customMediaList.length} arquivos`}/></summary>
       {/* GERENCIADOR DE MÍDIAS CUSTOMIZADAS */}
       <section aria-label="Gerenciador de Mídias Customizadas" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
@@ -1016,11 +1022,11 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
       {/* MODAL DE PRÉ-VISUALIZAÇÃO EXPANDIDA */}
       {previewMedia && (
         <div 
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="holy-overlay fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setPreviewMedia(null)}
         >
           <div 
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-w-4xl w-full max-h-[90vh] flex flex-col gap-4 shadow-2xl relative overflow-hidden"
+            ref={previewDialogRef} role="dialog" aria-modal="true" aria-label="Prévia da mídia" tabIndex={-1} className="holy-dialog bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-w-4xl w-full max-h-[90vh] flex flex-col gap-4 shadow-2xl relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
@@ -1036,7 +1042,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               <button
                 type="button"
                 onClick={() => setPreviewMedia(null)}
-                className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer"
+                aria-label="Fechar prévia" className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1065,9 +1071,12 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               <button
                 type="button"
                 onClick={() => {
+                  updateStateAndBroadcast('customVerseText', null);
+                  updateStateAndBroadcast('customVerseRef', null);
+                  updateStateAndBroadcast('activeVerseIndex', null);
                   updateStateAndBroadcast('manualSlideOverride', previewMedia.id);
                   setPreviewMedia(null);
-                  showAlert(`Mídia "${previewMedia.name}" projetada no telão`, 'success');
+                  showAlert(`Mídia "${previewMedia.name}" enviada. Confira o telão.`, 'success');
                 }}
                 className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
               >

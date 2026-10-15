@@ -1,3 +1,4 @@
+import {ConsoleIntro, ConsoleGroupTitle} from './ConsoleIntro';
 import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import { 
   Tv, ExternalLink, X, EyeOff, Sparkles, Plus, Minus, Play, Pause, RefreshCw, 
@@ -607,9 +608,11 @@ export function ControlsPanel({
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full animate-in fade-in duration-200">
+    <div className="controls-workspace console-area">
+      <ConsoleIntro icon={Sparkles} title="Ajustes da reunião" eyebrow="Luz, tempo e comunicação" description="Prepare a atmosfera e os avisos no mesmo lugar, com o estado atual à vista." stats={[{label:'Saída',value:blackoutEnabled ? 'Blackout' : clearContentEnabled ? 'Sem texto' : 'Conteúdo visível'},{label:'Cronômetro',value:countdownPaused ? 'Pausado' : 'Em contagem'},{label:'Áudio',value:Math.round(volume * 100) + '%'}]}/>
+      <div className="console-settings-groups">
       
-<details className="holy-disclosure"><summary>Projeção, efeitos e cronômetro</summary>
+<details open className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Sparkles} title="Projeção, efeitos e cronômetro" description="Atmosfera do telão, abertura da reunião e tempo." badge={background3DStyle === 'off' ? 'Efeito desligado' : 'Efeito ativo'}/></summary>
       {/* COLUMN 1: PROJECTION & TIMERS */}
       <div className="flex flex-col gap-6">
         
@@ -756,7 +759,7 @@ export function ControlsPanel({
               <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
                 <span className="flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                  {isOnline ? 'Sincronização Ativa' : 'Modo Offline'}
+                  {isOnline ? 'Navegador online' : 'Navegador offline'}
                 </span>
                 <button
                   onClick={() => {
@@ -767,7 +770,7 @@ export function ControlsPanel({
                   }}
                   className="text-[9px] font-bold text-amber-400 hover:text-amber-300 underline cursor-pointer"
                 >
-                  Forçar Re-sync
+                  Atualizar estado local
                 </button>
               </div>
             </div>
@@ -783,7 +786,7 @@ export function ControlsPanel({
               <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-950 border border-zinc-800/80 rounded-lg text-[10px] text-zinc-400">
                 <span className="flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                  {isOnline ? '2ª Tela Conectada' : '2ª Tela Offline'}
+                  Janela de projeção aberta
                 </span>
                 <button
                   onClick={() => {
@@ -794,7 +797,7 @@ export function ControlsPanel({
                   }}
                   className="text-[9px] font-bold text-amber-400 hover:text-amber-300 underline cursor-pointer"
                 >
-                  Forçar Re-sync
+                  Atualizar estado local
                 </button>
               </div>
             </div>
@@ -1112,7 +1115,7 @@ export function ControlsPanel({
       </div>
 
 </details>
-<details className="holy-disclosure"><summary>Avisos, áudio e letreiro</summary>
+<details className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Megaphone} title="Avisos, áudio e letreiro" description="Mensagens prontas, recados personalizados e som." badge={activeAlert ? 'Aviso na saída' : 'Pronto para enviar'}/></summary>
       {/* COLUMN 2: ALERTS & AUDIO & LETREIRO */}
       <div className="flex flex-col gap-6">
         
@@ -1358,7 +1361,8 @@ export function ControlsPanel({
       </div>
 
 </details>
-<details className="holy-disclosure"><summary>Desempenho e energia</summary><PerformanceControlModule /></details>
+<details className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Gauge} title="Desempenho e energia" description="Qualidade visual, diagnóstico e tela sempre ligada."/></summary><PerformanceControlModule /></details>
+      </div>
       <PWAInstallModal isOpen={showPwaModal} onClose={() => setShowPwaModal(false)} />
     </div>
   );
