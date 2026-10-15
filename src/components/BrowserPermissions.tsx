@@ -38,7 +38,7 @@ export function BrowserPermissions({startup=false}:{startup?:boolean}){
   return <section className="boot-permissions browser-permissions" aria-label="Permissões do navegador">
     <div className="boot-permissions-title"><ShieldCheck size={17}/><h2>{startup?'Permissões pendentes':'Acessos deste aparelho'}</h2><button disabled={checking||requesting!==null} onClick={()=>{void verify();}} aria-label="Verificar permissões novamente">{checking?<LoaderCircle className="animate-spin" size={16}/>:<RefreshCw size={16}/>}<span>{checking?'Verificando…':'Verificar'}</span></button></div>
     {pending?.map(item=>{
-      const Icon=item.id==='audio'?Volume2:item.id==='storage'?HardDrive:Monitor;
+      const Icon=item.id==='audio'?Volume2:item.id==='storage'?ShieldCheck:Monitor;
       const canRequest=item.status==='prompt'||!startup&&item.status==='denied';
       return <div className="boot-permission" key={item.id}><Icon size={18}/><div><strong>{item.title}</strong><small>{requesting===item.id?'Solicitando…':item.status==='unsupported'?'Indisponível':item.status==='denied'?'Não concedida':item.disabledByChoice?'Desativado':'Pendente'}</small><p role={item.status==='denied'?'status':undefined}>{item.description}</p></div>{canRequest?<button disabled={checking||requesting!==null} onClick={()=>{void request(item.id);}} aria-label={item.disabledByChoice?'Ativar tela acesa':item.id==='storage'?'Solicitar proteção dos arquivos locais':`Permitir ${item.title}`}>{requesting===item.id?<LoaderCircle className="animate-spin" size={17}/>:item.disabledByChoice?'Ativar':item.status==='denied'?'Tentar novamente':item.id==='storage'?'Solicitar proteção':'Permitir'}</button>:<AlertTriangle size={18}/>}</div>;
     })}

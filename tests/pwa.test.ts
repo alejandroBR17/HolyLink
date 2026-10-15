@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+import {inflateSync} from 'node:zlib';
 function worker(fetcher: (request: any) => Promise<Response>, seed: Record<string, Map<string, Response>> = {}) {
  const stores = new Map(Object.entries(seed));
  const handlers: Record<string, (event: any) => void> = {};
@@ -21,14 +22,18 @@ test('icon variants preserve application identity and point to their actual loca
   assert.equal(new URL(manifest.id,'https://holy.test/').href,'https://holy.test/');
   assert.equal(manifest.start_url,'/'); assert.equal(manifest.scope,'/');
   for(const size of [192,512]) {
-   const icon=manifest.icons.find((icon:any)=>icon.sizes===`${size}x${size}`);
-   assert.equal(icon.src,`/pwa/local-${type}-${theme}-${size}.png`);
+   const icon=manifest.icons.find((icon:any)=>icon.sizes===`${size}x${size}`&&icon.purpose==='any');
+   assert.equal(icon.src,`/pwa/app-v2-${type}-${theme}-${size}.png`);
    assert.equal(icon.purpose,'any');assert.equal(readFileSync('public'+icon.src).readUInt32BE(16),size);
+   const adaptive=manifest.icons.find((icon:any)=>icon.sizes===`${size}x${size}`&&icon.purpose==='maskable');
+   assert.equal(adaptive.src,`/pwa/adaptive-v2-${type}-${theme==='transparent'?'dark':theme}-${size}.png`);
+   assert.equal(readFileSync('public'+adaptive.src).readUInt32BE(16),size);
+
   }
  }
 });
 test('offline navigation tries the root fallback and returns an explicit failure if no shell exists',async()=>{
- const w=worker(async()=>{throw Error('offline');},{'holylink-pwa-v13-install-layout':new Map([['/',new Response('shell')]])});
+ const w=worker(async()=>{throw Error('offline');},{'holylink-pwa-v14-adaptive-launcher':new Map([['/',new Response('shell')]])});
  const request={method:'GET',url:'https://holy.test/operator',mode:'navigate'};
  assert.equal(await (await w.dispatch('fetch',{request}))!.text(),'shell');
  const empty=worker(async()=>{throw Error('offline');});
@@ -53,7 +58,26 @@ test('navigation caching never retains query strings or share tokens',async()=>{
 
 test('runtime cache remains bounded even when icon requests carry changing queries',async()=>{
  const entries=new Map(Array.from({length:135},(_,i)=>[`https://holy.test/pwa/local-symbol-dark-192.png?v=${i}`,new Response('old')] as [string,Response]));
- const w=worker(async()=>new Response('new'),{'holylink-pwa-v13-install-layout':entries});
+ const w=worker(async()=>new Response('new'),{'holylink-pwa-v14-adaptive-launcher':entries});
  await w.dispatch('fetch',{request:{method:'GET',mode:'cors',url:'https://holy.test/pwa/local-symbol-dark-192.png?v=next'}});
  assert.ok([...w.stores.values()][0].size<=120);
+});
+
+function pngCorner(path:string) {
+ const data=readFileSync(path);assert.equal(data[24],8);assert.equal(data[25],6);
+ const blocks:Buffer[]=[];
+ for(let offset=8;offset<data.length;){const length=data.readUInt32BE(offset);if(data.toString('ascii',offset+4,offset+8)==='IDAT')blocks.push(data.subarray(offset+8,offset+8+length));offset+=length+12;}
+ const pixels=inflateSync(Buffer.concat(blocks));assert.ok(pixels[0]<=4);
+ // All PNG filter predictors are zero for the very first pixel.
+ return Array.from(pixels.subarray(1,5));
+}
+test('actual installer files have rounded any corners and opaque adaptive/Apple backgrounds',()=>{
+ for(const type of ['symbol','full','text']) {
+  for(const theme of ['dark','light','transparent'])for(const size of [192,512])assert.equal(pngCorner(`public/pwa/app-v2-${type}-${theme}-${size}.png`)[3],0);
+  for(const theme of ['dark','light']) {
+   const background=theme==='dark'?[3,3,5,255]:[255,255,255,255];
+   for(const size of [192,512])assert.deepEqual(pngCorner(`public/pwa/adaptive-v2-${type}-${theme}-${size}.png`),background);
+   assert.deepEqual(pngCorner(`public/pwa/apple-v2-${type}-${theme}-180.png`),background);
+  }
+ }
 });

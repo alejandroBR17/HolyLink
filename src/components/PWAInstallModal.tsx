@@ -34,7 +34,7 @@ export function PWAInstallModal({isOpen,onClose}:PWAInstallModalProps) {
     <section ref={dialogRef} role="dialog" aria-modal="true" aria-label="Aplicativo HolyLink" tabIndex={-1} className="holy-dialog pwa-dialog">
       <div className="pwa-dialog-top"><span>HolyLink no seu aparelho</span><button onClick={onClose} aria-label="Fechar"><X size={22}/></button></div>
       <header className="pwa-app-heading">
-        <div className={`pwa-icon-preview pwa-icon-${iconTheme}`}><img src={`/pwa/local-${iconType}-transparent-192.png`} alt="Prévia do ícone HolyLink" width={96} height={96}/></div>
+        <div className={`pwa-icon-preview pwa-icon-${iconTheme}`}><img src={device==='android'?`/pwa/adaptive-v2-${iconType}-${iconTheme==='transparent'?'dark':iconTheme}-192.png`:device==='ios'?`/pwa/apple-v2-${iconType}-${iconTheme==='transparent'?'dark':iconTheme}-180.png`:`/pwa/app-v2-${iconType}-${iconTheme}-192.png`} alt="Prévia do ícone HolyLink" width={96} height={96}/></div>
         <div><h2>Aplicativo HolyLink</h2><p>Acesso pela tela inicial, em uma janela própria.</p></div>
       </header>
       {hasUpdateAvailable&&<AppUpdateNotice updating={isUpdating} onUpdate={forceAppUpdate}/>}
@@ -53,7 +53,7 @@ export function PWAInstallModal({isOpen,onClose}:PWAInstallModalProps) {
         <div className="pwa-customize-body">
           <fieldset><legend>Logotipo</legend><div className="pwa-choice-grid">{([{id:'symbol',label:'Símbolo'},{id:'full',label:'Completo'},{id:'text',label:'Letras'}] as {id:PWAIconType;label:string}[]).map(option=><button key={option.id} onClick={()=>setIconType(option.id)} aria-pressed={iconType===option.id}>{option.label}</button>)}</div></fieldset>
           <fieldset><legend>Fundo da imagem</legend><div className="pwa-choice-grid">{([{id:'dark',label:'Preto'},{id:'light',label:'Branco'},{id:'transparent',label:'Sem fundo'}] as {id:PWAIconTheme;label:string}[]).map(option=><button key={option.id} onClick={()=>setIconTheme(option.id)} aria-pressed={iconTheme===option.id}><span className={`pwa-color-swatch pwa-icon-${option.id}`}/>{option.label}</button>)}</div></fieldset>
-          <p className="pwa-note">O sistema define o recorte e a atualização do ícone do app instalado.</p>
+          <p className="pwa-note">Android recebe um ícone adaptável; iOS aplica o próprio recorte. Nesses formatos, Sem fundo usa uma base preta. Ícones já instalados podem demorar para atualizar.</p>
         </div>
       </details>
       {requiresReload&&<div className="pwa-apply-choice"><p>Aplique antes de instalar. Recarrega o HolyLink; faça isso fora da projeção.</p><button className="pwa-primary-action" onClick={applyIcon}><RefreshCw size={20}/>Aplicar ícone</button></div>}

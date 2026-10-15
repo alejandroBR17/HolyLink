@@ -1,6 +1,6 @@
-const CACHE_NAME = 'holylink-pwa-v13-install-layout';
+const CACHE_NAME = 'holylink-pwa-v14-adaptive-launcher';
 const MAX_ENTRIES = 120;
-const urlsToCache = ['/', '/index.html', '/pwa-bootstrap.js', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/local-symbol-dark-192.png', '/pwa/local-symbol-dark-512.png'];
+const urlsToCache = ['/', '/index.html', '/pwa-bootstrap.js', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/app-v2-symbol-dark-192.png', '/pwa/app-v2-symbol-dark-512.png', '/pwa/adaptive-v2-symbol-dark-192.png', '/pwa/adaptive-v2-symbol-dark-512.png', '/pwa/apple-v2-symbol-dark-180.png'];
 self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });

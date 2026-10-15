@@ -11,16 +11,28 @@
   "theme_color": "#030305",
   "icons": [
     {
-      "src": "/pwa/local-full-dark-192.png",
+      "src": "/pwa/app-v2-full-dark-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/pwa/local-full-dark-512.png",
+      "src": "/pwa/app-v2-full-dark-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/pwa/adaptive-v2-full-dark-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa/adaptive-v2-full-dark-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

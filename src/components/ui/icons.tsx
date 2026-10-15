@@ -1,3 +1,4 @@
+import {Broom as PhBroom} from '@phosphor-icons/react/dist/csr/Broom';
 import {ArrowSquareUp as PhArrowSquareUp} from '@phosphor-icons/react/dist/csr/ArrowSquareUp';
 import type {Icon, IconProps} from '@phosphor-icons/react';
 import {ArrowClockwise as PhArrowClockwise} from '@phosphor-icons/react/dist/csr/ArrowClockwise';
@@ -14,11 +15,11 @@ import {CaretLeft as PhCaretLeft} from '@phosphor-icons/react/dist/csr/CaretLeft
 import {CaretRight as PhCaretRight} from '@phosphor-icons/react/dist/csr/CaretRight';
 import {CaretUp as PhCaretUp} from '@phosphor-icons/react/dist/csr/CaretUp';
 import {CheckCircle as PhCheckCircle} from '@phosphor-icons/react/dist/csr/CheckCircle';
-import {CirclesThree as PhCirclesThree} from '@phosphor-icons/react/dist/csr/CirclesThree';
+import {CircleDashed as PhCircleDashed} from '@phosphor-icons/react/dist/csr/CircleDashed';
 import {CloudRain as PhCloudRain} from '@phosphor-icons/react/dist/csr/CloudRain';
 import {CornersIn as PhCornersIn} from '@phosphor-icons/react/dist/csr/CornersIn';
 import {CornersOut as PhCornersOut} from '@phosphor-icons/react/dist/csr/CornersOut';
-import {DeviceMobile as PhDeviceMobile} from '@phosphor-icons/react/dist/csr/DeviceMobile';
+import {DeviceMobileCamera as PhDeviceMobileCamera} from '@phosphor-icons/react/dist/csr/DeviceMobileCamera';
 import {DownloadSimple as PhDownloadSimple} from '@phosphor-icons/react/dist/csr/DownloadSimple';
 import {Drop as PhDrop} from '@phosphor-icons/react/dist/csr/Drop';
 import {Eye as PhEye} from '@phosphor-icons/react/dist/csr/Eye';
@@ -29,7 +30,7 @@ import {HardDrives as PhHardDrives} from '@phosphor-icons/react/dist/csr/HardDri
 import {Image as PhImage} from '@phosphor-icons/react/dist/csr/Image';
 import {Key as PhKey} from '@phosphor-icons/react/dist/csr/Key';
 import {Keyboard as PhKeyboard} from '@phosphor-icons/react/dist/csr/Keyboard';
-import {MagicWand as PhMagicWand} from '@phosphor-icons/react/dist/csr/MagicWand';
+import {ArrowsClockwise as PhArrowsClockwise} from '@phosphor-icons/react/dist/csr/ArrowsClockwise';
 import {Megaphone as PhMegaphone} from '@phosphor-icons/react/dist/csr/Megaphone';
 import {Minus as PhMinus} from '@phosphor-icons/react/dist/csr/Minus';
 import {Monitor as PhMonitor} from '@phosphor-icons/react/dist/csr/Monitor';
@@ -58,7 +59,7 @@ import {Wind as PhWind} from '@phosphor-icons/react/dist/csr/Wind';
 import {X as PhX} from '@phosphor-icons/react/dist/csr/X';
 // Shared visual weight; labels belong to controls, decorative symbols stay silent.
 function themed(Component: Icon) {
-  return function HolyIcon(props: IconProps) { return <Component weight="duotone" aria-hidden="true" {...props}/>; };
+  return function HolyIcon(props: IconProps) { return <Component weight="regular" aria-hidden="true" {...props}/>; };
 }
 export const ExternalLink = themed(PhArrowSquareOut);
 export const X = themed(PhX);
@@ -94,10 +95,10 @@ export const CloudRain = themed(PhCloudRain);
 export const Droplets = themed(PhDrop);
 export const ArrowRightLeft = themed(PhArrowsLeftRight);
 export const Wind = themed(PhWind);
-export const CircleDot = themed(PhCirclesThree);
+export const CircleDot = themed(PhCircleDashed);
 export const Sparkles = themed(PhSparkle);
 export const CircleOff = themed(PhProhibit);
-export const WandSparkles = themed(PhMagicWand);
+export const WandSparkles = themed(PhArrowsClockwise);
 export const CheckCircle2 = themed(PhCheckCircle);
 export const AlertTriangle = themed(PhWarning);
 export const ShieldCheck = themed(PhShieldCheck);
@@ -105,7 +106,7 @@ export const RefreshCw = themed(PhArrowClockwise);
 export const Palette = themed(PhPaintBrush);
 export const ImageIcon = themed(PhImage);
 export const LoaderCircle = themed(PhSpinnerGap);
-export const Smartphone = themed(PhDeviceMobile);
+export const Smartphone = themed(PhDeviceMobileCamera);
 export const Tv = themed(PhProjectorScreen);
 export const CalendarDays = themed(PhCalendarDots);
 export const BookOpen = themed(PhBookOpenText);
@@ -121,3 +122,5 @@ export const PanelLeftClose = themed(PhSidebarSimple);
 export const PanelLeftOpen = themed(PhSidebarSimple);
 
 export const Share = themed(PhArrowSquareUp);
+
+export const Broom = themed(PhBroom);

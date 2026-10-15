@@ -23,7 +23,7 @@ function update(next: typeof selection) {
 }
 export function usePWAIcons() {
   const current = useSyncExternalStore(subscribe, () => selection);
-  const path = `/pwa/local-${current.iconType}-${current.iconTheme}`;
+  const path = `/pwa/app-v2-${current.iconType}-${current.iconTheme}`;
   return { ...current,
     setIconType: (iconType: PWAIconType) => update({ ...selection, iconType }),
     setIconTheme: (iconTheme: PWAIconTheme) => update({ ...selection, iconTheme }),
