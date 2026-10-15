@@ -1,3 +1,5 @@
+import {PairingApproval} from './PairingApproval';
+import {PairingSession, createPairingCode, isPairingCode} from '../utils/pairing-session';
 import {ConsoleIntro} from './operator/ConsoleIntro';
 import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { Peer } from 'peerjs';
@@ -49,7 +51,10 @@ async function blobToBase64(blobField: any): Promise<{ base64: string; mimeType:
   }
 }
 
+const approvedConnections = new WeakSet<object>();
+
 export function registerPeerConn(conn: any) {
+  if (!approvedConnections.has(conn)) return;
   if (!conn) return;
   const list: any[] = (window as any).holyrics_peer_conns || [];
   if (!list.includes(conn)) {
@@ -60,6 +65,7 @@ export function registerPeerConn(conn: any) {
 }
 
 export function unregisterPeerConn(conn: any) {
+  approvedConnections.delete(conn);
   if (!conn) return;
   const list: any[] = (window as any).holyrics_peer_conns || [];
   const filtered = list.filter(c => c !== conn && c.open);
@@ -75,7 +81,7 @@ export function broadcastToPeers(data: any, excludeConn?: any) {
   const list: any[] = (window as any).holyrics_peer_conns || [];
   const activeList: any[] = [];
   for (const conn of list) {
-    if (conn && conn.open) {
+    if (conn && conn.open && approvedConnections.has(conn)) {
       activeList.push(conn);
       if (conn !== excludeConn) {
         try {
@@ -115,6 +121,40 @@ export const SyncSection = React.memo(function SyncSection({
   const [syncInputCode, setSyncInputCode] = useState(''); // Input value for manually typing the code
   const [syncMessage, setSyncMessage] = useState<string>('');
   const [syncProgress, setSyncProgress] = useState<number | undefined>(undefined);
+  const [pendingPairing, setPendingPairing] = useState<{conn: any; session: PairingSession; code: string} | null>(null);
+  const pendingPairingRef = useRef<typeof pendingPairing>(null);
+  const pairingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+
+  const clearPendingPairing = () => {
+    if (pairingTimerRef.current) clearTimeout(pairingTimerRef.current);
+    pairingTimerRef.current = null;
+    pendingPairingRef.current = null;
+    setPendingPairing(null);
+  };
+  const rejectPairing = () => {
+    const pending = pendingPairingRef.current;
+    clearPendingPairing();
+    if (!pending) return;
+    pending.session.close();
+    try { pending.conn.send({type: 'PAIRING_REJECTED'}); } catch {}
+    pending.conn.close();
+    setSyncMessage('Solicitação recusada ou expirada. Aguardando outro celular.');
+  };
+  const approvePairing = () => {
+    const pending = pendingPairingRef.current;
+    if (!pending || !pending.conn.open || !pending.session.approve(pending.code)) {
+      rejectPairing();
+      return;
+    }
+    clearPendingPairing();
+    approvedConnections.add(pending.conn);
+    registerPeerConn(pending.conn);
+    pending.conn.send({type: 'PAIRING_APPROVED', challenge: pending.code});
+    setDirectSyncStatus('success');
+    setSyncMessage('Celular autorizado. Agenda e mídias preservadas.');
+  };
+
   const [isPushing, setIsPushing] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const peerRef = useRef<any>(null);
@@ -313,19 +353,11 @@ export const SyncSection = React.memo(function SyncSection({
     }
   };
 
-  // Helper to generate a clean random ID
-  const generateRandomCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-  };
-
   // Cleanup peer and timeouts on unmount
   useEffect(() => {
     return () => {
+      if (pairingTimerRef.current) clearTimeout(pairingTimerRef.current);
+      pendingPairingRef.current?.session.close();
       if (peerRef.current) {
         peerRef.current.destroy();
       }
@@ -349,7 +381,7 @@ export const SyncSection = React.memo(function SyncSection({
   };
 
   // Initialize as Receiver (usually on PC)
-  const startReceiver = () => {
+  const startReceiver = (newCode = false) => {
     if (peerRef.current) {
       peerRef.current.destroy();
     }
@@ -360,11 +392,10 @@ export const SyncSection = React.memo(function SyncSection({
     setDirectSyncStatus('initializing');
     setSyncMessage('Iniciando conexão segura...');
 
-    const savedCode = localStorage.getItem('projection_myReceiverCode');
-    const code = savedCode || generateRandomCode();
-    if (!savedCode) {
-      localStorage.setItem('projection_myReceiverCode', code);
-    }
+    rejectPairing();
+    const code = (!newCode && syncCode) || createPairingCode();
+    const codeExpiresAt = Date.now() + 10 * 60_000;
+    localStorage.setItem('projection_myReceiverCode', code);
     setSyncCode(code);
 
     // Salva o papel do dispositivo como PC para reconexão automática ao recarregar
@@ -381,13 +412,29 @@ export const SyncSection = React.memo(function SyncSection({
 
     peer.on('connection', (conn) => {
       connRef.current = conn;
-      setDirectSyncStatus('receiving');
-      setSyncMessage('Celular conectado! Recebendo configurações e mídias...');
-
-      // Guarda conexão para qualquer comunicação de volta
-      registerPeerConn(conn);
-
+      let session: PairingSession | null = null;
+      // Merely opening a WebRTC transport grants no read/write/control access.
+      const requestTimeout = setTimeout(() => {
+        if (!session?.approved) conn.close();
+      }, 65_000);
       conn.on('data', async (data: any) => {
+        if (!session?.approved) {
+          if (data?.type !== 'REQUEST_PAIRING' || !isPairingCode(data.challenge)) return;
+          if (Date.now() >= codeExpiresAt) {
+            try { conn.send({type: 'PAIRING_REJECTED'}); } catch {}
+            conn.close();
+            setSyncMessage('O código expirou. Gere um novo código para conectar outro celular.');
+            return;
+          }
+          if (session || pendingPairingRef.current) { conn.close(); return; }
+          session = new PairingSession(data.challenge);
+          const pending = {conn, session, code: data.challenge};
+          pendingPairingRef.current = pending;
+          setPendingPairing(pending);
+          setSyncMessage('Confira a solicitação de controle neste computador.');
+          pairingTimerRef.current = setTimeout(rejectPairing, 60_000);
+          return;
+        }
         try {
           if (data && (data.type === 'MEDIA_CHUNK_START' || data.type === 'MEDIA_CHUNK_DATA')) {
             const res = await handleIncomingChunk(data);
@@ -767,6 +814,9 @@ export const SyncSection = React.memo(function SyncSection({
       });
 
       conn.on('close', () => {
+        clearTimeout(requestTimeout);
+        session?.close();
+        if (pendingPairingRef.current?.conn === conn) clearPendingPairing();
         console.log("Conexão com o celular fechada.");
         unregisterPeerConn(conn);
         const role = localStorage.getItem('projection_deviceRole');
@@ -777,6 +827,9 @@ export const SyncSection = React.memo(function SyncSection({
       });
 
       conn.on('error', (err) => {
+        clearTimeout(requestTimeout);
+        session?.close();
+        if (pendingPairingRef.current?.conn === conn) clearPendingPairing();
         console.error('Erro na conexão com celular:', err);
         unregisterPeerConn(conn);
         const role = localStorage.getItem('projection_deviceRole');
@@ -831,7 +884,11 @@ export const SyncSection = React.memo(function SyncSection({
 
   // Initialize as Sender (usually on Mobile/Celular) and send data to the receiver ID
   const connectAndSendData = async (targetCode: string) => {
-    if (!targetCode) return;
+    targetCode = targetCode.toUpperCase().trim();
+    if (!isPairingCode(targetCode)) {
+      notify('Confira o código atual exibido no computador.', 'error');
+      return;
+    }
 
     if (peerRef.current) {
       peerRef.current.destroy();
@@ -850,8 +907,46 @@ export const SyncSection = React.memo(function SyncSection({
       const conn = peer.connect(`holyrics_${targetCode.toUpperCase().trim()}`);
       connRef.current = conn;
 
+      const challenge = createPairingCode();
+      const session = new PairingSession(challenge);
+      let pairingRejected = false;
+      const approvalTimeout = setTimeout(() => {
+        if (!session.approved) {
+          pairingRejected = true;
+          session.close();
+          conn.close();
+          setDirectSyncStatus('error');
+          setSyncMessage('A aprovação expirou. Atualize o PC e conecte novamente.');
+        }
+      }, 65_000);
+
       // Listen to data from PC (for both full sync and real-time state updates)
       conn.on('data', async (incomingData: any) => {
+        if (incomingData?.type === 'PAIRING_REJECTED') {
+          pairingRejected = true;
+          clearTimeout(approvalTimeout);
+          session.close();
+          unregisterPeerConn(conn);
+          conn.close();
+          setDirectSyncStatus('error');
+          setSyncMessage('O PC recusou a solicitação ou o prazo expirou.');
+          return;
+        }
+        if (!session.approved) {
+          if (incomingData?.type !== 'PAIRING_APPROVED' || !session.approve(incomingData.challenge)) return;
+          clearTimeout(approvalTimeout);
+          approvedConnections.add(conn);
+          registerPeerConn(conn);
+          localStorage.setItem('projection_lastPairedPeerCode', targetCode);
+          localStorage.setItem('projection_deviceRole', 'phone');
+          setVerificationCode('');
+          setDirectSyncStatus('success');
+          setSyncMessage('Controle autorizado. Agenda e mídias preservadas nos dois aparelhos. Sincronize somente se precisar copiar os dados.');
+          const url = new URL(window.location.href);
+          url.searchParams.delete('syncCode');
+          window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+          return;
+        }
         try {
           if (incomingData && (incomingData.type === 'MEDIA_CHUNK_START' || incomingData.type === 'MEDIA_CHUNK_DATA')) {
             const res = await handleIncomingChunk(incomingData);
@@ -965,6 +1060,7 @@ export const SyncSection = React.memo(function SyncSection({
               window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
               setDirectSyncStatus('success');
               setSyncMessage('Tudo sincronizado!');
+              setIsPulling(false);
               try { conn.send({ type: 'SYNC_COMPLETE' }); } catch (e) {}
               return;
             }
@@ -1115,95 +1211,21 @@ export const SyncSection = React.memo(function SyncSection({
         }
       });
 
-      conn.on('open', async () => {
+      conn.on('open', () => {
         setDirectSyncStatus('sending');
-        setSyncMessage('Conectado! Verificando configurações do celular...');
-
-        try {
-          // Salva este targetCode como pareado e define papel como Celular
-          localStorage.setItem('projection_lastPairedPeerCode', targetCode.toUpperCase().trim());
-          localStorage.setItem('projection_deviceRole', 'phone');
-
-          // Check if this phone has custom data or is empty
-          const mediaItems = await getAllMediaItems();
-          const hasCustomMeetings = localStorage.getItem('projection_customMeetings') !== null;
-          const hasCustomCampaigns = localStorage.getItem('projection_customCampaigns') !== null;
-
-          if (mediaItems.length === 0 && !hasCustomMeetings && !hasCustomCampaigns) {
-            setSyncMessage('Celular limpo. Importando agenda, eventos e mídias do PC...');
-            conn.send({ type: 'REQUEST_FULL_SYNC', version: 1 });
-
-            // Save globally for real-time control
-            registerPeerConn(conn);
-
-            // Cleanup URL query params if any
-            if (window.location.search.includes('syncCode=')) {
-              window.history.replaceState({}, document.title, window.location.pathname);
-            }
-            return;
-          }
-
-          // Gather localStorage keys
-          const storageData: Record<string, string> = {};
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('projection_')) {
-              const val = localStorage.getItem(key);
-              if (val !== null) {
-                storageData[key] = val;
-              }
-            }
-          }
-
-          const mediaManifest = mediaItems.map(item => ({
-            id: item.id,
-            type: item.type,
-            name: item.name,
-            duration: item.duration,
-            enabledInLoop: item.enabledInLoop,
-            muted: item.muted,
-            order: item.order,
-            fit: item.fit,
-            size: item.blob ? item.blob.size : 0
-          }));
-
-          const payload = {
-            type: 'SYNC_MANIFEST',
-            version: 1,
-            localStorage: storageData,
-            mediaManifest
-          };
-
-          conn.send(payload);
-
-          // Save globally for real-time control
-          registerPeerConn(conn);
-
-          setDirectSyncStatus('success');
-          setSyncMessage('Conectado! Verificando alterações incrementais...');
-
-          // Cleanup URL query params if any
-          if (window.location.search.includes('syncCode=')) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-
-        } catch (err) {
-          console.error('Erro ao preparar dados:', err);
-          const role = localStorage.getItem('projection_deviceRole');
-          if (role === 'phone') {
-            setDirectSyncStatus('connecting');
-            setSyncMessage('Erro ao ler mídias. Tentando reconectar...');
-            triggerAutoReconnect(targetCode);
-          } else {
-            setDirectSyncStatus('error');
-            setSyncMessage('Erro ao preparar mídias para envio. Tente novamente.');
-          }
-        }
+        setVerificationCode(challenge);
+        setSyncMessage('Confira o código e permita o controle no computador.');
+        conn.send({type: 'REQUEST_PAIRING', challenge});
       });
 
       conn.on('close', () => {
+        clearTimeout(approvalTimeout);
+        session.close();
+        setIsPulling(false);
+        setIsPushing(false);
         console.log("Conexão com o PC fechada.");
         unregisterPeerConn(conn);
+        if (pairingRejected) return;
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'phone') {
           setDirectSyncStatus('connecting');
@@ -1213,8 +1235,11 @@ export const SyncSection = React.memo(function SyncSection({
       });
 
       conn.on('error', (err) => {
+        clearTimeout(approvalTimeout);
+        session.close();
         console.error('Erro na conexão com o destino:', err);
         unregisterPeerConn(conn);
+        if (pairingRejected) return;
         const role = localStorage.getItem('projection_deviceRole');
         if (role === 'phone') {
           setDirectSyncStatus('connecting');
@@ -1254,7 +1279,7 @@ export const SyncSection = React.memo(function SyncSection({
 
   const forcePushToPC = async () => {
     const conn = connRef.current;
-    if (!conn) {
+    if (!conn || !conn.open || !approvedConnections.has(conn)) {
       notify("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
@@ -1304,7 +1329,7 @@ export const SyncSection = React.memo(function SyncSection({
 
   const forcePullFromPC = () => {
     const conn = connRef.current;
-    if (!conn) {
+    if (!conn || !conn.open || !approvedConnections.has(conn)) {
       notify("Conexão inativa. Reconecte primeiro.", "error");
       return;
     }
@@ -1327,7 +1352,7 @@ export const SyncSection = React.memo(function SyncSection({
         connectAndSendData(codeFromUrl);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (isDesktop || savedRole === 'pc' || !savedRole) {
+    } else if (savedRole === 'pc' || (!savedRole && isDesktop)) {
       // Em computadores (PC / Desktop) ou quando não há papel definido, inicia receptor (PC) imediatamente
       localStorage.setItem('projection_deviceRole', 'pc');
       const timer = setTimeout(() => {
@@ -1344,6 +1369,12 @@ export const SyncSection = React.memo(function SyncSection({
         }, 1000);
         return () => clearTimeout(timer);
       }
+      setDirectSyncStatus('connecting');
+      setSyncMessage('Digite o código exibido no computador.');
+    } else {
+      localStorage.setItem('projection_deviceRole', 'phone');
+      setDirectSyncStatus('connecting');
+      setSyncMessage('Digite o código exibido no computador.');
     }
   }, []);
 
@@ -1511,6 +1542,7 @@ export const SyncSection = React.memo(function SyncSection({
 
   return (
     <div className="sync-workspace console-area bg-hl-panel border border-hl-line rounded-3xl p-5 flex flex-col gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)]">
+      {pendingPairing && <PairingApproval code={pendingPairing.code} onApprove={approvePairing} onReject={rejectPairing}/>}
       <ConsoleIntro icon={Smartphone} title="Conexão e backup" eyebrow="O PC projeta. O celular controla." description="Use o código do computador para conectar o celular e levar o controle da reunião com você." stats={[{label:'Este aparelho',value:localStorage.getItem('projection_deviceRole') === 'phone' ? 'Celular · controle' : 'PC · projeção'},{label:'Sincronização',value:({idle:'Aguardando',initializing:'Preparando',listening:'Aguardando celular',connecting:'Aguardando código',sending:'Enviando',receiving:'Recebendo',success:'Dados sincronizados',error:'Verificar conexão'})[directSyncStatus]}]}/>
       <ol className="console-connection-path" aria-label="Como conectar"><li><span>01</span><Laptop size={21}/><strong>PC no telão</strong><small>Abra a projeção na segunda tela.</small></li><li><span>02</span><Smartphone size={21}/><strong>Celular no controle</strong><small>Use o código ou QR do computador.</small></li><li><span>03</span><CheckCircle2 size={21}/><strong>Confira a conexão</strong><small>Verifique a exibição no PC e no telão.</small></li></ol>
 <details className="holy-disclosure sync-diagnostics"><summary>Diagnóstico de conexão</summary>      {/* BOTÃO DE DIAGNÓSTICO E TESTE AUTOMÁTICO */}
@@ -1623,7 +1655,7 @@ export const SyncSection = React.memo(function SyncSection({
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={startReceiver}
+                onClick={() => startReceiver()}
                 className="bg-hl-raised border border-hl-line hover:border-hl-gold/60 hover:bg-hl-raised text-hl-soft text-[11px] font-bold py-3 px-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all h-24 group shadow-[0_4px_12px_rgba(0,0,0,0.6)] active:translate-y-[1px]"
               >
                 <Laptop className="w-6 h-6 text-hl-gold-bright group-hover:scale-110 transition-transform" />
@@ -1689,6 +1721,7 @@ export const SyncSection = React.memo(function SyncSection({
 
                 <div className="text-[10px] text-hl-soft bg-hl-canvas p-3 rounded-xl text-center leading-normal border border-hl-line-soft max-w-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
                   <strong>Instruções:</strong> Aponte a câmera do celular para o QR Code acima para conectar.
+                  <span className="block mt-2">Código válido por 10 minutos. O PC ainda pedirá sua aprovação.</span>
                 </div>
               </div>
             )}
@@ -1696,6 +1729,10 @@ export const SyncSection = React.memo(function SyncSection({
             <button
               onClick={() => {
                 localStorage.removeItem('projection_deviceRole');
+                localStorage.removeItem('projection_lastPairedPeerCode');
+                if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+                rejectPairing();
+                if (connRef.current) unregisterPeerConn(connRef.current);
                 if (peerRef.current) peerRef.current.destroy();
                 setDirectSyncStatus('idle');
               }}
@@ -1705,6 +1742,10 @@ export const SyncSection = React.memo(function SyncSection({
             </button>
           </div>
         )}
+
+        {verificationCode && directSyncStatus === 'sending' && <div className="rounded-2xl border border-hl-line-strong bg-hl-canvas p-4 text-center"><p className="text-sm text-hl-soft">Compare este código com o PC antes de permitir:</p><strong className="block py-3 text-2xl font-mono tracking-widest text-hl-gold">{verificationCode}</strong><p className="text-xs text-hl-muted">Nenhum dado é enviado antes da aprovação.</p></div>}
+
+        {syncCode && localStorage.getItem('projection_deviceRole') === 'pc' && <button type="button" onClick={() => startReceiver(true)} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-gold">Gerar novo código e desconectar celulares</button>}
 
         {/* SENDER STATE (MOBILE CONNECTING/TYPING CODE) */}
         {(directSyncStatus === 'connecting' || directSyncStatus === 'sending') && (
@@ -1728,14 +1769,14 @@ export const SyncSection = React.memo(function SyncSection({
                   />
                   <button
                     onClick={() => connectAndSendData(syncInputCode)}
-                    disabled={!syncInputCode || syncInputCode.length !== 6}
+                    disabled={!isPairingCode(syncInputCode)}
                     className="bg-hl-gold hover:bg-hl-gold-bright text-black text-xs font-black px-4 py-2 rounded-xl disabled:opacity-50 transition-all cursor-pointer shadow-[0_0_12px_rgba(255,211,79,0.3)] active:translate-y-[1px]"
                   >
                     Conectar
                   </button>
                 </div>
                 <p className="text-[10px] text-hl-dim leading-normal font-mono">
-                  Digite o código de 6 letras exibido na tela do computador.
+                  Digite os 6 caracteres do código atual exibido no computador.
                 </p>
               </div>
             )}
@@ -1743,6 +1784,10 @@ export const SyncSection = React.memo(function SyncSection({
             <button
               onClick={() => {
                 localStorage.removeItem('projection_deviceRole');
+                localStorage.removeItem('projection_lastPairedPeerCode');
+                if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+                rejectPairing();
+                if (connRef.current) unregisterPeerConn(connRef.current);
                 if (peerRef.current) peerRef.current.destroy();
                 setDirectSyncStatus('idle');
               }}
@@ -1762,12 +1807,21 @@ export const SyncSection = React.memo(function SyncSection({
             <div className="text-center">
               <span className="text-xs font-black text-emerald-400 block uppercase tracking-wider font-mono">Dispositivos Conectados!</span>
               <p className="text-[11px] text-hl-soft mt-2 max-w-sm mx-auto leading-relaxed">
-                Sincronização realizada com sucesso.
+                Acesso autorizado pelo computador.
               </p>
               <p className="text-[10px] text-hl-muted mt-1 max-w-sm mx-auto leading-relaxed">
-                Comandos enviados pelo celular refletem instantaneamente na projeção.
+                Controle autorizado. Confira a projeção no telão; a conexão não confirma a imagem física do HDMI.
               </p>
             </div>
+
+            {localStorage.getItem('projection_deviceRole') === 'phone' && <details className="holy-disclosure w-full text-left">
+              <summary>Copiar agenda e mídias entre os aparelhos</summary>
+              <p className="text-xs text-hl-muted my-3">O controle funciona sem copiar os arquivos. Ao sincronizar, o aparelho de destino passa a usar a agenda, configurações e mídias da origem. Exporte um backup antes.</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" disabled={isPushing || isPulling} onClick={() => showConfirm('Receber dados do PC?', 'A agenda, configurações e lista de mídias deste celular serão substituídas pelas do PC. Arquivos ausentes no PC serão removidos deste celular. Exporte um backup antes.', forcePullFromPC, 'danger')} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-soft disabled:opacity-50">{isPulling ? 'Recebendo...' : 'Receber do PC'}</button>
+                <button type="button" disabled={isPushing || isPulling} onClick={() => showConfirm('Enviar dados para o PC?', 'A agenda, configurações e lista de mídias do PC serão substituídas pelas deste celular. Arquivos ausentes no celular serão removidos do PC. Exporte um backup antes.', () => { void forcePushToPC(); }, 'danger')} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-gold disabled:opacity-50">{isPushing ? 'Enviando...' : 'Enviar para o PC'}</button>
+              </div>
+            </details>}
 
             {localStorage.getItem('projection_deviceRole') === 'phone' && syncMessage && (
               <div className="w-full bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl text-center mt-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
@@ -1787,6 +1841,10 @@ export const SyncSection = React.memo(function SyncSection({
               <button
                 onClick={() => {
                   localStorage.removeItem('projection_deviceRole');
+                  localStorage.removeItem('projection_lastPairedPeerCode');
+                  if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+                  rejectPairing();
+                  if (connRef.current) unregisterPeerConn(connRef.current);
                   if (peerRef.current) peerRef.current.destroy();
                   setDirectSyncStatus('idle');
                 }}
@@ -1825,6 +1883,10 @@ export const SyncSection = React.memo(function SyncSection({
               <button
                 onClick={() => {
                   localStorage.removeItem('projection_deviceRole');
+                  localStorage.removeItem('projection_lastPairedPeerCode');
+                  if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+                  rejectPairing();
+                  if (connRef.current) unregisterPeerConn(connRef.current);
                   if (peerRef.current) peerRef.current.destroy();
                   setDirectSyncStatus('idle');
                 }}
