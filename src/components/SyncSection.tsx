@@ -1,3 +1,4 @@
+import {sendPeerChunk} from '../utils/peer-send';
 import {isSharedStateUpdate, readSharedStorage} from '../utils/shared-state';
 import {PairingApproval} from './PairingApproval';
 import {PairingSession, createPairingCode, isPairingCode} from '../utils/pairing-session';
@@ -8,7 +9,7 @@ import QRCode from "react-qr-code";
 import { Download, Upload, Laptop, Smartphone, RefreshCw, Activity, CheckCircle2, XCircle, FlaskConical, Zap, ShieldCheck, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import { getAllMediaItems, saveMediaItem, deleteMediaItem } from '../utils';
-import { sendMediaInChunks, handleIncomingChunk } from '../utils/webrtcChunking';
+import { sendMediaInChunks, handleIncomingChunk, cancelIncomingTransfers } from '../utils/webrtcChunking';
 
 function getRealBlob(blobInput: any): Blob | null {
   if (!blobInput) return null;
@@ -76,6 +77,10 @@ export function unregisterPeerConn(conn: any) {
   } else {
     delete (window as any).holyrics_peer_conn;
   }
+}
+
+export function getApprovedPeerConnections(): any[] {
+  return ((window as any).holyrics_peer_conns || []).filter(conn => conn.open && approvedConnections.has(conn));
 }
 
 export function broadcastToPeers(data: any, excludeConn?: any) {
@@ -438,7 +443,7 @@ export const SyncSection = React.memo(function SyncSection({
         }
         try {
           if (data && (data.type === 'MEDIA_CHUNK_START' || data.type === 'MEDIA_CHUNK_DATA')) {
-            const res = await handleIncomingChunk(data);
+            const res = await handleIncomingChunk(data, conn);
             if (res.complete) {
               window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
               setSyncMessage('Mídia recebida e salva com sucesso!');
@@ -615,9 +620,7 @@ export const SyncSection = React.memo(function SyncSection({
               const realBlob = getRealBlob(item.blob);
               if (realBlob && realBlob.size > 0) {
                 await sendMediaInChunks(
-                  (payload) => {
-                    try { conn.send(payload); } catch (e) {}
-                  },
+                  (payload) => sendPeerChunk(conn, payload, () => approvedConnections.has(conn)),
                   {
                     id: item.id,
                     type: item.type,
@@ -809,6 +812,7 @@ export const SyncSection = React.memo(function SyncSection({
           window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
 
         } catch (err) {
+          if (!conn.open || !session?.approved) return;
           console.error('Erro na recepção dos dados:', err);
           setDirectSyncStatus('error');
           setSyncMessage('Falha ao receber os dados. Verifique a conexão e tente novamente.');
@@ -817,6 +821,7 @@ export const SyncSection = React.memo(function SyncSection({
 
       conn.on('close', () => {
         clearTimeout(requestTimeout);
+        cancelIncomingTransfers(conn);
         session?.close();
         if (pendingPairingRef.current?.conn === conn) clearPendingPairing();
         console.log("Conexão com o celular fechada.");
@@ -830,6 +835,7 @@ export const SyncSection = React.memo(function SyncSection({
 
       conn.on('error', (err) => {
         clearTimeout(requestTimeout);
+        cancelIncomingTransfers(conn);
         session?.close();
         if (pendingPairingRef.current?.conn === conn) clearPendingPairing();
         console.error('Erro na conexão com celular:', err);
@@ -951,7 +957,7 @@ export const SyncSection = React.memo(function SyncSection({
         }
         try {
           if (incomingData && (incomingData.type === 'MEDIA_CHUNK_START' || incomingData.type === 'MEDIA_CHUNK_DATA')) {
-            const res = await handleIncomingChunk(incomingData);
+            const res = await handleIncomingChunk(incomingData, conn);
             if (res.complete) {
               window.dispatchEvent(new CustomEvent('projection_sync_update', { detail: { key: 'mediaUpdateTrigger', value: Date.now().toString() } }));
               setSyncMessage('Mídia recebida e salva com sucesso!');
@@ -969,9 +975,7 @@ export const SyncSection = React.memo(function SyncSection({
               const realBlob = getRealBlob(item.blob);
               if (realBlob && realBlob.size > 0) {
                 await sendMediaInChunks(
-                  (payload) => {
-                    try { conn.send(payload); } catch (e) {}
-                  },
+                  (payload) => sendPeerChunk(conn, payload, () => approvedConnections.has(conn)),
                   {
                     id: item.id,
                     type: item.type,
@@ -1210,6 +1214,7 @@ export const SyncSection = React.memo(function SyncSection({
             window.dispatchEvent(new CustomEvent('projection_full_sync_received'));
           }
         } catch (e) {
+          if (!conn.open || !session.approved) return;
           console.error("Erro ao processar dados recebidos do PC:", e);
         }
       });
@@ -1223,6 +1228,7 @@ export const SyncSection = React.memo(function SyncSection({
 
       conn.on('close', () => {
         clearTimeout(approvalTimeout);
+        cancelIncomingTransfers(conn);
         session.close();
         setIsPulling(false);
         setIsPushing(false);
@@ -1239,6 +1245,7 @@ export const SyncSection = React.memo(function SyncSection({
 
       conn.on('error', (err) => {
         clearTimeout(approvalTimeout);
+        cancelIncomingTransfers(conn);
         session.close();
         console.error('Erro na conexão com o destino:', err);
         unregisterPeerConn(conn);
@@ -1819,6 +1826,7 @@ export const SyncSection = React.memo(function SyncSection({
 
             {localStorage.getItem('projection_deviceRole') === 'phone' && <details className="holy-disclosure w-full text-left">
               <summary>Copiar agenda e mídias entre os aparelhos</summary>
+              <p className="text-xs text-hl-muted my-3">A transferência entre aparelhos aceita até 128 MB por arquivo. Arquivos maiores podem continuar sendo usados localmente.</p>
               <p className="text-xs text-hl-muted my-3">O controle funciona sem copiar os arquivos. Ao sincronizar, o aparelho de destino passa a usar a agenda, configurações e mídias da origem. Exporte um backup antes.</p>
               <div className="flex flex-wrap gap-2">
                 <button type="button" disabled={isPushing || isPulling} onClick={() => showConfirm('Receber dados do PC?', 'A agenda, configurações e lista de mídias deste celular serão substituídas pelas do PC. Arquivos ausentes no PC serão removidos deste celular. Exporte um backup antes.', forcePullFromPC, 'danger')} className="rounded-xl border border-hl-line px-4 py-3 text-sm text-hl-soft disabled:opacity-50">{isPulling ? 'Recebendo...' : 'Receber do PC'}</button>

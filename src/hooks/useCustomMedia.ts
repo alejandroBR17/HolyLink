@@ -1,6 +1,7 @@
+import {sendPeerChunk} from '../utils/peer-send';
 import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { saveMediaItem, getAllMediaItems, deleteMediaItem } from '../utils';
-import { broadcastToPeers } from '../components/SyncSection';
+import { broadcastToPeers, getApprovedPeerConnections } from '../components/SyncSection';
 import { sendMediaInChunks } from '../utils/webrtcChunking';
 import { mediaPreloader } from '../utils/preloader';
 
@@ -127,7 +128,20 @@ export function useCustomMedia(
     };
   }, [mediaUpdateTrigger]);
 
-  const broadcastMediaSave = useCallback(async (item: any) => {
+  const broadcastMediaSave = useCallback(async (item: any, includeFile = false) => {
+    // Snapshot the recipients: a phone joining midway must not receive orphaned blocks.
+    let targets = getApprovedPeerConnections();
+    if (!targets.length) return;
+    if (!includeFile) {
+      broadcastToPeers({type:'MEDIA_SAVE', version:1, mediaItem:{id:item.id,type:item.type,name:item.name,
+        duration:item.duration,enabledInLoop:item.enabledInLoop,muted:item.muted,order:item.order,fit:item.fit}});
+      return;
+    }
+    const send = async (data: any) => {
+      const results = await Promise.allSettled(targets.map(conn => sendPeerChunk(conn, data, () => getApprovedPeerConnections().includes(conn))));
+      targets = targets.filter((_, index) => results[index].status === 'fulfilled');
+      if (!targets.length) throw new Error('A transferência foi interrompida: não há aparelhos conectados.');
+    };
     try {
       let blobToUse = item.blob;
       if (!blobToUse) {
@@ -155,7 +169,7 @@ export function useCustomMedia(
       if (realBlob && realBlob.size > 0) {
         const mimeType = realBlob.type || 'application/octet-stream';
         await sendMediaInChunks(
-          (data) => broadcastToPeers(data),
+          send,
           {
             id: item.id,
             type: item.type,
@@ -188,6 +202,7 @@ export function useCustomMedia(
       }
     } catch (e) {
       console.error("Error broadcasting media save:", e);
+      setUploadError('Mídia salva neste aparelho, mas não enviada aos outros. ' + (e instanceof Error ? e.message : 'Confira a conexão e tente sincronizar novamente.'));
     }
   }, []);
 
@@ -262,7 +277,7 @@ export function useCustomMedia(
         order
       };
       await saveMediaItem(mediaItemPayload);
-      broadcastMediaSave(mediaItemPayload);
+      void broadcastMediaSave(mediaItemPayload, true);
 
       try {
         const savedOrderStr = localStorage.getItem('projection_slidesOrder');

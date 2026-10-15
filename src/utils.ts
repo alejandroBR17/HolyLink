@@ -174,35 +174,25 @@ export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
   }
 }
 
-export async function saveMediaItem(item: DBMediaItem): Promise<void> {
+export async function saveMediaItem(item: DBMediaItem, signal?: AbortSignal): Promise<void> {
+  signal?.throwIfAborted();
   const db = await openDB();
+  if (signal?.aborted) {db.close(); signal.throwIfAborted();}
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
-    
-    // Get existing item from store to preserve the blob if not provided in 'item'
-    const getRequest = store.get(item.id);
-    
-    getRequest.onsuccess = () => {
-      const existing = getRequest.result;
-      let finalItem = item;
-      if (existing) {
-        finalItem = {
-          ...existing,
-          ...item,
-          blob: (item.blob !== undefined && item.blob !== null) ? item.blob : existing.blob
-        };
-      }
-      
-      const putRequest = store.put(finalItem);
-      putRequest.onsuccess = () => resolve();
-      putRequest.onerror = () => reject(putRequest.error);
-    };
-    
-    getRequest.onerror = () => {
-      const putRequest = store.put(item);
-      putRequest.onsuccess = () => resolve();
-      putRequest.onerror = () => reject(putRequest.error);
+    const abort = () => {try {transaction.abort();} catch {}};
+    const cleanup = () => {signal?.removeEventListener('abort', abort); db.close();};
+    signal?.addEventListener('abort', abort, {once:true});
+    transaction.oncomplete = () => {cleanup(); resolve();};
+    transaction.onerror = () => {cleanup(); reject(signal?.reason || transaction.error || new Error('Falha ao salvar mídia.'));};
+    transaction.onabort = () => {cleanup(); reject(signal?.reason || transaction.error || new Error('Gravação de mídia cancelada.'));};
+    const request = store.get(item.id);
+    request.onsuccess = () => {
+      if (signal?.aborted) {abort(); return;}
+      const existing = request.result;
+      const finalItem = existing ? {...existing, ...item, blob:item.blob ?? existing.blob} : item;
+      store.put(finalItem);
     };
   });
 }

@@ -62,11 +62,31 @@ Validação desta etapa:
 - `../data/verify-holy-unified.cjs`: busca, seleção, projeção, paginação, histórico, falha de busca, comunicação entre janelas e ausência de overflow aprovados em 320/390/430/1365 px. API de Bíblia simulada nesse teste.
 - Primeira etapa também validada online na prévia em 390 e 1365 px, seis áreas, formulários, foco/Escape e ausência de overflow.
 
+## Rodada iniciada às 00h12 — mídia por conexão e gravação cancelável
+
+- Reconstrução de chunks isolada por conexão autorizada: IDs iguais de dois aparelhos não se misturam. Validação de versão, metadados, total de blocos, índice, base64 e tamanho exato de cada bloco antes de armazenar. Blocos repetidos não completam arquivo indevidamente. Metadados desconhecidos são descartados.
+- Limite técnico de 128 MiB por arquivo e por soma pendente em cada conexão, até duas transferências simultâneas. Isso limita alocações remotas; arquivos maiores continuam utilizáveis localmente. A interface informa o limite, e falha de envio informa que a cópia local foi preservada.
+- Transferências sem atividade por 60 segundos são descartadas pela verificação a cada 10 segundos; desconectar/erro libera imediatamente os buffers daquela conexão.
+- Envio lê somente fatias de 64 KiB em vez do vídeo inteiro para um ArrayBuffer. Aguarda a fila RTC/PeerJS drenar quando há pressão, com limite de espera de 30 segundos e checagem de autorização. Falha de envio interrompe os próximos blocos.
+- Broadcast de arquivo usa uma lista fixa de destinatários autorizados: quem entra durante o envio não recebe blocos sem cabeçalho. Aparelhos que desconectam saem da lista sem impedir os demais de receber. Sem destinatário não há leitura/conversão de arquivo.
+- Renomear, reordenar, alterar duração, enquadramento, áudio ou habilitação da mídia envia apenas metadados. Antes isso relia e reenviava o arquivo inteiro (e reordenar reenviava todos os arquivos em paralelo).
+- Persistência de mídia aceita cancelamento: desconectar cancela a gravação de chunks ainda em curso. Sucesso só é retornado após completar a transação IndexedDB. Abort durante a escrita preserva a versão anterior; atualizações somente de metadados continuam preservando o Blob. Commits já concluídos não são apagados ao desconectar.
+- O progresso de arquivo salvo só é anunciado depois da confirmação de gravação. Callbacks cancelados deixam de sobrescrever a mensagem de uma conexão encerrada.
+
+Validação:
+
+- `npm run lint`, `npm run build` aprovados.
+- 29 testes nativos aprovados: 8 novos de reconstrução/isolamento/limites/expiração de chunks; 3 de fila cheia, revogação e timeout do envio.
+- `../data/verify-holy-transfers.cjs`, Edge headless com IndexedDB real em contexto descartável: bytes exatos de três blocos, sender que proíbe ler o arquivo inteiro, gravação completa, desconexão antes de abrir o banco, abort após `put` com rollback real, manutenção do Blob ao editar metadados, isolamento entre conexões, descarte de parcial, interrupção após erro de envio e ausência de anúncio de gravação em um arquivo cancelado.
+- `../data/verify-holy-pairing.cjs` ampliado: metadados geram somente `MEDIA_SAVE`; inclusão explícita de arquivo gera cabeçalho+blocos; arquivo acima do limite é recusado antes de leitura/envio e informa que a cópia local está salva. Pareamento/estado continuam aprovados em 320/390/844 paisagem/1365 px.
+- `../data/verify-holy-console-actions.cjs`: upload local, preview, cancelamento de exclusão, agenda salva/recarregada e diagnóstico/foco/Escape aprovados em 320/390/1365 px.
+- Não foi ensaiado um arquivo real de 128 MiB por redes físicas; limite técnico não é promessa de velocidade. O teste de fila cheia usa transporte simulado. Nenhum arquivo legítimo foi apagado ou substituído pelos testes.
+
 ## Próxima rodada / pendências concretas
 
 1. Continuar validação dos envelopes/mídias e do arquivo inteiro de backup. Estados/configurações já têm contrato explícito; não repetir essa etapa sem uma falha concreta. Não declarar auditoria de segurança concluída.
-2. Limitar transferências incompletas e isolá-las por conexão; buffers de chunks hoje globais. Garantir cancelamento de tarefas assíncronas após revogar conexão e não aceitar chunks com índices/tamanhos inválidos.
-3. Confirmação por mensagem de comandos recebidos; não confundir com imagem física confirmada. Rever reconexões em loop constante.
+2. Chunks já estão isolados/limitados/canceláveis e validados. Ainda auditar os caminhos legados `MEDIA_SAVE`, `DELTA_MEDIA_ITEMS`, `FULL_SYNC` e manifesto: esses podem escrever/excluir itens fora do caminho de chunks. Validar envelope/mídia integralmente antes da primeira escrita e cancelar as demais tarefas assíncronas após revogação. O relay PC → outros celulares ainda usa `broadcastToPeers` síncrono para os blocos recebidos: aplicar controle de fila também nesse caminho, sem reordenar cabeçalho/blocos, antes de considerar redes com vários controles validadas. Não repetir o trabalho de chunks sem falha nova.
+3. Corrigir `SYNC_COMPLETE`: hoje o emissor pode anunciá-lo antes da última gravação assíncrona no receptor. Depois, confirmação por mensagem de comandos recebidos; não confundir com imagem física confirmada. Rever reconexões em loop constante.
 4. Cache persistente da Bíblia (atual cache é apenas em memória do componente), navegação rápida sem busca repetitiva e recuperação offline das passagens já consultadas.
 5. Roteiros nomeados persistidos e backup validado antes de qualquer escrita. Preservar arquivos/configurações existentes. Conferir também cópia de configurações padrão não persistidas: manifesto atual envia somente as chaves salvas, então defaults ausentes não substituem uma customização antiga no destino. Definir cópia/mescla claramente antes de alterar a regra.
 6. Revisão visual dos fluxos novos e consolidar relatório final às 06h50, excluindo a automação.
@@ -80,6 +100,6 @@ Validação desta etapa:
 - Produção conferida e preservada em `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi`. Nenhum merge/promote realizado.
 - Draft PR #1 atualizada até o código `d47d167`; continua rascunho.
 - Servidor local 3012 encerrado após os testes. Bibliotecas/configurações dos testes são descartáveis e não usam o perfil real do usuário.
-- Este checkpoint documental ficará em commit local para ser incluído junto da próxima etapa no próximo push, evitando outra implantação só para documentação. Nenhuma alteração de código pendente. A próxima rodada deve começar pelas transferências/mídias e backup, conforme a lista acima, sem repetir o que já passou.
+- Checkpoint documental `1dec077` será incluído no push desta rodada junto do código de transferência. Após publicar, verificar o SHA mais recente no Git/Vercel. A próxima rodada deve começar pelos envelopes legados, backup e confirmação de conclusão, sem repetir o que já passou.
 
 Retomadas continuam às 00h50–06h50, incluindo 04h50 após a renovação prevista para 04h41. Não consumir créditos de reset. Novo contexto automático do ambiente não é retorno humano; mensagens humanas de pausa/retorno prevalecem. Finalizar/excluir automação na rodada final.
