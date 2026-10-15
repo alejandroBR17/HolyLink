@@ -73,10 +73,10 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
             </div>
             <div>
               <h3 className="text-hl-copy font-extrabold text-base uppercase tracking-wider font-sans flex items-center gap-2">
-                Otimização Inteligente de Hardware
+                Diagnóstico deste aparelho
               </h3>
               <p className="text-xs text-hl-muted mt-0.5">
-                Análise de CPU, RAM, GPU e Prevenção Ativa Anti-Lag
+                Informações do navegador e ajustes de qualidade
               </p>
             </div>
           </div>
@@ -101,7 +101,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-black text-white uppercase tracking-wider font-mono">
-                      Pontuação do Hardware: {report ? `${report.score} / 100` : 'Calculando...'}
+                      Índice indicativo: {report ? `${report.score} / 100` : 'Calculando...'}
                     </span>
                     {report && (
                       <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border uppercase tracking-wider font-black shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] ${getTierColor(report.recommendedMode)}`}>
@@ -113,12 +113,12 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                     {report?.isTouchDevice ? (
                       <>
                         <Smartphone className="w-3.5 h-3.5 text-hl-gold shrink-0" />
-                        <span>Dispositivo Móvel Detectado: Modo de economia ativado para preservar energia e estabilizar taxa de quadros.</span>
+                        <span>Entrada por toque disponível. Escolha abaixo a qualidade adequada para este aparelho.</span>
                       </>
                     ) : (
                       <>
                         <Laptop className="w-3.5 h-3.5 text-hl-gold shrink-0" />
-                        <span>Computador / Notebook de Operação: Analisado para projeção fluida em alta resolução.</span>
+                        <span>Sem entrada por toque informada. Confira a fluidez na tela usada para projetar.</span>
                       </>
                     )}
                   </p>
@@ -131,7 +131,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                 className="bg-hl-gold hover:bg-hl-gold-bright disabled:opacity-50 text-black text-xs font-black px-4 py-2.5 rounded-xl shadow-[0_0_15px_rgba(255,211,79,0.3)] transition-all cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 active:translate-y-[1px]"
               >
                 <RefreshCw className={`w-4 h-4 ${isDiagnosticRunning ? 'animate-spin' : ''}`} />
-                <span>{isDiagnosticRunning ? 'Analisando...' : 'Executar Teste de Estresse'}</span>
+                <span>{isDiagnosticRunning ? 'Analisando...' : 'Atualizar diagnóstico'}</span>
               </button>
             </div>
 
@@ -161,6 +161,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
+              <p className="operator-muted">Informações locais desta aba. O navegador pode ocultar ou aproximar hardware; não é uma leitura do PC conectado nem confirmação do HDMI. O teste JavaScript e a pontuação são indicativos.</p>
               {/* CPU CARD */}
               <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
                 <div className="p-2 bg-hl-raised rounded-xl border border-hl-line text-hl-gold shrink-0">
@@ -169,10 +170,10 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                 <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Processador (CPU)</span>
                   <p className="text-xs font-extrabold text-white truncate">
-                    {report?.cpuCores ? `${report.cpuCores} Núcleos Lógicos` : '4 Núcleos'}
+                    {report?.cpuCores ? `${report.cpuCores} processadores lógicos` : 'Não informado'}
                   </p>
                   <p className="text-[10px] text-hl-muted mt-0.5">
-                    Benchmark Math JS: <span className="font-mono text-hl-gold-bright font-bold">{report?.cpuScoreMs || 20}ms</span>
+                    Benchmark Math JS: <span className="font-mono text-hl-gold-bright font-bold">{report?.cpuScoreMs !== undefined ? `${report.cpuScoreMs} ms` : 'Não medido'}</span>
                   </p>
                 </div>
               </div>
@@ -184,8 +185,8 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                 </div>
                 <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Memória RAM & App Heap</span>
-                  <p className="text-xs font-extrabold text-white truncate" title={report?.ramDisplay || 'RAM Identificada'}>
-                    RAM Total: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
+                  <p className="text-xs font-extrabold text-white truncate" title={'Estimativa do navegador; pode ser arredondada e limitada'}>
+                    RAM aproximada: {report?.ramDisplay || 'Não informada'}
                   </p>
                   <div className="mt-1 flex items-center gap-2">
                     <div className="w-full bg-hl-panel h-2 rounded-full overflow-hidden border border-hl-line-soft flex-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
@@ -195,13 +196,13 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                           width: `${
                             report?.jsHeapUsedMB && report?.jsHeapLimitMB
                               ? Math.min(100, Math.round((report.jsHeapUsedMB / report.jsHeapLimitMB) * 100))
-                              : 25
+                              : 0
                           }%`
                         }}
                       />
                     </div>
                     <span className="text-[9px] font-mono text-blue-400 font-bold shrink-0">
-                      App: {report?.jsHeapUsedMB ? `${report.jsHeapUsedMB} MB` : '10 MB'}
+                      App: {report?.jsHeapUsedMB !== undefined ? `${report.jsHeapUsedMB} MB` : 'Não informado'}
                     </span>
                   </div>
                 </div>
@@ -215,10 +216,10 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                 <div className="min-w-0 flex-1">
                   <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Placa de Vídeo (GPU / WebGL)</span>
                   <p className="text-xs font-extrabold text-white truncate" title={report?.gpuRenderer}>
-                    {report?.gpuRenderer || 'Aceleração de Hardware Ativa'}
+                    {report?.gpuRenderer || 'Não informada'}
                   </p>
                   <p className="text-[10px] text-hl-muted mt-0.5">
-                    Textura Máx: <span className="font-mono text-purple-400">{report?.maxTextureSize || 4096}px</span>
+                    Textura Máx: <span className="font-mono text-purple-400">{report?.maxTextureSize ? `${report.maxTextureSize} px` : 'Não informado'}</span>
                   </p>
                 </div>
               </div>
@@ -229,13 +230,13 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
                   <Monitor className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Taxa de Quadros (FPS Real)</span>
+                  <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Atualizações desta aba (FPS)</span>
                   <p className="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
                     <span className={fps < 38 ? 'text-hl-gold-bright font-mono font-black' : 'text-emerald-400 font-mono font-black'}>{fps} FPS</span>
-                    <span className="text-[10px] font-normal text-hl-muted">({fps >= 50 ? 'Estável 60Hz' : fps >= 35 ? 'Fluido' : 'Economia'})</span>
+                    <span className="text-[10px] font-normal text-hl-muted">({fps >= 50 ? 'Fluido' : fps >= 35 ? 'Fluido' : 'Economia'})</span>
                   </p>
                   <p className="text-[10px] text-hl-muted mt-0.5 truncate" title={`Resolução: ${report?.physicalWidth || report?.screenWidth}x${report?.physicalHeight || report?.screenHeight} px`}>
-                    Monitor: <span className="font-mono text-hl-soft font-bold">{report?.physicalWidth || report?.screenWidth}x{report?.physicalHeight || report?.screenHeight}</span>
+                    Tela estimada: <span className="font-mono text-hl-soft font-bold">{report?.physicalWidth || report?.screenWidth}x{report?.physicalHeight || report?.screenHeight}</span>
                   </p>
                 </div>
               </div>
@@ -343,7 +344,7 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               </div>
               <div>
                 <h5 className="text-xs font-extrabold text-white uppercase tracking-wider font-sans">
-                  Desobstrução de Memória RAM
+                  Cache de pré-carregamento
                 </h5>
                 <p className="text-[11px] text-hl-muted mt-0.5">
                   Libera buffers temporários de mídias na RAM sem apagar arquivos do culto.
@@ -362,12 +363,12 @@ export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkMod
               {cacheCleared ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-black" />
-                  <span>Memória RAM Desobstruída!</span>
+                  <span>Cache de pré-carregamento limpo</span>
                 </>
               ) : (
                 <>
                   <Trash2 className="w-4 h-4 text-hl-gold" />
-                  <span>Limpar RAM Agora</span>
+                  <span>Limpar cache agora</span>
                 </>
               )}
             </button>

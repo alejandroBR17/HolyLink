@@ -69,7 +69,7 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
   return (
     <canvas 
       ref={canvasRef} 
-      className="absolute inset-0 z-0 pointer-events-none opacity-40"
+      className="absolute inset-0 z-0 pointer-events-none opacity-40 w-full h-full"
     />
   );
 };

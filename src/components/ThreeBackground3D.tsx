@@ -10,6 +10,7 @@ interface ThreeBackground3DProps {
   stylePreset?: BackgroundStyleOption;
   fpsLimit?: 30 | 60;
   intensity?: 'high' | 'medium' | 'low';
+  onStatus?: (status: 'active' | 'unavailable') => void;
 }
 
 // ----------------------------------------------------------------------
@@ -159,6 +160,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
   stylePreset = 'auto',
   fpsLimit = 60,
   intensity = 'high',
+  onStatus,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -193,6 +195,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
         precision: 'mediump',
       });
     } catch (e) {
+      onStatus?.('unavailable');
       console.warn("WebGL renderer creation failed, falling back safely.");
       return;
     }
@@ -207,12 +210,14 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     renderer.domElement.style.left = '0';
     renderer.domElement.style.pointerEvents = 'none';
     container.appendChild(renderer.domElement);
+    onStatus?.('active');
 
     // Proteção contra crash da aba em caso de GPU overload (webglcontextlost)
     let isContextLost = false;
     const handleContextLost = (e: Event) => {
       e.preventDefault();
       isContextLost = true;
+      onStatus?.('unavailable');
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       console.warn("WebGL Context Lost - Interrompendo renderização 3D com segurança para proteger o navegador.");
     };
@@ -330,6 +335,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
         renderer.render(particleScene, particleCamera);
       } catch (e) {
         console.warn("Render loop caught WebGL exception, pausing animation safely:", e);
+        onStatus?.('unavailable');
         isContextLost = true;
       }
     };
@@ -347,10 +353,13 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     };
 
     window.addEventListener('resize', handleResize);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       canvasEl.removeEventListener('webglcontextlost', handleContextLost);
 
       planeGeometry.dispose();
@@ -364,7 +373,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [disabled, isFJU, stylePreset, fpsLimit, intensity]);
+  }, [disabled, isFJU, stylePreset, fpsLimit, intensity, onStatus]);
 
   if (disabled || stylePreset === 'off' || stylePreset === 'particles_2d') return null;
 

@@ -48,21 +48,21 @@ export function probeGpuCapabilities(): { vendor: string; renderer: string; maxT
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (!gl) {
-      return { vendor: 'Não Suportado', renderer: 'Renderizador Genérico por Software', maxTextureSize: 2048 };
+      return {vendor:'Não informado',renderer:'WebGL indisponível',maxTextureSize:0};
     }
     const glTyped = gl as WebGLRenderingContext;
     const debugInfo = glTyped.getExtension('WEBGL_debug_renderer_info');
     const vendor = debugInfo ? glTyped.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Desconhecido';
     const renderer = debugInfo ? glTyped.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Desconhecido';
-    const maxTextureSize = glTyped.getParameter(glTyped.MAX_TEXTURE_SIZE) || 2048;
+    const maxTextureSize = glTyped.getParameter(glTyped.MAX_TEXTURE_SIZE) || 0;
 
     return {
       vendor: vendor || 'Desconhecido',
-      renderer: renderer || 'Placa Gráfica Padrão',
+      renderer: renderer || 'Não informada',
       maxTextureSize
     };
   } catch (err) {
-    return { vendor: 'Erro ao detectar', renderer: 'Software Basic', maxTextureSize: 2048 };
+    return {vendor:'Não informado', renderer:'WebGL indisponível', maxTextureSize:0};
   }
 }
 
@@ -70,7 +70,7 @@ export function probeGpuCapabilities(): { vendor: string; renderer: string; maxT
  * Gathers complete hardware specifications of the host PC or Mobile device
  */
 export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise<DetailedHardwareReport> {
-  const cpuCores = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 4) : 4;
+  const cpuCores = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 0) : 0;
   const cpuScoreMs = benchmarkCpuSpeed();
   let realRamGB: number | undefined;
   try {
@@ -83,14 +83,14 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
   } catch (e) {}
 
   const rawDeviceMemory = (navigator as any).deviceMemory;
-  const ramGB: number | string = realRamGB || rawDeviceMemory || '>=4';
+  const ramGB: number | string = realRamGB || rawDeviceMemory || 'Não informada';
   let ramDisplay: string;
   if (realRamGB) {
     ramDisplay = `${realRamGB} GB`;
   } else if (rawDeviceMemory) {
-    ramDisplay = `${rawDeviceMemory} GB`;
+    ramDisplay = `≈ ${rawDeviceMemory} GB`;
   } else {
-    ramDisplay = `>= 4 GB`;
+    ramDisplay = 'Não informada';
   }
 
   // Memory Heap (Chromium)
@@ -106,7 +106,7 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
 
   // Network
   const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-  const networkType = conn?.effectiveType || 'wifi/ethernet';
+  const networkType = conn?.effectiveType || 'Não informada';
   const networkDownlinkMBPS = conn?.downlink;
 
   // Storage Quota
@@ -136,7 +136,7 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
   // Core count weighting
   if (cpuCores >= 8) score += 20;
   else if (cpuCores >= 4) score += 10;
-  else score -= 10;
+  else if (cpuCores > 0) score -= 10;
 
   // CPU Benchmark speed weighting (lower ms is faster)
   if (cpuScoreMs < 15) score += 20;
@@ -148,8 +148,6 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
     if (ramGB >= 8) score += 20;
     else if (ramGB >= 4) score += 10;
     else score -= 15;
-  } else {
-    score += 10; // default assumption for desktop
   }
 
   // FPS weighting
@@ -203,16 +201,16 @@ export async function runFullHardwareDiagnostic(
   onProgress?: (stepName: string, percent: number) => void,
   currentFps: number = 60
 ): Promise<DetailedHardwareReport> {
-  if (onProgress) onProgress('Mapeando Arquitetura do Processador e Cores...', 15);
+  if (onProgress) onProgress('Consultando processadores lógicos informados...', 15);
   await new Promise((r) => setTimeout(r, 250));
 
-  if (onProgress) onProgress('Medindo Memória RAM e Limites do Heap JS...', 35);
+  if (onProgress) onProgress('Consultando estimativa de RAM e heap JavaScript...', 35);
   await new Promise((r) => setTimeout(r, 300));
 
   if (onProgress) onProgress('Detectando Acelerador Gráfico WebGL & GPU...', 60);
   await new Promise((r) => setTimeout(r, 300));
 
-  if (onProgress) onProgress('Executando Teste de Estresse Math JS & FPS...', 80);
+  if (onProgress) onProgress('Medindo execução JavaScript e atualização da aba...', 80);
   const specs = await getDetailedHardwareSpecs(currentFps);
   await new Promise((r) => setTimeout(r, 250));
 
@@ -261,7 +259,7 @@ export function usePerformanceDiagnostics() {
   const lowFpsCountRef = useRef<number>(0);
   const highFpsCountRef = useRef<number>(0);
 
-  const hardwareConcurrency = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 4) : 4;
+  const hardwareConcurrency = typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 0) : 0;
 
   // Listen to storage and custom events across windows/tabs
   useEffect(() => {
@@ -349,6 +347,7 @@ export function usePerformanceDiagnostics() {
     // Auto mode decision based on report or low FPS
     if (isDetectedLowPerf) return 'light';
     if (report) return report.recommendedMode;
+    if (!hardwareConcurrency) return 'balanced';
     if (hardwareConcurrency <= 2) return 'light';
     if (hardwareConcurrency <= 4) return 'balanced';
     return 'high';

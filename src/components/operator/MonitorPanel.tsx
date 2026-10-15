@@ -1,3 +1,4 @@
+import {ShortcutsGuide} from './ShortcutsGuide';
 import {useDialogFocus} from '../../hooks/useDialogFocus';
 import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useRef, useState, useEffect } from 'react';
@@ -11,6 +12,9 @@ import { PWAInstallModal } from '../PWAInstallModal';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 interface MonitorPanelProps {
+  onNavigate: (tab:'slides'|'texts'|'agenda'|'controls'|'sync') => void;
+  onFullscreen: () => void;
+  projectionMode: 'pre'|'post';
   projectionWin: Window | null;
   setProjectionWin: (w: Window | null) => void;
   currentTime: Date;
@@ -53,6 +57,9 @@ interface MonitorPanelProps {
 }
 
 export function MonitorPanel({
+  onNavigate,
+  onFullscreen,
+  projectionMode,
   projectionWin,
   setProjectionWin,
   currentTime,
@@ -409,11 +416,11 @@ export function MonitorPanel({
                 {fps} FPS ({effectiveMode === 'light' ? 'Anti-Lag' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Máxima Qualidade'})
               </span>
               <span className="text-[9px] font-mono bg-hl-canvas px-2 py-0.5 rounded border border-hl-line-soft text-hl-gold-bright font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                RAM: {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
+                RAM: {report?.ramDisplay || 'Não informada'}
               </span>
             </div>
             <p className="text-[10px] text-hl-muted mt-1 leading-relaxed font-medium">
-              Otimização contínua de GPU, CPU ({report?.cpuCores || 4} cores) e memória de vídeo.
+              Diagnóstico desta aba e deste aparelho. Não mede o PC remoto; RAM e GPU dependem das informações que o navegador libera.
             </p>
           </div>
         </div>
@@ -427,10 +434,10 @@ export function MonitorPanel({
                 ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300'
                 : 'bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line hover:border-hl-line-strong text-hl-soft'
             }`}
-            title="Limpa cache de vídeos e imagens armazenados na RAM"
+            title="Limpa o cache de pré-carregamento; não controla a RAM do aparelho"
           >
             <HardDrive className={`w-3.5 h-3.5 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-hl-gold'}`} />
-            <span className="truncate">{ramCleared ? 'RAM Liberada!' : 'Limpar RAM'}</span>
+            <span className="truncate">{ramCleared ? 'Cache limpo' : 'Limpar cache'}</span>
           </button>
 
           <button
@@ -468,90 +475,18 @@ export function MonitorPanel({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-hl-muted leading-relaxed font-medium">
-              No computador, você pode pressionar as teclas diretamente. No celular ou tablet, pode tocar em qualquer comando abaixo:
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-              <button
-                type="button"
-                onClick={() => { updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled); setShowShortcutsModal(false); }}
-                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
-              >
-                <span className="font-bold text-hl-soft font-sans">Blackout (Ocultar Tela)</span>
-                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">B</kbd>
-              </button>
+            <ShortcutsGuide onCommand={id => {
+              if (id === 'blackout') updateStateAndBroadcast('blackoutEnabled',!blackoutEnabled);
+              else if (id === 'clear') updateStateAndBroadcast('clearContentEnabled',!clearContentEnabled);
+              else if (id === 'mute') updateStateAndBroadcast('volume',volume > 0 ? 0 : 0.5);
+              else if (id === 'resume') {updateStateAndBroadcast('manualSlideOverride',null); updateStateAndBroadcast('customVerseText',null); updateStateAndBroadcast('customVerseRef',null); updateStateAndBroadcast('activeVerseIndex',null); updateStateAndBroadcast('activeAlert',null);}
+              else if (id === 'next' || id === 'previous') {const index=activeSlides.indexOf(currentSlideId); const next=(index+(id === 'next' ? 1 : -1)+activeSlides.length)%activeSlides.length; if (activeSlides[next]) updateStateAndBroadcast('advanceToSlide',activeSlides[next]);}
+              else if (id === 'fullscreen') onFullscreen();
+              else if (id === 'mode') {updateStateAndBroadcast('projectionMode',projectionMode === 'pre' ? 'post' : 'pre'); updateStateAndBroadcast('manualSlideOverride',null);}
+              else if (['slides','texts','agenda','controls','sync'].includes(id)) onNavigate(id as 'slides'|'texts'|'agenda'|'controls'|'sync');
+              setShowShortcutsModal(false);
+            }}/>
 
-              <button
-                type="button"
-                onClick={() => { updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled); setShowShortcutsModal(false); }}
-                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
-              >
-                <span className="font-bold text-hl-soft font-sans">Limpar Texto/Versículo</span>
-                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">C</kbd>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeSlides.length > 0) {
-                    const currentIndex = activeSlides.indexOf(currentSlideId);
-                    const nextIndex = (currentIndex + 1) % activeSlides.length;
-                    updateStateAndBroadcast('advanceToSlide', activeSlides[nextIndex]);
-                  }
-                  setShowShortcutsModal(false);
-                }}
-                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
-              >
-                <span className="font-bold text-hl-soft font-sans">Próximo Slide da Fila</span>
-                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">Espaço / →</kbd>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeSlides.length > 0) {
-                    const currentIndex = activeSlides.indexOf(currentSlideId);
-                    const prevIndex = (currentIndex - 1 + activeSlides.length) % activeSlides.length;
-                    updateStateAndBroadcast('advanceToSlide', activeSlides[prevIndex]);
-                  }
-                  setShowShortcutsModal(false);
-                }}
-                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
-              >
-                <span className="font-bold text-hl-soft font-sans">Slide Anterior</span>
-                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">←</kbd>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  updateStateAndBroadcast('manualSlideOverride', null);
-                  if (customVerseText) {
-                    updateStateAndBroadcast('customVerseText', null);
-                    updateStateAndBroadcast('customVerseRef', null);
-                    updateStateAndBroadcast('activeVerseIndex', null);
-                  }
-                  if (activeAlert) updateStateAndBroadcast('activeAlert', null);
-                  setShowShortcutsModal(false);
-                }}
-                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
-              >
-                <span className="font-bold text-hl-soft font-sans">Resetar / Seguir Fila</span>
-                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">Esc</kbd>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  updateStateAndBroadcast('volume', volume > 0 ? 0 : 0.5);
-                  setShowShortcutsModal(false);
-                }}
-                className="bg-hl-canvas hover:bg-hl-raised p-3 rounded-xl border border-hl-line-soft hover:border-hl-line flex items-center justify-between text-left cursor-pointer transition-all active:translate-y-[1px] shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]"
-              >
-                <span className="font-bold text-hl-soft font-sans">Mudo / Ativar Som</span>
-                <kbd className="bg-hl-raised border border-hl-line px-2 py-0.5 rounded text-[10px] font-mono text-hl-gold-bright font-bold">M</kbd>
-              </button>
-            </div>
           </div>
         </div>
       )}

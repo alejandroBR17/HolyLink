@@ -810,6 +810,7 @@ export default function App() {
                 background3DFps={background3DFps}
                 background3DIntensity={background3DIntensity}
                 projectionMode={projectionMode}
+                manualSlideOverride={manualSlideOverride}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 currentTime={currentTime}
                 isProjectionOpen={isProjectionOpen}
@@ -825,6 +826,9 @@ export default function App() {
 
             {activeMobileTab === 'monitor' && (
               <MonitorPanel
+                onNavigate={setActiveMobileTab}
+                onFullscreen={toggleFullscreen}
+                projectionMode={projectionMode}
                 projectionWin={null}
                 setProjectionWin={setProjectionWin}
                 currentTime={currentTime}

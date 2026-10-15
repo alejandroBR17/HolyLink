@@ -1,80 +1,72 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Search, BookOpen, LoaderCircle} from 'lucide-react';
-const OLD_TESTAMENT_BOOKS = [
-  "Gênesis", "Êxodo", "Levítico", "Números", "Deuteronômio", "Josué", "Juízes", "Rute",
-  "1 Samuel", "2 Samuel", "1 Reis", "2 Reis", "1 Crônicas", "2 Crônicas", "Esdras", "Neemias", "Ester",
-  "Jó", "Salmos", "Provérbios", "Eclesiastes", "Cânticos", "Isaías", "Jeremias", "Lamentações",
-  "Ezequiel", "Daniel", "Oséias", "Joel", "Amós", "Obadias", "Jonas", "Miquéias", "Naum",
-  "Habacuque", "Sofonias", "Ageu", "Zacarias", "Malaquias"
-];
-const NEW_TESTAMENT_BOOKS = [
-  "Mateus", "Marcos", "Lucas", "João", "Atos", "Romanos", "1 Coríntios", "2 Coríntios",
-  "Gálatas", "Efésios", "Filipenses", "Colossenses", "1 Tessalonicenses", "2 Tessalonicenses",
-  "1 Timóteo", "2 Timóteo", "Tito", "Filemom", "Hebreus", "Tiago", "1 Pedro", "2 Pedro",
-  "1 João", "2 João", "3 João", "Judas", "Apocalipse"
-];
-const ALL_BIBLE_BOOKS = [...OLD_TESTAMENT_BOOKS, ...NEW_TESTAMENT_BOOKS];
-interface BibleSectionProps {
-  onShowVerse: (text: string, ref: string) => void;
-}
+import {Search, BookOpen, LoaderCircle, ChevronLeft, ChevronRight, RefreshCw} from 'lucide-react';
+import {BIBLE_BOOKS, cachedChapter, readChapter, rememberChapter, type BibleVerse} from '../utils/bible-catalog';
+interface BibleSectionProps {onShowVerse: (text: string, ref: string) => void}
 export function BibleSection({onShowVerse}: BibleSectionProps) {
-  const [query, setQuery] = useState('');
-  const [book, setBook] = useState('João');
-  const [chapter, setChapter] = useState('3');
-  const [verse, setVerse] = useState('16');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [bookId, setBookId] = useState('JHN');
+  const book = BIBLE_BOOKS.find(item => item.id === bookId)!;
+  const [chapter, setChapter] = useState(3);
+  const [verses, setVerses] = useState<BibleVerse[]>([]);
+  const [start, setStart] = useState(1), [end, setEnd] = useState(1);
+  const [loading, setLoading] = useState(false), [searching, setSearching] = useState(false);
+  const [error, setError] = useState(''), [query, setQuery] = useState('');
+  const [retry, setRetry] = useState(0), [offlineCopy, setOfflineCopy] = useState(false);
   const request = useRef<AbortController | null>(null);
-  const picker = useRef<HTMLDetailsElement | null>(null);
-  const prepare = (text: string, ref: string) => {if (picker.current) picker.current.open = false; onShowVerse(text, ref);};
-  const cache = useRef(new Map<string, {text: string; ref: string}>());
-  useEffect(() => () => {request.current?.abort(); request.current = null;}, []);
-  const lookup = async (reference: string) => {
-    const term = reference.trim();
-    if (!term) {setError('Informe uma referência, como João 3:16.'); return;}
-    request.current?.abort();
+  useEffect(() => {
     const controller = new AbortController();
-    request.current = controller;
-    setError('');
-    const key = term.toLocaleLowerCase('pt-BR');
-    const cached = cache.current.get(key);
-    if (cached) {setLoading(false); prepare(cached.text, cached.ref); return;}
-    setLoading(true);
-    const timeout = window.setTimeout(() => controller.abort(), 10000);
+    let disposed = false;
+    setVerses([]); setError(''); setStart(1); setEnd(1);
+    const cached = cachedChapter(bookId,chapter);
+    if (cached) {setVerses(cached); setStart(cached[0].verse); setEnd(cached[0].verse); setOfflineCopy(true); setLoading(false); return;}
+    setLoading(true); setOfflineCopy(false);
+    let timeout: number | undefined;
+    const delay = window.setTimeout(async () => {
+      timeout = window.setTimeout(() => controller.abort(),10000);
+      try {
+        const response = await fetch(`https://bible-api.com/data/almeida/${bookId}/${chapter}`,{signal:controller.signal});
+        if (!response.ok) throw new Error(response.status === 429 ? 'Muitas consultas seguidas. Aguarde alguns segundos e tente novamente.' : 'Não foi possível carregar o capítulo. Tente novamente.');
+        const result = readChapter(await response.json(),bookId,chapter);
+        if (controller.signal.aborted || disposed) return;
+        setVerses(result); setStart(result[0].verse); setEnd(result[0].verse); rememberChapter(bookId,chapter,result);
+      } catch (err) {
+        if (!disposed) setError(controller.signal.aborted ? 'A consulta demorou demais. Tente novamente.' : err instanceof TypeError ? 'Sem conexão. Capítulos já consultados ficam salvos neste navegador.' : err instanceof Error ? err.message : 'Não foi possível consultar o capítulo.');
+      } finally {window.clearTimeout(timeout); if (!disposed) setLoading(false);}
+    },300);
+    return () => {disposed = true; window.clearTimeout(delay); window.clearTimeout(timeout); controller.abort();};
+  },[bookId,chapter,retry]);
+  useEffect(() => () => request.current?.abort(),[]);
+  const prepare = (first: number,last: number) => {
+    const selected = verses.filter(v => v.verse >= first && v.verse <= last);
+    if (selected.length) onShowVerse(selected.map(v => v.text).join('\n'),`${book.name} ${chapter}:${first}${last > first ? '-' + last : ''}`);
+  };
+  const lookup = async () => {
+    if (!query.trim()) return;
+    request.current?.abort(); const controller = new AbortController(); request.current = controller;
+    setSearching(true); setError(''); const timeout = window.setTimeout(() => controller.abort(),10000);
     try {
-      const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      let response = await fetch(`https://bible-api.com/${encodeURIComponent(term)}?translation=almeida`, {signal: controller.signal});
-      if (response.status === 404 && normalized !== term) response = await fetch(`https://bible-api.com/${encodeURIComponent(normalized)}?translation=almeida`, {signal: controller.signal});
-      if (!response.ok) throw new Error(response.status === 404 ? 'Referência não encontrada. Confira o livro, capítulo e versículo.' : 'A Bíblia online não respondeu. Tente novamente.');
+      const response = await fetch(`https://bible-api.com/${encodeURIComponent(query.trim())}?translation=almeida&single_chapter_book_matching=indifferent`,{signal:controller.signal});
+      if (!response.ok) throw new Error();
       const value = await response.json();
-      if (typeof value.text !== 'string' || !value.text.trim() || value.text.length > 100000) throw new Error('Esta referência não tem texto disponível.');
-      if (controller.signal.aborted || request.current !== controller) return;
-      const passage = {text: value.text.trim(), ref: typeof value.reference === 'string' ? value.reference : term};
-      if (cache.current.size >= 20) cache.current.delete(cache.current.keys().next().value!);
-      cache.current.set(key, passage);
-      prepare(passage.text, passage.ref);
-    } catch (err) {
-      if (request.current !== controller) return;
-      setError(controller.signal.aborted ? 'A busca demorou demais. Tente novamente ou repita uma passagem recente.' : err instanceof TypeError ? 'Sem conexão com a Bíblia online. Tente novamente.' : err instanceof Error ? err.message : 'Sem conexão com a Bíblia online. Tente novamente.');
-    } finally {
-      window.clearTimeout(timeout);
-      if (request.current === controller) setLoading(false);
-    }
+      if (typeof value.text !== 'string' || !value.text.trim() || value.text.length > 100000) throw new Error();
+      if (!controller.signal.aborted) onShowVerse(value.text.trim(),typeof value.reference === 'string' ? value.reference : query.trim());
+    } catch {if (request.current === controller) setError('Não foi possível consultar esta referência. Use o seletor ou tente novamente.');}
+    finally {window.clearTimeout(timeout); if (request.current === controller) setSearching(false);}
   };
   return <div className="bible-search" aria-labelledby="bible-search-title">
-    <div className="operator-section-heading"><div><span className="operator-eyebrow"><BookOpen size={16} />Bíblia · Almeida</span><h3 id="bible-search-title">Bíblia</h3><p>Almeida · Busque, confira e envie ao telão.</p></div></div>
-    <form onSubmit={event => {event.preventDefault(); void lookup(query);}} className="bible-reference-form">
-      <label htmlFor="bible-reference">Referência</label>
-      <div><input id="bible-reference" value={query} onChange={event => setQuery(event.target.value)} placeholder="Ex.: João 3:16 ou Salmos 23:1-3" autoComplete="off" maxLength={120} /><button className="operator-primary" type="submit" aria-label="Buscar passagem">{loading ? <LoaderCircle className="animate-spin" size={18}/> : <Search size={18}/>}Buscar</button></div>
-    </form>
-    <details ref={picker} className="bible-picker"><summary>Prefiro escolher livro, capítulo e versículo</summary>
-      <form onSubmit={event => {event.preventDefault(); const ref = `${book} ${chapter}${verse.trim() ? ':' + verse.trim() : ''}`; setQuery(ref); void lookup(ref);}}>
-        <label htmlFor="bible-book">Livro<select id="bible-book" aria-label="Livro" value={book} onChange={event => setBook(event.target.value)}>{ALL_BIBLE_BOOKS.map(name => <option key={name}>{name}</option>)}</select></label>
-        <label htmlFor="bible-chapter">Capítulo<input id="bible-chapter" type="number" min="1" max="150" required value={chapter} onChange={event => setChapter(event.target.value)} /></label>
-        <label htmlFor="bible-verse">Versículo ou intervalo<input id="bible-verse" value={verse} pattern="[0-9]+(-[0-9]+)?" placeholder="Todos ou 1-3" onChange={event => setVerse(event.target.value)} inputMode="text" maxLength={12}/></label>
-        <button type="submit"><Search size={17}/>Buscar seleção</button>
-      </form><p className="operator-muted">Deixe o versículo vazio para buscar o capítulo inteiro.</p>
-    </details>
-    <p role="status" className="operator-notice">{loading ? 'Buscando passagem… A projeção continua como está.' : error}</p>
+    <div className="operator-section-heading"><div><span className="operator-eyebrow"><BookOpen size={16}/>Bíblia · Almeida</span><h3 id="bible-search-title">Escolha a passagem</h3><p>Toque no versículo para preparar. Só vai ao telão quando você projetar.</p></div></div>
+    <div className="bible-fast-select">
+      <label>Livro<select aria-label="Livro" value={bookId} onChange={e => {setBookId(e.target.value); setChapter(1);}}>{[BIBLE_BOOKS.slice(0,39),BIBLE_BOOKS.slice(39)].map((items,index) => <optgroup key={index} label={index ? 'Novo Testamento' : 'Antigo Testamento'}>{items.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>)}</select></label>
+      <label>Capítulo<select aria-label="Capítulo" value={chapter} onChange={e => setChapter(Number(e.target.value))}>{Array.from({length:book.chapters},(_,i) => <option key={i+1} value={i+1}>{i+1}</option>)}</select></label>
+    </div>
+    <div className="operator-actions bible-chapter-nav"><button aria-label="Capítulo anterior" disabled={chapter === 1} onClick={() => setChapter(c => c-1)}><ChevronLeft size={17}/>Anterior</button><strong>{book.name} {chapter}</strong><button aria-label="Próximo capítulo" disabled={chapter === book.chapters} onClick={() => setChapter(c => c+1)}>Próximo<ChevronRight size={17}/></button></div>
+    {loading && <p role="status" className="operator-notice"><LoaderCircle size={16} className="animate-spin"/>Carregando versículos…</p>}
+    {!!verses.length && <>
+      <div className="bible-verse-grid" role="group" aria-label="Versículos disponíveis">{verses.map(v => <button key={v.verse} aria-label={`Preparar ${book.name} ${chapter}:${v.verse}`} aria-pressed={v.verse >= start && v.verse <= end} onClick={() => {setStart(v.verse); setEnd(v.verse); prepare(v.verse,v.verse);}}>{v.verse}</button>)}</div>
+      <div className="bible-range"><label>Do versículo<select aria-label="Do versículo" value={start} onChange={e => {const n=Number(e.target.value); setStart(n); setEnd(n); prepare(n,n);}}>{verses.map(v => <option key={v.verse}>{v.verse}</option>)}</select></label><label>Até o versículo<select aria-label="Até o versículo" value={end} onChange={e => {const n=Number(e.target.value); setEnd(n); prepare(start,n);}}>{verses.filter(v => v.verse >= start).map(v => <option key={v.verse}>{v.verse}</option>)}</select></label></div>
+      <div className="operator-actions"><button onClick={() => {const first=verses[0].verse,last=verses[verses.length-1].verse; setStart(first); setEnd(last); prepare(first,last);}}>Preparar capítulo inteiro</button></div>
+      <small className="operator-muted">{verses.length} versículos disponíveis{offlineCopy ? ' · cópia salva neste navegador' : ' · capítulo salvo para consultar novamente'}.</small>
+    </>}
+    {error && <div role="alert" className="operator-notice">{error}<button onClick={() => setRetry(n => n+1)}><RefreshCw size={16}/>Tentar carregar capítulo</button></div>}
+    <details className="bible-picker"><summary>Digitar uma referência (opcional)</summary><form className="bible-reference-form" onSubmit={e => {e.preventDefault(); void lookup();}}><label htmlFor="bible-reference">Referência</label><div><input id="bible-reference" value={query} onChange={e => setQuery(e.target.value)} placeholder="Ex.: João 3:16 ou Salmos 23:1-3" maxLength={120}/><button type="submit" className="operator-primary" disabled={searching}>{searching ? <LoaderCircle size={17} className="animate-spin"/> : <Search size={17}/>}Buscar</button></div></form></details>
   </div>;
 }

@@ -93,3 +93,23 @@
 .holy-dialog > div:first-child { min-width:0; }
 .holy-dialog h3 { overflow-wrap:anywhere; }
 .operator-shell .media-library .console-group-badge { align-self:center; }
+.bible-fast-select,.bible-range,.ambience-tuning{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px;margin:16px 0}
+.bible-fast-select label,.bible-range label,.ambience-tuning label{display:flex;flex-direction:column;gap:8px;min-width:0;color:var(--color-hl-soft);font-size:13px;font-weight:600}
+.bible-fast-select select,.bible-range select,.ambience-tuning select{width:100%;min-width:0;min-height:46px;padding:10px;border:1px solid var(--color-hl-line);border-radius:12px;background:var(--color-hl-raised);color:var(--color-hl-copy);font:inherit;color-scheme:dark}
+.bible-chapter-nav{justify-content:space-between;gap:8px}.bible-chapter-nav strong{font-size:13px;overflow-wrap:anywhere}
+.bible-verse-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;max-height:248px;overflow:auto;overscroll-behavior:contain;padding:4px;margin:14px 0}
+.bible-verse-grid button{min-height:44px;border:1px solid var(--color-hl-line);border-radius:10px;background:var(--color-hl-raised);color:var(--color-hl-copy);font-variant-numeric:tabular-nums;cursor:pointer}
+.bible-verse-grid button[aria-pressed=true]{background:var(--color-hl-gold);color:#111;border-color:var(--color-hl-gold)}
+.bible-range{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ambience-controls{padding:20px;border:1px solid var(--color-hl-line);border-radius:20px;background:linear-gradient(145deg,var(--color-hl-raised),var(--color-hl-panel));box-shadow:0 12px 30px #0006}
+.ambience-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0}
+.ambience-options button{display:flex;align-items:flex-start;gap:10px;padding:14px;text-align:left;border:1px solid var(--color-hl-line);border-radius:14px;background:var(--color-hl-canvas);color:var(--color-hl-soft);cursor:pointer;min-width:0}
+.ambience-options button svg{flex-shrink:0;color:var(--color-hl-gold)}.ambience-options button strong{display:block;font-size:13px}.ambience-options button small{display:block;margin-top:5px;font-size:12px;line-height:1.5;color:var(--color-hl-muted)}
+.ambience-options button[aria-pressed=true]{border-color:var(--color-hl-gold);background:var(--color-hl-gold-well);box-shadow:inset 0 0 16px #ffd34f10}
+.ambience-tuning{grid-template-columns:repeat(2,minmax(0,1fr))}.ambience-tuning label svg{display:none}.ambience-tuning select:disabled{opacity:.45}
+.ambience-preview summary{display:flex;gap:8px;align-items:center}.ambience-preview-frame{position:relative;aspect-ratio:16/9;background:#020204;border:1px solid var(--color-hl-line);border-radius:14px;overflow:hidden;margin:12px 0}
+.ambience-preview-caption{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;pointer-events:none;color:#ffe797;text-shadow:0 3px 15px #000}.ambience-preview-caption span{font-size:11px;letter-spacing:.14em;text-transform:uppercase}.ambience-preview-caption strong{font-size:clamp(20px,3vw,30px)}
+.shortcuts-guide{display:grid;gap:16px}.shortcuts-guide section h4{font-size:13px;color:var(--color-hl-gold);margin:0 0 8px}.shortcuts-guide dl{margin:0;display:grid;gap:6px}.shortcuts-guide dl>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 10px;background:var(--color-hl-canvas);border:1px solid var(--color-hl-line);border-radius:10px}.shortcuts-guide dt{font-size:12px;line-height:1.5}.shortcuts-guide dt button{text-align:left;width:100%;cursor:pointer;color:var(--color-hl-copy);min-height:32px}.shortcuts-guide dd{margin:0}.shortcuts-guide kbd{font-size:11px;color:var(--color-hl-gold-bright);white-space:normal}.shortcuts-guide .operator-muted{margin:0}
+.operator-actions.bible-chapter-nav{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px}.operator-actions.bible-chapter-nav button{min-width:0;width:auto;padding:10px 6px;font-size:12px;white-space:nowrap}.bible-chapter-nav strong{font-size:12px;text-align:center}
+@media(max-width:600px){.ambience-options{grid-template-columns:1fr}.ambience-options button{padding:12px}.ambience-options button small{margin-top:3px}}
+@media(max-width:380px){.ambience-tuning{grid-template-columns:1fr}.shortcuts-guide dl>div{grid-template-columns:minmax(0,1fr) minmax(0,100px)}}

@@ -265,7 +265,7 @@ export function SmartSplashLoader({ customMediaList, onComplete }: SmartSplashLo
             <Cpu className="w-4 h-4 text-hl-gold shrink-0" />
             <div className="flex flex-col">
               <span className="text-[9px] text-hl-dim font-black uppercase font-mono">Processador</span>
-              <span className="text-[11px] font-mono font-bold text-hl-soft">{hardwareConcurrency} Cores CPU</span>
+              <span className="text-[11px] font-mono font-bold text-hl-soft">{hardwareConcurrency ? `${hardwareConcurrency} processadores lógicos` : 'CPU não informada'}</span>
             </div>
           </div>
 

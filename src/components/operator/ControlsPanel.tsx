@@ -1,3 +1,5 @@
+import {BackgroundControls} from './BackgroundControls';
+import {ShortcutsGuide} from './ShortcutsGuide';
 import {ConsoleIntro, ConsoleGroupTitle} from './ConsoleIntro';
 import React, { FormEvent, useState, useEffect, useRef } from 'react';
 import {
@@ -82,25 +84,26 @@ function PerformanceControlModule() {
         </span>
       </div>
 
+      <p className="operator-muted">Dados deste aparelho e desta aba, não do PC remoto. FPS mede a atualização da página; RAM é aproximada e o navegador pode ocultar CPU, GPU e memória.</p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
         <div className="bg-hl-canvas border border-hl-line-soft p-3 rounded-2xl flex flex-col justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
           <span className="text-[9px] text-hl-dim font-black uppercase font-mono">Taxa FPS</span>
           <span className={`font-mono font-black text-xs mt-0.5 ${fps < 38 ? 'text-hl-gold-bright' : 'text-emerald-400'}`}>{fps} FPS</span>
         </div>
         <div className="bg-hl-canvas border border-hl-line-soft p-3 rounded-2xl flex flex-col justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-          <span className="text-[9px] text-hl-dim font-black uppercase font-mono">CPU Cores</span>
-          <span className="font-mono font-black text-xs text-hl-soft mt-0.5">{hardwareConcurrency} Cores</span>
+          <span className="text-[9px] text-hl-dim font-black uppercase font-mono">Processadores lógicos</span>
+          <span className="font-mono font-black text-xs text-hl-soft mt-0.5">{hardwareConcurrency || 'Não informado'}{hardwareConcurrency ? ' lógicos' : ''}</span>
         </div>
         <div className="bg-hl-canvas border border-hl-line-soft p-3 rounded-2xl flex flex-col justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-          <span className="text-[9px] text-hl-dim font-black uppercase font-mono">Memória RAM</span>
-          <span className="font-mono font-black text-xs text-blue-400 mt-0.5 truncate" title={report?.ramDisplay || 'RAM Identificada'}>
-            {report?.ramDisplay || (report?.ramGB ? `${report.ramGB} GB` : '>= 4 GB')}
+          <span className="text-[9px] text-hl-dim font-black uppercase font-mono">RAM aproximada</span>
+          <span className="font-mono font-black text-xs text-blue-400 mt-0.5 truncate" title={'Estimativa disponibilizada pelo navegador'}>
+            {report?.ramDisplay || 'Não informada'}
           </span>
         </div>
         <div className="bg-hl-canvas border border-hl-line-soft p-3 rounded-2xl flex flex-col justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
           <span className="text-[9px] text-hl-dim font-black uppercase font-mono">Heap JS</span>
           <span className="font-mono font-black text-xs text-purple-400 mt-0.5 truncate">
-            {report?.jsHeapUsedMB ? `${report.jsHeapUsedMB} MB` : 'Ativo'}
+            {report?.jsHeapUsedMB !== undefined ? `${report.jsHeapUsedMB} MB` : 'Não informado'}
           </span>
         </div>
       </div>
@@ -109,7 +112,7 @@ function PerformanceControlModule() {
         <CheckCircle2 className="w-4 h-4 shrink-0 text-hl-gold mt-0.5" />
         <div>
           {effectiveMode === 'light' ? (
-            <span><strong>Modo Leve (Anti-Lag / PCs 4GB RAM):</strong> Otimizado para fluidez instantânea, pré-carregamento econômico de slides na RAM e renderização com 0% de sobrecarga na GPU.</span>
+            <span><strong>Modo Leve:</strong> Otimizado para fluidez instantânea, pré-carregamento econômico de slides na RAM e renderização com menor complexidade visual.</span>
           ) : effectiveMode === 'balanced' ? (
             <span><strong>Modo Equilibrado:</strong> Transições suaves com pré-carregamento preditivo e baixo consumo de memória.</span>
           ) : (
@@ -133,10 +136,10 @@ function PerformanceControlModule() {
             {ramCleared ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Memória Cache Liberada!</span>
+                <span>Cache de pré-carregamento limpo</span>
               </>
             ) : (
-              <span>Limpar Memória RAM</span>
+              <span>Limpar RAM aproximada</span>
             )}
           </span>
         </button>
@@ -393,6 +396,7 @@ interface ControlsPanelProps {
   background3DStyle?: 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off';
   background3DFps?: 30 | 60;
   background3DIntensity?: 'high' | 'medium' | 'low';
+  manualSlideOverride?: string | null;
   projectionMode?: 'pre' | 'post';
   updateStateAndBroadcast: (key: string, value: any) => void;
   currentTime: Date;
@@ -421,6 +425,7 @@ export function ControlsPanel({
   background3DFps = 60,
   background3DIntensity = 'high',
   projectionMode = 'pre',
+  manualSlideOverride,
   updateStateAndBroadcast,
   currentTime,
   isProjectionOpen = false,
@@ -428,7 +433,6 @@ export function ControlsPanel({
   showAlert
 }: ControlsPanelProps) {
   const notify = showToast || showAlert;
-  const { setPerformanceMode } = usePerformanceDiagnostics();
   const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
 
@@ -680,22 +684,26 @@ export function ControlsPanel({
           <div className="grid grid-cols-2 gap-2 pt-1 border-t border-hl-line-soft">
             <button
               type="button"
-              onClick={() => updateStateAndBroadcast('advanceToSlide', 'baptism')}
+              aria-pressed={manualSlideOverride === 'baptism'}
+              onClick={() => {updateStateAndBroadcast('activeVerseIndex',null); updateStateAndBroadcast('customVerseText',null); updateStateAndBroadcast('customVerseRef',null); updateStateAndBroadcast('manualSlideOverride',manualSlideOverride === 'baptism' ? null : 'baptism');}}
               className="py-2.5 px-3 bg-hl-raised hover:bg-sky-950/40 border border-hl-line hover:border-sky-500/50 rounded-xl text-[10px] font-bold text-sky-400 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:translate-y-[1px]"
             >
               <Droplets className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-              <span>Fixar Batismo</span>
+              <span>{manualSlideOverride === 'baptism' ? 'Soltar Batismo' : 'Fixar Batismo'}</span>
             </button>
 
             <button
               type="button"
-              onClick={() => updateStateAndBroadcast('advanceToSlide', 'blessing')}
+              aria-pressed={manualSlideOverride === 'blessing'}
+              onClick={() => {updateStateAndBroadcast('activeVerseIndex',null); updateStateAndBroadcast('customVerseText',null); updateStateAndBroadcast('customVerseRef',null); updateStateAndBroadcast('manualSlideOverride',manualSlideOverride === 'blessing' ? null : 'blessing');}}
               className="py-2.5 px-3 bg-hl-raised hover:bg-hl-gold-well/40 border border-hl-line hover:border-hl-gold/50 rounded-xl text-[10px] font-bold text-hl-gold-bright flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm active:translate-y-[1px]"
             >
               <Sparkles className="w-3.5 h-3.5 text-hl-gold-bright shrink-0" />
-              <span>Fixar Despedida</span>
+              <span>{manualSlideOverride === 'blessing' ? 'Soltar Despedida' : 'Fixar Despedida'}</span>
             </button>
           </div>
+          {(manualSlideOverride === 'baptism' || manualSlideOverride === 'blessing') && <div className="operator-actions" role="status"><span>Slide fixado · a fila foi preservada.</span><button className="operator-primary" onClick={() => updateStateAndBroadcast('manualSlideOverride',null)}><Play size={17}/>Voltar à fila normal</button></div>}
+
         </div>
 
         {/* QUICK ACTION BUTTONS */}
@@ -804,169 +812,7 @@ export function ControlsPanel({
           )}
         </div>
 
-        {/* 3D VOLUMETRIC BACKGROUND CARD */}
-        <div className="relative bg-hl-panel border border-hl-line rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-4 group">
-          <div className="border-b border-hl-line-soft pb-3 flex items-center justify-between">
-            <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider flex items-center gap-2 font-sans">
-              <Sparkles className="w-4 h-4 text-hl-gold drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
-              Fundo 3D & Efeitos Visuais
-            </h3>
-            <span className="text-[9px] bg-hl-raised border border-hl-line-strong/50 text-hl-gold-bright font-mono px-2 py-0.5 rounded-md font-extrabold shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
-              100% Offline
-            </span>
-          </div>
-
-          {/* 1-CLICK PRESET MODES FOR QUICK OPERATOR SETUP */}
-          <div className="flex flex-col gap-1.5 bg-hl-canvas p-3 rounded-xl border border-hl-line-soft shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-            <span className="text-[10px] font-mono font-extrabold text-hl-gold uppercase tracking-widest flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-hl-gold shrink-0" /> Otimização Rápida:
-            </span>
-            <div className="grid grid-cols-3 gap-2 mt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  updateStateAndBroadcast('background3DStyle', 'particles_2d');
-                  updateStateAndBroadcast('background3DFps', 30);
-                  updateStateAndBroadcast('background3DIntensity', 'low');
-                  setPerformanceMode('light');
-                }}
-                className="py-2.5 px-2 bg-hl-raised hover:bg-emerald-950/40 border border-hl-line hover:border-emerald-500/50 rounded-xl text-[10px] font-extrabold text-emerald-400 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
-                title="Ideal para computadores sem GPU dedicada"
-              >
-                <span className="font-sans flex items-center gap-1.5 justify-center">
-                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Anti-Lag</span>
-                </span>
-                <span className="text-[8px] text-hl-dim group-hover:text-emerald-300 font-mono mt-0.5">30 FPS (Leve)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  updateStateAndBroadcast('background3DStyle', 'auto');
-                  updateStateAndBroadcast('background3DFps', 60);
-                  updateStateAndBroadcast('background3DIntensity', 'medium');
-                  setPerformanceMode('auto');
-                }}
-                className="py-2.5 px-2 bg-hl-raised hover:bg-hl-gold-well/40 border border-hl-line hover:border-hl-gold/50 rounded-xl text-[10px] font-extrabold text-hl-gold-bright flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
-                title="Equilíbrio ideal entre fluidez e visual"
-              >
-                <span className="font-sans flex items-center gap-1.5 justify-center">
-                  <Scale className="w-3.5 h-3.5 text-hl-gold-bright" />
-                  <span>Equilibrado</span>
-                </span>
-                <span className="text-[8px] text-hl-dim group-hover:text-hl-gold-bright font-mono mt-0.5">60 FPS (Auto)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  updateStateAndBroadcast('background3DStyle', 'aurora');
-                  updateStateAndBroadcast('background3DFps', 60);
-                  updateStateAndBroadcast('background3DIntensity', 'high');
-                  setPerformanceMode('high');
-                }}
-                className="py-2.5 px-2 bg-hl-raised hover:bg-blue-950/40 border border-hl-line hover:border-blue-500/50 rounded-xl text-[10px] font-extrabold text-blue-400 flex flex-col items-center justify-center transition-all cursor-pointer group shadow-[0_2px_6px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
-                title="Qualidade gráfica máxima"
-              >
-                <span className="font-sans flex items-center gap-1.5 justify-center">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Alta Qualidade</span>
-                </span>
-                <span className="text-[8px] text-hl-dim group-hover:text-blue-300 font-mono mt-0.5">60 FPS (3D)</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <span className="text-[10px] font-mono font-extrabold text-hl-muted uppercase tracking-wider">Estilo de Ambiência 3D</span>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { id: 'auto', label: 'Automático', icon: Bot },
-                { id: 'aurora', label: 'Aurora 3D', icon: Sunrise },
-                { id: 'veil', label: 'Véu 3D', icon: ShieldAlert },
-                { id: 'fju_aura', label: 'Aura 3D', icon: Zap },
-                { id: 'particles_2d', label: '2D', icon: Sparkles },
-                { id: 'off', label: 'Desativado', icon: Ban },
-              ].map((item) => {
-                const ItemIcon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => updateStateAndBroadcast('background3DStyle', item.id)}
-                    className={`py-2 px-2 rounded-xl text-[10px] font-extrabold uppercase transition-all cursor-pointer border truncate font-sans flex items-center justify-center gap-1.5 active:translate-y-[1px] ${
-                      background3DStyle === item.id
-                        ? 'bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]'
-                        : 'bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line text-hl-soft hover:text-white'
-                    }`}
-                  >
-                    <ItemIcon className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-hl-line-soft">
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-mono font-extrabold text-hl-muted uppercase tracking-wider">Modo Desempenho / FPS</span>
-              <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => updateStateAndBroadcast('background3DFps', 60)}
-                  className={`py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all cursor-pointer border font-sans active:translate-y-[1px] ${
-                    background3DFps === 60
-                      ? 'bg-emerald-500 border-emerald-400 text-black shadow-[0_0_10px_rgba(16,185,129,0.3)]'
-                      : 'bg-hl-raised border-hl-line text-hl-muted hover:text-white'
-                  }`}
-                >
-                  60 FPS
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateStateAndBroadcast('background3DFps', 30)}
-                  className={`py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all cursor-pointer border font-sans active:translate-y-[1px] ${
-                    background3DFps === 30
-                      ? 'bg-hl-gold border-hl-gold text-black shadow-[0_0_10px_rgba(255,211,79,0.3)]'
-                      : 'bg-hl-raised border-hl-line text-hl-muted hover:text-white'
-                  }`}
-                  title="Economiza processamento no computador"
-                >
-                  30 FPS
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-mono font-extrabold text-hl-muted uppercase tracking-wider">Carga Gráfica 3D</span>
-              <div className="grid grid-cols-3 gap-1">
-                {[
-                  { id: 'high', label: 'Alta' },
-                  { id: 'medium', label: 'Média' },
-                  { id: 'low', label: 'Leve' },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => updateStateAndBroadcast('background3DIntensity', item.id)}
-                    className={`py-2 rounded-xl text-[9px] font-extrabold uppercase transition-all cursor-pointer border font-sans active:translate-y-[1px] ${
-                      background3DIntensity === item.id
-                        ? item.id === 'low'
-                          ? 'bg-emerald-500 border-emerald-400 text-black'
-                          : 'bg-hl-gold border-hl-gold text-black'
-                        : 'bg-hl-raised border-hl-line text-hl-muted hover:text-white'
-                    }`}
-                    title={item.id === 'low' ? 'Modo Anti-Lag ultra otimizado para computadores fracos' : undefined}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <BackgroundControls style={background3DStyle} fps={background3DFps} intensity={background3DIntensity} update={updateStateAndBroadcast}/>
 
         {/* TIMER COUNTDOWN CARD */}
         <div className="relative bg-hl-panel border border-hl-line rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col gap-4">
@@ -1074,44 +920,8 @@ export function ControlsPanel({
           </div>
         </div>
 
-        {/* KEYBOARD SHORTCUTS CHEAT SHEET */}
-        <div className="relative bg-hl-panel border border-hl-line rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col gap-4">
-          <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider border-b border-hl-line-soft pb-3 flex items-center justify-between font-sans">
-            <span>Atalhos Rápidos de Teclado</span>
-            <span className="text-[9px] text-hl-gold font-mono font-bold">Teclas Ativas</span>
-          </h3>
+        <details className="bible-picker"><summary>Atalhos de teclado por função</summary><ShortcutsGuide/></details>
 
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-              <span className="text-[10px] text-hl-soft font-bold font-sans">Blackout (Black)</span>
-              <kbd className="bg-hl-raised text-hl-gold-bright font-mono text-[10px] font-black px-2 py-0.5 rounded border border-hl-line">B</kbd>
-            </div>
-            <div className="bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-              <span className="text-[10px] text-hl-soft font-bold font-sans">Limpar Texto (Clear)</span>
-              <kbd className="bg-hl-raised text-hl-gold-bright font-mono text-[10px] font-black px-2 py-0.5 rounded border border-hl-line">C</kbd>
-            </div>
-            <div className="bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-              <span className="text-[10px] text-hl-soft font-bold font-sans">Próximo Slide</span>
-              <kbd className="bg-hl-raised text-hl-gold-bright font-mono text-[10px] font-black px-2 py-0.5 rounded border border-hl-line">Espaço / →</kbd>
-            </div>
-            <div className="bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-              <span className="text-[10px] text-hl-soft font-bold font-sans">Slide Anterior</span>
-              <kbd className="bg-hl-raised text-hl-gold-bright font-mono text-[10px] font-black px-2 py-0.5 rounded border border-hl-line">←</kbd>
-            </div>
-            <div className="bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-              <span className="text-[10px] text-hl-soft font-bold font-sans">Mute / Desmutar</span>
-              <kbd className="bg-hl-raised text-hl-gold-bright font-mono text-[10px] font-black px-2 py-0.5 rounded border border-hl-line">M</kbd>
-            </div>
-            <div className="bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-              <span className="text-[10px] text-hl-soft font-bold font-sans">Tela Cheia</span>
-              <kbd className="bg-hl-raised text-hl-gold-bright font-mono text-[10px] font-black px-2 py-0.5 rounded border border-hl-line">F</kbd>
-            </div>
-            <div className="bg-hl-canvas border border-hl-line-soft p-2.5 rounded-xl flex items-center justify-between col-span-2 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-              <span className="text-[10px] text-hl-soft font-bold font-sans">Resetar Versículo / Alertas</span>
-              <kbd className="bg-hl-raised text-hl-gold-bright font-mono text-[10px] font-black px-2 py-0.5 rounded border border-hl-line">Esc</kbd>
-            </div>
-          </div>
-        </div>
       </div>
 
 </details>

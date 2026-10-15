@@ -19,6 +19,8 @@ export function useKeyboardShortcuts({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.repeat || document.querySelector('[role="dialog"][aria-modal="true"]')) return;
+      if ((e.key === ' ' || e.key === 'Enter') && target?.closest('button, a, summary')) return;
       if (
         target &&
         (target.tagName === 'INPUT' ||
@@ -74,6 +76,7 @@ export function useKeyboardShortcuts({
           return;
         }
         if (manualSlideOverride) updateStateAndBroadcast('manualSlideOverride', null);
+        updateStateAndBroadcast('activeVerseIndex', null);
         if (customVerseText) {
           updateStateAndBroadcast('customVerseText', null);
           updateStateAndBroadcast('customVerseRef', null);
