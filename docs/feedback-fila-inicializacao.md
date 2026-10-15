@@ -63,3 +63,11 @@ Projetar pela lista da fila, biblioteca em lista/galeria ou prévia ampliada lim
 Setas da biblioteca usam a posição na coleção completa, não o índice dos resultados de busca. A galeria deixou de esconder ações sob hover e de sobrepô-las aos selos da miniatura; no celular pequeno isso impedia tocar em Projetar. Ações de prévia/projeção ficam abaixo da imagem com 44 px e rótulos acessíveis; grade usa uma coluna nas telas estreitas.
 
 Ensaios em quatro larguras com IndexedDB descartável: mídia com ambos os bloqueios, ativar/ocultar e filtros, mover sob busca, substituir passagem pelos três caminhos de biblioteca, retomar, cancelar edição e salvar/reabrir ordem. TypeScript/build e 40 testes nativos; revisão geral das seis áreas em sete viewports. Sem dados reais, pareamento físico ou HDMI. A aba Bíblia é a próxima frente; sua revisão funcional completa não está incluída nesta etapa.
+
+## Permissões sem confirmação repetida
+
+O botão antes identificado apenas por ícone agora diz Verificar; só gira e informa Verificando durante uma consulta. O componente compartilhado fica na abertura e em Ajustes → Desempenho e energia → Acessos deste aparelho.
+
+Na abertura, áudio e tela acesa não exigem confirmações separadas: a entrada por gesto solicita a sessão atual, sem salvar concessões falsas. A proteção persistente concedida continua verificada pelo navegador. A recusa passa a ser lembrada neste navegador para não repetir o pedido após recarga; pode ser solicitada novamente em Ajustes. Se o navegador conceder posteriormente, a consulta real reconhece isso. Se uma concessão anterior for perdida, volta a ser oferecida. Esta regra substitui o tratamento anterior de recusa somente em memória da sessão.
+
+APIs indisponíveis/negadas continuam descritas em Ajustes, sem bloquear a entrada. A decisão salva é apenas preferência do fluxo, não substitui `persisted()` nem garante proteção ao limpar os dados do site. Ajustes mostra somente recursos não concedidos; quando todos estão disponíveis, informa o resultado da checagem.
