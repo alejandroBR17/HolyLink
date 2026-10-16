@@ -117,3 +117,10 @@ O Monitor mostra o conteúdo atual respeitando blackout, passagem enviada/priori
 A prévia é silenciosa e pode ser ampliada num diálogo 16:9, com Escape/foco preservados. Há somente uma composição local montada, inclusive quando ampliada. Pausar a prévia desmonta seu renderer e reduz o trabalho deste aparelho, mantendo leitura do conteúdo atual e a operação/projeção. Essa pausa não é persistida entre entradas; vídeos da prévia podem reiniciar ao ampliar/recolher/retomar e não são um espelho sincronizado do instante do vídeo no telão.
 
 O cabeçalho completo (marca, abrir telão/opções e aviso de reunião) recolhe ao rolar para baixo. Navegação e controles rápidos ficam acessíveis. Rolar para cima restaura; a seta Mostrar topo permite restaurar mesmo quando o recolhimento fez toda a página caber na tela. Menu de opções aberto ou foco de teclado no cabeçalho impedem ocultação inesperada. Elementos recolhidos ficam inert, com animação reduzida conforme a preferência do aparelho.
+
+
+## Ajuda de projeção e diagnóstico do Monitor
+
+A ajuda reúne guia para PC no telão/celular no controle, solução de tela preta, falta de som, controle remoto e travamentos, com acesso a Conexão, áudio, atalhos e qualidade. Trocar o guia não altera o papel do aparelho. Ações de retirar blackout/mostrar conteúdo aparecem apenas para estados ativos e exigem toque explícito. Dados de atualização da aba, perfil efetivo e RAM aproximada são locais.
+
+O diálogo Diagnóstico e qualidade substitui o antigo Testar & Otimizar. Consultar aparelho faz uma consulta direta limitada a quatro segundos e não troca perfil. Fechar invalida respostas atrasadas; timeout libera os controles. Perfis Automático/Leve/Equilibrado/Detalhado só são gravados quando escolhidos; falha de armazenamento não altera a escolha da sessão nem informa sucesso. Informações técnicas são recolhíveis, identificam valores não informados/estimados e não prometem zero lag, teste de HDMI ou velocidade real da rede. O cache limpo é de pré-carregamento, sem apagar mídias/roteiro/autorizações. A sondagem WebGL libera o contexto isolado após a consulta.

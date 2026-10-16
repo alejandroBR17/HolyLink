@@ -1,12 +1,11 @@
+import {MonitorHelp} from './MonitorHelp';
 import {MonitorPreview} from './MonitorPreview';
 import {selectProjectionVerse} from '../../utils/verse-selection';
 import {nextQueueItem,describeQueueItem} from '../../utils/monitor-queue';
-import {Smartphone} from '../ui/icons';
 import {ShortcutsGuide} from './ShortcutsGuide';
 import {useDialogFocus} from '../../hooks/useDialogFocus';
-import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useRef, useState, useEffect } from 'react';
-import { Monitor, Tv, ExternalLink, X, SkipForward, BookOpen, Keyboard, Laptop, EyeOff, Eye, Gauge, Zap, Sparkles, HardDrive, CheckCircle2, Download } from '../ui/icons';
+import {X,SkipForward,Keyboard} from '../ui/icons';
 import { ProjectionContent } from '../ProjectionContent';
 import { CHURCH_INFO, ALERTS, VERSES } from '../../data';
 import { Meeting } from '../../types';
@@ -108,12 +107,10 @@ export function MonitorPanel({
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const shortcutsRef = useDialogFocus(showShortcutsModal, () => setShowShortcutsModal(false));
   const [showBenchmarkModal, setShowBenchmarkModal] = useState(false);
-  const [isMobileDevice, setIsMobileDevice] = useState<boolean>(false);
-
   const [ramCleared, setRamCleared] = useState(false);
   const cacheFeedbackTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   useEffect(()=>()=>{if(cacheFeedbackTimer.current)clearTimeout(cacheFeedbackTimer.current);},[]);
-  const { fps, mode, effectiveMode, report, purgeCache } = usePerformanceDiagnostics();
+  const { fps, effectiveMode, report, purgeCache } = usePerformanceDiagnostics();
 
   const handleClearRam = () => {
     purgeCache();
@@ -121,18 +118,6 @@ export function MonitorPanel({
     if(cacheFeedbackTimer.current)clearTimeout(cacheFeedbackTimer.current);
     cacheFeedbackTimer.current=setTimeout(() => setRamCleared(false), 3000);
   };
-
-  useEffect(() => {
-    const checkDevice = () => {
-      const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-      const isSmall = typeof window !== 'undefined' && window.innerWidth < 1024;
-      setIsMobileDevice(isTouch || isSmall);
-    };
-
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
-  }, []);
 
   const nextMedia=nextQueueItem(activeSlides,currentSlideId,customMediaList,customMeetings);
   const verseOverlay=!!customVerseText||activeVerseIndex!==null;
@@ -252,116 +237,11 @@ export function MonitorPanel({
         </div>
       </section>
 
-<details className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Gauge} title="Ajuda de projeção e diagnóstico" description="Atalhos, desempenho e orientações para cada aparelho." badge={`${Math.round(fps)} FPS locais`}/></summary><div>
-      {/* HARDWARE DIAGNOSTIC & AUTOMATIC OPTIMIZATION BANNER */}
-      <section aria-label="Desempenho e Memória" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-3.5 text-left group">
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <MonitorHelp fps={fps} mode={effectiveMode} report={report} blackout={blackoutEnabled} clear={clearContentEnabled}
+        onBlackout={()=>updateStateAndBroadcast('blackoutEnabled',false)} onClear={()=>updateStateAndBroadcast('clearContentEnabled',false)}
+        onConnection={()=>onNavigate('sync')} onSettings={()=>onNavigate('controls')} onShortcuts={()=>setShowShortcutsModal(true)}
+        onPerformance={()=>setShowBenchmarkModal(true)} onClearCache={handleClearRam} cacheCleared={ramCleared}/>
 
-        <div className="relative z-10 flex items-start gap-3 min-w-0 w-full">
-          <div className="p-2 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-            <Gauge className="w-4 h-4 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h4 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Desempenho & Memória</h4>
-              <span className={`text-[9px] font-mono px-2 py-0.5 rounded font-bold border shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] ${
-                effectiveMode === 'light'
-                  ? 'bg-hl-gold-well/80 border-hl-line-strong/50 text-hl-gold-bright'
-                  : effectiveMode === 'balanced'
-                  ? 'bg-blue-950/80 border-blue-900/50 text-blue-400'
-                  : 'bg-emerald-950/80 border-emerald-900/50 text-emerald-400'
-              }`}>
-                {fps} FPS ({effectiveMode === 'light' ? 'Anti-Lag' : effectiveMode === 'balanced' ? 'Equilibrado' : 'Máxima Qualidade'})
-              </span>
-              <span className="text-[9px] font-mono bg-hl-canvas px-2 py-0.5 rounded border border-hl-line-soft text-hl-gold-bright font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                RAM: {report?.ramDisplay || 'Não informada'}
-              </span>
-            </div>
-            <p className="text-[10px] text-hl-muted mt-1 leading-relaxed font-medium">
-              Diagnóstico desta aba e deste aparelho. Não mede o PC remoto; RAM e GPU dependem das informações que o navegador libera.
-            </p>
-          </div>
-        </div>
-
-        <div className="relative z-10 grid grid-cols-2 gap-2 w-full pt-1">
-          <button
-            type="button"
-            onClick={handleClearRam}
-            className={`text-xs font-bold px-3 py-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] active:translate-y-[1px] ${
-              ramCleared
-                ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300'
-                : 'bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line hover:border-hl-line-strong text-hl-soft'
-            }`}
-            title="Limpa o cache de pré-carregamento; não controla a RAM do aparelho"
-          >
-            <HardDrive className={`w-3.5 h-3.5 ${ramCleared ? 'text-emerald-400 animate-bounce' : 'text-hl-gold'}`} />
-            <span className="truncate">{ramCleared ? 'Cache limpo' : 'Limpar cache'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowBenchmarkModal(true)}
-            className="bg-hl-gold hover:bg-hl-gold-bright text-black text-xs font-black px-3 py-2 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(255,211,79,0.3)] min-h-[38px] active:translate-y-[1px]"
-          >
-            <Zap className="w-3.5 h-3.5 shrink-0 fill-current" />
-            <span className="truncate">Testar & Otimizar</span>
-          </button>
-        </div>
-      </section>
-
-      {/* SMART DEVICE GUIDANCE CARD */}
-      <section aria-label="Modo de Dispositivo" className="console-monitor-card relative bg-hl-panel border border-hl-line rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden text-left group">
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-        <div className="relative z-10 flex flex-wrap items-center justify-between mb-3 gap-2 border-b border-hl-line pb-3">
-          <h4 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans flex items-center gap-2 min-w-0">
-            {isMobileDevice ? (
-              <Smartphone className="w-4 h-4 text-hl-gold animate-pulse shrink-0" />
-            ) : (
-              <Laptop className="w-4 h-4 text-hl-gold shrink-0" />
-            )}
-            <span className="break-words">Orientação: {isMobileDevice ? 'Tela portátil' : 'Computador'}</span>
-          </h4>
-          <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[9px] font-mono px-2.5 py-1 rounded uppercase tracking-wider font-bold shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
-            {localStorage.getItem('projection_deviceRole')==='phone'?'Controle escolhido':localStorage.getItem('projection_deviceRole')==='pc'?'Projeção escolhida':'Orientação de uso'}
-          </span>
-        </div>
-
-        {isMobileDevice ? (
-          <div className="relative z-10 text-[11px] text-hl-muted space-y-2 leading-relaxed">
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
-              <span>Para controlar outro aparelho, escolha <strong>Celular de controle</strong> em Conexão e autorize no PC.</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
-              <span>Abra este mesmo link no PC da igreja conectado à TV/HDMI.</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
-              <span>Use os botões <strong>BLACKOUT</strong>, <strong>LIMPAR TEXTO</strong> e a <strong>FILA DE TRANSMISSÃO</strong> para controlar tudo em tempo real!</span>
-            </p>
-          </div>
-        ) : (
-          <div className="relative z-10 text-[11px] text-hl-muted space-y-2 leading-relaxed">
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">1</span>
-              <span>Conecte a TV ou Projetor na saída HDMI do computador.</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">2</span>
-              <span>Use <strong>Abrir telão</strong> no topo e mova a janela para a segunda tela.</span>
-            </p>
-            <p className="flex items-start gap-2">
-              <span className="font-mono bg-hl-canvas border border-hl-line-soft px-2 py-0.5 rounded text-hl-gold text-[10px] font-bold shrink-0 mt-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">3</span>
-              <span>Atalhos: <strong>B</strong> (Blackout), <strong>C</strong> (Limpar), <strong>Espaço</strong> (Próximo) e <strong>ESC</strong> (Resetar).</span>
-            </p>
-          </div>
-        )}
-      </section>
-
-
-</div></details>
       {/* HARDWARE BENCHMARK MODAL */}
       <HardwareBenchmarkModal
         isOpen={showBenchmarkModal}

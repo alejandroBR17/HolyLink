@@ -44,13 +44,14 @@ export function benchmarkCpuSpeed(): number {
  * Probes WebGL for GPU renderer and hardware capabilities
  */
 export function probeGpuCapabilities(): { vendor: string; renderer: string; maxTextureSize: number } {
+  let glTyped:WebGLRenderingContext|undefined;
   try {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (!gl) {
       return {vendor:'Não informado',renderer:'WebGL indisponível',maxTextureSize:0};
     }
-    const glTyped = gl as WebGLRenderingContext;
+    glTyped = gl as WebGLRenderingContext;
     const debugInfo = glTyped.getExtension('WEBGL_debug_renderer_info');
     const vendor = debugInfo ? glTyped.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Desconhecido';
     const renderer = debugInfo ? glTyped.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Desconhecido';
@@ -63,7 +64,7 @@ export function probeGpuCapabilities(): { vendor: string; renderer: string; maxT
     };
   } catch (err) {
     return {vendor:'Não informado', renderer:'WebGL indisponível', maxTextureSize:0};
-  }
+  } finally {try{glTyped?.getExtension('WEBGL_lose_context')?.loseContext();}catch{/* Optional cleanup of the isolated probe. */}}
 }
 
 /**
@@ -115,8 +116,8 @@ export async function getDetailedHardwareSpecs(currentFps: number = 60): Promise
   if (navigator.storage && navigator.storage.estimate) {
     try {
       const estimate = await navigator.storage.estimate();
-      if (estimate.usage) storageUsedMB = Math.round(estimate.usage / (1024 * 1024));
-      if (estimate.quota) storageQuotaMB = Math.round(estimate.quota / (1024 * 1024));
+      if (typeof estimate.usage==='number'&&Number.isFinite(estimate.usage)&&estimate.usage>=0) storageUsedMB = Math.round(estimate.usage / (1024 * 1024));
+      if (typeof estimate.quota==='number'&&Number.isFinite(estimate.quota)&&estimate.quota>=0) storageQuotaMB = Math.round(estimate.quota / (1024 * 1024));
     } catch (e) {
       // Storage estimate error fallback
     }
@@ -358,8 +359,9 @@ export function usePerformanceDiagnostics() {
   const isHighModeActive = effectiveMode === 'high';
 
   const setPerformanceMode = (newMode: PerformanceMode) => {
-    setModeState(newMode);
+    if(!['auto','light','balanced','high'].includes(newMode))throw new Error('Perfil inválido.');
     localStorage.setItem('projection_perfMode', newMode);
+    setModeState(newMode);
     window.dispatchEvent(new CustomEvent('projection_perf_mode_change', { detail: newMode }));
   };
 

@@ -1,379 +1,56 @@
-import {Smartphone} from './ui/icons';
+import {useEffect,useRef,useState} from 'react';
 import {useDialogFocus} from '../hooks/useDialogFocus';
-import React from 'react';
-import { Cpu, HardDrive, Monitor, Zap, Activity, X, RefreshCw, Trash2, CheckCircle2, Gauge, Layers, Sparkles, Laptop, Check, AlertTriangle } from 'lucide-react';
-import { usePerformanceDiagnostics, PerformanceMode } from '../utils/performance';
-
-interface HardwareBenchmarkModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function HardwareBenchmarkModal({ isOpen, onClose }: HardwareBenchmarkModalProps) {
-  const {
-    fps,
-    mode,
-    report,
-    isDiagnosticRunning,
-    diagnosticStep,
-    diagnosticProgress,
-    runBenchmark,
-    setPerformanceMode,
-    purgeCache
-  } = usePerformanceDiagnostics();
-
-  const [cacheCleared, setCacheCleared] = React.useState(false);
-
-  const dialogRef = useDialogFocus(isOpen, onClose);
-  if (!isOpen) return null;
-
-  const handleClearCache = () => {
-    purgeCache();
-    setCacheCleared(true);
-    setTimeout(() => setCacheCleared(false), 3000);
-  };
-
-  const getTierColor = (recommendedMode?: string) => {
-    if (recommendedMode === 'high') return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
-    if (recommendedMode === 'light') return 'text-hl-gold-bright bg-hl-gold/10 border-hl-gold/30';
-    return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
-  };
-
-  const getTierBadgeText = (recommendedMode?: string) => {
-    if (recommendedMode === 'high') return 'Alto Desempenho (Efeitos Máximos)';
-    if (recommendedMode === 'light') return 'Modo Leve (Economia de Recursos)';
-    return 'Desempenho Equilibrado';
-  };
-
-  return (
-    <div className="holy-theme holy-overlay fixed inset-0 z-[10000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Diagnóstico do aparelho" tabIndex={-1} className="holy-dialog bg-hl-panel border border-hl-line rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-[0_25px_60px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.08)] overflow-hidden text-left relative">
-
-        {/* HEADER */}
-        <div className="p-5 border-b border-hl-line-soft flex items-center justify-between bg-hl-canvas relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-hl-raised rounded-2xl text-hl-gold border border-hl-line-strong/40 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-              <Gauge className="w-5 h-5 text-hl-gold" />
-            </div>
-            <div>
-              <h3 className="text-hl-copy font-extrabold text-base uppercase tracking-wider font-sans flex items-center gap-2">
-                Diagnóstico deste aparelho
-              </h3>
-              <p className="text-xs text-hl-muted mt-0.5">
-                Informações do navegador e ajustes de qualidade
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Fechar diagnóstico" className="p-2 text-hl-muted hover:text-white rounded-xl bg-hl-raised border border-hl-line hover:border-hl-line transition-all cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* BODY CONTENT */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-hl-soft relative z-10">
-
-          {/* DIAGNOSTIC RUNNER BANNER */}
-          <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-5 shadow-[inset_0_2px_10px_rgba(0,0,0,1)] relative overflow-hidden">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5">
-                <div className="p-3 bg-hl-raised border border-hl-line rounded-xl text-hl-gold shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
-                  <Activity className={`w-6 h-6 ${isDiagnosticRunning ? 'animate-spin text-hl-gold-bright' : ''}`} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-black text-white uppercase tracking-wider font-mono">
-                      Índice indicativo: {report ? `${report.score} / 100` : 'Calculando...'}
-                    </span>
-                    {report && (
-                      <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border uppercase tracking-wider font-black shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] ${getTierColor(report.recommendedMode)}`}>
-                        {getTierBadgeText(report.recommendedMode)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-hl-muted mt-1 leading-relaxed flex items-center gap-1.5">
-                    {report?.isTouchDevice ? (
-                      <>
-                        <Smartphone className="w-3.5 h-3.5 text-hl-gold shrink-0" />
-                        <span>Entrada por toque disponível. Escolha abaixo a qualidade adequada para este aparelho.</span>
-                      </>
-                    ) : (
-                      <>
-                        <Laptop className="w-3.5 h-3.5 text-hl-gold shrink-0" />
-                        <span>Sem entrada por toque informada. Confira a fluidez na tela usada para projetar.</span>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={runBenchmark}
-                disabled={isDiagnosticRunning}
-                className="bg-hl-gold hover:bg-hl-gold-bright disabled:opacity-50 text-black text-xs font-black px-4 py-2.5 rounded-xl shadow-[0_0_15px_rgba(255,211,79,0.3)] transition-all cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 active:translate-y-[1px]"
-              >
-                <RefreshCw className={`w-4 h-4 ${isDiagnosticRunning ? 'animate-spin' : ''}`} />
-                <span>{isDiagnosticRunning ? 'Analisando...' : 'Atualizar diagnóstico'}</span>
-              </button>
-            </div>
-
-            {/* PROGRESS BAR ANIMATION */}
-            {isDiagnosticRunning && (
-              <div className="mt-4 pt-3 border-t border-hl-line-soft space-y-2">
-                <div className="flex justify-between text-xs text-hl-muted font-mono">
-                  <span>{diagnosticStep}</span>
-                  <span className="text-hl-gold-bright font-bold">{diagnosticProgress}%</span>
-                </div>
-                <div className="w-full bg-hl-panel h-3 rounded-full overflow-hidden border border-hl-line shadow-[inset_0_2px_4px_rgba(0,0,0,1)]">
-                  <div
-                    className="bg-gradient-to-r from-hl-gold to-emerald-400 h-full transition-all duration-300 shadow-[0_0_12px_rgba(255,211,79,0.5)]"
-                    style={{ width: `${diagnosticProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* DETAILED SPECS GRID */}
-          <div>
-            <h4 className="text-xs font-black text-hl-gold uppercase tracking-widest font-mono mb-3 flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-hl-gold" />
-              Recursos de Hardware Identificados
-            </h4>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-              <p className="operator-muted">Informações locais desta aba. O navegador pode ocultar ou aproximar hardware; não é uma leitura do PC conectado nem confirmação do HDMI. O teste JavaScript e a pontuação são indicativos.</p>
-              {/* CPU CARD */}
-              <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-                <div className="p-2 bg-hl-raised rounded-xl border border-hl-line text-hl-gold shrink-0">
-                  <Cpu className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Processador (CPU)</span>
-                  <p className="text-xs font-extrabold text-white truncate">
-                    {report?.cpuCores ? `${report.cpuCores} processadores lógicos` : 'Não informado'}
-                  </p>
-                  <p className="text-[10px] text-hl-muted mt-0.5">
-                    Benchmark Math JS: <span className="font-mono text-hl-gold-bright font-bold">{report?.cpuScoreMs !== undefined ? `${report.cpuScoreMs} ms` : 'Não medido'}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* RAM & HEAP CARD */}
-              <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-                <div className="p-2 bg-hl-raised rounded-xl border border-hl-line text-blue-400 shrink-0">
-                  <HardDrive className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Memória RAM & App Heap</span>
-                  <p className="text-xs font-extrabold text-white truncate" title={'Estimativa do navegador; pode ser arredondada e limitada'}>
-                    RAM aproximada: {report?.ramDisplay || 'Não informada'}
-                  </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <div className="w-full bg-hl-panel h-2 rounded-full overflow-hidden border border-hl-line-soft flex-1 shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)]">
-                      <div
-                        className="bg-blue-500 h-full rounded-full"
-                        style={{
-                          width: `${
-                            report?.jsHeapUsedMB && report?.jsHeapLimitMB
-                              ? Math.min(100, Math.round((report.jsHeapUsedMB / report.jsHeapLimitMB) * 100))
-                              : 0
-                          }%`
-                        }}
-                      />
-                    </div>
-                    <span className="text-[9px] font-mono text-blue-400 font-bold shrink-0">
-                      App: {report?.jsHeapUsedMB !== undefined ? `${report.jsHeapUsedMB} MB` : 'Não informado'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* GPU CARD */}
-              <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-                <div className="p-2 bg-hl-raised rounded-xl border border-hl-line text-purple-400 shrink-0">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Placa de Vídeo (GPU / WebGL)</span>
-                  <p className="text-xs font-extrabold text-white truncate" title={report?.gpuRenderer}>
-                    {report?.gpuRenderer || 'Não informada'}
-                  </p>
-                  <p className="text-[10px] text-hl-muted mt-0.5">
-                    Textura Máx: <span className="font-mono text-purple-400">{report?.maxTextureSize ? `${report.maxTextureSize} px` : 'Não informado'}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* FPS & DISPLAY CARD */}
-              <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-3.5 flex items-start gap-3 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-                <div className="p-2 bg-hl-raised rounded-xl border border-hl-line text-emerald-400 shrink-0">
-                  <Monitor className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-black text-hl-dim uppercase tracking-wider block font-mono">Atualizações desta aba (FPS)</span>
-                  <p className="text-xs font-extrabold text-white truncate flex items-center gap-1.5">
-                    <span className={fps < 38 ? 'text-hl-gold-bright font-mono font-black' : 'text-emerald-400 font-mono font-black'}>{fps} FPS</span>
-                    <span className="text-[10px] font-normal text-hl-muted">({fps >= 50 ? 'Fluido' : fps >= 35 ? 'Fluido' : 'Economia'})</span>
-                  </p>
-                  <p className="text-[10px] text-hl-muted mt-0.5 truncate" title={`Resolução: ${report?.physicalWidth || report?.screenWidth}x${report?.physicalHeight || report?.screenHeight} px`}>
-                    Tela estimada: <span className="font-mono text-hl-soft font-bold">{report?.physicalWidth || report?.screenWidth}x{report?.physicalHeight || report?.screenHeight}</span>
-                  </p>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* PERFORMANCE MODE SELECTION */}
-          <div>
-            <h4 className="text-xs font-black text-hl-gold uppercase tracking-widest font-mono mb-3 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-hl-gold" />
-              Seleção de Perfil de Desempenho
-            </h4>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-
-              {/* AUTO MODE */}
-              <button
-                onClick={() => setPerformanceMode('auto')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:translate-y-[1px] ${
-                  mode === 'auto'
-                    ? 'bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.35)] font-black'
-                    : 'bg-hl-canvas border-hl-line-soft text-hl-muted hover:border-hl-line'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className={`font-black text-xs uppercase tracking-wider ${mode === 'auto' ? 'text-black' : 'text-hl-gold-bright'}`}>Automático</span>
-                    {mode === 'auto' && <Check className="w-4 h-4 text-black stroke-[3]" />}
-                  </div>
-                  <p className={`text-[10px] mt-1 leading-snug ${mode === 'auto' ? 'text-black/80 font-medium' : 'text-hl-muted'}`}>
-                    Ajusta os gráficos dinamicamente.
-                  </p>
-                </div>
-              </button>
-
-              {/* HIGH MODE */}
-              <button
-                onClick={() => setPerformanceMode('high')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:translate-y-[1px] ${
-                  mode === 'high'
-                    ? 'bg-emerald-500 border-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.35)] font-black'
-                    : 'bg-hl-canvas border-hl-line-soft text-hl-muted hover:border-hl-line'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className={`font-black text-xs uppercase tracking-wider ${mode === 'high' ? 'text-black' : 'text-emerald-400'}`}>Alto Desempenho</span>
-                    {mode === 'high' && <Check className="w-4 h-4 text-black stroke-[3]" />}
-                  </div>
-                  <p className={`text-[10px] mt-1 leading-snug ${mode === 'high' ? 'text-black/80 font-medium' : 'text-hl-muted'}`}>
-                    Mantém todos os efeitos visuais e blurs.
-                  </p>
-                </div>
-              </button>
-
-              {/* BALANCED MODE */}
-              <button
-                onClick={() => setPerformanceMode('balanced')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:translate-y-[1px] ${
-                  mode === 'balanced'
-                    ? 'bg-blue-500 border-blue-400 text-black shadow-[0_0_12px_rgba(59,130,246,0.35)] font-black'
-                    : 'bg-hl-canvas border-hl-line-soft text-hl-muted hover:border-hl-line'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className={`font-black text-xs uppercase tracking-wider ${mode === 'balanced' ? 'text-black' : 'text-blue-400'}`}>Equilibrado</span>
-                    {mode === 'balanced' && <Check className="w-4 h-4 text-black stroke-[3]" />}
-                  </div>
-                  <p className={`text-[10px] mt-1 leading-snug ${mode === 'balanced' ? 'text-black/80 font-medium' : 'text-hl-muted'}`}>
-                    Equilíbrio ideal para apresentações.
-                  </p>
-                </div>
-              </button>
-
-              {/* LIGHT MODE */}
-              <button
-                onClick={() => setPerformanceMode('light')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:translate-y-[1px] ${
-                  mode === 'light'
-                    ? 'bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.35)] font-black'
-                    : 'bg-hl-canvas border-hl-line-soft text-hl-muted hover:border-hl-line'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className={`font-black text-xs uppercase tracking-wider ${mode === 'light' ? 'text-black' : 'text-hl-gold-bright'}`}>Modo Leve</span>
-                    {mode === 'light' && <Check className="w-4 h-4 text-black stroke-[3]" />}
-                  </div>
-                  <p className={`text-[10px] mt-1 leading-snug ${mode === 'light' ? 'text-black/80 font-medium' : 'text-hl-muted'}`}>
-                    Zero lag para computadores básicos.
-                  </p>
-                </div>
-              </button>
-
-            </div>
-          </div>
-
-          {/* CACHE PURGE & MEMORY CLEANUP ACTION */}
-          <div className="bg-hl-canvas border border-hl-line-soft rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[inset_0_2px_8px_rgba(0,0,0,1)]">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-hl-raised rounded-xl border border-hl-line text-hl-gold shrink-0">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h5 className="text-xs font-extrabold text-white uppercase tracking-wider font-sans">
-                  Cache de pré-carregamento
-                </h5>
-                <p className="text-[11px] text-hl-muted mt-0.5">
-                  Libera buffers temporários de mídias na RAM sem apagar arquivos do culto.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleClearCache}
-              className={`text-xs font-black px-4 py-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto active:translate-y-[1px] ${
-                cacheCleared
-                  ? 'bg-emerald-500 border-emerald-400 text-black font-black shadow-[0_0_12px_rgba(52,211,153,0.35)]'
-                  : 'bg-hl-raised border-hl-line hover:border-hl-line text-hl-soft hover:text-white'
-              }`}
-            >
-              {cacheCleared ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-black" />
-                  <span>Cache de pré-carregamento limpo</span>
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4 text-hl-gold" />
-                  <span>Limpar cache agora</span>
-                </>
-              )}
-            </button>
-          </div>
-
-        </div>
-
-        {/* FOOTER */}
-        <div className="p-4 border-t border-hl-line-soft bg-hl-canvas flex items-center justify-between relative z-10">
-          <span className="text-[10px] text-hl-dim font-mono font-bold">
-            HolyLink Engine v2.4 — Aceleração Anti-Lag Ativa
-          </span>
-          <button
-            onClick={onClose}
-            className="bg-hl-gold hover:bg-hl-gold-bright text-black text-xs font-black px-5 py-2 rounded-xl transition-all cursor-pointer shadow-[0_0_12px_rgba(255,211,79,0.35)] active:translate-y-[1px]"
-          >
-            Concluído
-          </button>
-        </div>
-
-      </div>
-    </div>
-  );
+import {Gauge,HardDrive,Monitor,Sparkles,RefreshCw,X,SlidersHorizontal,CheckCircle2} from './ui/icons';
+import {getDetailedHardwareSpecs,usePerformanceDiagnostics,type PerformanceMode,type DetailedHardwareReport} from '../utils/performance';
+const profiles:Array<{id:PerformanceMode;name:string;description:string}>=[
+ {id:'auto',name:'Automático',description:'Escolhe conforme as informações disponíveis e a resposta desta aba.'},
+ {id:'light',name:'Leve',description:'Reduz efeitos para exigir menos deste aparelho.'},
+ {id:'balanced',name:'Equilibrado',description:'Combina efeitos e menor uso de recursos.'},
+ {id:'high',name:'Detalhado',description:'Mantém mais efeitos; exige mais do aparelho.'}
+];
+const profileName=(id:string)=>profiles.find(profile=>profile.id===id)?.name||'Não informado';
+export function HardwareBenchmarkModal({isOpen,onClose}:{isOpen:boolean;onClose:()=>void}){
+ const{fps,mode,effectiveMode,report,setPerformanceMode,purgeCache}=usePerformanceDiagnostics();
+ const[measured,setMeasured]=useState<DetailedHardwareReport|null>(null),[measuredAt,setMeasuredAt]=useState<string|null>(null),[busy,setBusy]=useState(false);
+ const[message,setMessage]=useState<{error:boolean;text:string}|null>(null);
+ const generation=useRef(0),running=useRef(false),timers=useRef(new Set<ReturnType<typeof setTimeout>>());
+ const close=()=>{generation.current++;running.current=false;setBusy(false);onClose();};
+ const dialogRef=useDialogFocus(isOpen,close);
+ useEffect(()=>{if(!isOpen){generation.current++;running.current=false;setBusy(false);setMessage(null);}},[isOpen]);
+ useEffect(()=>()=>{generation.current++;for(const timer of timers.current)clearTimeout(timer);},[]);
+ const measure=async()=>{
+  if(running.current)return;running.current=true;const id=++generation.current;setBusy(true);setMessage(null);
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  try{
+   const timeout=new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('timeout')),4000);timers.current.add(timer);});
+   const result=await Promise.race([getDetailedHardwareSpecs(fps),timeout]);
+   if(id!==generation.current)return;
+   setMeasured(result);setMeasuredAt(new Date().toLocaleTimeString('pt-BR'));setMessage({error:false,text:'Consulta concluída. Nenhum perfil foi alterado.'});
+  }catch{if(id===generation.current)setMessage({error:true,text:'Não foi possível concluir a consulta. O perfil e os arquivos foram preservados; tente novamente.'});}
+  finally{if(timer){clearTimeout(timer);timers.current.delete(timer);}if(id===generation.current){running.current=false;setBusy(false);}}
+ };
+ const choose=(id:PerformanceMode)=>{try{setPerformanceMode(id);setMessage({error:false,text:`Perfil ${profileName(id)} salvo para este navegador.`});}catch{setMessage({error:true,text:'Não foi possível salvar o perfil neste navegador. Tente novamente.'});}};
+ if(!isOpen)return null;
+ const data=measured??report;
+ const resolution=data?`${data.screenWidth} × ${data.screenHeight} px CSS`:'Não informada';
+ return <div className="holy-theme holy-overlay hardware-overlay"><div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Diagnóstico do aparelho" tabIndex={-1} className="hardware-dialog">
+  <header><div><span className="operator-eyebrow"><Gauge size={18}/>Desempenho local</span><h2>Diagnóstico e qualidade</h2><p>Dados deste navegador e deste aparelho.</p></div><button aria-label="Fechar diagnóstico" onClick={close}><X size={21}/></button></header>
+  <div className="hardware-dialog-body">
+   <section className="hardware-measure"><div><h3>Consulte antes de ajustar</h3><p>A consulta mede uma pequena tarefa JavaScript e lê os recursos que o navegador informa. Não testa o HDMI, a rede entre aparelhos ou a reprodução completa de um vídeo.</p><small>{measuredAt?`Última consulta solicitada: ${measuredAt}`:'Os dados abaixo vêm da consulta inicial deste navegador.'}</small></div><button className="hardware-primary" onClick={()=>{void measure();}} disabled={busy}>{busy?<RefreshCw size={19} className="animate-spin"/>:<Gauge size={19}/>}<span>{busy?'Consultando…':'Consultar aparelho'}</span></button></section>
+   {message&&<p className={`hardware-message ${message.error?'is-error':''}`} role={message.error?'alert':'status'}>{message.text}</p>}
+   <dl className="hardware-overview"><div><dt><Monitor size={18}/>Atualizações da aba</dt><dd>{Math.round(fps)} FPS</dd><small>Amostra contínua; não é a taxa do telão.</small></div><div><dt><HardDrive size={18}/>RAM aproximada</dt><dd>{data?.ramDisplay||'Não informada'}</dd><small>Pode ser arredondada ou omitida.</small></div><div><dt><SlidersHorizontal size={18}/>Perfil em uso</dt><dd>{profileName(effectiveMode)}</dd><small>{mode==='auto'?'Escolhido pelo modo automático.':'Escolhido por você neste navegador.'}</small></div></dl>
+   <section className="hardware-profiles" aria-labelledby="hardware-profiles-title"><h3 id="hardware-profiles-title">Qualidade dos efeitos</h3><p>Escolha no próprio aparelho que deseja ajustar. Isso pode alterar os efeitos de uma projeção aberta neste navegador; não configura o PC remoto.</p><div role="group" aria-label="Perfil de desempenho">{profiles.map(profile=><button key={profile.id} aria-pressed={mode===profile.id} onClick={()=>choose(profile.id)} disabled={busy}><span><strong>{profile.name}</strong>{mode===profile.id&&<CheckCircle2 size={18}/>}</span><small>{profile.description}</small></button>)}</div><p className="hardware-footnote">A recomendação é aproximada. Nenhum perfil garante ausência de travamentos.</p></section>
+   <details className="hardware-technical"><summary><Sparkles size={18}/>Informações técnicas</summary><dl>
+    <div><dt>Processadores lógicos informados</dt><dd>{data?.cpuCores||'Não informados'}</dd></div>
+    <div><dt>Tarefa JavaScript</dt><dd>{data?.cpuScoreMs!==undefined?`${data.cpuScoreMs} ms`:'Não medida'}</dd></div>
+    <div><dt>GPU informada pelo WebGL</dt><dd>{data?.gpuRenderer||'Não informada'}</dd></div>
+    <div><dt>Limite de textura</dt><dd>{data?.maxTextureSize?`${data.maxTextureSize} px`:'Não informado'}</dd></div>
+    <div><dt>Área desta janela</dt><dd>{resolution}</dd></div>
+    <div><dt>Memória JavaScript usada</dt><dd>{data?.jsHeapUsedMB!==undefined?`${data.jsHeapUsedMB} MB`:'Não informada'}</dd></div>
+    <div><dt>Armazenamento do site (estimativa)</dt><dd>{data?.storageUsedMB!==undefined?`${data.storageUsedMB} MB usados`:'Não informado'}</dd></div>
+    <div><dt>Tipo de rede estimado</dt><dd>{data?.networkType||'Não informado'}</dd></div>
+   </dl><p>Informações indisponíveis não são falhas. Esta consulta não confirma o modelo exato da placa, a RAM total ou a velocidade real da conexão.</p></details>
+   <section className="hardware-cache"><div><h3>Pré-carregamento</h3><p>Descarta recursos temporários. Não apaga mídias, roteiro ou autorizações e não controla a RAM do sistema.</p></div><button disabled={busy} onClick={()=>{purgeCache();setMessage({error:false,text:'Pré-carregamento limpo. Arquivos, roteiro e autorizações preservados.'});}}>Limpar pré-carregamento</button></section>
+  </div><footer><span>Alterações de qualidade exigem sua escolha.</span><button className="hardware-primary" onClick={close}>Concluído</button></footer>
+ </div></div>;
 }
