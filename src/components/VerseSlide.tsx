@@ -1,6 +1,6 @@
 import {selectProjectionVerse} from '../utils/verse-selection';
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {ProjectionText} from './ProjectionText';
 import { VERSES } from '../data';
 import { usePerformanceDiagnostics } from '../utils/performance';
@@ -36,7 +36,8 @@ export const VerseSlide: React.FC<VerseSlideProps> = ({
   const {verse,keyId}=selectProjectionVerse(VERSES,{text:customVerseText,ref:customVerseRef,index:activeVerseIndex,loop:loopIteration,offset:verseIndexOffset,timeMs:currentTime.getTime()});
 
   // Performance-based animation configuration (Anti-Lag uses silky 0.35s GPU-friendly cross-fade)
-  const motionProps = isLightMode
+  const reducedMotion=useReducedMotion();
+  const motionProps = reducedMotion?{initial:{opacity:0},animate:{opacity:1},exit:{opacity:0},transition:{duration:.08}}:isLightMode
     ? {
         initial: { opacity: 0 },
         animate: { opacity: 1 },

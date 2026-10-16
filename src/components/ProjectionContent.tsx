@@ -1,7 +1,8 @@
+import {ProjectedImage,ProjectionMediaFallback} from './ProjectionMedia';
 import {Smartphone} from './ui/icons';
 import {isYouthProjection} from '../utils/projection-theme';
 import React, { useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion, MotionConfig } from 'motion/react';
 import { Bell, X, Armchair, DoorOpen, MessageSquareOff, Clock, Instagram, Globe, Flame, Users2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -110,6 +111,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   // Logic to detect FJU mode:
   // 1. If ongoing meeting is FJU / Encontro Jovem / Força Jovem
   // 2. If next meeting is FJU / Encontro Jovem / Força Jovem (active during pre-service loop and countdown)
+  const reducedMotion=useReducedMotion();
   const isFJU = isYouthProjection(ongoingMeeting, nextMeeting, nextMeetingDate, currentTime);
 
   const themeColor = isFJU ? 'text-hl-gold' : 'text-hl-gold';
@@ -120,6 +122,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   const { isLightModeActive, isHighModeActive, effectiveMode } = usePerformanceDiagnostics();
 
   const getTransitionVariants = (slideId: string) => {
+    if(reducedMotion)return {initial:{opacity:0},animate:{opacity:1},exit:{opacity:0},transition:{duration:.08}};
     if (isLightModeActive) {
       return {
         initial: { opacity: 0 },
@@ -156,12 +159,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
     if (slideId.startsWith("custom_")) {
       const media = customMediaList.find(m => m.id === slideId);
       if (!media) {
-        return (
-          <div className="text-hl-muted text-2xl font-bold flex flex-col items-center justify-center h-full w-full bg-black/60 p-8 text-center">
-            <span className="text-hl-gold font-extrabold text-3xl mb-2">Mídia Não Encontrada</span>
-            <p className="text-hl-soft text-lg">A mídia associada a este slide não está disponível na lista atual.</p>
-          </div>
-        );
+        return <ProjectionMediaFallback preview={isMiniature} id={currentSlideId} name="Arquivo não disponível neste aparelho"/>;
       }
 
       // Validação do caminho/URL da mídia
@@ -172,17 +170,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       );
 
       if (!isMediaUrlValid) {
-        return (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-black/70 text-white p-8 text-center">
-            <div className="p-8 rounded-3xl bg-hl-gold/10 border border-hl-gold/30 flex flex-col items-center max-w-lg">
-              <span className="text-hl-gold-bright font-extrabold text-2xl mb-2">Aguardando Mídia / URL Inválida</span>
-              <p className="text-hl-soft text-base mb-4">{media.name || 'Arquivo de mídia com URL ausente ou em sincronização'}</p>
-              <span className="text-xs text-hl-gold/80 bg-black/40 px-3 py-1 rounded-full uppercase tracking-wider font-mono">
-                {media.type === 'video' ? 'Vídeo' : 'Imagem'} • ID: {media.id}
-              </span>
-            </div>
-          </div>
-        );
+        return <ProjectionMediaFallback preview={isMiniature} id={media.id} kind={media.type} name={media.name}/>;
       }
 
       if (media.type === 'image') {
@@ -191,7 +179,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         const isFullScreen = fitMode === 'fill';
 
         // Base padding and rounded corners logic
-        const containerPadding = isFullScreen ? 'p-0' : 'p-12 md:p-20';
+        const containerPadding = isFullScreen ? 'p-0' : 'p-12 @[768px]:p-20';
         const innerRounded = isFullScreen ? 'rounded-none' : 'rounded-[3.5rem]';
         const innerBg = isFullScreen ? 'bg-black' : 'bg-black/40';
         const innerBorder = isFullScreen ? 'border-none' : borderColor;
@@ -214,26 +202,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                   <div className="absolute inset-0 bg-gradient-to-tr from-hl-canvas via-hl-panel to-black opacity-90 pointer-events-none" />
                 )
               )}
-              <img
-                src={media.url}
-                alt={media.name}
-                className={`w-full h-full relative z-10 ${isCover ? 'object-cover' : isFullScreen ? 'object-fill' : 'object-contain'}`}
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  console.warn("Erro ao carregar imagem de projeção:", media.name, media.url);
-                  const img = e.currentTarget;
-                  img.style.display = 'none';
-                  const parent = img.parentElement;
-                  if (parent && !parent.querySelector('.img-error-fallback')) {
-                    const fallback = document.createElement('div');
-                    fallback.className = 'img-error-fallback absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 text-hl-gold-bright p-6 text-center';
-                    const title=document.createElement('span');title.className='font-bold text-xl mb-1';title.textContent='Erro de carregamento';
-                    const name=document.createElement('span');name.className='text-hl-soft text-sm';name.textContent=media.name;
-                    fallback.append(title,name);
-                    parent.appendChild(fallback);
-                  }
-                }}
-              />
+              <ProjectedImage media={media} preview={isMiniature}/>
               {!isFullScreen && (
                 <div className={`absolute inset-0 z-20 ring-1 ring-inset ${isFJU ? 'ring-hl-gold/20' : 'ring-white/20'} shadow-[inset_0_0_150px_rgba(0,0,0,0.6)] pointer-events-none`} />
               )}
@@ -246,7 +215,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         const isFullScreen = fitMode === 'fill';
 
         // Base padding and rounded corners logic
-        const containerPadding = isFullScreen ? 'p-0' : 'p-12 md:p-20';
+        const containerPadding = isFullScreen ? 'p-0' : 'p-12 @[768px]:p-20';
         const innerRounded = isFullScreen ? 'rounded-none' : 'rounded-[3.5rem]';
         const innerBg = isFullScreen ? 'bg-black' : 'bg-black/40';
         const innerBorder = isFullScreen ? 'border-none' : borderColor;
@@ -256,32 +225,14 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           <div className={`w-full h-full ${containerPadding} flex items-center justify-center bg-black/20`}>
             <div className={`w-full h-full relative ${innerRounded} overflow-hidden ${innerShadow} border ${innerBorder} ${innerBg}`}>
               {/* Background for videos */}
-              {fitMode === 'contain' && (
-                isHighModeActive ? (
-                  /* High Performance: Dual-layer video background blur ambient illumination */
-                  <div className={`absolute inset-0 blur-3xl opacity-35 scale-110 pointer-events-none overflow-hidden`}>
-                    <div className="w-full h-full scale-[2]">
-                      <VideoSlide
-                        media={media}
-                        currentSlideId={currentSlideId}
-                        videoPinBehavior={videoPinBehavior}
-                        onVideoEnded={undefined}
-                        isBackgroundBlur
-                        volume={0}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  /* Balanced & Light Mode: Zero duplicate video decoders, lightweight dark vignette */
-                  <div className="absolute inset-0 bg-gradient-to-tr from-hl-canvas via-hl-panel to-black opacity-90 pointer-events-none" />
-                )
-              )}
+              {fitMode==='contain'&&<div className="projection-video-backdrop absolute inset-0 pointer-events-none"/>}
               <div className="w-full h-full relative z-10">
                 <VideoSlide
                   media={media}
                   currentSlideId={currentSlideId}
                   videoPinBehavior={videoPinBehavior}
                   onVideoEnded={onVideoEnded}
+                  preview={isMiniature}
                   volume={isMiniature ? 0 : volume}
                   fit={isFullScreen ? 'fill' : isCover ? 'cover' : 'contain'}
                 />
@@ -551,7 +502,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   );
 
   return (
-    <div className="holy-theme holy-projection w-full h-full relative select-none font-sans overflow-hidden bg-hl-canvas text-white flex flex-col justify-between">
+    <MotionConfig reducedMotion="user"><div className="holy-theme holy-projection w-full h-full relative select-none font-sans overflow-hidden bg-hl-canvas text-white flex flex-col justify-between">
       {/* 3D Volumetric Background Engine */}
       <ThreeBackground3D
         disabled={background3DStyle === 'off' || background3DStyle === 'particles_2d'}
@@ -579,7 +530,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       <AnimatePresence>
         {activeAlert && (
           <motion.div
-            initial={{ opacity: 0, y: isMiniature ? -50 : -100 }}
+            initial={reducedMotion?false:{ opacity: 0, y: isMiniature ? -50 : -100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: isMiniature ? -50 : -100 }}
             className={`absolute ${isMiniature ? 'top-10' : 'top-12'} left-1/2 -translate-x-1/2 z-[90] bg-hl-gold text-black ${isMiniature ? 'px-10 py-6 rounded-[2rem] border-2' : 'px-12 py-7 rounded-[2rem] border-2 shadow-[0_25px_60px_rgba(0,0,0,0.6)] min-w-[700px]'} border-hl-gold flex items-center gap-8 max-w-[90%]`}
@@ -607,7 +558,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         {shouldShowVerse ? (
           <motion.div
             key="verse-active"
-            initial={{ opacity: 0 }}
+            initial={reducedMotion?false:{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: isLightModeActive ? 0.35 : 0.4 }}
@@ -628,7 +579,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         ) : isFinalMinute ? (
           <motion.div
             key="final-minute"
-            initial={{ opacity: 0 }}
+            initial={reducedMotion?false:{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
@@ -648,7 +599,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               <div className="w-full h-full flex flex-col items-center justify-center relative z-20 px-8 select-none">
                 {/* Header Badge */}
                 <motion.div
-                  initial={{ opacity: 0, y: -20 }}
+                  initial={reducedMotion?false:{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                   className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-8 ${
@@ -660,7 +611,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                   <span className={`w-2.5 h-2.5 rounded-full ${
                     isFJU ? 'bg-hl-gold-bright animate-ping' : 'bg-hl-gold-bright'
                   }`} />
-                  <span className={`text-xl xl:text-2xl font-black tracking-[0.3em] uppercase font-mono ${
+                  <span className={`text-xl @[1280px]:text-2xl font-black tracking-[0.3em] uppercase font-mono ${
                     isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright/95'
                   }`}>
                     {isFJU ? 'CONTAGEM REGRESSIVA • FJU' : 'CONTAGEM REGRESSIVA'}
@@ -669,16 +620,16 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
                 {/* Main Title */}
                 <motion.h1
-                  initial={{ opacity: 0, y: -10 }}
+                  initial={reducedMotion?false:{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.1 }}
-                  className="font-sans font-black text-[4.5rem] xl:text-[5.8rem] text-white uppercase tracking-tight leading-none mb-10 text-center drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]"
+                  className="font-sans font-black text-[4.5rem] @[1280px]:text-[5.8rem] text-white uppercase tracking-tight leading-none mb-10 text-center drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]"
                 >
                   {isFJU ? 'O Encontro Vai Começar!' : 'A Reunião Vai Começar'}
                 </motion.h1>
 
                 {/* Monumental Circular Gauge & Number */}
-                <div className="relative w-[340px] h-[340px] xl:w-[420px] xl:h-[420px] flex items-center justify-center my-2">
+                <div className="relative w-[340px] h-[340px] @[1280px]:w-[420px] @[1280px]:h-[420px] flex items-center justify-center my-2">
                   <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 400 400">
                     {/* Background Track */}
                     <circle
@@ -712,11 +663,11 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                     <AnimatePresence mode="popLayout">
                       <motion.div
                         key={diffSeconds}
-                        initial={{ opacity: 0, scale: 0.75, y: 15 }}
+                        initial={reducedMotion?false:{ opacity: 0, scale: 0.75, y: 15 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 1.25, y: -15 }}
                         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className={`font-mono text-[9.5rem] xl:text-[12.5rem] font-black leading-none tracking-tighter tabular-nums ${
+                        className={`font-mono text-[9.5rem] @[1280px]:text-[12.5rem] font-black leading-none tracking-tighter tabular-nums ${
                           diffSeconds <= 10
                             ? (isFJU
                                 ? 'text-hl-gold-bright drop-shadow-[0_0_60px_rgba(255,211,79,0.85)]'
@@ -732,10 +683,10 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
                 {/* Subtitle / Reverence Guidance */}
                 <div className="flex flex-col items-center text-center mt-8">
-                  <span className="text-hl-gold-bright/90 text-2xl xl:text-3xl font-mono uppercase tracking-[0.35em] font-extrabold mb-3">
+                  <span className="text-hl-gold-bright/90 text-2xl @[1280px]:text-3xl font-mono uppercase tracking-[0.35em] font-extrabold mb-3">
                     {diffSeconds === 1 ? "Segundo Restante" : "Segundos Restantes"}
                   </span>
-                  <p className="text-hl-soft text-2xl xl:text-3xl font-normal max-w-3xl leading-relaxed">
+                  <p className="text-hl-soft text-2xl @[1280px]:text-3xl font-normal max-w-3xl leading-relaxed">
                     {isFJU
                       ? "Vem pra FJU! Desliga as notificações e chega mais!"
                       : "Em oração e reverência, prepare-se para ouvir a voz do Senhor."
@@ -764,18 +715,18 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                     isFJU ? 'bg-hl-gold/10 border border-hl-gold/30' : 'bg-white/[0.04] border border-hl-gold/25'
                   }`}>
                     <span className={`w-2 h-2 rounded-full ${isFJU ? 'bg-hl-gold-bright animate-ping' : 'bg-hl-gold-bright'}`} />
-                    <span className={`text-base xl:text-lg font-black tracking-[0.25em] uppercase font-mono ${
+                    <span className={`text-base @[1280px]:text-lg font-black tracking-[0.25em] uppercase font-mono ${
                       isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'
                     }`}>
                       {isFJU ? 'FJU AO VIVO' : 'CONTAGEM REGRESSIVA'}
                     </span>
                   </div>
 
-                  <span className="text-white text-3xl xl:text-4xl font-extrabold uppercase tracking-tight mb-8 text-center">
+                  <span className="text-white text-3xl @[1280px]:text-4xl font-extrabold uppercase tracking-tight mb-8 text-center">
                     {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
                   </span>
 
-                  <div className="relative w-[260px] h-[260px] xl:w-[300px] xl:h-[300px] flex items-center justify-center">
+                  <div className="relative w-[260px] h-[260px] @[1280px]:w-[300px] @[1280px]:h-[300px] flex items-center justify-center">
                     <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 300 300">
                       <circle
                         cx="150"
@@ -804,11 +755,11 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                       <AnimatePresence mode="popLayout">
                         <motion.div
                           key={diffSeconds}
-                          initial={{ opacity: 0, scale: 0.75, y: 12 }}
+                          initial={reducedMotion?false:{ opacity: 0, scale: 0.75, y: 12 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 1.25, y: -12 }}
                           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                          className={`font-mono text-[7rem] xl:text-[8.5rem] font-black leading-none tracking-tighter tabular-nums ${
+                          className={`font-mono text-[7rem] @[1280px]:text-[8.5rem] font-black leading-none tracking-tighter tabular-nums ${
                             diffSeconds <= 10
                               ? (isFJU ? 'text-hl-gold-bright drop-shadow-[0_0_40px_rgba(255,211,79,0.8)]' : 'text-hl-gold-bright drop-shadow-[0_0_35px_rgba(255,211,79,0.7)]')
                               : 'text-white'
@@ -820,7 +771,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                     </div>
                   </div>
 
-                  <span className="text-hl-gold-bright/90 text-xl xl:text-2xl font-mono uppercase tracking-[0.3em] font-extrabold mt-6">
+                  <span className="text-hl-gold-bright/90 text-xl @[1280px]:text-2xl font-mono uppercase tracking-[0.3em] font-extrabold mt-6">
                     {diffSeconds === 1 ? "Segundo" : "Segundos"}
                   </span>
                 </div>
@@ -850,7 +801,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         ) : isFinalFiveMinutes ? (
           <motion.div
             key="final-five"
-            initial={{ opacity: 0 }}
+            initial={reducedMotion?false:{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
@@ -865,7 +816,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                 isFJU ? 'bg-hl-gold/10 border border-hl-gold/30' : 'bg-white/[0.04] border border-hl-gold/25'
               }`}>
                 <span className={`w-2.5 h-2.5 rounded-full ${isFJU ? 'bg-hl-gold-bright animate-ping' : 'bg-hl-gold-bright'}`} />
-                <span className={`text-lg xl:text-xl font-black tracking-[0.25em] uppercase font-mono ${
+                <span className={`text-lg @[1280px]:text-xl font-black tracking-[0.25em] uppercase font-mono ${
                   isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright/95'
                 }`}>
                   {isFJU ? 'FALTAM 5 MINUTOS • FJU' : 'PREPARAÇÃO PARA A REUNIÃO'}
@@ -874,19 +825,19 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
               {/* Center Countdown Unit */}
               <div className="flex flex-col items-center w-full">
-                <span className="text-white text-3xl xl:text-4xl font-extrabold uppercase tracking-tight mb-8 text-center">
+                <span className="text-white text-3xl @[1280px]:text-4xl font-extrabold uppercase tracking-tight mb-8 text-center">
                   {isFJU ? 'O Encontro Começa em' : 'A Reunião Começa em'}
                 </span>
 
                 {/* Digital Pod Boxes */}
-                <div className="flex items-center justify-center gap-5 xl:gap-7 w-full max-w-md">
+                <div className="flex items-center justify-center gap-5 @[1280px]:gap-7 w-full max-w-md">
                   <div className={`flex-1 flex flex-col items-center ${
                     isFJU ? 'bg-black/60 border border-hl-gold/30' : 'bg-hl-canvas/80 border border-hl-gold/25'
                   } rounded-3xl py-7 shadow-2xl relative overflow-hidden`}>
-                    <span className="font-mono text-[6.5rem] xl:text-[7.8rem] font-black text-white leading-none tabular-nums">
+                    <span className="font-mono text-[6.5rem] @[1280px]:text-[7.8rem] font-black text-white leading-none tabular-nums">
                       {formatMinutesPart}
                     </span>
-                    <span className="text-hl-gold-bright/90 text-sm xl:text-base font-mono uppercase tracking-[0.25em] font-extrabold mt-3">
+                    <span className="text-hl-gold-bright/90 text-sm @[1280px]:text-base font-mono uppercase tracking-[0.25em] font-extrabold mt-3">
                       Minutos
                     </span>
                   </div>
@@ -896,10 +847,10 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                   <div className={`flex-1 flex flex-col items-center ${
                     isFJU ? 'bg-black/60 border border-hl-gold/30' : 'bg-hl-canvas/80 border border-hl-gold/25'
                   } rounded-3xl py-7 shadow-2xl relative overflow-hidden`}>
-                    <span className="font-mono text-[6.5rem] xl:text-[7.8rem] font-black text-white leading-none tabular-nums">
+                    <span className="font-mono text-[6.5rem] @[1280px]:text-[7.8rem] font-black text-white leading-none tabular-nums">
                       {formatSecondsPart}
                     </span>
-                    <span className="text-hl-gold-bright/90 text-sm xl:text-base font-mono uppercase tracking-[0.25em] font-extrabold mt-3">
+                    <span className="text-hl-gold-bright/90 text-sm @[1280px]:text-base font-mono uppercase tracking-[0.25em] font-extrabold mt-3">
                       Segundos
                     </span>
                   </div>
@@ -923,7 +874,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               </div>
 
               {/* Bottom Solemn Advice */}
-              <p className="text-hl-soft text-xl xl:text-2xl text-center max-w-sm font-normal leading-relaxed">
+              <p className="text-hl-soft text-xl @[1280px]:text-2xl text-center max-w-sm font-normal leading-relaxed">
                 {isFJU
                   ? "Aquece aí que estamos nos preparativos finais!"
                   : "Mantenha sua mente em oração e expectativa pela Palavra de Deus."
@@ -955,7 +906,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         ) : isJustStarted ? (
           <motion.div
             key="just-started"
-            initial={{ opacity: 0 }}
+            initial={reducedMotion?false:{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
@@ -974,7 +925,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         ) : isLooping ? (
           <motion.div
             key="looping"
-            initial={{ opacity: 0 }}
+            initial={reducedMotion?false:{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
@@ -983,7 +934,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             <header className={`h-[145px] shrink-0 px-20 flex items-center justify-between border-b border-white/[0.08] bg-hl-canvas/75 backdrop-blur-md relative z-50`}>
               <div className="flex flex-col justify-center">
                 <div>
-                  <h1 className="font-sans font-black text-[3rem] xl:text-[3.3rem] tracking-[0.12em] text-white leading-none uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                  <h1 className="font-sans font-black text-[3rem] @[1280px]:text-[3.3rem] tracking-[0.12em] text-white leading-none uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                     {churchInfo.name}
                   </h1>
                   <p className={`text-2xl font-black tracking-[0.25em] uppercase mt-1.5 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'}`}>
@@ -995,26 +946,26 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               <div className="flex items-center gap-10">
                 <div className="flex items-center gap-8">
                   <div className="text-right">
-                    <span className="text-sm xl:text-base font-black text-hl-gold-bright/90 tracking-[0.2em] uppercase block mb-1">
-                      {isFJU ? 'O Encontro Começa em:' : 'A Reunião Começa em:'}
+                    <span className="text-sm @[1280px]:text-base font-black text-hl-gold-bright/90 tracking-[0.2em] uppercase block mb-1">
+                      {nextMeetingDate ? isFJU ? 'O Encontro Começa em:' : 'A Reunião Começa em:' : 'Agenda'}
                     </span>
-                    <div className="flex items-baseline justify-end gap-1.5 font-mono text-white text-5xl font-black tracking-tight">
+                    {nextMeetingDate ? <div className="flex items-baseline justify-end gap-1.5 font-mono text-white text-5xl font-black tracking-tight">
                       <span>{hoursStr}</span>
                       <span className="text-xl font-sans text-hl-muted uppercase font-extrabold mr-2">h</span>
                       <span className={!isMiniature ? `${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'} animate-pulse` : ""}>:</span>
                       <span>{minutesStr}</span>
                       <span className="text-xl font-sans text-hl-muted uppercase font-extrabold">m</span>
-                    </div>
+                    </div> : <p className="text-2xl text-hl-copy">Sem reunião agendada</p>}
                   </div>
 
                   {!isMiniature && (
                     <>
                       <div className="h-14 w-[1px] bg-white/[0.15]" />
                       <div className={`border-2 px-7 py-3 rounded-2xl flex flex-col items-center justify-center ${isFJU ? 'bg-hl-gold-strong/15 border-hl-gold/40 shadow-lg' : 'bg-white/[0.06] border-white/[0.15] shadow-lg'}`}>
-                        <span className={`font-mono text-3xl xl:text-4xl font-black tracking-wider ${isFJU ? 'text-hl-gold-bright' : 'text-hl-copy'}`}>
+                        <span className={`font-mono text-3xl @[1280px]:text-4xl font-black tracking-wider ${isFJU ? 'text-hl-gold-bright' : 'text-hl-copy'}`}>
                           {format(currentTime, 'HH:mm:ss')}
                         </span>
-                        <span className={`font-sans text-sm xl:text-base font-bold tracking-[0.15em] uppercase mt-1 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright/90'}`}>
+                        <span className={`font-sans text-sm @[1280px]:text-base font-bold tracking-[0.15em] uppercase mt-1 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright/90'}`}>
                           {format(currentTime, "EEEE, dd 'de' MMMM", { locale: ptBR })}
                         </span>
                       </div>
@@ -1043,7 +994,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       <AnimatePresence>
         {tickerText && !blackoutEnabled && (
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={reducedMotion?false:{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             className="absolute bottom-0 left-0 w-full h-20 bg-hl-gold-strong/90 backdrop-blur-md z-[100] flex items-center overflow-hidden border-t border-hl-gold/50"
@@ -1062,9 +1013,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
       {/* SYNC TOAST ON PROJECTION */}
       <AnimatePresence>
-        {syncStatus?.active && (
+        {isMiniature && syncStatus?.active && (
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
+            initial={reducedMotion?false:{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 50 }}
             className="absolute top-10 right-10 z-[200] bg-black/80 backdrop-blur-md border border-hl-gold/30 px-6 py-4 rounded-2xl flex items-center gap-4"
@@ -1087,6 +1038,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div></MotionConfig>
   );
 };

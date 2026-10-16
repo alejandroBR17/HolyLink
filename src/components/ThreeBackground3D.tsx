@@ -1,3 +1,4 @@
+import {useReducedMotion} from 'motion/react';
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
@@ -164,6 +165,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
   onStatus,
   compatible = false,
 }) => {
+  const reducedMotion=useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   const [fallback, setFallback] = useState(false);
 
@@ -327,13 +329,14 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
 
     const animate = (now: number) => {
       if (isContextLost) return;
-      animationFrameId = requestAnimationFrame(animate);
+      if(!reducedMotion)animationFrameId = requestAnimationFrame(animate);
+      if(document.visibilityState==='hidden'&&!reducedMotion)return;
 
       const delta = now - lastTime;
-      if (delta < frameInterval) return;
+      if (!reducedMotion && delta < frameInterval) return;
       lastTime = now - (delta % frameInterval);
 
-      const elapsedTime = (now - startTime) * 0.001;
+      const elapsedTime = reducedMotion ? .5 :(now - startTime) * 0.001;
       uniforms.uTime.value = elapsedTime;
 
       // Movimento ultra leve das micro-partículas
@@ -369,6 +372,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       particleCamera.aspect = width / height;
       particleCamera.updateProjectionMatrix();
       renderer.setSize(width, height);
+      if(reducedMotion)animate(performance.now());
     };
 
     window.addEventListener('resize', handleResize);
@@ -387,19 +391,20 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       particleMaterial.dispose();
       pTexture.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
 
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [disabled, isFJU, stylePreset, fpsLimit, intensity, onStatus, compatible]);
+  }, [disabled, isFJU, stylePreset, fpsLimit, intensity, onStatus, compatible, reducedMotion]);
 
   if (disabled || stylePreset === 'off' || stylePreset === 'particles_2d') return null;
 
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 z-0 pointer-events-none overflow-hidden ${fallback || compatible ? 'atmosphere-fallback-host' : ''}`}
+      className={`absolute inset-0 z-0 pointer-events-none overflow-hidden ${fallback || compatible ? 'atmosphere-fallback-host' : ''} ${reducedMotion?'atmosphere-still':''}`}
       data-renderer={fallback || compatible ? 'compatible' : 'webgl'}
     >{(fallback || compatible) && <div className={`atmosphere-compatible atmosphere-${stylePreset === 'auto' ? isFJU ? 'fju_aura' : 'aurora' : stylePreset} atmosphere-intensity-${intensity}`} aria-hidden="true"><i/><i/><i/></div>}</div>
   );

@@ -17,9 +17,10 @@ export function ProjectionText({text, reference}: {text: string; reference?: str
       body.style.fontSize = `${size}px`;
       while (body.scrollHeight > available && size > 30) {size = Math.max(30, size - 2); body.style.fontSize = `${size}px`;}
     };
-    fit();
+    let alive=true;fit();
+    void document.fonts?.ready.then(()=>{if(alive)fit();});
     const observer = new ResizeObserver(fit); observer.observe(container);
-    return () => observer.disconnect();
+    return () => {alive=false;observer.disconnect();};
   }, [text, reference]);
   return <div ref={frame} className="projection-reading">
     <div className="projection-reading-rule" aria-hidden="true" />

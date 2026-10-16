@@ -73,11 +73,13 @@ export function useCustomMedia(
             let itemUrl = '';
 
             // Reuse existing Object URL if valid
-            if (existing && existing.url && existing.url.startsWith('blob:')) {
+            const forceReload = mediaUpdateTrigger.startsWith(`retry:${item.id}:`);
+            if (existing && existing.url && existing.url.startsWith('blob:') && !forceReload) {
               itemUrl = existing.url;
             } else if (item.blob instanceof Blob) {
               try {
                 itemUrl = URL.createObjectURL(item.blob);
+                if(existing?.url?.startsWith('blob:'))objectUrlsToRevoke.push(existing.url);
               } catch (e) {
                 console.error("Error creating Object URL for item:", item.id, e);
               }

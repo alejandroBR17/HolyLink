@@ -1,6 +1,8 @@
+import {useReducedMotion} from 'motion/react';
 import React, { useRef, useEffect } from 'react';
 
 export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }) => {
+  const reducedMotion=useReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
         ctx.globalAlpha = 1.0;
       });
 
-      animationFrameId = requestAnimationFrame(render);
+      if(!reducedMotion)animationFrameId = requestAnimationFrame(render);
     };
 
     render();
@@ -62,7 +64,7 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [disabled]);
+  }, [disabled,reducedMotion]);
 
   if (disabled) return null;
 

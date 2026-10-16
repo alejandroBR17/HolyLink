@@ -1,3 +1,4 @@
+import {ProjectionStage} from './components/ProjectionStage';
 import {HeaderScroll} from './utils/header-scroll';
 import {AppUpdateNotice} from './components/AppUpdateNotice';
 import {selectProjectionVerse} from './utils/verse-selection';
@@ -544,7 +545,9 @@ export default function App() {
     }
   }, [manualSlideOverride, customMediaList, customMeetings, isMediaLoaded, isProjectionView, updateStateAndBroadcast,todayStr]);
 
+  const currentOutputRef=useRef(currentSlideId);currentOutputRef.current=currentSlideId;
   const handleVideoEnded = useCallback(() => {
+    if(currentOutputRef.current!==currentSlideId)return;
     if (videoPinBehavior === 'unpin') {
       const activeSlideId = currentSlideId;
       if (activeSlides.length > 0) {
@@ -573,17 +576,7 @@ export default function App() {
     updateStateAndBroadcast('activeVerseIndex', null);
     updateStateAndBroadcast('manualSlideOverride', activeSlides[next]);
   };
-  const [isCurrentlyFullscreen, setIsCurrentlyFullscreen] = useState(false);
-
-  useEffect(() => {
-    const handleFsChange = () => {
-      setIsCurrentlyFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
-  }, []);
-
-  if (isSmartBooting) {
+  if (isSmartBooting && !isProjectionView) {
     return (
       <SmartSplashLoader
         mediaReady={isMediaLoaded}
@@ -652,7 +645,7 @@ export default function App() {
               setProjectionWin(win); updateStateAndBroadcast('isProjectionOpen', true); updateStateAndBroadcast('projectionCloseTrigger', null);
             }}><ExternalLink size={18} aria-hidden="true" /><span>{isProjectionOpen ? 'Fechar telão' : 'Abrir telão'}</span></button>
             <details className="holy-options"><summary aria-label="Mais opções">Opções<ChevronDown size={16} aria-hidden="true" /></summary><div>
-              <button type="button" onClick={event => {setIsLocalProjection(true); toggleFullscreen(); event.currentTarget.closest('details')?.removeAttribute('open');}}><Maximize size={18} />Projetar neste aparelho</button>
+              <button type="button" onClick={event => {setIsLocalProjection(true); event.currentTarget.closest('details')?.removeAttribute('open');}}><Maximize size={18} />Projetar neste aparelho</button>
               <button type="button" onClick={event => {setActiveMobileTab('sync'); event.currentTarget.closest('details')?.removeAttribute('open');}}><Smartphone size={18} />Conectar celular</button>
               <button type="button" onClick={event => {setShowPwaModal(true); event.currentTarget.closest('details')?.removeAttribute('open');}}><Download size={18} />Instalar HolyLink</button>
               {isElectron && <button type="button" onClick={() => {ipcRendererRef.current?.send(isProjectionWindowShowing ? 'hide-projection' : 'show-projection'); setIsProjectionWindowShowing(!isProjectionWindowShowing);}}><Tv size={18} />Alternar janela do projetor</button>}
@@ -893,40 +886,9 @@ export default function App() {
     );
   }
 
-  // MAIN HDMI 16:9 DUAL-SCREEN VIEWPORT
+  // Preparation belongs to this output window, not to the audience composition.
   return (
-    <div
-      onClick={async () => {
-        if (!isCurrentlyFullscreen) {
-          try {
-            if ('getScreenDetails' in window) {
-              const screenDetails = await (window as any).getScreenDetails();
-              const secondaryScreen = screenDetails.screens.find((s: any) => s.isExtended || !s.isPrimary);
-
-              if (secondaryScreen) {
-                await (document.documentElement as any).requestFullscreen({ screen: secondaryScreen });
-                return;
-              }
-            }
-          } catch (e) {
-            console.warn("Window Management API failed:", e);
-          }
-          document.documentElement.requestFullscreen().catch(() => {});
-        }
-      }}
-      className={`holy-theme holy-projection-window w-screen h-screen bg-black overflow-hidden relative select-none font-sans flex items-center justify-center ${isCurrentlyFullscreen ? 'cursor-none' : 'cursor-pointer'}`}
-    >
-
-      {!isCurrentlyFullscreen && (
-        <div className="holy-fullscreen-prompt absolute inset-0 z-[200] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white p-10 text-center animate-in fade-in duration-500">
-          <div className="bg-hl-gold text-black p-6 rounded-2xl mb-6 shadow-[0_0_50px_rgba(255,211,79,0.25)]">
-            <Maximize className="w-12 h-12" />
-          </div>
-          <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Ativar tela cheia no telão</h2>
-          <p className="text-hl-soft text-xl font-medium">Abra esta janela no telão ligado por HDMI e clique para entrar em tela cheia.</p>
-        </div>
-      )}
-
+    <ProjectionStage local={isLocalProjection} ready={isMediaLoaded} loadError={mediaLoadError} currentId={currentSlideId} onExit={()=>setIsLocalProjection(false)} onNext={()=>navigateOutput(1)} onRetry={()=>window.dispatchEvent(new CustomEvent('projection_sync_update',{detail:{key:'mediaUpdateTrigger',value:'retry:'+currentSlideId+':'+Date.now()}}))}>
       {/* 16:9 PROJECTION FRAME */}
       <div
         id="painel-16-9"
@@ -982,68 +944,6 @@ export default function App() {
         />
       </div>
 
-      {/* PRELOAD SYSTEM */}
-      <div className="hidden absolute w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        {customMediaList.map((media) => {
-          if (!media.url) return null;
-          if (media.type === 'image') {
-            return (
-              <img
-                key={`preload-${media.id}`}
-                src={media.url}
-                alt=""
-                referrerPolicy="no-referrer"
-              />
-            );
-          } else {
-            return (
-              <video
-                key={`preload-${media.id}`}
-                src={media.url}
-                preload="auto"
-                muted
-              />
-            );
-          }
-        })}
-      </div>
-
-      {shouldRotate && (
-        <div className="absolute top-6 left-6 z-50 bg-black/95 text-white border border-hl-line rounded-xl px-5 py-3 text-sm flex items-center gap-2 font-medium pointer-events-none tracking-wide shadow-xl backdrop-blur-md animate-pulse">
-          <Tv className="w-5 h-5 text-hl-gold" />
-          <span>Modo Widescreen Bloqueado. Deite a tela.</span>
-        </div>
-      )}
-
-      <button
-        onClick={toggleFullscreen}
-        className="absolute top-6 right-6 z-50 bg-black/80 hover:bg-black/95 text-white border border-hl-line hover:border-hl-line-strong rounded-full p-4 shadow-xl backdrop-blur-md transition-all cursor-pointer flex items-center justify-center gap-2 group lg:hidden"
-        aria-label="Alternar Tela Cheia"
-      >
-        {isFullscreen ? (
-          <Minimize className="w-6 h-6 text-hl-gold" />
-        ) : (
-          <Maximize className="w-6 h-6 text-hl-gold" />
-        )}
-        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap text-hl-soft text-sm font-semibold pr-0 group-hover:pr-2">
-          {isFullscreen ? "Sair" : "Tela Cheia"}
-        </span>
-      </button>
-
-      <CustomModal
-        isOpen={modalConfig.isOpen}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        onConfirm={modalConfig.onConfirm}
-        onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
-        variant={modalConfig.variant}
-      />
-      <CustomToast
-        isVisible={toastConfig.isVisible}
-        message={toastConfig.message}
-        type={toastConfig.type}
-        onClose={() => setToastConfig(prev => ({ ...prev, isVisible: false }))}
-      />
-    </div>
+    </ProjectionStage>
   );
 }
