@@ -1,3 +1,4 @@
+import {deriveCountdown} from './utils/countdown';
 import {ProjectionStage} from './components/ProjectionStage';
 import {HeaderScroll} from './utils/header-scroll';
 import {AppUpdateNotice} from './components/AppUpdateNotice';
@@ -102,6 +103,7 @@ export default function App() {
     pausedSeconds,
     countdownPaused,
     countdownOffset,
+    countdownAnchor,
     dismissedJustStarted,
 
     videoPinBehavior,
@@ -233,40 +235,12 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Meeting & Countdown calculation logic
-  const { nextMeeting, nextMeetingDate, ongoingMeeting } = getNextMeeting(currentTime, customMeetings);
-
-  let isJustStartedRaw = false;
-  if (ongoingMeeting) {
-    const mStart = new Date(currentTime);
-    mStart.setHours(ongoingMeeting.hours, ongoingMeeting.minutes, 0, 0);
-    if(mStart>currentTime)mStart.setDate(mStart.getDate()-1);
-    const elapsedSinceStart = currentTime.getTime() - mStart.getTime();
-    if (elapsedSinceStart >= 0 && elapsedSinceStart <= 30 * 60 * 1000) {
-      isJustStartedRaw = true;
-    }
-  }
-
-  const adjustedNextMeetingDate = nextMeetingDate?new Date(nextMeetingDate.getTime() + countdownOffset):null;
-  const diffMs = adjustedNextMeetingDate?adjustedNextMeetingDate.getTime() - currentTime.getTime():Infinity;
-
-  if (!isJustStartedRaw && diffMs <= 0) {
-    isJustStartedRaw = true;
-  }
-
-  let isJustStarted = isJustStartedRaw && !dismissedJustStarted;
-  let diffSeconds = nextMeetingDate?Math.max(0, Math.floor(diffMs / 1000)):0;
-
-  if (nextMeetingDate && countdownPaused && pausedSeconds !== null) {
-    diffSeconds = pausedSeconds;
-  }
-
-  const formatMinutesPart = Math.floor(diffSeconds / 60).toString().padStart(2, '0');
-  const formatSecondsPart = (diffSeconds % 60).toString().padStart(2, '0');
-
-  let isFinalMinute = Boolean(nextMeetingDate) && !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
-  let isFinalFiveMinutes = Boolean(nextMeetingDate) && !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
-  let isLooping = !isJustStarted && !isFinalFiveMinutes && !isFinalMinute;
+  const {ongoingMeeting}=getNextMeeting(currentTime,customMeetings);
+  const countdown=deriveCountdown(currentTime,customMeetings,countdownOffset,countdownPaused,pausedSeconds,countdownAnchor,dismissedJustStarted);
+  const {nextMeeting,nextMeetingDate,isJustStartedRaw}=countdown;
+  let {isJustStarted,diffSeconds,isFinalMinute,isFinalFiveMinutes,isLooping}=countdown;
+  const formatMinutesPart=Math.floor(diffSeconds/60).toString().padStart(2,'0');
+  const formatSecondsPart=(diffSeconds%60).toString().padStart(2,'0');
 
   // No modo Pós-Reunião, desativamos contagem regressiva de início e priorizamos carrossel de saída
   if (projectionMode === 'post') {
@@ -903,6 +877,7 @@ export default function App() {
         className="bg-hl-canvas text-white shadow-[0_0_250px_rgba(0,0,0,0.99)] overflow-hidden flex flex-col z-10"
       >
         <ProjectionContent
+          projectionMode={projectionMode}
           currentTime={currentTime}
           isLooping={isLooping}
           isFinalFiveMinutes={isFinalFiveMinutes}

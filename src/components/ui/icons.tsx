@@ -168,3 +168,6 @@ export const HeartHandshake=themed(PhHandHeart);
 export const Info=themed(PhInfo);
 export const WifiOff=themed(PhWifiSlash);
 export const PrayingHands=themed(PhHandsPraying);
+
+// A church pew: continuous back and seat, with solid ends rather than school-chair legs.
+export function ChurchBench({size=32,color='currentColor',className,style}:IconProps){return <svg width={size} height={size} viewBox="0 0 256 256" fill="none" stroke={color} strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" className={className} style={style} aria-hidden="true"><path d="M48 128V64a16 16 0 0 1 16-16h128a16 16 0 0 1 16 16v64M40 136h176v32H40zM24 104h16v104H24zM216 104h16v104h-16zM48 184h160"/></svg>;}

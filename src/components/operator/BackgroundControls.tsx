@@ -7,8 +7,8 @@ const styles = [
   {id:'aurora',label:'Aurora',description:'Luz dourada em movimento.',icon:Waves},
   {id:'veil',label:'Véu',description:'Ondas suaves como tecido.',icon:Wind},
   {id:'fju_aura',label:'Aura',description:'Luz e energia ao redor do centro.',icon:CircleDot},
-  {id:'particles_2d',label:'Partículas 2D',description:'Pontos de luz com movimento leve.',icon:Sparkles},
-  {id:'off',label:'Sem efeito',description:'Desliga a camada animada do fundo.',icon:CircleOff},
+  {id:'particles_2d',label:'Partículas 2D',description:'Fundo leve, mundo e fogo sem 3D.',icon:Sparkles},
+  {id:'off',label:'Sem efeito',description:'Fundo desligado; mundo e fogo parados.',icon:CircleOff},
 ] as const;
 export function BackgroundControls({style,fps,intensity,update}: {style:BackgroundStyleOption; fps:30|60; intensity:'high'|'medium'|'low'; update:(key:string,value:unknown)=>void}) {
   const [preview, setPreview] = useState(false);
@@ -21,7 +21,7 @@ export function BackgroundControls({style,fps,intensity,update}: {style:Backgrou
       <label><Gauge size={16}/>Limite da animação<select aria-label="Limite da animação" disabled={style === 'off' || style === 'particles_2d'} value={fps} onChange={e => update('background3DFps',Number(e.target.value))}><option value={30}>30 FPS · menor consumo</option><option value={60}>60 FPS · mais fluidez</option></select></label>
       <label>Intensidade e detalhe<select aria-label="Intensidade e detalhe" disabled={style === 'off' || style === 'particles_2d'} value={intensity} onChange={e => update('background3DIntensity',e.target.value)}><option value="low">Leve</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
     </div>
-    <p className="operator-muted">FPS é um limite, não uma garantia. Partículas 2D têm movimento próprio. A qualidade geral deste aparelho fica em Desempenho.</p>
+    <p className="operator-muted">Mundo e fogo acompanham estes ajustes: Sem efeito deixa ambos parados; Partículas 2D usa a versão leve. Os demais estilos permitem 3D, limitado também pelo perfil em Desempenho. FPS é um limite, não uma garantia.</p>
     <details className="bible-picker ambience-preview" onToggle={e => setPreview(e.currentTarget.open)}><summary><Eye size={17}/>Conferir efeito neste aparelho · 16:9</summary>
       {preview && <><div className="ambience-preview-frame" data-style={style}>
         <ThreeBackground3D stylePreset={style} fpsLimit={fps} intensity={intensity} onStatus={setStatus} compatible={compatible}/><ParticlesBackground disabled={style !== 'particles_2d'}/>

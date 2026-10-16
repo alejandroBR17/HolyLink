@@ -146,6 +146,7 @@ export function MonitorPanel({
         tools={<><button type="button" onClick={()=>setShowShortcutsModal(true)} title="Atalhos e Comandos" aria-label="Atalhos da projeção"><Keyboard size={20}/></button></>}
       >
               <ProjectionContent
+                projectionMode={projectionMode}
                 currentTime={currentTime}
                 isLooping={isLooping}
                 isFinalFiveMinutes={isFinalFiveMinutes}

@@ -1,5 +1,6 @@
+import {CountdownReadout,ProjectionCountdown,ProjectionMeetingStart} from './ProjectionCountdown';
 import {ProjectedImage,ProjectionMediaFallback} from './ProjectionMedia';
-import {Smartphone,Bell,Chair,Restroom,MessageSquareOff,Clock,Instagram,Flame,RefreshCw} from './ui/icons';
+import {Smartphone,Bell,ChurchBench,PrayingHands,Restroom,MessageSquareOff,Clock,Instagram,Flame,RefreshCw} from './ui/icons';
 import {isYouthProjection} from '../utils/projection-theme';
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion, MotionConfig } from 'motion/react';
@@ -25,6 +26,7 @@ interface CustomMedia {
 }
 
 interface ProjectionContentProps {
+  projectionMode?:'pre'|'post';
   currentTime: Date;
   isLooping: boolean;
   isFinalFiveMinutes: boolean;
@@ -67,6 +69,7 @@ interface ProjectionContentProps {
 }
 
 export const ProjectionContent: React.FC<ProjectionContentProps> = ({
+  projectionMode='pre',
   currentTime,
   isLooping,
   isFinalFiveMinutes,
@@ -301,7 +304,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         if (isFJU) {
           return (
             <IconSlide
-              icon={Chair}
+              icon={ChurchBench}
               title="Cola aí!"
               subtitle="Encontre seu lugar e chega mais, o Encontro Jovem vai começar!"
               layout="split-left"
@@ -313,7 +316,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         }
         return (
           <IconSlide
-            icon={Chair}
+            icon={ChurchBench}
             title="Fique à vontade"
             subtitle="Procure um assento e acomode-se para o início da reunião."
             layout="split-left"
@@ -375,7 +378,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             <IconSlide
               icon={MessageSquareOff}
               title="Fica Ligado"
-              subtitle="O Encontro Jovem está quase começando. Encerre os papos e prepare-se, não perde nada!"
+              subtitle="Silencie as conversas e prepare-se."
               layout="split-left"
               variant="fju"
               category="FORÇA JOVEM UNIVERSAL"
@@ -388,7 +391,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           <IconSlide
             icon={MessageSquareOff}
             title="Momento de Concentração"
-            subtitle="À medida que a reunião se aproxima, vá diminuindo as conversas e concentre-se na presença de Deus."
+            subtitle="Silencie as conversas. Prepare-se para a reunião."
             layout="split-left"
             category="CONCENTRAÇÃO"
             effectiveMode={effectiveMode}
@@ -412,9 +415,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         }
         return (
           <IconSlide
-            icon={Clock}
-            title="A reunião começa"
-            subtitle="em instantes..."
+            icon={isCountdownActive?PrayingHands:Clock}
+            title={isCountdownActive?"Prepare seu coração":"A reunião começa"}
+            subtitle={isCountdownActive?"Acolha este momento de fé.":"em instantes..."}
             pulse
             layout="center"
             effectiveMode={effectiveMode}
@@ -464,6 +467,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       case 'world_god':
         return (
           <WorldGodSlide
+            backgroundStyle={background3DStyle} fps={background3DFps} detail={background3DIntensity}
             variant={isFJU ? 'fju' : undefined}
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
@@ -472,6 +476,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       case 'baptism':
         return (
           <BaptismSlide
+            post={projectionMode==='post'}
             variant={isFJU ? 'fju' : undefined}
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
@@ -568,351 +573,15 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
               isLightModeActive={isLightModeActive}
             />
           </motion.div>
-        ) : isFinalMinute ? (
-          <motion.div
-            key="final-minute"
-            initial={reducedMotion?false:{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex w-full h-full bg-hl-canvas relative overflow-hidden"
-          >
-            {/* Ambient Background Glows */}
-            {!isLightModeActive && (
-              <>
-                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none blur-[180px] ${
-                  isFJU ? 'bg-hl-gold-strong/15' : 'bg-hl-gold/10'
-                }`} />
-                <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/40 to-black pointer-events-none" />
-              </>
-            )}
-
-            {!isCurrentSlideVideo ? (
-              <div className="w-full h-full flex flex-col items-center justify-center relative z-20 px-8 select-none">
-                {/* Header Badge */}
-                <motion.div
-                  initial={reducedMotion?false:{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                  className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-8 ${
-                    isFJU
-                      ? 'bg-hl-gold/10 border border-hl-gold/30'
-                      : 'bg-white/[0.04] border border-hl-gold/25'
-                  } backdrop-blur-md`}
-                >
-                  <span className={`w-2.5 h-2.5 rounded-full ${
-                    isFJU ? 'bg-hl-gold-bright animate-ping' : 'bg-hl-gold-bright'
-                  }`} />
-                  <span className={`text-xl @[1280px]:text-2xl font-black tracking-[0.3em] uppercase font-mono ${
-                    isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright/95'
-                  }`}>
-                    {isFJU ? 'CONTAGEM REGRESSIVA • FJU' : 'CONTAGEM REGRESSIVA'}
-                  </span>
-                </motion.div>
-
-                {/* Main Title */}
-                <motion.h1
-                  initial={reducedMotion?false:{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.1 }}
-                  className="font-sans font-black text-[4.5rem] @[1280px]:text-[5.8rem] text-white uppercase tracking-tight leading-none mb-10 text-center drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]"
-                >
-                  {isFJU ? 'O Encontro Vai Começar!' : 'A Reunião Vai Começar'}
-                </motion.h1>
-
-                {/* Monumental Circular Gauge & Number */}
-                <div className="relative w-[340px] h-[340px] @[1280px]:w-[420px] @[1280px]:h-[420px] flex items-center justify-center my-2">
-                  <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 400 400">
-                    {/* Background Track */}
-                    <circle
-                      cx="200"
-                      cy="200"
-                      r="175"
-                      className="stroke-white/[0.06]"
-                      strokeWidth="10"
-                      fill="transparent"
-                    />
-                    {/* Glowing Progress Ring */}
-                    <circle
-                      cx="200"
-                      cy="200"
-                      r="175"
-                      className={`${isFJU ? 'stroke-amber-400' : 'stroke-yellow-400'} transition-all duration-1000 ease-linear`}
-                      strokeWidth="12"
-                      strokeDasharray={2 * Math.PI * 175}
-                      strokeDashoffset={(2 * Math.PI * 175) * (1 - (diffSeconds / 60))}
-                      strokeLinecap="round"
-                      fill="transparent"
-                    />
-                  </svg>
-
-                  {/* Inner Glass Disc */}
-                  <div className={`absolute inset-6 rounded-full ${
-                    isFJU
-                      ? 'bg-black/60 border border-hl-gold/30'
-                      : 'bg-hl-canvas/80 border border-hl-gold/25'
-                  } backdrop-blur-xl flex flex-col items-center justify-center shadow-2xl overflow-hidden`}>
-                    <AnimatePresence mode="popLayout">
-                      <motion.div
-                        key={diffSeconds}
-                        initial={reducedMotion?false:{ opacity: 0, scale: 0.75, y: 15 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 1.25, y: -15 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                        className={`font-mono text-[9.5rem] @[1280px]:text-[12.5rem] font-black leading-none tracking-tighter tabular-nums ${
-                          diffSeconds <= 10
-                            ? (isFJU
-                                ? 'text-hl-gold-bright drop-shadow-[0_0_60px_rgba(255,211,79,0.85)]'
-                                : 'text-hl-gold-bright drop-shadow-[0_0_55px_rgba(255,211,79,0.7)]')
-                            : 'text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.2)]'
-                        }`}
-                      >
-                        {diffSeconds}
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </div>
-
-                {/* Subtitle / Reverence Guidance */}
-                <div className="flex flex-col items-center text-center mt-8">
-                  <span className="text-hl-gold-bright/90 text-2xl @[1280px]:text-3xl font-mono uppercase tracking-[0.35em] font-extrabold mb-3">
-                    {diffSeconds === 1 ? "Segundo Restante" : "Segundos Restantes"}
-                  </span>
-                  <p className="text-hl-soft text-2xl @[1280px]:text-3xl font-normal max-w-3xl leading-relaxed">
-                    {isFJU
-                      ? "Vem pra FJU! Desliga as notificações e chega mais!"
-                      : "Em oração e reverência, prepare-se para ouvir a voz do Senhor."
-                    }
-                  </p>
-                </div>
-              </div>
-            ) : finalMinuteDisplayMode === 'full_video' ? (
-              <div className="w-full h-full flex items-center justify-center relative overflow-hidden bg-black">
-                <AnimatePresence>
-                  <motion.div
-                    key={currentSlideId}
-                    {...getTransitionVariants(currentSlideId)}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
-                    {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            ) : (
-              <>
-                <div className={`w-[36%] h-full flex flex-col items-center justify-center border-r ${
-                  isFJU ? 'border-hl-gold/20 bg-hl-panel/90' : 'border-hl-gold/20 bg-hl-canvas/95'
-                } backdrop-blur-2xl z-20 px-8 select-none`}>
-                  <div className={`inline-flex items-center gap-3 px-6 py-2 rounded-full mb-6 ${
-                    isFJU ? 'bg-hl-gold/10 border border-hl-gold/30' : 'bg-white/[0.04] border border-hl-gold/25'
-                  }`}>
-                    <span className={`w-2 h-2 rounded-full ${isFJU ? 'bg-hl-gold-bright animate-ping' : 'bg-hl-gold-bright'}`} />
-                    <span className={`text-base @[1280px]:text-lg font-black tracking-[0.25em] uppercase font-mono ${
-                      isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'
-                    }`}>
-                      {isFJU ? 'FJU AO VIVO' : 'CONTAGEM REGRESSIVA'}
-                    </span>
-                  </div>
-
-                  <span className="text-white text-3xl @[1280px]:text-4xl font-extrabold uppercase tracking-tight mb-8 text-center">
-                    {isFJU ? 'O Encontro Começa Em' : 'A Reunião Começa Em'}
-                  </span>
-
-                  <div className="relative w-[260px] h-[260px] @[1280px]:w-[300px] @[1280px]:h-[300px] flex items-center justify-center">
-                    <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 300 300">
-                      <circle
-                        cx="150"
-                        cy="150"
-                        r="130"
-                        className="stroke-white/[0.06]"
-                        strokeWidth="8"
-                        fill="transparent"
-                      />
-                      <circle
-                        cx="150"
-                        cy="150"
-                        r="130"
-                        className={`${isFJU ? 'stroke-amber-400' : 'stroke-yellow-400'} transition-all duration-1000 ease-linear`}
-                        strokeWidth="10"
-                        strokeDasharray={2 * Math.PI * 130}
-                        strokeDashoffset={(2 * Math.PI * 130) * (1 - (diffSeconds / 60))}
-                        strokeLinecap="round"
-                        fill="transparent"
-                      />
-                    </svg>
-
-                    <div className={`absolute inset-4 rounded-full ${
-                      isFJU ? 'bg-black/60 border border-hl-gold/30' : 'bg-hl-canvas/80 border border-hl-gold/25'
-                    } flex flex-col items-center justify-center`}>
-                      <AnimatePresence mode="popLayout">
-                        <motion.div
-                          key={diffSeconds}
-                          initial={reducedMotion?false:{ opacity: 0, scale: 0.75, y: 12 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 1.25, y: -12 }}
-                          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                          className={`font-mono text-[7rem] @[1280px]:text-[8.5rem] font-black leading-none tracking-tighter tabular-nums ${
-                            diffSeconds <= 10
-                              ? (isFJU ? 'text-hl-gold-bright drop-shadow-[0_0_40px_rgba(255,211,79,0.8)]' : 'text-hl-gold-bright drop-shadow-[0_0_35px_rgba(255,211,79,0.7)]')
-                              : 'text-white'
-                          }`}
-                        >
-                          {diffSeconds}
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                  </div>
-
-                  <span className="text-hl-gold-bright/90 text-xl @[1280px]:text-2xl font-mono uppercase tracking-[0.3em] font-extrabold mt-6">
-                    {diffSeconds === 1 ? "Segundo" : "Segundos"}
-                  </span>
-                </div>
-
-                <div className="w-[64%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
-                  <div
-                    className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.64]"
-                    style={{
-                      width: '1920px',
-                      height: '1080px',
-                    }}
-                  >
-                    <AnimatePresence>
-                      <motion.div
-                        key={currentSlideId}
-                        {...getTransitionVariants(currentSlideId)}
-                        className="absolute inset-0 flex items-center justify-center"
-                      >
-                        {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </div>
-              </>
-            )}
-          </motion.div>
-        ) : isFinalFiveMinutes ? (
-          <motion.div
-            key="final-five"
-            initial={reducedMotion?false:{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 flex w-full h-full bg-hl-canvas relative overflow-hidden"
-          >
-            {/* Left Pod: 38% Width */}
-            <div className={`w-[38%] h-full flex flex-col items-center justify-between border-r ${
-              isFJU ? 'border-hl-gold/20 bg-hl-panel/90' : 'border-hl-gold/20 bg-hl-canvas/95'
-            } backdrop-blur-2xl z-20 px-10 py-16 select-none`}>
-              {/* Top Badge */}
-              <div className={`inline-flex items-center gap-3 px-7 py-2.5 rounded-full ${
-                isFJU ? 'bg-hl-gold/10 border border-hl-gold/30' : 'bg-white/[0.04] border border-hl-gold/25'
-              }`}>
-                <span className={`w-2.5 h-2.5 rounded-full ${isFJU ? 'bg-hl-gold-bright animate-ping' : 'bg-hl-gold-bright'}`} />
-                <span className={`text-lg @[1280px]:text-xl font-black tracking-[0.25em] uppercase font-mono ${
-                  isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright/95'
-                }`}>
-                  {isFJU ? 'FALTAM 5 MINUTOS • FJU' : 'PREPARAÇÃO PARA A REUNIÃO'}
-                </span>
-              </div>
-
-              {/* Center Countdown Unit */}
-              <div className="flex flex-col items-center w-full">
-                <span className="text-white text-3xl @[1280px]:text-4xl font-extrabold uppercase tracking-tight mb-8 text-center">
-                  {isFJU ? 'O Encontro Começa em' : 'A Reunião Começa em'}
-                </span>
-
-                {/* Digital Pod Boxes */}
-                <div className="flex items-center justify-center gap-5 @[1280px]:gap-7 w-full max-w-md">
-                  <div className={`flex-1 flex flex-col items-center ${
-                    isFJU ? 'bg-black/60 border border-hl-gold/30' : 'bg-hl-canvas/80 border border-hl-gold/25'
-                  } rounded-3xl py-7 shadow-2xl relative overflow-hidden`}>
-                    <span className="font-mono text-[6.5rem] @[1280px]:text-[7.8rem] font-black text-white leading-none tabular-nums">
-                      {formatMinutesPart}
-                    </span>
-                    <span className="text-hl-gold-bright/90 text-sm @[1280px]:text-base font-mono uppercase tracking-[0.25em] font-extrabold mt-3">
-                      Minutos
-                    </span>
-                  </div>
-
-                  <span className="text-hl-gold-bright font-mono text-5xl font-black mb-6">:</span>
-
-                  <div className={`flex-1 flex flex-col items-center ${
-                    isFJU ? 'bg-black/60 border border-hl-gold/30' : 'bg-hl-canvas/80 border border-hl-gold/25'
-                  } rounded-3xl py-7 shadow-2xl relative overflow-hidden`}>
-                    <span className="font-mono text-[6.5rem] @[1280px]:text-[7.8rem] font-black text-white leading-none tabular-nums">
-                      {formatSecondsPart}
-                    </span>
-                    <span className="text-hl-gold-bright/90 text-sm @[1280px]:text-base font-mono uppercase tracking-[0.25em] font-extrabold mt-3">
-                      Segundos
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress Bar (5 min to 1 min window) */}
-                <div className="w-full max-w-md mt-10">
-                  <div className="w-full h-2.5 bg-white/[0.08] rounded-full overflow-hidden p-0.5">
-                    <div
-                      className={`h-full rounded-full transition-all duration-1000 ${
-                        isFJU
-                          ? 'bg-gradient-to-r from-hl-gold to-hl-gold-bright shadow-[0_0_15px_rgba(255,211,79,0.5)]'
-                          : 'bg-gradient-to-r from-hl-gold-strong to-hl-gold-bright shadow-[0_0_15px_rgba(255,211,79,0.4)]'
-                      }`}
-                      style={{
-                        width: `${Math.min(100, Math.max(0, ((300 - Math.min(300, Math.max(60, diffSeconds))) / 240) * 100))}%`
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Solemn Advice */}
-              <p className="text-hl-soft text-xl @[1280px]:text-2xl text-center max-w-sm font-normal leading-relaxed">
-                {isFJU
-                  ? "Aquece aí que estamos nos preparativos finais!"
-                  : "Mantenha sua mente em oração e expectativa pela Palavra de Deus."
-                }
-              </p>
-            </div>
-
-            {/* Right Slide Stage: 62% Width */}
-            <div className="w-[62%] h-full flex items-center justify-center relative overflow-hidden bg-transparent">
-              <div
-                className="absolute origin-center flex flex-col items-center justify-center transform scale-[0.62]"
-                style={{
-                  width: '1920px',
-                  height: '1080px',
-                }}
-              >
-                <AnimatePresence>
-                  <motion.div
-                    key={currentSlideId}
-                    {...getTransitionVariants(currentSlideId)}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
-                    {clearContentEnabled ? null : renderSlide(currentSlideId)}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </div>
+        ) : isFinalMinute || isFinalFiveMinutes ? (
+          <motion.div key={isFinalMinute?'final-minute':'final-five'} initial={reducedMotion?false:{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:.3}} className="absolute inset-0">
+            <ProjectionCountdown seconds={diffSeconds} final={isFinalMinute} video={isCurrentSlideVideo} fullVideo={finalMinuteDisplayMode==='full_video'}>
+              <AnimatePresence><motion.div key={currentSlideId} {...getTransitionVariants(currentSlideId)} className="absolute inset-0 flex items-center justify-center">{clearContentEnabled?null:renderSlide(currentSlideId)}</motion.div></AnimatePresence>
+            </ProjectionCountdown>
           </motion.div>
         ) : isJustStarted ? (
-          <motion.div
-            key="just-started"
-            initial={reducedMotion?false:{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-0 w-full h-full"
-          >
-            <VerseSlide
-              currentTime={currentTime}
-              customVerseText={customVerseText}
-              customVerseRef={customVerseRef}
-              activeVerseIndex={activeVerseIndex}
-              variant={isFJU ? 'fju' : undefined}
-              effectiveMode={effectiveMode}
-              isLightModeActive={isLightModeActive}
-            />
+          <motion.div key="just-started" initial={reducedMotion?false:{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:.3}} className="absolute inset-0">
+            <ProjectionMeetingStart><VerseSlide currentTime={currentTime} customVerseText={customVerseText} customVerseRef={customVerseRef} activeVerseIndex={activeVerseIndex} variant={isFJU?'fju':undefined} effectiveMode={effectiveMode} isLightModeActive={isLightModeActive}/></ProjectionMeetingStart>
           </motion.div>
         ) : isLooping ? (
           <motion.div
@@ -937,18 +606,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
               <div className="flex items-center gap-10">
                 <div className="flex items-center gap-8">
-                  <div className="text-right">
-                    <span className="text-sm @[1280px]:text-base font-black text-hl-gold-bright/90 tracking-[0.2em] uppercase block mb-1">
-                      {nextMeetingDate ? isFJU ? 'O Encontro Começa em:' : 'A Reunião Começa em:' : 'Agenda'}
-                    </span>
-                    {nextMeetingDate ? <div className="flex items-baseline justify-end gap-1.5 font-mono text-white text-5xl font-black tracking-tight">
-                      <span>{hoursStr}</span>
-                      <span className="text-xl font-sans text-hl-muted uppercase font-extrabold mr-2">h</span>
-                      <span className={!isMiniature ? `${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'} animate-pulse` : ""}>:</span>
-                      <span>{minutesStr}</span>
-                      <span className="text-xl font-sans text-hl-muted uppercase font-extrabold">m</span>
-                    </div> : <p className="text-2xl text-hl-copy">Sem reunião agendada</p>}
-                  </div>
+                  {projectionMode==='post'?<span className="projection-post-label">Após a reunião</span>:nextMeetingDate?<CountdownReadout hours={hoursStr} minutes={minutesStr}/>:<span className="projection-post-label">Sem reunião agendada</span>}
 
                   {!isMiniature && (
                     <>

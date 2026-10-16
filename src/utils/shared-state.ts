@@ -38,7 +38,7 @@ const validators: Record<string, Validator> = {
   activeAlert: nullable(text(10_000)), tickerText: nullable(text(10_000)),
   blackoutEnabled: oneOf(true, false, 'true', 'false'), clearContentEnabled: oneOf(true, false, 'true', 'false'),
   countdownPaused: oneOf(true, false, 'true', 'false'), dismissedJustStarted: oneOf(true, false, 'true', 'false'),
-  pausedSeconds: nullable(number(0, 31_536_000, true)), countdownOffset: number(-31_536_000_000, 31_536_000_000, true),
+  countdownAnchor: nullable(number(0,4102444800000,true)), pausedSeconds: nullable(number(0, 31_536_000, true)), countdownOffset: number(-31_536_000_000, 31_536_000_000, true),
   videoPinBehavior: oneOf('unpin', 'loop'), finalMinuteDisplayMode: oneOf('split', 'full_video'),
   verseDisplayPriority: oneOf('verse_over_video', 'video_over_verse'),
   carouselStartTimeOffset: number(-Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, true),

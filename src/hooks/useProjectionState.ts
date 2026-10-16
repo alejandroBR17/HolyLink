@@ -17,6 +17,7 @@ export interface ProjectionState {
   pausedSeconds: number | null;
   countdownPaused: boolean;
   countdownOffset: number;
+  countdownAnchor: number|null;
   dismissedJustStarted: boolean;
   videoPinBehavior: 'unpin' | 'loop';
   carouselStartTimeOffset: number;
@@ -106,6 +107,7 @@ export function useProjectionState() {
     return localStorage.getItem('projection_countdownPaused') === 'true';
   });
 
+  const [countdownAnchor,setCountdownAnchor]=useState<number|null>(()=>{const value=localStorage.getItem('projection_countdownAnchor');const stamp=Number(value);return value!==null&&Number.isSafeInteger(stamp)&&stamp>=0&&stamp<=4102444800000?stamp:null;});
   const [countdownOffset, setCountdownOffset] = useState<number>(() => {
     if (typeof window === 'undefined') return 0;
     return parseInt(localStorage.getItem('projection_countdownOffset') || '0', 10);
@@ -231,6 +233,7 @@ export function useProjectionState() {
 
     if (key === 'manualSlideOverride') setManualSlideOverride(value);
     else if (key === 'projectionMode') setProjectionMode((value as 'pre' | 'post') || 'pre');
+    else if (key === 'countdownAnchor') setCountdownAnchor(value===null?null:Number(value));
     else if (key === 'countdownOffset') setCountdownOffset(typeof value === 'number' ? value : parseInt(value?.toString() || '0', 10));
     else if (key === 'countdownPaused') setCountdownPaused(value === 'true' || value === true);
     else if (key === 'pausedSeconds') setPausedSeconds(value !== null && value !== undefined ? parseInt(value.toString(), 10) : null);
@@ -335,6 +338,7 @@ export function useProjectionState() {
 
       if (key === 'manualSlideOverride') setManualSlideOverride(value);
       else if (key === 'projectionMode') setProjectionMode((value as 'pre' | 'post') || 'pre');
+      else if (key === 'countdownAnchor') setCountdownAnchor(value===null?null:Number(value));
       else if (key === 'countdownOffset') setCountdownOffset(value !== null && value !== undefined ? parseInt(value.toString(), 10) : 0);
       else if (key === 'countdownPaused') setCountdownPaused(value === 'true' || value === true);
       else if (key === 'pausedSeconds') setPausedSeconds(value !== null && value !== undefined ? parseInt(value.toString(), 10) : null);
@@ -434,6 +438,7 @@ export function useProjectionState() {
       setSyncStatus({ active: true, message: 'Finalizando sincronização...' });
       setManualSlideOverride(localStorage.getItem('projection_manualSlideOverride'));
       setProjectionMode((localStorage.getItem('projection_projectionMode') as 'pre' | 'post') || 'pre');
+      const savedAnchor=localStorage.getItem('projection_countdownAnchor');const parsedAnchor=Number(savedAnchor);setCountdownAnchor(savedAnchor!==null&&isSharedStateUpdate('countdownAnchor',parsedAnchor)?parsedAnchor:null);
       setCountdownOffset(parseInt(localStorage.getItem('projection_countdownOffset') || '0', 10));
       setCountdownPaused(localStorage.getItem('projection_countdownPaused') === 'true');
       setPausedSeconds(localStorage.getItem('projection_pausedSeconds') ? parseInt(localStorage.getItem('projection_pausedSeconds')!, 10) : null);
@@ -531,6 +536,7 @@ export function useProjectionState() {
       pausedSeconds,
       countdownPaused,
       countdownOffset,
+      countdownAnchor,
       dismissedJustStarted,
       videoPinBehavior,
       finalMinuteDisplayMode,

@@ -363,3 +363,20 @@ Fechamento local: TypeScript/build e 78 testes nativos aprovados, incluindo prec
 
 
 Entrega `b570ba136ae3db1d4caf686d6d695810101d6865`, Preview READY `dpl_2CMaMyUeKvE2bb5VkmbKhFk8FFxo`, alias conferido. Online passaram globo WebGL em 1920 com perda de contexto/fallback e troca para fogo, alternativa leve em 390, descarte do globo e QR decodificado exatamente nos dois contextos. Revisão dos doze cartões/aviso/contagem em 1920/390 também aprovada. PR #1 rascunho atualizada; produção segue `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi` e main preservada. 78 testes nativos, TypeScript e build aprovados. Checkpoint documental local sem outro deployment. Responsável pode continuar revisão visual na Preview; som físico permanece pendente.
+
+
+## 16/10 — banco, símbolos, QR, textos e contagens
+
+Solicitação humana: banco de igreja, fogo 3D coerente com o mundo e vinculado aos efeitos existentes; QR compacto; batismo/concentração com menos texto; revisão funcional/visual das contagens e abertura.
+
+Implementado SVG próprio de banco contínuo com encosto/apoios. Fogo com malhas extrudadas/chanfradas, luz e rotação/pulsação; globo e fogo compartilham orçamento derivado de efeitos, desempenho, FPS e detalhe existentes. Sem efeito fica parado; Partículas 2D/Leve usam CSS/SVG; movimento reduzido também para. Sem novas opções. Alternativas para WebGL ausente/perdido e descarte de recursos preservados. QR reduzido a 320 px + 52 px de margem branca, URL fora do quadrado; destino exato https://universal.org/doar.
+
+Batismo orienta procurar pastor/obreiro após a reunião somente no pré; pós usa orientação direta. Concentração e contagem receberam texto curto. Horas/minutos com unidades; últimos cinco minutos com leitura estável; último minuto com círculo de progresso; início com título próprio e versículo existente. Não se removeu conteúdo legítimo.
+
+Correção funcional: seleção da contagem passa a usar relógio ajustado, mantém encontro ancorado ao pausar/ajustar e persiste na recarga. Retomada não trunca segundos; zero pausado fica pausado. Agenda removida exige Restaurar, disponível mesmo sem encontro. Dismissal não rearma abertura dentro da janela existente de 30 minutos. Nova referência passa pelo mesmo validador de estado compartilhado; full-sync valida antes de aplicar. Vídeo fixado/split/full, pós, blackout e Bíblia preservam prioridades.
+
+Validação local: teste real de interface em 1920/390 percorreu horas → 5 min → 60 s, pausa atravessando horário, ajuste +/- minuto, recarga, retomada → 01 → zero, versículo de abertura e batismo pré/pós. Sete cenários globo/fogo (PC, móvel, WebGL indisponível, Leve, movimento reduzido, Sem efeito e Partículas 2D) passaram, incluindo perda de contexto, animação/estático e decodificação independente do QR real em cada caso. Troca pela interface existente de efeitos sincronizou duas janelas e desmontou/recriou canvas, com detalhe Leve em 210 px. WebM local real reproduziu no split do último minuto e no modo fixado tela cheia, sempre um player. Doze cartões, aviso e contagem passaram em 1920/390. Recursos/cache agora v24. Validações finais, commit e Preview registrados abaixo após conclusão.
+
+O responsável já confirmou fisicamente enquadramento, leitura à distância e controle pelo celular. Som físico continua pendente; testes automatizados de reprodução não substituem alto-falante/HDMI. O QR foi decodificado, sem afirmar disponibilidade/processamento do site externo. Nenhuma mídia legítima, configuração remota, produção ou outro projeto foi alterado.
+
+Fechamento local desta etapa: lint, 86 testes nativos e build aprovados. Revisão completa das seis abas em 320/390/430/768/844 paisagem/1365/1920 px passou sem overflow. Vídeo da contagem e troca de efeitos pelas opções existentes aprovados.

@@ -32,3 +32,9 @@ test('a corrupt storage bag fails atomically and never restores window lifecycle
   assert.throws(()=>readSharedStorage([]));
   assert.deepEqual(readSharedStorage({projection_isProjectionOpen:'true',projection_projectionCloseTrigger:'123',projection_mediaUpdateTrigger:'123',projection_myReceiverCode:'ABC234'}), {});
 });
+
+
+test('countdown target is bounded and may be explicitly cleared',()=>{
+ assert.equal(isSharedStateUpdate('countdownAnchor',new Date(2026,9,16).getTime()),true);assert.equal(isSharedStateUpdate('countdownAnchor',null),true);
+ for(const value of [-1,NaN,Infinity,{},'tomorrow',4102444800001,1.5])assert.equal(isSharedStateUpdate('countdownAnchor',value),false);
+});

@@ -1,3 +1,5 @@
+import {symbolMotion} from '../../utils/projection-motion';
+import {ProjectionFire} from '../ProjectionFire';
 import {ProjectionGlobe} from '../ProjectionGlobe';
 import {Globe,Flame,HeartHandshake,CalendarDays,WifiOff,Info,Droplets,PrayingHands,BookOpen} from '../ui/icons';
 import React, { useState, useEffect, useRef } from 'react';
@@ -326,13 +328,14 @@ export const IconSlide = ({
 // ==========================================
 // SPECIAL SLIDES: WORLD & GOD
 // ==========================================
-export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLightModeActive: propIsLightMode }: any) => {
+export const WorldGodSlide = ({ variant, backgroundStyle='auto',fps=30,detail='medium',effectiveMode: propEffectiveMode, isLightModeActive: propIsLightMode }: any) => {
   const reducedMotion=useReducedMotion();
   const diag = usePerformanceDiagnostics();
   const effectiveMode = propEffectiveMode || diag.effectiveMode;
   const isLightMode = propIsLightMode !== undefined ? propIsLightMode : diag.isLightModeActive;
   const isHighMode = effectiveMode === 'high';
 
+  const symbolSettings=symbolMotion(backgroundStyle,isLightMode?'light':effectiveMode,fps,detail);
   const [phase, setPhase] = useState<'world' | 'god'>('world');
   const isFJU = variant === 'fju';
 
@@ -377,7 +380,7 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
                 ? 'bg-hl-canvas border-2 border-hl-line'
                 : 'bg-hl-panel/70 backdrop-blur-md border border-hl-line/60 shadow-[0_20px_50px_rgba(0,0,0,0.6)]'
             } mb-6`}>
-              <ProjectionGlobe light={isLightMode}/>
+              <ProjectionGlobe {...symbolSettings}/>
             </div>
 
             <h1 className="font-sans font-black text-[4.4rem] @[1280px]:text-[5.4rem] @[1536px]:text-[6.2rem] tracking-tight text-white leading-[1.08] mb-4 uppercase drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)]">
@@ -405,13 +408,7 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
               </span>
             </div>
 
-            <div className={`projection-emblem p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
-              isLightMode
-                ? 'bg-hl-canvas border-2 border-hl-gold/40'
-                : 'bg-hl-canvas/80 backdrop-blur-md border border-hl-gold/35 shadow-[0_0_50px_rgba(255,211,79,0.2)]'
-            } mb-6`}>
-              <Flame className={`w-32 h-32 @[1280px]:w-40 @[1280px]:h-40 ${isFJU ? 'text-hl-gold-bright drop-shadow-[0_0_50px_rgba(255,211,79,0.65)]' : 'text-hl-gold-bright drop-shadow-[0_0_45px_rgba(255,211,79,0.4)]'}`} />
-            </div>
+            <div className="projection-world-emblem mb-6"><ProjectionFire {...symbolSettings}/></div>
 
             <h1 className={`font-sans font-black text-[4.4rem] @[1280px]:text-[5.4rem] @[1536px]:text-[6.2rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_0_60px_rgba(255,211,79,0.45)]' : 'text-hl-gold-bright drop-shadow-[0_0_50px_rgba(255,211,79,0.35)]'} leading-[1.08] mb-4 uppercase`}>
               {isFJU ? 'Vem pra FJU' : 'Ligue-se com Deus'}
@@ -685,15 +682,15 @@ export const DonationSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
         </div>
 
         {/* QR Code Container with Frame */}
-        <div data-projection-qr className={`projection-qr-plate flex-shrink-0 p-7 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+        <div data-projection-qr className="projection-qr-block"><div className={`projection-qr-plate flex-shrink-0 p-7 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode
             ? 'bg-white border-8 border-hl-line'
             : isFJU
               ? 'bg-white shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-8 ring-hl-gold/30'
               : 'bg-white shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-4 ring-hl-gold/30'
         }`}>
-          <QRCode value={DONATION.url} size={380} level="M" title="Doações — universal.org/doar"/>
-          <div className="mt-3 text-center">
+          <QRCode value={DONATION.url} size={320} level="M" title="Doações — universal.org/doar"/>
+          </div><div className="mt-3 text-center">
             <span className="text-hl-ink font-mono font-black text-base uppercase tracking-widest">
               UNIVERSAL.ORG/DOAR
             </span>
@@ -932,10 +929,12 @@ export const MeetingEventSlide = ({
 // ==========================================
 export const BaptismSlide = ({
   variant,
+  post=false,
   effectiveMode: propEffectiveMode,
   isLightModeActive: propIsLightMode
 }: {
   variant?: string;
+  post?:boolean;
   effectiveMode?: 'high' | 'balanced' | 'light';
   isLightModeActive?: boolean;
 }) => {
@@ -992,16 +991,14 @@ export const BaptismSlide = ({
         </h1>
 
         <p className="text-[2.2rem] @[1280px]:text-[2.6rem] @[1536px]:text-[3rem] text-hl-soft font-normal leading-[1.28] max-w-[90%] mb-6">
-          {isFJU
-            ? "Decida hoje entregar a sua vida a Deus e começar uma nova história."
-            : "O batismo nas águas é a decisão de sepultar o passado e começar uma nova vida com Deus."}
+          Um novo começo com Deus.
         </p>
 
         <div className={`inline-flex items-center gap-4 px-8 py-3.5 rounded-full ${
           isLightMode ? 'bg-hl-canvas border-2 border-hl-line' : 'bg-hl-canvas/85 border border-hl-gold/30 backdrop-blur-md shadow-xl'
         }`}>
           <p className="projection-closing-note text-[1.9rem] @[1280px]:text-[2.4rem] text-hl-copy font-semibold tracking-wide">
-            Para se batizar hoje, <span className={isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'}>procure o Pastor ou um de nossos Obreiros</span>.
+            {!post&&<>Após a reunião, </>}<span className="text-hl-gold-bright">{post?'Procure':'procure'} um pastor ou um dos obreiros.</span>
           </p>
         </div>
       </motion.div>
