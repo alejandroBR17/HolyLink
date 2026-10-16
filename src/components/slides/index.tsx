@@ -387,7 +387,7 @@ export const WorldGodSlide = ({ variant, backgroundStyle='auto',fps=30,detail='m
               {isFJU ? 'Cola com a gente' : 'Desligue-se do mundo'}
             </h1>
             <p className="text-hl-soft text-[2.2rem] @[1280px]:text-[2.6rem] @[1536px]:text-[3rem] font-normal tracking-wide leading-[1.28] max-w-[88%]">
-              {isFJU ? 'Prepare a mente e esteja pronto para o que Deus vai falar' : 'Prepare sua mente e esteja pronto para ouvir a voz de Deus'}
+              Deixe as preocupações de lado e concentre-se em Deus.
             </p>
           </motion.div>
         ) : (
@@ -414,7 +414,7 @@ export const WorldGodSlide = ({ variant, backgroundStyle='auto',fps=30,detail='m
               {isFJU ? 'Vem pra FJU' : 'Ligue-se com Deus'}
             </h1>
             <p className="text-hl-gold-bright/90 text-[2.2rem] @[1280px]:text-[2.6rem] @[1536px]:text-[3rem] font-normal tracking-wide leading-[1.28] max-w-[88%]">
-              {isFJU ? 'O encontro que vai transformar a sua história' : 'Uma reunião de fé que vai abençoar a sua vida'}
+              Use a sua fé e acompanhe a reunião.
             </p>
           </motion.div>
         )}
@@ -807,7 +807,7 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
               </div>
               <h3 className="text-white font-extrabold text-[2.8rem] @[1280px]:text-[3.4rem] tracking-tight mb-3">Ainda Não Há Propósitos em Andamento</h3>
               <p className="text-hl-soft text-xl @[1280px]:text-2xl leading-relaxed max-w-2xl font-normal">
-                Procure o pastor da igreja ou um dos nossos obreiros para avivar sua fé e se fortalecer sempre no Senhor.
+                Para saber mais, procure um pastor ou um dos obreiros.
               </p>
             </div>
           )}
@@ -1072,7 +1072,7 @@ export const BlessingSlide = ({
 
         <p className="text-[2.2rem] @[1280px]:text-[2.6rem] @[1536px]:text-[3rem] text-hl-soft font-normal leading-[1.28] max-w-[90%] mb-6">
           {isFJU
-            ? "Guarde essa palavra com você. Nos vemos no próximo sábado!"
+            ? "Continue praticando o que aprendeu."
             : "Vá em paz e que o Espírito Santo acompanhe você e toda a sua família."}
         </p>
 

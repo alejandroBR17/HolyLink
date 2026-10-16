@@ -691,7 +691,7 @@ export default function App() {
                 clearContentEnabled={clearContentEnabled}
                 currentVerse={currentSlideId.startsWith('verse_') ? selectProjectionVerse(VERSES,{text:customVerseText,ref:customVerseRef,index:activeVerseIndex,loop:loopIteration,offset:Number(currentSlideId.replace('verse_',''))||0,timeMs:currentTime.getTime()}).verse : null}
                 liveVerse={Boolean(customVerseText && (verseDisplayPriority === 'verse_over_video' || !(isFinalMinute || isFinalFiveMinutes))) ? {text:customVerseText!,ref:customVerseRef || 'Passagem bíblica'} : null}
-                countdownMode={isFinalMinute ? 'Contagem final · último minuto' : isFinalFiveMinutes ? 'Contagem final · últimos cinco minutos' : isJustStarted ? 'A reunião vai começar' : null}
+                countdownMode={isFinalMinute ? 'Contagem final · último minuto' : isFinalFiveMinutes ? 'Contagem final · últimos cinco minutos' : isJustStarted ? 'Horário previsto atingido' : null}
                 onOpenMonitor={() => setActiveMobileTab('monitor')}
                 slidesOrder={slidesOrder}
                 currentSlideId={currentSlideId}

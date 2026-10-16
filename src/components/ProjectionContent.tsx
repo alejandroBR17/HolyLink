@@ -1,6 +1,6 @@
 import {CountdownReadout,ProjectionCountdown,ProjectionMeetingStart} from './ProjectionCountdown';
 import {ProjectedImage,ProjectionMediaFallback} from './ProjectionMedia';
-import {Smartphone,Bell,ChurchBench,PrayingHands,Restroom,MessageSquareOff,Clock,Instagram,Flame,RefreshCw} from './ui/icons';
+import {Smartphone,Bell,ChurchBench,PrayingHands,Restroom,MessageSquareOff,Instagram,Flame,RefreshCw} from './ui/icons';
 import {isYouthProjection} from '../utils/projection-theme';
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion, MotionConfig } from 'motion/react';
@@ -306,7 +306,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             <IconSlide
               icon={ChurchBench}
               title="Cola aí!"
-              subtitle="Encontre seu lugar e chega mais, o Encontro Jovem vai começar!"
+              subtitle="Encontre um lugar e acompanhe o Encontro Jovem."
               layout="split-left"
               variant="fju"
               effectiveMode={effectiveMode}
@@ -329,8 +329,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           return (
             <IconSlide
               icon={Restroom}
-              title="Pit Stop"
-              subtitle="Aproveite agora para ir ao banheiro. Depois que começar, ninguém quer sair!"
+              title="Antes do encontro"
+              subtitle="Se precisar, utilize o banheiro antes da reunião."
               layout="split-right"
               variant="fju"
               effectiveMode={effectiveMode}
@@ -354,7 +354,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             <IconSlide
               icon={Smartphone}
               title="Foco Total"
-              subtitle="Desliga as notificações aí! Vamos focar 100% no que vai rolar no Encontro Jovem."
+              subtitle="Evite distrações durante o Encontro Jovem."
               layout="center"
               variant="fju"
               effectiveMode={effectiveMode}
@@ -378,7 +378,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             <IconSlide
               icon={MessageSquareOff}
               title="Fica Ligado"
-              subtitle="Silencie as conversas e prepare-se."
+              subtitle="Evite conversas. Concentre-se em Deus."
               layout="split-left"
               variant="fju"
               category="FORÇA JOVEM UNIVERSAL"
@@ -391,7 +391,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           <IconSlide
             icon={MessageSquareOff}
             title="Momento de Concentração"
-            subtitle="Silencie as conversas. Prepare-se para a reunião."
+            subtitle="Evite conversas. Concentre-se em Deus."
             layout="split-left"
             category="CONCENTRAÇÃO"
             effectiveMode={effectiveMode}
@@ -404,7 +404,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             <IconSlide
               icon={Flame}
               title="Vem pra FJU"
-              subtitle="O encontro que vai mudar a sua história. Começamos em instantes!"
+              subtitle="Use a sua fé e mantenha seus pensamentos em Deus."
               pulse
               layout="center"
               variant="fju"
@@ -415,9 +415,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         }
         return (
           <IconSlide
-            icon={isCountdownActive?PrayingHands:Clock}
-            title={isCountdownActive?"Prepare seu coração":"A reunião começa"}
-            subtitle={isCountdownActive?"Acolha este momento de fé.":"em instantes..."}
+            icon={PrayingHands}
+            title="Use a sua fé"
+            subtitle="Mantenha seus pensamentos em Deus."
             pulse
             layout="center"
             effectiveMode={effectiveMode}

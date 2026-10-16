@@ -152,6 +152,13 @@ O QR renderizado codifica exatamente `https://universal.org/doar` (domínio `.or
 
 ## Contagem e início da reunião — revisão de 16/10
 
-A contagem usa a agenda e o ajuste existente, com horas/minutos no cabeçalho, últimos cinco minutos em composição dividida, último minuto em círculo e abertura com o versículo existente. Não troca a identidade da reunião por passar do horário durante uma pausa. Pausa/ajuste guardam a referência do encontro, compartilhada com a saída e persistida na recarga; Retomar calcula o deslocamento sem truncar milissegundos. Restaurar limpa referência e ajustes. Remover da agenda o encontro pausado exige Restaurar, sem escolher outro encontro silenciosamente. Uma pausa em zero não inicia a reunião. A abertura mantém a janela existente de 30 minutos e pode ser dispensada sem rearmar imediatamente. Pós-reunião não mostra contagem de início.
+A contagem usa a agenda e o ajuste existente, com horas/minutos no cabeçalho, últimos cinco minutos em composição dividida, último minuto em círculo e versículo ao atingir o horário previsto. Não troca a identidade da reunião por passar do horário durante uma pausa. Pausa/ajuste guardam a referência do encontro, compartilhada com a saída e persistida na recarga; Retomar calcula o deslocamento sem truncar milissegundos. Restaurar limpa referência e ajustes. Remover da agenda o encontro pausado exige Restaurar, sem escolher outro encontro silenciosamente. Uma pausa em zero não inicia a reunião. A abertura mantém a janela existente de 30 minutos e pode ser dispensada sem rearmar imediatamente. Pós-reunião não mostra contagem de início.
 
 O último minuto preserva vídeo dividido e o comportamento existente de vídeo fixado em tela cheia. Blackout, passagem enviada e conteúdo oculto conservam sua prioridade. A revisão não representa teste de áudio físico. O banco no cartão de assento é um SVG próprio no padrão visual dos ícones. Batismo usa orientação após a reunião no pré e orientação direta no pós; concentração e mensagens da contagem foram encurtadas.
+
+
+### Linguagem e horário previsto — ajuste após avaliação humana
+
+A contagem indica o horário previsto, não o início real da reunião. Ao zerar mantém o versículo existente sem faixa/título anunciando que a reunião começou. O pastor pode iniciar antes ou depois; o operador continua livre para projetar outra passagem/conteúdo e usar os controles existentes de pausa/ajuste/retorno à fila. Não há detecção automática da presença ou início do pastor.
+
+Retiradas as expressões “Prepare seu coração”, “Acolha este momento de fé”, “Vamos começar”, “Começamos em” e promessas de início “em instantes”. Cartões usam orientações diretas sobre fé, concentração e silêncio; mundo/fogo e variantes FJU perderam slogans e promessas de transformação. Despedida FJU não presume próximo sábado. Textos bíblicos, agenda e mensagens do usuário não foram alterados.

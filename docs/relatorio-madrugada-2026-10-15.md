@@ -385,3 +385,12 @@ Fechamento local desta etapa: lint, 86 testes nativos e build aprovados. Revisã
 Entrega revisável: commit `08534bfd063779a7e6441f3f09a4aae979ef1372`, Preview READY `dpl_77bn9fKePwhzpw7ETCWyDMofakqf`; alias de branch aponta para essa implantação. Na Preview passaram novamente contagens pela interface em 1920/390 (horas, cinco minutos, último minuto, pausa atravessando início/recarga, retomada/zero, abertura e batismo pré/pós), globo/fogo 3D PC e compatível Leve móvel com QR decodificado e revisão das seis áreas em 390/1365. PR #1 permanece draft e foi reescrita para refletir implementação/86 testes/limites atuais.
 
 URL de revisão: https://holylink-git-feat-first-p-a549d7-alesobralcortes-9387s-projects.vercel.app/ (usar o acesso de compartilhamento privado já fornecido ao responsável; token não consta no Git). Produção `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi` continua READY/production e main remoto permanece `fc8e5e19c5324310c950918834ef90226f04753e`. Nenhuma promoção/merge foi realizada. Registro final fica em commit local de documentação para evitar implantação redundante. Próximo passo: avaliação visual humana do banco, fogo, QR e contagens; som físico ainda pendente.
+
+
+## 16/10 — revisão de linguagem e início imprevisível
+
+Após feedback humano, removido “Prepare seu coração” e linguagem genérica/slogans na preparação, concentração, mundo/fogo e FJU. Orientações agora curtas: “Use a sua fé”, “Mantenha seus pensamentos em Deus”, evitar conversas/distrações. Não se declara que isso seja texto oficial da Universal nem se alteram versículos, mensagens legítimas ou agenda.
+
+Contagem mostra “Horário previsto em”, sem “Vamos começar”/“Começamos em” nem “em instantes” nos cartões. Ao zero mantém a passagem existente, retirando completamente a faixa “A reunião começou” e seu espaço/CSS. Indicador do operador passa a “Horário previsto atingido”. Não se afirma início real nem se tenta detectá-lo: pastor pode começar antes/depois; controles existentes continuam disponíveis. Sem alteração nas regras numéricas, pausa, ajuste, prioridades ou mídia. Cache v25; produção/main preservadas.
+
+Validação: lint/build e 11 testes relevantes de PWA/design aprovados. Interface de contagem em 1920/390 repetiu horas/cinco/minuto/pausa/recarga/retomada/zero e confirmou versículo sem anúncio de início nem faixa vazia; ausência das frases rejeitadas também conferida. Inspeção visual das capturas de cinco minutos e passagem ao zero realizada. Revisão dos cartões e Preview registrada no fechamento abaixo.
