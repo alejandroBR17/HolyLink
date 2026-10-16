@@ -4,7 +4,7 @@ import {ProjectionStage} from './components/ProjectionStage';
 import {HeaderScroll} from './utils/header-scroll';
 import {AppUpdateNotice} from './components/AppUpdateNotice';
 import {selectProjectionVerse} from './utils/verse-selection';
-import {isYouthProjection,isYouthMeeting,availableInYouthLoop} from './utils/projection-theme';
+import {isYouthProjection,isYouthMeeting,isChurchMeeting,availableInYouthLoop,availableInChurchLoop} from './utils/projection-theme';
 import { useSlideManager } from "./hooks/useSlideManager";
 import { useWakeLock } from "./hooks/useWakeLock";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -240,8 +240,8 @@ export default function App() {
 
   const originalSchedule=getNextMeeting(currentTime,customMeetings);
   const isFJUProjection=isYouthProjection(originalSchedule.ongoingMeeting,originalSchedule.nextMeeting,originalSchedule.nextMeetingDate,currentTime,projectionTheme);
-  const manualSlideOverride=storedManualSlideOverride&&(!isFjuProject(storedManualSlideOverride)||fjuProjectsEnabled)&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):!storedManualSlideOverride.startsWith('fju_'))?storedManualSlideOverride:null;
-  const projectionMeetings=isFJUProjection?customMeetings.filter(isYouthMeeting):customMeetings;
+  const manualSlideOverride=storedManualSlideOverride&&(!isFjuProject(storedManualSlideOverride)||fjuProjectsEnabled)&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):availableInChurchLoop(storedManualSlideOverride,customMeetings))?storedManualSlideOverride:null;
+  const projectionMeetings=customMeetings.filter(isFJUProjection?isYouthMeeting:isChurchMeeting);
   const {ongoingMeeting}=getNextMeeting(currentTime,projectionMeetings);
   const countdown=deriveCountdown(currentTime,projectionMeetings,countdownOffset,countdownPaused,pausedSeconds,countdownAnchor,dismissedJustStarted);
   const {nextMeeting,nextMeetingDate,isJustStartedRaw}=countdown;
@@ -294,7 +294,7 @@ export default function App() {
   const hasActiveCampaigns = activeCampaignsFiltered.length > 0;
 
   const defaultBaseSlides = (isFJUProjection?(projectionMode==='post'?FJU_POST_SLIDES:FJU_PRE_SLIDES):(projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES)).filter(id => {
-    if(isFJUProjection&&!availableInYouthLoop(id,customMeetings))return false;
+    if(!(isFJUProjection?availableInYouthLoop(id,customMeetings):availableInChurchLoop(id,customMeetings)))return false;
     if(id==='fju_agenda'&&!nextMeetingDate)return false;
     if(id==='soon'&&!nextMeetingDate)return false;
     if (id === 'campaigns' && !hasActiveCampaigns) return false;
@@ -306,7 +306,7 @@ export default function App() {
       allAvailableSlides.push(media.id);
     }
   });
-  customMeetings.forEach((meet) => {
+  projectionMeetings.forEach((meet) => {
     if (meet.date && meet.date >= todayStr && (!isFJUProjection||isYouthMeeting(meet))) {
       const meetSlideId = `meeting_event_${meet.id}`;
       if (!allAvailableSlides.includes(meetSlideId)) {
@@ -734,7 +734,7 @@ export default function App() {
                 broadcastMediaDelete={broadcastMediaDelete}
                 broadcastMediaSave={broadcastMediaSave}
                 saveMediaItem={saveMediaItem}
-                customMeetings={customMeetings}
+                customMeetings={projectionMeetings}
               />
             )}
 

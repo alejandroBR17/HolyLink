@@ -24,7 +24,7 @@ const meeting: Validator = value => record(value) && Object.keys(value).every(ke
   && typeof value.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.time)
   && number(0, 23, true)(value.hours) && number(0, 59, true)(value.minutes)
   && Number(value.hours)===Number(value.time.slice(0,2)) && Number(value.minutes)===Number(value.time.slice(3))
-  && optional(value.audience,oneOf('fju','church'))
+  && optional(value.audience,oneOf('fju','church','both'))
   && optional(value.day, number(0, 6, true)) && optional(value.date, date);
 const campaign: Validator = value => record(value) && Object.keys(value).every(key => ['id','title','duration','iconType','endDate'].includes(key))
   && text(200)(value.id) && text(4000)(value.title)

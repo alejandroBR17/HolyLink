@@ -1,7 +1,16 @@
 import {FJU_CARDS,isFjuProject} from './fju-content.ts';
 export type ProjectionThemeMode = 'auto'|'fju'|'regular';
-type YouthEvent={theme?:string;audience?:'fju'|'church'};
-export const isYouthMeeting=(meeting:YouthEvent|null|undefined)=>meeting?.audience?meeting.audience==='fju':/jovem|fju|algo\s+a\s+mais/i.test(meeting?.theme||'');
+type YouthEvent={theme?:string;audience?:'fju'|'church'|'both'};
+export const isYouthMeeting=(meeting:YouthEvent|null|undefined)=>meeting?.audience?meeting.audience!=='church':/jovem|fju|algo\s+a\s+mais/i.test(meeting?.theme||'');
+
+export const isChurchMeeting=(meeting:YouthEvent|null|undefined)=>Boolean(meeting)&&(meeting?.audience?meeting.audience!=='fju':!isYouthMeeting(meeting));
+
+export function availableInChurchLoop(id:string,meetings:readonly ({id:string;day?:number}&YouthEvent)[]){
+ if(id.startsWith('fju_'))return false;
+ if(id.startsWith('meeting_event_'))return isChurchMeeting(meetings.find(m=>m.id===id.slice('meeting_event_'.length)));
+ if(id==='agenda_day_6_fju')return meetings.some(m=>m.day===6&&isYouthMeeting(m)&&isChurchMeeting(m));
+ return true;
+}
 
 export function availableInYouthLoop(id:string,meetings:readonly ({id:string}&YouthEvent)[]){
  if(id.startsWith('custom_')||id.startsWith('verse_'))return true;

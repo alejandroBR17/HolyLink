@@ -1,4 +1,4 @@
-import {isYouthMeeting} from '../../utils/projection-theme';
+import {isYouthMeeting,isChurchMeeting} from '../../utils/projection-theme';
 import {ConsoleIntro} from './ConsoleIntro';
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
@@ -56,7 +56,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 }: AgendaPanelProps) {
   const latest=useRef({customMeetings,customCampaigns});latest.current={customMeetings,customCampaigns};
   const notify = showToast || showAlert;
-  const [newMeetAudience,setNewMeetAudience]=useState<'fju'|'church'>(youth?'fju':'church');
+  const [newMeetAudience,setNewMeetAudience]=useState<'fju'|'church'|'both'>(youth?'fju':'church');
   const [newMeetTheme, setNewMeetTheme] = useState('');
   const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
   const [newMeetWeeklyDay, setNewMeetWeeklyDay] = useState(0);
@@ -80,7 +80,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 
   const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(true);
   const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(true);
-  const [meetingFilter,setMeetingFilter]=useState(youth?'fju':'all');
+  const [meetingFilter,setMeetingFilter]=useState(youth?'fju':'church');
   const [meetingSearch,setMeetingSearch]=useState('');
   const revealForm=(id:string)=>{
     const input=document.getElementById(id);
@@ -96,10 +96,13 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const now = new Date();
   const todayStr = localDateKey(now);
 
-  const expiredMeetings = (customMeetings || []).filter(m => m.date && m.date < todayStr);
+  const matchesAgenda=youth?isYouthMeeting:isChurchMeeting;
+  const contextMeetings=customMeetings.filter(matchesAgenda);
+  const expiredMeetings = contextMeetings.filter(m => m.date && m.date < todayStr);
   const visibleMeetings=customMeetings.filter(meet=>{
     const matches=`${meet.theme} ${meet.dayName} ${meet.time}`.toLocaleLowerCase('pt-BR').includes(meetingSearch.trim().toLocaleLowerCase('pt-BR'));
-    return matches&&(meetingFilter==='all'||meetingFilter==='fju'&&isYouthMeeting(meet)||meetingFilter==='weekly'&&!meet.date||meetingFilter==='upcoming'&&Boolean(meet.date&&meet.date>=todayStr)||meetingFilter==='past'&&Boolean(meet.date&&meet.date<todayStr));
+    const scope=['all','fju','church'].includes(meetingFilter)||matchesAgenda(meet);
+    return matches&&scope&&(meetingFilter==='all'||meetingFilter==='church'&&isChurchMeeting(meet)||meetingFilter==='fju'&&isYouthMeeting(meet)||meetingFilter==='weekly'&&!meet.date||meetingFilter==='upcoming'&&Boolean(meet.date&&meet.date>=todayStr)||meetingFilter==='past'&&Boolean(meet.date&&meet.date<todayStr));
   });
 
   const handleClearExpiredMeetings = () => {
@@ -109,13 +112,13 @@ export const AgendaPanel = React.memo(function AgendaPanel({
         'Excluir eventos passados?',
         `Deseja remover ${expiredMeetings.length} evento(s) pontual(is) cuja data já passou?`,
         () => {
-          const updated = latest.current.customMeetings.filter(m => !(m.date && m.date < localDateKey(new Date())));
+          const updated = latest.current.customMeetings.filter(m => !(matchesAgenda(m)&&m.date && m.date < localDateKey(new Date())));
           updateStateAndBroadcast('customMeetings', updated);
         },
         'danger'
       );
     } else {
-      const updated = (customMeetings || []).filter(m => !(m.date && m.date < todayStr));
+      const updated = customMeetings.filter(m => !(matchesAgenda(m)&&m.date && m.date < todayStr));
       updateStateAndBroadcast('customMeetings', updated);
     }
   };
@@ -285,7 +288,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 
   return (
     <div className="agenda-workspace console-area">
-      <ConsoleIntro icon={CalendarDays} title="Agenda" eyebrow="Semana e eventos" description="Encontro Jovem, Algo a Mais, reuniões e eventos pontuais. Dias e horários são editáveis." stats={[{label:'Semana',value:customMeetings.filter(m => !m.date).length + ' reuniões'},{label:'Pontuais',value:customMeetings.filter(m => m.date).length + ' eventos'},{label:'Campanhas',value:customCampaigns.length}]}/>
+      <ConsoleIntro icon={CalendarDays} title="Agenda" eyebrow="Semana e eventos" description="Encontro Jovem, Algo a Mais, reuniões e eventos pontuais. Dias e horários são editáveis." stats={[{label:'Semana',value:contextMeetings.filter(m => !m.date).length + ' eventos'},{label:'Pontuais',value:contextMeetings.filter(m => m.date).length + ' eventos'},{label:'Campanhas',value:customCampaigns.length}]}/>
       <div className="agenda-columns">
 
       {/* MEETS COLUMN */}
@@ -306,7 +309,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             </div>
             <div>
               <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Agenda e eventos</h3>
-              <p className="text-[10px] text-hl-muted font-medium mt-0.5">{(customMeetings || []).length} reuniões registradas</p>
+              <p className="text-[10px] text-hl-muted font-medium mt-0.5">{contextMeetings.length} eventos nesta agenda</p>
             </div>
           </div>
           <motion.div animate={{ rotate: isMeetingPanelOpen ? 180 : 0 }} transition={{ duration: 0.15 }}>
@@ -344,7 +347,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     <Zap className="w-3.5 h-3.5 text-hl-gold shrink-0" /> Adicionar Rápido:
                   </span>
                   <div className="grid grid-cols-2 gap-2">
-                    {DEFAULT_MEETING_PRESETS.filter(preset=>!youth||isYouthMeeting(preset)).map((preset, pIdx) => (
+                    {DEFAULT_MEETING_PRESETS.filter(preset=>youth?isYouthMeeting(preset):isChurchMeeting(preset)).map((preset, pIdx) => (
                       <button
                         key={pIdx}
                         type="button"
@@ -373,7 +376,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-1.5"><label htmlFor="meeting-audience" className="text-xs text-hl-muted">Agenda de</label><select id="meeting-audience" value={newMeetAudience} onChange={e=>setNewMeetAudience(e.target.value as 'fju'|'church')} className="bg-hl-canvas border border-hl-line rounded-xl px-3 py-3 text-sm text-hl-copy"><option value="church">Igreja</option><option value="fju">FJU</option></select><p className="text-xs text-hl-muted">Marque FJU para exibir também vigílias e eventos com qualquer nome na agenda jovem.</p></div>
+                <div className="flex flex-col gap-1.5"><label htmlFor="meeting-audience" className="text-xs text-hl-muted">Agenda de</label><select id="meeting-audience" value={newMeetAudience} onChange={e=>setNewMeetAudience(e.target.value as 'fju'|'church'|'both')} className="bg-hl-canvas border border-hl-line rounded-xl px-3 py-3 text-sm text-hl-copy"><option value="church">Igreja</option><option value="fju">FJU</option><option value="both">FJU e reuniões</option></select><p className="text-xs text-hl-muted">FJU aparece só no modo jovem. Para divulgar também nas reuniões, escolha FJU e reuniões.</p></div>
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="meeting-theme" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Nome do encontro ou evento</label>
                   <input
@@ -496,7 +499,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             )}
 
             {/* MEETS LIST */}
-            <div className="agenda-list-tools"><label>Buscar reunião<input value={meetingSearch} onChange={event=>setMeetingSearch(event.target.value)} placeholder="Tema, dia ou horário"/></label><label>Mostrar<select aria-label="Filtrar reuniões" value={meetingFilter} onChange={event=>setMeetingFilter(event.target.value)}><option value="all">Todas</option><option value="fju">FJU</option><option value="weekly">Semanais</option><option value="upcoming">Eventos futuros</option><option value="past">Eventos passados</option></select></label></div>
+            <div className="agenda-list-tools"><label>Buscar reunião<input value={meetingSearch} onChange={event=>setMeetingSearch(event.target.value)} placeholder="Tema, dia ou horário"/></label><label>Mostrar<select aria-label="Filtrar reuniões" value={meetingFilter} onChange={event=>setMeetingFilter(event.target.value)}><option value="all">Todas</option><option value="church">Reuniões</option><option value="fju">FJU</option><option value="weekly">Semanais</option><option value="upcoming">Eventos futuros</option><option value="past">Eventos passados</option></select></label></div>
             <div className="flex flex-col gap-2.5 pr-1">
               {(customMeetings || []).length === 0 ? (
                 <div className="text-hl-dim text-center py-6 text-xs italic bg-hl-canvas border border-dashed border-hl-line-soft rounded-xl font-medium">
@@ -570,7 +573,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                               setEditingMeetId(meet.id);
                               setMeetingBase(JSON.stringify(meet));setMeetingError('');
                               setNewMeetTheme(meet.theme);
-                              setNewMeetAudience(isYouthMeeting(meet)?'fju':'church');
+                              setNewMeetAudience(meet.audience||(isYouthMeeting(meet)?'fju':'church'));
                               setNewMeetTime(meet.time);
                               setNewMeetType(meet.date ? 'one_time' : 'weekly');
                               if (meet.date) setNewMeetDate(meet.date);
