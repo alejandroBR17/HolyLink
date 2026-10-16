@@ -8,6 +8,7 @@ export interface Meeting {
   day?: number; // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado (para recorrentes)
   dayName: string;
   theme: string;
+  audience?: 'fju' | 'church';
   time: string; // e.g. "08:00", "19:30"
   hours: number;
   minutes: number;

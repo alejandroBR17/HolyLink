@@ -1,8 +1,8 @@
-export const FJU_CARDS:Record<string,{title:string;subtitle:string;label?:string;layout?:'welcome'|'statement'|'split';symbol:'hand'|'seat'|'door'|'phone'|'chat'|'mute'|'fire'|'social'|'heart'}>={
+export const FJU_CARDS:Record<string,{title:string;subtitle:string;label?:string;layout?:'welcome'|'statement'|'split';symbol:'hand'|'seat'|'door'|'phone'|'chat'|'mute'|'fire'|'social'|'people'}>={
  fju_welcome:{title:'Bom ter você aqui',subtitle:'Esse encontro também é seu. Chega junto!',label:'FJU / ENCONTRO JOVEM',layout:'welcome',symbol:'hand'},
- fju_first_time:{title:'É sua primeira vez?',subtitle:'Pode chegar. Fale com a equipe e conheça a FJU.',label:'CHEGA JUNTO',symbol:'hand'},
- fju_together:{title:'Ninguém fica de fora',subtitle:'Convide quem está perto a participar com você.',label:'JUNTOS NO ENCONTRO',layout:'statement',symbol:'heart'},
- fju_support:{title:'Quer conversar?',subtitle:'Procure a equipe da FJU. Você não precisa ficar sozinho.',label:'CONTE COM A GENTE',symbol:'chat'},
+ fju_first_time:{title:'É sua primeira vez?',subtitle:'Fique à vontade. Esse encontro também é seu.',label:'CHEGA JUNTO',symbol:'hand'},
+ fju_together:{title:'Ninguém fica de fora',subtitle:'Convide quem está perto a participar com você.',label:'JUNTOS NO ENCONTRO',layout:'statement',symbol:'people'},
+ fju_support:{title:'Quer conversar?',subtitle:'Se precisar, converse com um obreiro.',label:'CONTE COM A GENTE',symbol:'chat'},
  fju_goodbye:{title:'Valeu pela presença',subtitle:'Leve essa experiência com você. Até o próximo encontro!',label:'A GENTE SE ENCONTRA',layout:'welcome',symbol:'hand'},
  social:{title:'Universal Jardim Osasco',subtitle:'@universaljardimosascooficial',label:'INSTAGRAM DA IGREJA',symbol:'social'},
  seat:{title:'Chega mais',subtitle:'Encontre seu lugar e participe com a gente.',symbol:'hand'},

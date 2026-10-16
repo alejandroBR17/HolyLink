@@ -1,3 +1,4 @@
+import {isYouthMeeting} from '../../utils/projection-theme';
 import {ConsoleIntro} from './ConsoleIntro';
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
@@ -16,6 +17,7 @@ interface Campaign {
 }
 
 interface AgendaPanelProps {
+  youth?:boolean;
   customMeetings: Meeting[];
   customCampaigns: Campaign[];
   updateStateAndBroadcast: (key: string, value: any) => void;
@@ -26,12 +28,13 @@ interface AgendaPanelProps {
 }
 
 const DEFAULT_MEETING_PRESETS = [
+  {theme:"Algo a Mais",day:5,dayName:"Sexta-feira",time:"19:00",hours:19,minutes:0},
   { theme: "Santo Culto do Domingo", day: 0, dayName: "Domingo", time: "18:00", hours: 18, minutes: 0 },
   { theme: "Prosperidade com Deus", day: 1, dayName: "Segunda-feira", time: "19:30", hours: 19, minutes: 30 },
   { theme: "Escola da Fé & Salvação", day: 3, dayName: "Quarta-feira", time: "19:30", hours: 19, minutes: 30 },
   { theme: "Nação dos Casais & Família", day: 4, dayName: "Quinta-feira", time: "19:30", hours: 19, minutes: 30 },
   { theme: "Corrente de Libertação & Cura", day: 5, dayName: "Sexta-feira", time: "19:30", hours: 19, minutes: 30 },
-  { theme: "Encontro Força Jovem (FJU)", day: 6, dayName: "Sábado", time: "16:00", hours: 16, minutes: 0 },
+  { theme: "Encontro Força Jovem (FJU)", day: 6, dayName: "Sábado", time: "15:00", hours: 15, minutes: 0 },
 ];
 
 const DEFAULT_CAMPAIGN_PRESETS: Array<{ title: string; duration: string; iconType: 'flame' | 'wifi_off' | 'globe' | 'faith' }> = [
@@ -42,6 +45,7 @@ const DEFAULT_CAMPAIGN_PRESETS: Array<{ title: string; duration: string; iconTyp
 ];
 
 export const AgendaPanel = React.memo(function AgendaPanel({
+  youth=false,
   customMeetings,
   customCampaigns,
   updateStateAndBroadcast,
@@ -52,6 +56,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 }: AgendaPanelProps) {
   const latest=useRef({customMeetings,customCampaigns});latest.current={customMeetings,customCampaigns};
   const notify = showToast || showAlert;
+  const [newMeetAudience,setNewMeetAudience]=useState<'fju'|'church'>(youth?'fju':'church');
   const [newMeetTheme, setNewMeetTheme] = useState('');
   const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
   const [newMeetWeeklyDay, setNewMeetWeeklyDay] = useState(0);
@@ -75,7 +80,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 
   const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(true);
   const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(true);
-  const [meetingFilter,setMeetingFilter]=useState('all');
+  const [meetingFilter,setMeetingFilter]=useState(youth?'fju':'all');
   const [meetingSearch,setMeetingSearch]=useState('');
   const revealForm=(id:string)=>{
     const input=document.getElementById(id);
@@ -94,7 +99,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const expiredMeetings = (customMeetings || []).filter(m => m.date && m.date < todayStr);
   const visibleMeetings=customMeetings.filter(meet=>{
     const matches=`${meet.theme} ${meet.dayName} ${meet.time}`.toLocaleLowerCase('pt-BR').includes(meetingSearch.trim().toLocaleLowerCase('pt-BR'));
-    return matches&&(meetingFilter==='all'||meetingFilter==='weekly'&&!meet.date||meetingFilter==='upcoming'&&Boolean(meet.date&&meet.date>=todayStr)||meetingFilter==='past'&&Boolean(meet.date&&meet.date<todayStr));
+    return matches&&(meetingFilter==='all'||meetingFilter==='fju'&&isYouthMeeting(meet)||meetingFilter==='weekly'&&!meet.date||meetingFilter==='upcoming'&&Boolean(meet.date&&meet.date>=todayStr)||meetingFilter==='past'&&Boolean(meet.date&&meet.date<todayStr));
   });
 
   const handleClearExpiredMeetings = () => {
@@ -116,11 +121,13 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   };
 
   const handleAddMeetingPreset = (preset: typeof DEFAULT_MEETING_PRESETS[0]) => {
+    if(customMeetings.some(m=>!m.date&&m.day===preset.day&&m.time===preset.time&&m.theme===preset.theme)){notify('Este evento já está na agenda. Você pode editar o dia e o horário.', 'info');return;}
     const newM: Meeting = {
       id: `meet_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       day: preset.day,
       dayName: preset.dayName,
       theme: preset.theme,
+      audience:isYouthMeeting(preset)?'fju':'church',
       time: preset.time,
       hours: preset.hours,
       minutes: preset.minutes
@@ -164,7 +171,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
     setMeetingError('');
     if(meetingConflict){setMeetingError('Esta reunião mudou em outro controle. Cancele e abra a edição novamente.');return;}
     if (!newMeetTheme.trim()) {
-      setMeetingError('Informe o tema da reunião.');document.getElementById('meeting-theme')?.focus();
+      setMeetingError('Informe o nome do encontro ou evento.');document.getElementById('meeting-theme')?.focus();
       return;
     }
     const time=clockTime(newMeetTime);
@@ -194,6 +201,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       day: finalDay,
       dayName: finalDayName,
       theme: newMeetTheme.trim(),
+      audience:newMeetAudience,
       time: newMeetTime,
       hours: hours,
       minutes: minutes,
@@ -277,7 +285,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 
   return (
     <div className="agenda-workspace console-area">
-      <ConsoleIntro icon={CalendarDays} title="Agenda da igreja" eyebrow="Encontros e propósitos" description="Reuniões da semana e campanhas que fazem parte da projeção." stats={[{label:'Semana',value:customMeetings.filter(m => !m.date).length + ' reuniões'},{label:'Pontuais',value:customMeetings.filter(m => m.date).length + ' eventos'},{label:'Campanhas',value:customCampaigns.length}]}/>
+      <ConsoleIntro icon={CalendarDays} title="Agenda" eyebrow="Semana e eventos" description="Encontro Jovem, Algo a Mais, reuniões e eventos pontuais. Dias e horários são editáveis." stats={[{label:'Semana',value:customMeetings.filter(m => !m.date).length + ' reuniões'},{label:'Pontuais',value:customMeetings.filter(m => m.date).length + ' eventos'},{label:'Campanhas',value:customCampaigns.length}]}/>
       <div className="agenda-columns">
 
       {/* MEETS COLUMN */}
@@ -297,7 +305,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
               <CalendarDays className="w-5 h-5 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
             </div>
             <div>
-              <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Agenda & Reuniões</h3>
+              <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Agenda e eventos</h3>
               <p className="text-[10px] text-hl-muted font-medium mt-0.5">{(customMeetings || []).length} reuniões registradas</p>
             </div>
           </div>
@@ -318,6 +326,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     setEditingMeetId(null);
                     setMeetingError('');setMeetingBase('');
                     setNewMeetTheme('');
+                    setNewMeetAudience(youth?'fju':'church');
                     setNewMeetType('weekly');
                     setNewMeetWeeklyDay(new Date().getDay());
                     setNewMeetDate(todayStr);
@@ -326,16 +335,16 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   className="w-full py-3 bg-gradient-to-b from-hl-raised to-hl-raised border border-hl-line hover:border-hl-gold/50 text-hl-copy rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px]"
                 >
                   <Plus className="w-4 h-4 text-hl-gold drop-shadow-[0_0_4px_rgba(255,211,79,0.6)]" />
-                  <span className="font-sans">Nova Reunião</span>
+                  <span className="font-sans">Novo evento</span>
                 </button>
 
                 {/* Modelos Prontos de Reuniões */}
-                <details className="console-templates"><summary>Modelos de reuniões</summary><div className="flex flex-col gap-2 pt-3 border-t border-hl-line-soft">
+                <details className="console-templates"><summary>Modelos da agenda</summary><div className="flex flex-col gap-2 pt-3 border-t border-hl-line-soft">
                   <span className="text-[10px] font-mono font-extrabold text-hl-gold uppercase tracking-widest flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5 text-hl-gold shrink-0" /> Adicionar Rápido:
                   </span>
                   <div className="grid grid-cols-2 gap-2">
-                    {DEFAULT_MEETING_PRESETS.map((preset, pIdx) => (
+                    {DEFAULT_MEETING_PRESETS.filter(preset=>!youth||isYouthMeeting(preset)).map((preset, pIdx) => (
                       <button
                         key={pIdx}
                         type="button"
@@ -353,7 +362,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
               <form aria-label="Formulário de reunião" onSubmit={event=>{event.preventDefault();handleSaveMeeting();}} className="bg-hl-panel border border-hl-line p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
                 <div className="flex items-center justify-between border-b border-hl-line pb-2.5">
                   <span className="text-xs font-extrabold text-hl-gold font-sans uppercase tracking-wider">
-                    {editingMeetId ? "Editar Reunião" : "Nova Reunião / Evento"}
+                    {editingMeetId ? "Editar evento" : "Novo evento"}
                   </span>
                   <button
                     type="button"
@@ -364,8 +373,9 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   </button>
                 </div>
 
+                <div className="flex flex-col gap-1.5"><label htmlFor="meeting-audience" className="text-xs text-hl-muted">Agenda de</label><select id="meeting-audience" value={newMeetAudience} onChange={e=>setNewMeetAudience(e.target.value as 'fju'|'church')} className="bg-hl-canvas border border-hl-line rounded-xl px-3 py-3 text-sm text-hl-copy"><option value="church">Igreja</option><option value="fju">FJU</option></select><p className="text-xs text-hl-muted">Marque FJU para exibir também vigílias e eventos com qualquer nome na agenda jovem.</p></div>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="meeting-theme" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Tema do Culto / Evento</label>
+                  <label htmlFor="meeting-theme" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Nome do encontro ou evento</label>
                   <input
                     type="text"
                     id="meeting-theme" value={newMeetTheme} maxLength={2000}
@@ -447,7 +457,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     disabled={meetingConflict}
                     className="flex-1 py-2.5 bg-hl-gold hover:bg-hl-gold-bright text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(255,211,79,0.3)] active:translate-y-[1px]"
                   >
-                    {editingMeetId?'Salvar alterações':'Adicionar reunião'}
+                    {editingMeetId?'Salvar alterações':'Adicionar evento'}
                   </button>
                   <button
                     type="button"
@@ -486,7 +496,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             )}
 
             {/* MEETS LIST */}
-            <div className="agenda-list-tools"><label>Buscar reunião<input value={meetingSearch} onChange={event=>setMeetingSearch(event.target.value)} placeholder="Tema, dia ou horário"/></label><label>Mostrar<select aria-label="Filtrar reuniões" value={meetingFilter} onChange={event=>setMeetingFilter(event.target.value)}><option value="all">Todas</option><option value="weekly">Semanais</option><option value="upcoming">Eventos futuros</option><option value="past">Eventos passados</option></select></label></div>
+            <div className="agenda-list-tools"><label>Buscar reunião<input value={meetingSearch} onChange={event=>setMeetingSearch(event.target.value)} placeholder="Tema, dia ou horário"/></label><label>Mostrar<select aria-label="Filtrar reuniões" value={meetingFilter} onChange={event=>setMeetingFilter(event.target.value)}><option value="all">Todas</option><option value="fju">FJU</option><option value="weekly">Semanais</option><option value="upcoming">Eventos futuros</option><option value="past">Eventos passados</option></select></label></div>
             <div className="flex flex-col gap-2.5 pr-1">
               {(customMeetings || []).length === 0 ? (
                 <div className="text-hl-dim text-center py-6 text-xs italic bg-hl-canvas border border-dashed border-hl-line-soft rounded-xl font-medium">
@@ -560,6 +570,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                               setEditingMeetId(meet.id);
                               setMeetingBase(JSON.stringify(meet));setMeetingError('');
                               setNewMeetTheme(meet.theme);
+                              setNewMeetAudience(isYouthMeeting(meet)?'fju':'church');
                               setNewMeetTime(meet.time);
                               setNewMeetType(meet.date ? 'one_time' : 'weekly');
                               if (meet.date) setNewMeetDate(meet.date);
@@ -567,7 +578,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                               setShowAddMeetingForm(true);
                             }}
                             className="p-2 bg-hl-raised border border-hl-line hover:border-hl-line-strong hover:bg-hl-raised rounded-lg text-hl-muted hover:text-white transition-all cursor-pointer active:translate-y-[1px]"
-                            title="Editar Reunião"
+                            title="Editar evento"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>

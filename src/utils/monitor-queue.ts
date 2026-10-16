@@ -9,7 +9,7 @@ export function nextQueueItem(active:readonly string[],current:string,media:read
 export function describeQueueItem(id:string,media:readonly Media[],meetings:readonly Meeting[],youth=false){
  if(isFjuProject(id))return{id,title:id==='fju_projects'?'Conheça os projetos':FJU_PROJECTS.find(p=>p.id===id)!.name,typeLabel:'Projetos FJU'};
  if((youth||id.startsWith('fju_'))&&FJU_CARDS[id])return{id,title:FJU_CARDS[id].title,typeLabel:'Encontro Jovem'};
- if(id==='fju_agenda')return{id,title:'Próximos encontros',typeLabel:'Agenda FJU'};
+ if(id==='fju_agenda')return{id,title:'Próximos eventos FJU',typeLabel:'Agenda FJU'};
  if(youth&&id==='world_god')return{id,title:'Distrações / Conecte-se com Deus',typeLabel:'Encontro Jovem'};
  const file=media.find(item=>item.id===id);let title=id,typeLabel='Slide';
  const names:Record<string,string>={seat:'Fique à vontade',bathroom:'Vá ao banheiro',phone:'Celular no silencioso',no_chat:'Momento de concentração',soon:'Começa em instantes',social:'Redes sociais',donations:'Doações / Dízimos',campaigns:'Campanhas da igreja',world_god:'Desligue-se do mundo / Deus',baptism:'Batismo nas águas',blessing:'Despedida e bênção'};

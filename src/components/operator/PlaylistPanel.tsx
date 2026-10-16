@@ -201,7 +201,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
     if(isFjuProject(slideId))return {name:slideId==='fju_projects'?'Conheça os projetos':FJU_PROJECTS.find(p=>p.id===slideId)!.name,desc:'Projetos FJU · apresentação conectada',category:'fixo' as const};
     if((youth||slideId.startsWith('fju_'))&&FJU_CARDS[slideId])return{name:FJU_CARDS[slideId].title,desc:FJU_CARDS[slideId].subtitle,category:'fixo' as const};
     if(youth&&slideId==='world_god')return{name:'Distrações / Conecte-se com Deus',desc:'Transição do encontro com mundo e fogo',category:'fixo' as const};
-    if(slideId==='fju_agenda')return{name:'Próximos encontros',desc:'Somente Encontros Jovens cadastrados',category:'agenda' as const};
+    if(slideId==='fju_agenda')return{name:'Próximos eventos FJU',desc:'Encontro Jovem, Algo a Mais e eventos cadastrados, por proximidade',category:'agenda' as const};
 
     let name = slideId;
     let desc = "";

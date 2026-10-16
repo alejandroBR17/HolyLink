@@ -329,7 +329,7 @@ export function ControlsPanel({
     void saveSetting('projection_alert_history', updated).catch(() => notify?.('Não foi possível salvar o histórico neste aparelho.','error'));
   };
 
-  const tickerSuggestions = youth?['Bem-vindo ao Encontro Jovem!','Primeira vez? Fale com a equipe da FJU.','Convide quem está perto a participar com você.','Fique ligado nos avisos do encontro.']:[
+  const tickerSuggestions = youth?['Bem-vindo ao Encontro Jovem!','Primeira vez? Fique à vontade e participe com a gente.','Convide quem está perto a participar com você.','Fique ligado nos avisos do encontro.']:[
     "Seja muito bem-vindo à Casa de Deus!",
     "Por favor, silencie o seu aparelho celular para a reunião.",
     "EBI: Traga seus filhos para o Espaço Infantil durante a reunião.",

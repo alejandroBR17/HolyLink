@@ -753,6 +753,7 @@ export default function App() {
 
             {activeMobileTab === 'agenda' && (
               <AgendaPanel
+                youth={isFJUProjection}
                 customMeetings={customMeetings}
                 customCampaigns={customCampaigns}
                 updateStateAndBroadcast={updateStateAndBroadcast}
