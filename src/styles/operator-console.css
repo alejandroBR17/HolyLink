@@ -194,3 +194,9 @@
 @media(max-width:360px){.monitor-help-tabs,.hardware-profiles>div{grid-template-columns:1fr}.hardware-dialog>footer{align-items:flex-start;flex-direction:column}.hardware-dialog>footer button{width:100%}}
 
 .hardware-dialog>footer .hardware-primary{flex-shrink:0;min-width:110px;white-space:nowrap}.hardware-dialog>footer span{min-width:0;flex:1}
+
+/* Give the preload actions the same inset and containment as the other cards. */
+.hardware-dialog .hardware-cache{padding:16px;border:1px solid #4b3e40;border-radius:14px;background:linear-gradient(145deg,#211b1380,#0b0a10);width:100%;min-width:0;gap:16px}
+.hardware-dialog .hardware-cache>div{min-width:0;flex:1 1 220px}.hardware-dialog .hardware-cache h3{margin:0 0 9px}.hardware-dialog .hardware-cache button{flex-shrink:0;max-width:100%;white-space:normal}
+.monitor-help-footnote,.monitor-help-feedback{padding:12px;border:1px solid #443a40;border-radius:10px;background:#161219;gap:9px}.monitor-help-feedback svg{flex-shrink:0}
+@media(max-width:600px){.hardware-dialog .hardware-cache{padding:14px;gap:14px}.hardware-dialog .hardware-cache>div{flex-basis:100%}.hardware-dialog .hardware-cache button{width:100%}}

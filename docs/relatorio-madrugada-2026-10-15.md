@@ -291,3 +291,8 @@ Validação: lint e 76 testes nativos aprovados. Cinco tamanhos (320/390/768/844
 
 
 Entrega Ajuda `e684b9bb541bac625109ef6e66cad1e7e314683c`, Preview READY `dpl_Hs4xafpDzD2E4BN7pFeJqpCvnAYf` gerado pela integração Git, alias conferido. Fluxo específico de ajuda/diagnóstico e revisão geral das seis áreas também passaram online em 390×844/1365×900. Consulta preservou perfil, escolha explícita e escrita bloqueada funcionaram; foco/Escape e geometria aprovados. PR #1 atualizada e rascunho. Produção original `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi` e main preservadas. Lint/build, 76 testes nativos e sete testes de PWA aprovados. Servidor local encerrado; checkpoint documental sem deploy redundante. Próximo passo: avaliação visual do responsável em Monitor → Ajuda de projeção e diagnóstico, incluindo novo diálogo Diagnóstico e qualidade; ensaio físico permanece independente.
+
+
+### Ajuste pontual — pré-carregamento
+
+Responsável relatou letras encostadas na borda do bloco de pré-carregamento e perguntou próximo ponto. Identificado padding apenas superior no cartão do diagnóstico, enquanto o tema compartilhado dava borda/fundo a todas as seções. Cartão agora tem padding completo, largura contida, texto flexível e botão empilhado em celular. Explicação/feedback da ajuda também recebem área interna própria. Sem alteração de funcionalidade. Build e sete testes de PWA após cache v19 aprovados. Conferência focada em 320/390/844 paisagem/1365 verificou recuo mínimo de 14 px, botão/feedback e ausência de overflow; captura móvel inspecionada. Não foram repetidos os testes funcionais extensos sem mudança. Próxima etapa recomendada ao responsável: revisar projeção de texto/vídeo/transições/recuperação; nenhuma mudança desse bloco iniciada nesta rodada.
