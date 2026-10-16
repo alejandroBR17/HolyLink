@@ -345,3 +345,6 @@ Ajuste durante a revisão: responsável rejeitou vaso sanitário por ser indiscr
 
 
 Fechamento local: porta discreta conferida em 1920/390 após solicitação do responsável, sem cortes. Faixa do aviso revisada nesses tamanhos, agora sem cobrir o cabeçalho; captura final inspecionada. TypeScript, 77 testes nativos e build aprovados; build repetido somente após a troca final de ícone. Verificação de React manteve imports estáticos por símbolo, ícones decorativos, conteúdo/estado existentes e escopo da saída. Preparando publicação somente Preview.
+
+
+Entrega `aa0141788b0055849ccbc4a301f5008ad98b7dc1`, Preview READY `dpl_272Pdeuf8ZQ8tSUvCnA4wzPbJut3`, alias conferido. Online os doze cartões, aviso e contagem passaram em 1920×1080 e 390×844: sem texto fora da composição, ícones Lucide ou botão no aviso; posição canônica confirmou faixa abaixo do cabeçalho. Porta discreta substitui a opção rejeitada. PR #1 rascunho atualizada. Produção segue `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi`; main preservada. Checkpoint documental local sem outro deploy. Responsável fará anotações visuais adicionais; som físico permanece a única pendência dos ensaios citados por ele.
