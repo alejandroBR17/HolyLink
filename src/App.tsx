@@ -1,4 +1,4 @@
-import {FJU_PRE_SLIDES,FJU_POST_SLIDES} from './utils/fju-content';
+import {FJU_PRE_SLIDES,FJU_POST_SLIDES,FJU_PROJECT_SLIDES,isFjuProject,connectFjuProjects} from './utils/fju-content';
 import {deriveCountdown} from './utils/countdown';
 import {ProjectionStage} from './components/ProjectionStage';
 import {HeaderScroll} from './utils/header-scroll';
@@ -95,6 +95,7 @@ export default function App() {
     manualSlideOverride: storedManualSlideOverride,
     slidesOrder,
     disabledSlides,
+    fjuProjectsEnabled,
     customVerseText,
     customVerseRef,
     activeVerseIndex,
@@ -239,7 +240,7 @@ export default function App() {
 
   const originalSchedule=getNextMeeting(currentTime,customMeetings);
   const isFJUProjection=isYouthProjection(originalSchedule.ongoingMeeting,originalSchedule.nextMeeting,originalSchedule.nextMeetingDate,currentTime,projectionTheme);
-  const manualSlideOverride=storedManualSlideOverride&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):!storedManualSlideOverride.startsWith('fju_'))?storedManualSlideOverride:null;
+  const manualSlideOverride=storedManualSlideOverride&&(!isFjuProject(storedManualSlideOverride)||fjuProjectsEnabled)&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):!storedManualSlideOverride.startsWith('fju_'))?storedManualSlideOverride:null;
   const projectionMeetings=isFJUProjection?customMeetings.filter(isYouthMeeting):customMeetings;
   const {ongoingMeeting}=getNextMeeting(currentTime,projectionMeetings);
   const countdown=deriveCountdown(currentTime,projectionMeetings,countdownOffset,countdownPaused,pausedSeconds,countdownAnchor,dismissedJustStarted);
@@ -299,7 +300,7 @@ export default function App() {
     if (id === 'campaigns' && !hasActiveCampaigns) return false;
     return true;
   });
-  const allAvailableSlides: string[] = [...defaultBaseSlides];
+  const allAvailableSlides: string[] = [...defaultBaseSlides,...(isFJUProjection&&fjuProjectsEnabled?FJU_PROJECT_SLIDES:[])];
   customMediaList.forEach((media) => {
     if (!allAvailableSlides.includes(media.id)) {
       allAvailableSlides.push(media.id);
@@ -318,7 +319,7 @@ export default function App() {
   }
 
   const baseActiveSlides: SlideType[] = allAvailableSlides.filter((id) => {
-    if (disabledSlides && disabledSlides.includes(id)) return false;
+    if (!isFjuProject(id)&&disabledSlides && disabledSlides.includes(id)) return false;
     if (id.startsWith('custom_')) {
       const media = customMediaList.find((m) => m.id === id);
       return media ? media.enabledInLoop : false;
@@ -333,6 +334,7 @@ export default function App() {
     }
   });
 
+  if(isFJUProjection)activeSlides=connectFjuProjects(activeSlides);
   const totalDuration = activeSlides.reduce((sum, id) => sum + getSlideDuration(id, customMediaList), 0);
   const adjustedTime = currentTime.getTime() - carouselStartTimeOffset;
   const timeInLoop = ((adjustedTime % (totalDuration || 1)) + (totalDuration || 1)) % (totalDuration || 1);
@@ -702,6 +704,7 @@ export default function App() {
                 liveVerse={Boolean(customVerseText && (verseDisplayPriority === 'verse_over_video' || !(isFinalMinute || isFinalFiveMinutes))) ? {text:customVerseText!,ref:customVerseRef || 'Passagem bíblica'} : null}
                 countdownMode={isFinalMinute ? 'Contagem final · último minuto' : isFinalFiveMinutes ? 'Contagem final · últimos cinco minutos' : isJustStarted ? 'Horário previsto atingido' : null}
                 onOpenMonitor={() => setActiveMobileTab('monitor')}
+                fjuProjectsEnabled={fjuProjectsEnabled}
                 slidesOrder={slidesOrder}
                 currentSlideId={currentSlideId}
                 manualSlideOverride={manualSlideOverride}

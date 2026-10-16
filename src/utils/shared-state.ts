@@ -34,7 +34,7 @@ const campaign: Validator = value => record(value) && Object.keys(value).every(k
 const validators: Record<string, Validator> = {
   manualSlideOverride: nullable(text(200)), slidesOrder: array(text(200)), disabledSlides: array(text(200)),
   customVerseText: nullable(text(100_000)), customVerseRef: nullable(text(500)), activeVerseIndex: nullable(number(0, 10_000, true)),
-  projectionMode: oneOf('pre', 'post'), projectionTheme: oneOf('auto','fju','regular'),
+  projectionMode: oneOf('pre', 'post'), projectionTheme: oneOf('auto','fju','regular'), fjuProjectsEnabled: oneOf(true,false,'true','false'),
   activeAlert: nullable(text(10_000)), tickerText: nullable(text(10_000)),
   blackoutEnabled: oneOf(true, false, 'true', 'false'), clearContentEnabled: oneOf(true, false, 'true', 'false'),
   countdownPaused: oneOf(true, false, 'true', 'false'), dismissedJustStarted: oneOf(true, false, 'true', 'false'),

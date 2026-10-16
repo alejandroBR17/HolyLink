@@ -1,4 +1,4 @@
-import {FJU_CARDS} from './fju-content.ts';
+import {FJU_CARDS,FJU_PROJECTS,isFjuProject} from './fju-content.ts';
 interface Media {id:string;name:string;type:string}
 interface Meeting {id:string;theme:string}
 export function nextQueueItem(active:readonly string[],current:string,media:readonly Media[],meetings:readonly Meeting[],youth=false){
@@ -7,6 +7,7 @@ export function nextQueueItem(active:readonly string[],current:string,media:read
  return {...describeQueueItem(id,media,meetings,youth),position:position+1};
 }
 export function describeQueueItem(id:string,media:readonly Media[],meetings:readonly Meeting[],youth=false){
+ if(isFjuProject(id))return{id,title:id==='fju_projects'?'Conheça os projetos':FJU_PROJECTS.find(p=>p.id===id)!.name,typeLabel:'Projetos FJU'};
  if((youth||id.startsWith('fju_'))&&FJU_CARDS[id])return{id,title:FJU_CARDS[id].title,typeLabel:'Encontro Jovem'};
  if(id==='fju_agenda')return{id,title:'Próximos encontros',typeLabel:'Agenda FJU'};
  if(youth&&id==='world_god')return{id,title:'Distrações / Conecte-se com Deus',typeLabel:'Encontro Jovem'};

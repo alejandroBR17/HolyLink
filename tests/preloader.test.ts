@@ -19,6 +19,6 @@ test('warmup reports real outcomes, deduplicates pending requests and never cach
     const pendingAgain=svc.preloadImage('slow');svc.clearCache();assert.equal(await pendingAgain,false);
     const progress:number[]=[];
     const result=await svc.prepareStartup('custom_b',['custom_a','custom_b','custom_c'],[{id:'custom_a',type:'image',url:'not-next'},{id:'custom_b',type:'image',url:'current'},{id:'custom_c',type:'image',url:'next'}],(done)=>progress.push(done));
-    assert.deepEqual(result,{checked:6,failed:0});assert.deepEqual(progress,[0,1,2,3,4,5,6]);assert.ok(requests.includes('/brand/fju-white-v2.png'));assert.ok(requests.includes('current')&&requests.includes('next'));assert.ok(!requests.includes('not-next'));
+    assert.deepEqual(result,{checked:9,failed:0});assert.deepEqual(progress,[0,1,2,3,4,5,6,7,8,9]);assert.ok(requests.includes('/brand/fju-white-v2.png'));assert.ok(requests.includes('current')&&requests.includes('next'));assert.ok(!requests.includes('not-next'));
   }finally{if(savedImage)Object.defineProperty(globalThis,'Image',savedImage);else delete (globalThis as {Image?:unknown}).Image;if(savedDocument)Object.defineProperty(globalThis,'document',savedDocument);else delete (globalThis as {document?:unknown}).document;}
 });

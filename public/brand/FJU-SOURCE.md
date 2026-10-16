@@ -13,3 +13,7 @@ Os três PNGs originais têm 1278×461 e canal alfa. Foram copiados sem edição
 `fju-official.png` foi obtido de https://forcajovemuniversal.com/_assets/images/236534a3d0ca242bd08d8c2e923dd06a.png em 16/10/2026, a partir do site https://forcajovemuniversal.com/ . Está preservado como recurso anterior, fora do preparo/cache e da interface atual.
 
 As marcas e seus direitos pertencem aos respectivos titulares. Não são arte original do HolyLink e não recebem licença MIT por estar no repositório. Uso para identificação do Encontro Jovem a pedido do operador. Não se afirma certificação/endosso do HolyLink pela instituição. O ícone de instalação do HolyLink permanece com sua identidade própria.
+
+## Projetos da unidade — arquivos fornecidos em 16/10/2026
+
+Mídia, Esportes e Cultura foram enviados pelo responsável como PNGs 1920×1080. Os três já tinham canal alfa e fundo externo transparente. Os arquivos locais fju-project-midia.png, fju-project-esportes.png e fju-project-cultura.png preservam os pixels do desenho, recortando somente as margens totalmente transparentes (caixa 896×864 em x512/y108). Não houve geração por IA, redesenho ou remoção de branco interno das logos. Uso restrito à identidade dos respectivos projetos, sem relicenciamento MIT.

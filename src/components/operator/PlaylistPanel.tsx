@@ -1,4 +1,4 @@
-import {FJU_CARDS} from '../../utils/fju-content';
+import {FJU_CARDS,FJU_PROJECT_SLIDES,FJU_PROJECTS,isFjuProject,connectFjuProjects} from '../../utils/fju-content';
 import {RemoteMediaLibrary} from './RemoteMediaLibrary';
 import type {MediaManifestItem} from '../../utils/media-manifest';
 import {useDialogFocus} from '../../hooks/useDialogFocus';
@@ -26,6 +26,7 @@ interface CustomMedia {
 
 interface PlaylistPanelProps {
   youth?:boolean;
+  fjuProjectsEnabled?:boolean;
   blackoutEnabled?:boolean;
   clearContentEnabled?:boolean;
   liveVerse?:{text:string;ref:string}|null;
@@ -69,6 +70,7 @@ type QueueFilterMode = 'all' | 'active' | 'disabled' | 'media' | 'agenda';
 
 export const PlaylistPanel = React.memo(function PlaylistPanel({
   youth=false,
+  fjuProjectsEnabled=false,
   blackoutEnabled=false,
   clearContentEnabled=false,
   liveVerse=null,
@@ -175,25 +177,28 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   // Combina todos os slides conhecidos respeitando a ordem atual de slidesOrder
   const fullSlideList = useMemo(() => {
     const available = [...new Set([...activeSlides, ...allAvailableSlides])];
-    return [...slidesOrder.filter(id => available.includes(id)), ...available.filter(id => !slidesOrder.includes(id))];
-  }, [activeSlides, allAvailableSlides, slidesOrder]);
+    const ordered=[...slidesOrder.filter(id => available.includes(id)), ...available.filter(id => !slidesOrder.includes(id))];
+    return youth?connectFjuProjects(ordered):ordered;
+  }, [activeSlides, allAvailableSlides, slidesOrder,youth]);
   const [draftOrder, setDraftOrder] = useState<string[] | null>(null);
   const [editingBase, setEditingBase] = useState('');
   const orderChangedElsewhere = draftOrder !== null && editingBase !== JSON.stringify(fullSlideList);
   const beginEditing = () => {setDraftOrder([...fullSlideList]); setEditingBase(JSON.stringify(fullSlideList)); setFilterMode('all'); setSearchTerm('');};
   const moveDraft = (id: string, direction: -1 | 1) => setDraftOrder(current => {
     if (!current) return current;
+    if(youth){const block=isFjuProject(id)?FJU_PROJECT_SLIDES.filter(x=>current.includes(x)):[id];const normalized=connectFjuProjects(current);const start=normalized.indexOf(block[0]);const rest=normalized.filter(x=>!block.includes(x));let target=start+direction;if(direction===1&&isFjuProject(rest[start]))target=start+FJU_PROJECT_SLIDES.length;if(direction===-1&&isFjuProject(rest[start-1]))target=start-FJU_PROJECT_SLIDES.length;if(target<0||target>rest.length)return normalized;rest.splice(target,0,...block);return connectFjuProjects(rest);}
     const index = current.indexOf(id), target = index + direction;
     if (index < 0 || target < 0 || target >= current.length) return current;
     const next = [...current]; [next[index], next[target]] = [next[target], next[index]]; return next;
   });
   const applyOrder = () => {
     if (!draftOrder || orderChangedElsewhere) return;
-    updateStateAndBroadcast('slidesOrder', JSON.stringify(draftOrder));
+    updateStateAndBroadcast('slidesOrder', JSON.stringify(youth?connectFjuProjects(draftOrder):draftOrder));
     setDraftOrder(null); notify('Ordem aplicada neste operador.', 'success');
   };
 
   const getSlideDetails = (slideId: string) => {
+    if(isFjuProject(slideId))return {name:slideId==='fju_projects'?'Conheça os projetos':FJU_PROJECTS.find(p=>p.id===slideId)!.name,desc:'Projetos FJU · apresentação conectada',category:'fixo' as const};
     if((youth||slideId.startsWith('fju_'))&&FJU_CARDS[slideId])return{name:FJU_CARDS[slideId].title,desc:FJU_CARDS[slideId].subtitle,category:'fixo' as const};
     if(youth&&slideId==='world_god')return{name:'Distrações / Conecte-se com Deus',desc:'Transição do encontro com mundo e fogo',category:'fixo' as const};
     if(slideId==='fju_agenda')return{name:'Próximos encontros',desc:'Somente Encontros Jovens cadastrados',category:'agenda' as const};
@@ -402,6 +407,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           <div><span className="operator-eyebrow"><Layers size={16}/>{youth?'Controle do encontro':'Controle da reunião'}</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
           {!draftOrder ? <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => {if (libraryRef.current) libraryRef.current.open = true; fileInputRef.current?.click();}}><Plus size={17}/>Adicionar mídia</button><button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button></div> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
         </header>
+        {youth&&<section className="fju-program-choice" aria-label="Preparar encontro"><div><h3>Projetos neste encontro</h3><p>Apresentação → Esportes → Cultura → Mídia. O bloco permanece junto na fila.</p><small>A escolha fica salva. Confira antes de cada encontro.</small></div><label><input type="checkbox" checked={fjuProjectsEnabled} onChange={e=>{updateStateAndBroadcast('fjuProjectsEnabled',e.target.checked);if(!e.target.checked&&manualSlideOverride&&isFjuProject(manualSlideOverride))resumeSequence();}}/>Incluir projetos na sequência</label></section>}
         <div className="sequence-status"><span className="sequence-status-light"/><span>{liveVerse ? 'Passagem bíblica sobre a fila' : manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{(manualSlideOverride || liveVerse) && <button onClick={resumeSequence}><RefreshCw size={15}/>Retomar</button>}</div>
         {changingQueueMedia && <p className="operator-notice" role="status">Salvando participação na sequência…</p>}
         <section className="sequence-now" aria-label="Conteúdo atual do operador">
@@ -420,7 +426,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               <span className={`sequence-art sequence-art-${category}`} aria-hidden="true">{media?.type === 'image' ? <img src={media.url} alt="" loading="lazy"/> : <Icon size={24}/>}<span className="sequence-position">{draftOrder ? index + 1 : fullSlideList.indexOf(slideId) + 1}</span></span>
               <div className="sequence-item-text"><h3>{name}{isCurrent && <span className="sequence-live-label"><span aria-hidden="true"/>Exibindo</span>}</h3><p className="sequence-description">{desc}</p><p>{draftOrder ? 'Editando a posição' : `${getSlideDuration(slideId, customMediaList) / 1000}s${isDisabled ? ' · Fora da sequência' : ''}`}</p></div>
               <div className="sequence-item-actions">{draftOrder ? <><button disabled={index === 0 || orderChangedElsewhere} aria-label={`Subir ${name}`} onClick={() => moveDraft(slideId, -1)}><ArrowUp size={18}/></button><button disabled={index === list.length - 1 || orderChangedElsewhere} aria-label={`Descer ${name}`} onClick={() => moveDraft(slideId, 1)}><ArrowDown size={18}/></button></> : <>
-                {handleToggleDisableSlide && <button disabled={changingQueueMedia!==null} aria-label={`${isDisabled ? 'Ativar' : 'Ocultar'} ${name}`} title={isDisabled ? 'Incluir na sequência' : 'Retirar da sequência'} onClick={() => toggleQueueSlide(slideId)}>{isDisabled ? <EyeOff size={17}/> : <Eye size={17}/>}</button>}
+                {handleToggleDisableSlide && !isFjuProject(slideId) && <button disabled={changingQueueMedia!==null} aria-label={`${isDisabled ? 'Ativar' : 'Ocultar'} ${name}`} title={isDisabled ? 'Incluir na sequência' : 'Retirar da sequência'} onClick={() => toggleQueueSlide(slideId)}>{isDisabled ? <EyeOff size={17}/> : <Eye size={17}/>}</button>}
                 <button className={isFixed ? 'sequence-primary' : 'sequence-project'} aria-label={`${isFixed ? 'Desafixar' : 'Projetar'} ${name}`} onClick={() => isFixed ? resumeSequence() : projectSlide(slideId)}><Send size={16}/><span>{isFixed ? 'Retomar' : 'Projetar'}</span></button>
               </>}</div>
             </li>;

@@ -1,5 +1,6 @@
-import {FJU_CARDS} from '../utils/fju-content';
+import {FJU_CARDS,isFjuProject} from '../utils/fju-content';
 import {FjuAgendaSlide} from './FjuAgendaSlide';
+import {FjuProjectsSlide} from './FjuProjectsSlide';
 import {FjuSlide} from './FjuSlide';
 import {CountdownReadout,ProjectionCountdown,ProjectionMeetingStart} from './ProjectionCountdown';
 import {ProjectedImage,ProjectionMediaFallback} from './ProjectionMedia';
@@ -164,6 +165,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
   const renderSlide = (slideId: string) => {
     if(isFJU){
+      if(isFjuProject(slideId))return <FjuProjectsSlide slideId={slideId}/>;
       if(slideId==='fju_agenda')return <FjuAgendaSlide meetings={customMeetings} now={currentTime}/>;
       if(slideId.startsWith('meeting_event_')){const meeting=customMeetings.find(m=>m.id===slideId.slice('meeting_event_'.length));if(meeting)return <FjuSlide label="PRÓXIMO ENCONTRO" title={meeting.theme} subtitle={`${meeting.date?format(new Date(meeting.date+'T12:00:00'),'dd/MM',{locale:ptBR}):meeting.dayName} · ${meeting.time}`} symbol={<CalendarDays/>}/>;}
 
@@ -374,7 +376,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         return (
           <IconSlide
             icon={Instagram}
-            title="Siga nosso Instagram"
+            title="Universal Jardim Osasco"
             subtitle={SOCIAL.instagram}
             layout="split-left"
             effectiveMode={effectiveMode}
