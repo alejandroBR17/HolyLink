@@ -139,3 +139,12 @@ Vídeo tem um player por conteúdo, sem uma segunda reprodução apenas para faz
 Arquivo inválido, imagem sem carregamento por 12 segundos ou vídeo sem progresso por 15 segundos recebem uma composição neutra. O nome do arquivo fica no controle técnico, não na mensagem ao público. Tentar mídia novamente relê o arquivo local; Próximo conteúdo permite seguir a fila. Tentar não repara bytes corrompidos nem torna um codec incompatível em compatível: reimporte uma versão válida se necessário. Ocultar/minimizar a janela suspende o vídeo e ele tenta retomar quando visível; não feche/minimize a janela enviada ao telão.
 
 Validação em navegador não confirma cabo HDMI, posição física da janela, overscan, distância de leitura, alto-falantes ou políticas do navegador do aparelho real. Faça um ensaio no equipamento da igreja, incluindo volume, fim do vídeo e perda/recuperação de mídia, antes do uso ao vivo.
+
+
+## Globo e QR de doações
+
+O cartão Desligue-se do mundo usa uma esfera 3D rotativa (Three.js, mapa local), limitada a 30 quadros/s e pixel ratio 1,5. Mantém os 7,5 segundos iniciais antes de trocar para fogo/Ligue-se com Deus. Não muda o tempo total existente do cartão. Perfil leve e falta/perda de WebGL usam esfera CSS sombreada com mapa girando; movimento reduzido mantém a esfera parada. Geometria, textura, canvas, quadro agendado e contexto gráfico são liberados quando o cartão sai. A animação fica suspensa em janela oculta. A aparência final ainda depende do aparelho real, embora os caminhos 3D/compatível tenham sido exercitados em navegador.
+
+O desenho geográfico local `public/media/earth-land.svg` deriva de Natural Earth 1:110m land (domínio público), com coordenadas projetadas para uma textura SVG sem requisições externas. Fonte: https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_land.geojson . Termos: https://www.naturalearthdata.com/about/terms-of-use/ . O mapa entra no cache local de instalação, sem ampliar o cache para arquivos de mídia arbitrários.
+
+O QR renderizado codifica exatamente `https://universal.org/doar` (domínio `.org`). Seu painel branco oferece margem externa de 64 px para os módulos de 380 px, e a URL fica escrita junto ao código. Decodificação independente da captura real foi conferida em PC e composição móvel. Isso confirma o conteúdo do QR, não a disponibilidade ou procedimentos de recebimento do site externo.

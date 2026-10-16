@@ -1,3 +1,4 @@
+import {ProjectionGlobe} from '../ProjectionGlobe';
 import {Globe,Flame,HeartHandshake,CalendarDays,WifiOff,Info,Droplets,PrayingHands,BookOpen} from '../ui/icons';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
@@ -371,12 +372,12 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
               </span>
             </div>
 
-            <div className={`projection-emblem p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+            <div className={`projection-world-emblem ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
               isLightMode
                 ? 'bg-hl-canvas border-2 border-hl-line'
                 : 'bg-hl-panel/70 backdrop-blur-md border border-hl-line/60 shadow-[0_20px_50px_rgba(0,0,0,0.6)]'
             } mb-6`}>
-              <Globe className={`w-32 h-32 @[1280px]:w-40 @[1280px]:h-40 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-soft drop-shadow-[0_0_35px_rgba(255,255,255,0.2)]'} `} />
+              <ProjectionGlobe light={isLightMode}/>
             </div>
 
             <h1 className="font-sans font-black text-[4.4rem] @[1280px]:text-[5.4rem] @[1536px]:text-[6.2rem] tracking-tight text-white leading-[1.08] mb-4 uppercase drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)]">
@@ -684,17 +685,17 @@ export const DonationSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
         </div>
 
         {/* QR Code Container with Frame */}
-        <div className={`flex-shrink-0 p-7 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+        <div data-projection-qr className={`projection-qr-plate flex-shrink-0 p-7 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode
             ? 'bg-white border-8 border-hl-line'
             : isFJU
               ? 'bg-white shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-8 ring-hl-gold/30'
               : 'bg-white shadow-[0_25px_70px_rgba(0,0,0,0.85)] ring-4 ring-hl-gold/30'
         }`}>
-          <QRCode value={DONATION.url} size={380} />
+          <QRCode value={DONATION.url} size={380} level="M" title="Doações — universal.org/doar"/>
           <div className="mt-3 text-center">
             <span className="text-hl-ink font-mono font-black text-base uppercase tracking-widest">
-              QR CODE OFICIAL
+              UNIVERSAL.ORG/DOAR
             </span>
           </div>
         </div>

@@ -348,3 +348,15 @@ Fechamento local: porta discreta conferida em 1920/390 após solicitação do re
 
 
 Entrega `aa0141788b0055849ccbc4a301f5008ad98b7dc1`, Preview READY `dpl_272Pdeuf8ZQ8tSUvCnA4wzPbJut3`, alias conferido. Online os doze cartões, aviso e contagem passaram em 1920×1080 e 390×844: sem texto fora da composição, ícones Lucide ou botão no aviso; posição canônica confirmou faixa abaixo do cabeçalho. Porta discreta substitui a opção rejeitada. PR #1 rascunho atualizada. Produção segue `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi`; main preservada. Checkpoint documental local sem outro deploy. Responsável fará anotações visuais adicionais; som físico permanece a única pendência dos ensaios citados por ele.
+
+
+### 16/10 — cadeira, globo girando e conferência do QR
+
+Responsável pediu assento como banco/cadeira, mundo girando antes do fogo, possibilidade de 3D e revisão da segunda tela. Cadeira Phosphor substitui poltrona. Mundo ganhou esfera 3D real com mapa local de domínio público, preto/dourado, rotação sobre o próprio eixo, limite 30 fps e pixel ratio 1,5; sequência anterior de 7,5 segundos até fogo preservada. Perfil leve/falha/perda de WebGL usa esfera CSS sombreada com rotação; preferência reduzida deixa o globo parado. Recursos gráficos e callbacks descartados na saída. Nenhuma requisição a mapas externos durante uso.
+
+QR usa DONATION.url=https://universal.org/doar (.org). Margem branca ampliada para 64 px e domínio escrito junto ao QR. Decodificador independente jsQR executado somente nos arquivos de QA externos ao repositório confirmou a URL em capturas reais de saída. A ferramenta web não conseguiu abrir a página de doações; não se afirma teste de pagamento, disponibilidade nem conteúdo atual desse site. Natural Earth fonte/termos de domínio público conferidos e documentados.
+
+Testes locais: doze cartões, aviso e contagem em 1920/390 continuam sem cortes/ícones antigos. Globo 3D animado passou em PC/celular emulado, queda de contexto trocou para alternativa sem canvas restante, ausência de WebGL e perfil leve mantiveram rotação, movimento reduzido ficou parado; todos avançaram para fogo e liberaram o globo. QR de cada um desses cinco cenários foi decodificado para a URL exata. Fonte/mapa e fundos legítimos preservados. Cache v23 inclui apenas o mapa local específico; armazenamento de mídia arbitrária segue excluído. Validações finais/build ainda em andamento antes da Preview.
+
+
+Fechamento local: TypeScript/build e 78 testes nativos aprovados, incluindo precache/uso offline do mapa e exclusão de mídias arbitrárias. QR de cinco cenários foi decodificado para https://universal.org/doar. Captura do globo 3D inspecionada; rotação real e passagem para fogo confirmadas. Perfil leve, WebGL indisponível/contexto perdido e preferência reduzida preservam conteúdo. Revisão React manteve descarte idempotente do renderer e callbacks invalidados no unmount, importações estáticas e ausência de serviços externos durante projeção. Preparando Preview; nenhum ensaio de áudio físico acrescentado.

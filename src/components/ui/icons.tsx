@@ -1,4 +1,4 @@
-import {Armchair as PhArmchair} from '@phosphor-icons/react/dist/csr/Armchair';
+import {Chair as PhChair} from '@phosphor-icons/react/dist/csr/Chair';
 import {DoorOpen as PhDoorOpen} from '@phosphor-icons/react/dist/csr/DoorOpen';
 import {ChatCircleSlash as PhChatCircleSlash} from '@phosphor-icons/react/dist/csr/ChatCircleSlash';
 import {Clock as PhClock} from '@phosphor-icons/react/dist/csr/Clock';
@@ -157,7 +157,7 @@ export const Zap = themed(PhLightning);
 
 export const SkipForward=themed(PhSkipForward);
 
-export const Armchair=themed(PhArmchair);
+export const Chair=themed(PhChair);
 export const Restroom=themed(PhDoorOpen);
 export const MessageSquareOff=themed(PhChatCircleSlash);
 export const Clock=themed(PhClock);

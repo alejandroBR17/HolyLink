@@ -1,5 +1,5 @@
 import {ProjectedImage,ProjectionMediaFallback} from './ProjectionMedia';
-import {Smartphone,Bell,Armchair,Restroom,MessageSquareOff,Clock,Instagram,Flame,RefreshCw} from './ui/icons';
+import {Smartphone,Bell,Chair,Restroom,MessageSquareOff,Clock,Instagram,Flame,RefreshCw} from './ui/icons';
 import {isYouthProjection} from '../utils/projection-theme';
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion, MotionConfig } from 'motion/react';
@@ -301,7 +301,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         if (isFJU) {
           return (
             <IconSlide
-              icon={Armchair}
+              icon={Chair}
               title="Cola aí!"
               subtitle="Encontre seu lugar e chega mais, o Encontro Jovem vai começar!"
               layout="split-left"
@@ -313,7 +313,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         }
         return (
           <IconSlide
-            icon={Armchair}
+            icon={Chair}
             title="Fique à vontade"
             subtitle="Procure um assento e acomode-se para o início da reunião."
             layout="split-left"
