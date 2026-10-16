@@ -1,3 +1,4 @@
+import {Music2,Trophy,Volleyball,BookOpen} from 'lucide-react';
 import {FJU_CARDS,FJU_PROJECTS,isFjuProject} from '../utils/fju-content';
 import {FjuAgendaSlide} from './FjuAgendaSlide';
 import {FjuProjectsSlide} from './FjuProjectsSlide';
@@ -170,7 +171,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       if(slideId.startsWith('meeting_event_')){const meeting=customMeetings.find(m=>m.id===slideId.slice('meeting_event_'.length));if(meeting)return <FjuSlide label="PRÓXIMO EVENTO FJU" title={meeting.theme} subtitle={`${meeting.date?format(new Date(meeting.date+'T12:00:00'),'dd/MM',{locale:ptBR}):meeting.dayName} · ${meeting.time}`} symbol={<CalendarDays/>}/>;}
 
       const card=FJU_CARDS[slideId];
-      if(card){const symbols={hand:<Hand/>,seat:<ChurchBench/>,door:<Restroom/>,phone:<Smartphone/>,chat:<MessageSquareText/>,mute:<MessageSquareOff/>,fire:<Flame/>,social:<Instagram/>,people:<UsersRound/>};return <FjuSlide {...card} symbol={symbols[card.symbol]}/>;}
+      if(card){const symbols={hand:<Hand/>,seat:<ChurchBench/>,door:<Restroom/>,phone:<Smartphone/>,chat:<MessageSquareText/>,mute:<MessageSquareOff/>,fire:<Flame/>,social:<Instagram/>,people:<UsersRound/>,music:<Music2/>,book:<BookOpen/>,trophy:<Trophy/>,ball:<Volleyball/>};return <FjuSlide {...card} symbol={symbols[card.symbol]}/>;}
     }
 
     if (slideId.startsWith("custom_")) {

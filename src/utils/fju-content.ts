@@ -1,4 +1,7 @@
-export const FJU_CARDS:Record<string,{title:string;subtitle:string;label?:string;layout?:'welcome'|'statement'|'split';symbol:'hand'|'seat'|'door'|'phone'|'chat'|'mute'|'fire'|'social'|'people'}>={
+import {FJU_MOMENTS} from './fju-moments.ts';
+
+export const FJU_CARDS:Record<string,{title:string;subtitle:string;label?:string;layout?:'welcome'|'statement'|'split';symbol:'hand'|'seat'|'door'|'phone'|'chat'|'mute'|'fire'|'social'|'people'|'music'|'book'|'trophy'|'ball'}>={
+ ...Object.fromEntries(FJU_MOMENTS.map(({id,name,...card})=>[id,card])),
  fju_welcome:{title:'Bom ter você aqui',subtitle:'Esse encontro também é seu. Chega junto!',label:'FJU / ENCONTRO JOVEM',layout:'welcome',symbol:'hand'},
  fju_first_time:{title:'É sua primeira vez?',subtitle:'Fique à vontade. Esse encontro também é seu.',label:'CHEGA JUNTO',symbol:'hand'},
  fju_together:{title:'Ninguém fica de fora',subtitle:'Convide quem está perto a participar com você.',label:'JUNTOS NO ENCONTRO',layout:'statement',symbol:'people'},

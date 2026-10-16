@@ -1,3 +1,4 @@
+import {readFjuMoments} from '../utils/fju-moments';
 import type {ProjectionThemeMode} from '../utils/projection-theme';
 import {isSharedStateUpdate} from '../utils/shared-state';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -35,9 +36,11 @@ export interface ProjectionState {
   projectionMode: 'pre' | 'post';
   projectionTheme: ProjectionThemeMode;
   fjuProjectsEnabled:boolean;
+  fjuMoments:string[];
 }
 
 export function useProjectionState() {
+  const [fjuMoments,setFjuMoments]=useState(()=>readFjuMoments(localStorage.getItem('projection_fjuMoments')));
   const [fjuProjectsEnabled,setFjuProjectsEnabled]=useState(()=>localStorage.getItem('projection_fjuProjectsEnabled')==='true');
   const [projectionTheme,setProjectionTheme]=useState<ProjectionThemeMode>(()=>{const mode=localStorage.getItem('projection_projectionTheme');return mode==='fju'||mode==='regular'?mode:'auto';});
   const [projectionMode, setProjectionMode] = useState<'pre' | 'post'>(() => {
@@ -239,6 +242,7 @@ export function useProjectionState() {
     if (key === 'manualSlideOverride') setManualSlideOverride(value);
     else if (key === 'projectionTheme') setProjectionTheme(value as ProjectionThemeMode);
     else if(key==='fjuProjectsEnabled')setFjuProjectsEnabled(value===true||value==='true');
+    else if(key==='fjuMoments')setFjuMoments(readFjuMoments(value));
     else if (key === 'projectionMode') setProjectionMode((value as 'pre' | 'post') || 'pre');
     else if (key === 'countdownAnchor') setCountdownAnchor(value===null?null:Number(value));
     else if (key === 'countdownOffset') setCountdownOffset(typeof value === 'number' ? value : parseInt(value?.toString() || '0', 10));
@@ -346,6 +350,7 @@ export function useProjectionState() {
       if (key === 'manualSlideOverride') setManualSlideOverride(value);
       else if (key === 'projectionTheme') setProjectionTheme(value as ProjectionThemeMode);
     else if(key==='fjuProjectsEnabled')setFjuProjectsEnabled(value===true||value==='true');
+    else if(key==='fjuMoments')setFjuMoments(readFjuMoments(value));
       else if (key === 'projectionMode') setProjectionMode((value as 'pre' | 'post') || 'pre');
       else if (key === 'countdownAnchor') setCountdownAnchor(value===null?null:Number(value));
       else if (key === 'countdownOffset') setCountdownOffset(value !== null && value !== undefined ? parseInt(value.toString(), 10) : 0);
@@ -447,6 +452,7 @@ export function useProjectionState() {
       setSyncStatus({ active: true, message: 'Finalizando sincronização...' });
       setManualSlideOverride(localStorage.getItem('projection_manualSlideOverride'));
       setFjuProjectsEnabled(localStorage.getItem('projection_fjuProjectsEnabled')==='true');
+      setFjuMoments(readFjuMoments(localStorage.getItem('projection_fjuMoments')));
       const savedTheme=localStorage.getItem('projection_projectionTheme');setProjectionTheme(savedTheme==='fju'||savedTheme==='regular'?savedTheme:'auto');
       setProjectionMode((localStorage.getItem('projection_projectionMode') as 'pre' | 'post') || 'pre');
       const savedAnchor=localStorage.getItem('projection_countdownAnchor');const parsedAnchor=Number(savedAnchor);setCountdownAnchor(savedAnchor!==null&&isSharedStateUpdate('countdownAnchor',parsedAnchor)?parsedAnchor:null);
@@ -566,6 +572,7 @@ export function useProjectionState() {
       projectionMode,
       projectionTheme,
       fjuProjectsEnabled,
+      fjuMoments,
       syncStatus
     },
     updateStateAndBroadcast,

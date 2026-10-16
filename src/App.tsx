@@ -1,3 +1,4 @@
+import {availablePreparedMoment} from './utils/fju-moments';
 import {FJU_PRE_SLIDES,FJU_POST_SLIDES,FJU_PROJECT_SLIDES,isFjuProject,connectFjuProjects} from './utils/fju-content';
 import {deriveCountdown} from './utils/countdown';
 import {ProjectionStage} from './components/ProjectionStage';
@@ -96,6 +97,7 @@ export default function App() {
     slidesOrder,
     disabledSlides,
     fjuProjectsEnabled,
+    fjuMoments,
     customVerseText,
     customVerseRef,
     activeVerseIndex,
@@ -240,7 +242,7 @@ export default function App() {
 
   const originalSchedule=getNextMeeting(currentTime,customMeetings);
   const isFJUProjection=isYouthProjection(originalSchedule.ongoingMeeting,originalSchedule.nextMeeting,originalSchedule.nextMeetingDate,currentTime,projectionTheme);
-  const manualSlideOverride=storedManualSlideOverride&&(!isFjuProject(storedManualSlideOverride)||fjuProjectsEnabled)&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):availableInChurchLoop(storedManualSlideOverride,customMeetings))?storedManualSlideOverride:null;
+  const manualSlideOverride=storedManualSlideOverride&&availablePreparedMoment(storedManualSlideOverride,fjuMoments)&&(!isFjuProject(storedManualSlideOverride)||fjuProjectsEnabled)&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):availableInChurchLoop(storedManualSlideOverride,customMeetings))?storedManualSlideOverride:null;
   const projectionMeetings=customMeetings.filter(isFJUProjection?isYouthMeeting:isChurchMeeting);
   const {ongoingMeeting}=getNextMeeting(currentTime,projectionMeetings);
   const countdown=deriveCountdown(currentTime,projectionMeetings,countdownOffset,countdownPaused,pausedSeconds,countdownAnchor,dismissedJustStarted);
@@ -705,6 +707,7 @@ export default function App() {
                 countdownMode={isFinalMinute ? 'Contagem final · último minuto' : isFinalFiveMinutes ? 'Contagem final · últimos cinco minutos' : isJustStarted ? 'Horário previsto atingido' : null}
                 onOpenMonitor={() => setActiveMobileTab('monitor')}
                 fjuProjectsEnabled={fjuProjectsEnabled}
+                fjuMoments={fjuMoments}
                 slidesOrder={slidesOrder}
                 currentSlideId={currentSlideId}
                 manualSlideOverride={manualSlideOverride}

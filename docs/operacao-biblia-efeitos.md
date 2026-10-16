@@ -203,3 +203,6 @@ Agenda de oferece três destinos: FJU (somente jovem), Igreja (somente reuniões
 O redesenho das reuniões de 16/10 foi revertido a pedido do responsável; componentes e visual anterior foram restaurados.
 
 Nos cartões individuais de Esportes/Cultura/Mídia, a paleta acompanha a identidade do projeto no fundo, cabeçalho, efeitos, avisos e contagem. Não há filtros sobre os PNGs. Mudanças de paleta mantêm o mesmo renderer e respeitam movimento reduzido, efeitos desligados e perda de WebGL; nenhum controle adicional é necessário. Overview mantém azul FJU. Para comparar a identidade normal na prévia, use Ajustes → FJU desligado.
+
+### Momentos preparados do Encontro Jovem
+Em Sequência com FJU ligado, escolha os momentos de Música, Palavra, Gincana e Esportes após o encontro. A escolha fica salva e acompanha os dispositivos sincronizados; confira antes de cada encontro. Cada botão exibe um cartão fixado. Use Retomar sequência (ou toque no momento fixado) para voltar. Desmarcar o momento ao vivo também retoma. São cartões manuais, fora da fila automática; não reproduzem música/vídeo e não programam atividades. Blackout e limpar tela continuam tendo prioridade.

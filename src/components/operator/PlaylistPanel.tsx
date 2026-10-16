@@ -1,3 +1,4 @@
+import {FjuMomentsControl} from './FjuMomentsControl';
 import {FJU_CARDS,FJU_PROJECT_SLIDES,FJU_PROJECTS,isFjuProject,connectFjuProjects} from '../../utils/fju-content';
 import {RemoteMediaLibrary} from './RemoteMediaLibrary';
 import type {MediaManifestItem} from '../../utils/media-manifest';
@@ -27,6 +28,7 @@ interface CustomMedia {
 interface PlaylistPanelProps {
   youth?:boolean;
   fjuProjectsEnabled?:boolean;
+  fjuMoments?:string[];
   blackoutEnabled?:boolean;
   clearContentEnabled?:boolean;
   liveVerse?:{text:string;ref:string}|null;
@@ -71,6 +73,7 @@ type QueueFilterMode = 'all' | 'active' | 'disabled' | 'media' | 'agenda';
 export const PlaylistPanel = React.memo(function PlaylistPanel({
   youth=false,
   fjuProjectsEnabled=false,
+  fjuMoments=[],
   blackoutEnabled=false,
   clearContentEnabled=false,
   liveVerse=null,
@@ -407,6 +410,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           <div><span className="operator-eyebrow"><Layers size={16}/>{youth?'Controle do encontro':'Controle da reunião'}</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
           {!draftOrder ? <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => {if (libraryRef.current) libraryRef.current.open = true; fileInputRef.current?.click();}}><Plus size={17}/>Adicionar mídia</button><button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button></div> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
         </header>
+        {youth&&<FjuMomentsControl selected={fjuMoments} current={manualSlideOverride} obscured={blackoutEnabled||clearContentEnabled} onChange={ids=>{updateStateAndBroadcast('fjuMoments',ids);if(manualSlideOverride&&fjuMoments.includes(manualSlideOverride)&&!ids.includes(manualSlideOverride))resumeSequence();}} onProject={projectSlide} onResume={resumeSequence}/>}
         {youth&&<section className="fju-program-choice" aria-label="Preparar encontro"><div><h3>Projetos neste encontro</h3><p>Apresentação → Esportes → Cultura → Mídia. O bloco permanece junto na fila.</p><small>A escolha fica salva. Confira antes de cada encontro.</small></div><label><input type="checkbox" checked={fjuProjectsEnabled} onChange={e=>{updateStateAndBroadcast('fjuProjectsEnabled',e.target.checked);if(!e.target.checked&&manualSlideOverride&&isFjuProject(manualSlideOverride))resumeSequence();}}/>Incluir projetos na sequência</label></section>}
         <div className="sequence-status"><span className="sequence-status-light"/><span>{liveVerse ? 'Passagem bíblica sobre a fila' : manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{(manualSlideOverride || liveVerse) && <button onClick={resumeSequence}><RefreshCw size={15}/>Retomar</button>}</div>
         {changingQueueMedia && <p className="operator-notice" role="status">Salvando participação na sequência…</p>}
