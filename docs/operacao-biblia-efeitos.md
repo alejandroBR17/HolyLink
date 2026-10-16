@@ -198,3 +198,8 @@ Em Agenda, use Agenda de FJU para incluir eventos com qualquer título (vigília
 
 ### Divulgação nas duas agendas
 Agenda de oferece três destinos: FJU (somente jovem), Igreja (somente reuniões) ou FJU e reuniões (ambas). O vínculo compartilhado usa um cadastro, sem cópia. Eventos legados reconhecidos como FJU ficam exclusivos do modo jovem até escolha explícita de ambos. A filtragem também vale para contagem, Monitor, fila, cartões diários e eventos fixados. Filtros temporais e limpeza de passados respeitam o contexto atual; Todas permite consultar a base administrativa completa.
+
+### Identidade das reuniões e dos projetos
+A projeção normal usa os novos cartões em preto/dourado, com tipografia ajustada ao palco1920×1080 e ao split canônico. Avisos, agenda, eventos, campanhas, doações, batismo e despedida compartilham essa linguagem. Bíblia não ganha placa ou fundo próprio. A página de doações continua codificando universal.org/doar com margem branca preservada. Conteúdos densos de agenda/campanhas avançam páginas de quatro itens pelo ciclo da fila, mantendo duração e cadastros.
+
+Nos cartões individuais de Esportes/Cultura/Mídia, a paleta acompanha a identidade do projeto no fundo, cabeçalho, efeitos, avisos e contagem. Não há filtros sobre os PNGs. Mudanças de paleta mantêm o mesmo renderer e respeitam movimento reduzido, efeitos desligados e perda de WebGL; nenhum controle adicional é necessário. Overview mantém azul FJU. Para comparar a identidade normal na prévia, use Ajustes → FJU desligado.
