@@ -360,3 +360,6 @@ Testes locais: doze cartões, aviso e contagem em 1920/390 continuam sem cortes/
 
 
 Fechamento local: TypeScript/build e 78 testes nativos aprovados, incluindo precache/uso offline do mapa e exclusão de mídias arbitrárias. QR de cinco cenários foi decodificado para https://universal.org/doar. Captura do globo 3D inspecionada; rotação real e passagem para fogo confirmadas. Perfil leve, WebGL indisponível/contexto perdido e preferência reduzida preservam conteúdo. Revisão React manteve descarte idempotente do renderer e callbacks invalidados no unmount, importações estáticas e ausência de serviços externos durante projeção. Preparando Preview; nenhum ensaio de áudio físico acrescentado.
+
+
+Entrega `b570ba136ae3db1d4caf686d6d695810101d6865`, Preview READY `dpl_2CMaMyUeKvE2bb5VkmbKhFk8FFxo`, alias conferido. Online passaram globo WebGL em 1920 com perda de contexto/fallback e troca para fogo, alternativa leve em 390, descarte do globo e QR decodificado exatamente nos dois contextos. Revisão dos doze cartões/aviso/contagem em 1920/390 também aprovada. PR #1 rascunho atualizada; produção segue `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi` e main preservada. 78 testes nativos, TypeScript e build aprovados. Checkpoint documental local sem outro deployment. Responsável pode continuar revisão visual na Preview; som físico permanece pendente.
