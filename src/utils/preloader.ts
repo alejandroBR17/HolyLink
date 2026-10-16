@@ -9,7 +9,7 @@ export class MediaPreloaderService {
   private imageCache: Map<string, HTMLImageElement> = new Map();
   private videoCache: Map<string, HTMLVideoElement> = new Map();
   private preloadedUrls: Set<string> = new Set();
-  private staticAssetUrls: Set<string> = new Set(['/brand/hl-symbol-20261014.webp','/brand/hl-text-20261014.webp','/brand/hl-full-20261014.webp']);
+  private staticAssetUrls: Set<string> = new Set(['/brand/fju-official.png','/brand/hl-symbol-20261014.webp','/brand/hl-text-20261014.webp','/brand/hl-full-20261014.webp']);
 
   /**
    * Disposes of a cached media resource completely from browser memory

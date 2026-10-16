@@ -172,3 +172,10 @@ A área do cartão mantém um palco próprio de 1920×1080, reduzido proporciona
 ### Luz dourada substitui Aura
 
 O antigo portal de anéis azul/índigo foi substituído por faixas douradas difusas nas bordas, com deslocamento lento e centro escuro para leitura. A opção agora se chama Luz dourada. O identificador interno fju_aura foi preservado para manter preferências/backup e o Automático no encontro jovem. A alternativa CSS também usa faixas douradas, sem anéis. FPS, intensidade, movimento reduzido, janela oculta e descarte mantêm os controles existentes. Não há novo botão nem recurso remoto.
+
+
+## Identidade FJU — controle manual e automático
+
+Ajustes → Operação da reunião → Identidade da projeção reúne Automático, FJU ligado e FJU desligado. Automático mantém a detecção existente: encontro jovem em andamento ou próximo, na janela de quatro horas antes/90 minutos depois. FJU ligado independe da agenda; FJU desligado impede ativação automática. A escolha persiste, é validada no protocolo/configuração e acompanha Monitor, Bíblia e saída conectada. Não altera agenda, horário, conteúdo fixado ou fila. Para voltar à agenda escolha Automático.
+
+O cabeçalho mostra a marca FJU e Encontro Jovem; versículo/contagem recebem identificação discreta fora do texto. Detalhes em azul-marinho/branco/dourado mantêm preto profundo e leitura. O modo normal conserva a identidade anterior. A marca local veio do site https://forcajovemuniversal.com/ e tem origem/direitos em public/brand/FJU-SOURCE.md. Incluída no preparo/cache para não depender de servidor externo durante o uso. Não é uma mudança de logotipo de instalação do HolyLink nem uma nova cópia dos arquivos do usuário.

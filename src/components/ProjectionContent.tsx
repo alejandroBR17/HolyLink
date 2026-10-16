@@ -27,6 +27,7 @@ interface CustomMedia {
 
 interface ProjectionContentProps {
   projectionMode?:'pre'|'post';
+  projectionTheme?:'auto'|'fju'|'regular';
   currentTime: Date;
   isLooping: boolean;
   isFinalFiveMinutes: boolean;
@@ -70,6 +71,7 @@ interface ProjectionContentProps {
 
 export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   projectionMode='pre',
+  projectionTheme='auto',
   currentTime,
   isLooping,
   isFinalFiveMinutes,
@@ -114,7 +116,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   // 1. If ongoing meeting is FJU / Encontro Jovem / Força Jovem
   // 2. If next meeting is FJU / Encontro Jovem / Força Jovem (active during pre-service loop and countdown)
   const reducedMotion=useReducedMotion();
-  const isFJU = isYouthProjection(ongoingMeeting, nextMeeting, nextMeetingDate, currentTime);
+  const isFJU = isYouthProjection(ongoingMeeting, nextMeeting, nextMeetingDate, currentTime, projectionTheme);
 
   const themeColor = isFJU ? 'text-hl-gold' : 'text-hl-gold';
   const borderColor = isFJU ? 'border-hl-gold/40' : 'border-white/10';
@@ -506,7 +508,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   );
 
   return (
-    <MotionConfig reducedMotion="user"><div className="holy-theme holy-projection w-full h-full relative select-none font-sans overflow-hidden bg-hl-canvas text-white flex flex-col justify-between">
+    <MotionConfig reducedMotion="user"><div data-projection-theme={isFJU?'fju':'regular'} className={`holy-theme holy-projection ${isFJU?'projection-fju':''} w-full h-full relative select-none font-sans overflow-hidden bg-hl-canvas text-white flex flex-col justify-between`}>
       {/* 3D Volumetric Background Engine */}
       <ThreeBackground3D
         disabled={background3DStyle === 'off' || background3DStyle === 'particles_2d'}
@@ -519,6 +521,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       {/* Efeitos 2D Clássicos */}
       <ParticlesBackground disabled={background3DStyle !== 'particles_2d'} />
 
+      {isFJU&&(!isLooping||shouldShowVerse)&&!clearContentEnabled&&<div className="projection-fju-signature"><img src="/brand/fju-official.png" alt="Força Jovem Universal"/><span>Encontro Jovem</span></div>}
       {/* BLACKOUT OVERLAY */}
       {blackoutEnabled && (
         <div className="absolute inset-0 bg-black z-[100] flex flex-col items-center justify-center">
@@ -593,10 +596,11 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             className="absolute inset-0 flex flex-col"
           >
             <header className={`h-[145px] shrink-0 px-20 flex items-center justify-between border-b border-white/[0.08] bg-hl-canvas/75 backdrop-blur-md relative z-50`}>
-              <div className="flex flex-col justify-center">
+              <div className={`flex justify-center ${isFJU?'projection-fju-heading':'flex-col'}`}>
+                {isFJU&&<img src="/brand/fju-official.png" alt="Força Jovem Universal"/>}
                 <div>
                   <h1 className="font-sans font-black text-[3rem] @[1280px]:text-[3.3rem] tracking-[0.12em] text-white leading-none uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-                    {churchInfo.name}
+                    {isFJU?'Encontro Jovem':churchInfo.name}
                   </h1>
                   <p className={`text-2xl font-black tracking-[0.25em] uppercase mt-1.5 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'}`}>
                     {churchInfo.location}

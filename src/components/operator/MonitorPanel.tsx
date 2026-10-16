@@ -16,6 +16,7 @@ interface MonitorPanelProps {
   onNavigate: (tab:'slides'|'texts'|'agenda'|'controls'|'sync') => void;
   onFullscreen: () => void;
   projectionMode: 'pre'|'post';
+  projectionTheme?:'auto'|'fju'|'regular';
   projectionWin: Window | null;
   setProjectionWin: (w: Window | null) => void;
   currentTime: Date;
@@ -62,6 +63,7 @@ export function MonitorPanel({
   onNavigate,
   onFullscreen,
   projectionMode,
+  projectionTheme='auto',
   projectionWin,
   setProjectionWin,
   currentTime,
@@ -147,6 +149,7 @@ export function MonitorPanel({
       >
               <ProjectionContent
                 projectionMode={projectionMode}
+                projectionTheme={projectionTheme}
                 currentTime={currentTime}
                 isLooping={isLooping}
                 isFinalFiveMinutes={isFinalFiveMinutes}

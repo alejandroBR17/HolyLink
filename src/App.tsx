@@ -120,6 +120,7 @@ export default function App() {
     background3DFps,
     background3DIntensity,
     projectionMode,
+    projectionTheme,
     syncStatus
   } = state;
 
@@ -728,7 +729,7 @@ export default function App() {
 
             {activeMobileTab === 'texts' && (
               <BiblePanel
-                isFJU={isYouthProjection(ongoingMeeting, nextMeeting, nextMeetingDate, currentTime)}
+                isFJU={isYouthProjection(ongoingMeeting, nextMeeting, nextMeetingDate, currentTime, projectionTheme)}
                 backgroundStyle={background3DStyle}
                 activeVerseIndex={activeVerseIndex}
                 customVerseText={customVerseText}
@@ -772,6 +773,7 @@ export default function App() {
                 background3DFps={background3DFps}
                 background3DIntensity={background3DIntensity}
                 projectionMode={projectionMode}
+                projectionTheme={projectionTheme}
                 manualSlideOverride={manualSlideOverride}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 currentTime={currentTime}
@@ -791,6 +793,7 @@ export default function App() {
                 onNavigate={setActiveMobileTab}
                 onFullscreen={toggleFullscreen}
                 projectionMode={projectionMode}
+                projectionTheme={projectionTheme}
                 projectionWin={null}
                 setProjectionWin={setProjectionWin}
                 currentTime={currentTime}
@@ -878,6 +881,7 @@ export default function App() {
       >
         <ProjectionContent
           projectionMode={projectionMode}
+                projectionTheme={projectionTheme}
           currentTime={currentTime}
           isLooping={isLooping}
           isFinalFiveMinutes={isFinalFiveMinutes}

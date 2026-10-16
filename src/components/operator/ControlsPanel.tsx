@@ -99,6 +99,7 @@ interface ControlsPanelProps {
   background3DIntensity?: 'high' | 'medium' | 'low';
   manualSlideOverride?: string | null;
   projectionMode?: 'pre' | 'post';
+  projectionTheme?:'auto'|'fju'|'regular';
   updateStateAndBroadcast: (key: string, value: any) => void;
   currentTime: Date;
   isProjectionOpen?: boolean;
@@ -126,6 +127,7 @@ export function ControlsPanel({
   background3DFps = 60,
   background3DIntensity = 'high',
   projectionMode = 'pre',
+  projectionTheme = 'auto',
   manualSlideOverride,
   updateStateAndBroadcast,
   currentTime,
@@ -348,6 +350,10 @@ export function ControlsPanel({
           <div className="settings-choice-pair" role="group" aria-label="Modo da reunião">{(['pre','post'] as const).map(mode => <button key={mode} aria-pressed={projectionMode === mode} onClick={() => {updateStateAndBroadcast('projectionMode',mode); updateStateAndBroadcast('manualSlideOverride',null);}}><ArrowRightLeft size={18}/><span><strong>{mode === 'pre' ? 'Pré-reunião' : 'Pós-reunião'}</strong><small>{mode === 'pre' ? 'Entrada e preparação' : 'Encerramento e despedida'}</small></span></button>)}</div>
           <div className="settings-choice-pair" role="group" aria-label="Fixar momento">{([{id:'baptism',name:'Batismo',icon:Droplets},{id:'blessing',name:'Despedida',icon:Hand}] as const).map(item => <button key={item.id} aria-pressed={manualSlideOverride === item.id} onClick={() => {updateStateAndBroadcast('activeVerseIndex',null); updateStateAndBroadcast('customVerseText',null); updateStateAndBroadcast('customVerseRef',null); updateStateAndBroadcast('manualSlideOverride',manualSlideOverride === item.id ? null : item.id);}}><item.icon size={19}/><strong>{manualSlideOverride === item.id ? 'Soltar ' : 'Fixar '}{item.name}</strong></button>)}</div>
           {(manualSlideOverride === 'baptism' || manualSlideOverride === 'blessing') && <div className="settings-pinned"><p role="status">{manualSlideOverride === 'baptism' ? 'Batismo' : 'Despedida'} fixado. A fila continua preservada.</p><button className="settings-primary settings-resume" onClick={() => updateStateAndBroadcast('manualSlideOverride',null)}><Play size={18}/><span>Voltar à fila normal</span></button></div>}
+        </section>
+        <section className="settings-card settings-wide"><header><Monitor size={19}/><div><h3>Identidade da projeção</h3><p>Escolha o visual da reunião sem alterar a agenda.</p></div></header>
+          <div className="settings-theme-choices" role="group" aria-label="Modo FJU">{([{id:'auto',title:'Automático',detail:'Segue os encontros da agenda'},{id:'fju',title:'FJU ligado',detail:'Encontro Jovem a qualquer momento'},{id:'regular',title:'FJU desligado',detail:'Visual normal, mesmo com FJU na agenda'}] as const).map(item=><button key={item.id} aria-pressed={projectionTheme===item.id} onClick={()=>updateStateAndBroadcast('projectionTheme',item.id)}><strong>{item.title}</strong><span>{item.detail}</span></button>)}</div>
+          <p className="settings-hint" role="status">{projectionTheme==='auto'?'A identidade FJU será ativada pela agenda, na janela de preparação do encontro.':projectionTheme==='fju'?'FJU ligado manualmente. Permanece ligado até você mudar esta escolha.':'FJU desligado manualmente. A agenda não ativará a identidade jovem.'} A escolha acompanha o Monitor e a projeção conectada; não troca a mídia nem o horário.</p>
         </section>
         <section className="settings-card settings-wide"><header><Timer size={19}/><div><h3>Contagem regressiva</h3><p>{nextMeeting?`${nextMeeting.dayName}, às ${nextMeeting.time} · ${nextMeeting.theme}`:countdownPaused?'A reunião da contagem foi alterada. Restaure o horário da agenda.':'Cadastre uma reunião futura na Agenda para ativar a contagem.'}</p></div></header><div className="settings-timer-display"><strong>{hoursStr}:{minutesStr}</strong><span>{!nextMeeting ? 'Sem próxima reunião' : countdownPaused ? 'Contagem pausada' : 'Até a próxima reunião'}{countdownOffset ? ' · horário ajustado' : ''}</span></div>
           <div className="settings-timer-adjust"><fieldset disabled={!nextMeetingDate} className="settings-time-add"><legend><Plus size={17}/>Aumentar contagem</legend><div>{[1,5,30].map(n => <button key={n} aria-label={`Acrescentar ${n} minuto${n>1?'s':''}`} onClick={() => adjustTimer(n)}><Plus size={16}/>{n} min</button>)}</div></fieldset><fieldset disabled={!nextMeetingDate} className="settings-time-subtract"><legend><Minus size={17}/>Diminuir contagem</legend><div>{[1,5,30].map(n => <button key={n} aria-label={`Diminuir ${n} minuto${n>1?'s':''}`} onClick={() => adjustTimer(-n)}><Minus size={16}/>{n} min</button>)}</div></fieldset></div>

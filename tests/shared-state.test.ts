@@ -38,3 +38,10 @@ test('countdown target is bounded and may be explicitly cleared',()=>{
  assert.equal(isSharedStateUpdate('countdownAnchor',new Date(2026,9,16).getTime()),true);assert.equal(isSharedStateUpdate('countdownAnchor',null),true);
  for(const value of [-1,NaN,Infinity,{},'tomorrow',4102444800001,1.5])assert.equal(isSharedStateUpdate('countdownAnchor',value),false);
 });
+
+
+test('FJU theme shares only known modes and survives validated configuration transport',()=>{
+ for(const mode of ['auto','fju','regular'])assert.equal(isSharedStateUpdate('projectionTheme',mode),true);
+ for(const invalid of ['on','off',true,null,{},'FJU'])assert.equal(isSharedStateUpdate('projectionTheme',invalid),false);
+ assert.deepEqual(readSharedStorage({projection_projectionTheme:'fju'}),{projection_projectionTheme:'fju'});
+});
