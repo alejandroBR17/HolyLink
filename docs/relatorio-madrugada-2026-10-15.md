@@ -397,3 +397,13 @@ Validação: lint/build e 11 testes relevantes de PWA/design aprovados. Interfac
 
 
 Fechamento: commit `9109a5270e25973ca89288c4432344a89d4e651d`, Preview READY `dpl_At8ffqtw1tXoPTXiU8YdHCVDnz1G`, target Preview/null e alias de branch confirmado nessa implantação. Contagens pela interface também passaram online em 1920/390, incluindo previsão, zero sem anúncio e versículo sem faixa vazia. Doze cartões/aviso/contagem locais passaram em 1920/390. PR #1 permanece draft, atualizada. Registro pós-implantação fica em commit local sem novo deploy. Produção/main não promovidas. Link base de avaliação é o alias de branch já registrado; acesso compartilhado continua privado, fora do Git.
+
+
+## 16/10 — tipografia e enquadramento na contagem dividida
+
+Relato humano de quebras de texto/composição ruim ao dividir. Reproduzido: seletor CSS `.projection-countdown h1` alcançava títulos dos cartões, impondo 54 px/line-height 1.2/text-wrap balance/alinhamento central. Corrigido para filho direto do bloco do relógio, incluindo tamanho próprio do último minuto em tela inteira. Palco do cartão ganhou contêiner de tamanho próprio, isolamento visual e proteção contra encolhimento flex, mantendo 1920×1080 e redução uniforme em 65%.
+
+Não se alteraram horários, mensagens, biblioteca ou prioridades. A regra visual foi comparada no navegador entre cartão integral e dividido; antes havia diferença indevida de tipografia. Captura corrigida de assentos foi inspecionada. Onze testes relevantes PWA/design e build aprovados; cache v26. Validação dos cartões em andamento antes do fechamento da prévia abaixo.
+
+
+Durante a etapa o responsável pediu também substituição da Aura. A opção agora se chama Luz dourada: shader de faixas difusas nas bordas, sem portal concêntrico, azul/índigo ou pulsação central. Alternativa CSS também substituída; identificador antigo preservado para preferências e Automático/FJU. Mesmos limites de FPS/intensidade/movimento/visibilidade, sem novos controles. Revisão visual da captura e testes em viewport móvel confirmaram animação WebGL, animação compatível sem WebGL, seleção leve e fallback por perda de contexto. Lint, 11 testes relevantes e build passaram após a alteração. Vídeo WebM real no último minuto dividido/tela cheia preserva um único player e contagem.

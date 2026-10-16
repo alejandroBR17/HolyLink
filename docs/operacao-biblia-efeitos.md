@@ -162,3 +162,13 @@ O último minuto preserva vídeo dividido e o comportamento existente de vídeo 
 A contagem indica o horário previsto, não o início real da reunião. Ao zerar mantém o versículo existente sem faixa/título anunciando que a reunião começou. O pastor pode iniciar antes ou depois; o operador continua livre para projetar outra passagem/conteúdo e usar os controles existentes de pausa/ajuste/retorno à fila. Não há detecção automática da presença ou início do pastor.
 
 Retiradas as expressões “Prepare seu coração”, “Acolha este momento de fé”, “Vamos começar”, “Começamos em” e promessas de início “em instantes”. Cartões usam orientações diretas sobre fé, concentração e silêncio; mundo/fogo e variantes FJU perderam slogans e promessas de transformação. Despedida FJU não presume próximo sábado. Textos bíblicos, agenda e mensagens do usuário não foram alterados.
+
+
+### Composição ao lado da contagem
+
+A área do cartão mantém um palco próprio de 1920×1080, reduzido proporcionalmente dentro da coluna de 65%. O contêiner de consultas de tamanho pertence ao palco, não à coluna estreita do cronômetro. Estilos de título da contagem são limitados ao seu próprio título, sem modificar títulos/linhas/alinhamento dos cartões. A área não encolhe como item flex. Fotos/vídeos e modos de ajuste existentes são preservados.
+
+
+### Luz dourada substitui Aura
+
+O antigo portal de anéis azul/índigo foi substituído por faixas douradas difusas nas bordas, com deslocamento lento e centro escuro para leitura. A opção agora se chama Luz dourada. O identificador interno fju_aura foi preservado para manter preferências/backup e o Automático no encontro jovem. A alternativa CSS também usa faixas douradas, sem anéis. FPS, intensidade, movimento reduzido, janela oculta e descarte mantêm os controles existentes. Não há novo botão nem recurso remoto.

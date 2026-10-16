@@ -29,7 +29,7 @@ const vertexShader = `
 const fragmentShader = `
   uniform float uTime;
   uniform vec2 uResolution;
-  uniform int uStyle; // 0: Aurora Sacra (Ondas Horizontais), 1: Véu Divino (Raios Verticais), 2: Aura FJU (Halo Concêntrico)
+  uniform int uStyle; // 0: Aurora Sacra (Ondas Horizontais), 1: Véu Divino (Raios Verticais), 2: Luz dourada (Faixas difusas)
   uniform float uIntensity;
   uniform int uOctaves;
   varying vec2 vUv;
@@ -128,27 +128,19 @@ const fragmentShader = `
       alpha = rays * coneMask * 0.40 * uIntensity;
     }
     // =============================================================
-    // ESTILO 2: AURA FJU 3D
-    // VISUAL: Portal / Halo Concêntrico Pulsante Energético Jovem
+    // ESTILO 2: LUZ DOURADA
+    // Broad, slowly drifting light at the edges; no portal, rings or flashing core.
     // =============================================================
     else if (uStyle == 2) {
-      vec2 center = vec2(0.5, 0.5);
-      vec2 distVec = (st - center);
-      distVec.x *= (uResolution.x / uResolution.y);
-      float r = length(distVec);
-
-      float pulse = sin(r * 16.0 - time * 2.2 + fbm(st * 2.5) * 1.8) * 0.5 + 0.5;
-      float ringHalo = 1.0 - smoothstep(0.25, 0.65, abs(r - 0.35 - sin(time * 0.7) * 0.04));
-
-      vec3 colBlueFJU = vec3(0.22, 0.74, 0.97);  // Azul Céu FJU
-      vec3 colAmberFJU = vec3(0.98, 0.62, 0.08); // Âmbar Energia
-      vec3 colIndigo = vec3(0.38, 0.40, 0.94);   // Indigo Jovem
-
-      vec3 auraColor = mix(colBlueFJU, colAmberFJU, pulse);
-      finalColor = mix(auraColor, colIndigo, smoothstep(0.0, 0.65, r));
-
-      float coreGlow = 1.0 - smoothstep(0.0, 0.85, r);
-      alpha = (ringHalo * 0.55 + pulse * 0.3) * coreGlow * 0.42 * uIntensity;
+      vec2 p = st - vec2(0.5);
+      p.x *= uResolution.x / uResolution.y;
+      float drift = fbm(st * 1.5 + vec2(time * 0.18, -time * 0.12)) * 0.06;
+      float lower = exp(-pow((p.y + 0.36 + p.x * 0.12 + sin(time * 0.5 + p.x) * 0.05 + drift) * 6.0, 2.0));
+      float upper = exp(-pow((p.y - 0.45 + p.x * 0.18 + cos(time * 0.4 + p.x) * 0.04 - drift) * 7.0, 2.0));
+      float edge = smoothstep(0.12, 0.7, length(p * vec2(0.7, 1.0)));
+      float light = lower * 0.72 + upper * 0.48;
+      finalColor = mix(vec3(0.68, 0.36, 0.06), vec3(1.0, 0.79, 0.30), light * 0.65);
+      alpha = light * (0.35 + edge * 0.65) * 0.38 * uIntensity;
     }
 
     gl_FragColor = vec4(finalColor, alpha);
@@ -241,7 +233,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     canvasEl.addEventListener('webglcontextlost', handleContextLost, false);
 
     // Decisão do estilo efetivo
-    let styleInt = 0; // 0: Aurora, 1: Véu Divino, 2: Aura FJU
+    let styleInt = 0; // 0: Aurora, 1: Véu Divino, 2: Luz dourada
     let effectiveStyle = stylePreset;
     if (effectiveStyle === 'auto') {
       effectiveStyle = isFJU ? 'fju_aura' : 'aurora';

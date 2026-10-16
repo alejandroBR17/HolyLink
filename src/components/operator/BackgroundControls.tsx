@@ -3,10 +3,10 @@ import {Waves, Wind, CircleDot, Sparkles, CircleOff, WandSparkles, Eye, Gauge} f
 import {ThreeBackground3D, type BackgroundStyleOption} from '../ThreeBackground3D';
 import {ParticlesBackground} from '../ParticlesBackground';
 const styles = [
-  {id:'auto',label:'Automático',description:'Aurora na reunião; aura no encontro jovem.',icon:WandSparkles},
+  {id:'auto',label:'Automático',description:'Aurora na reunião; luz dourada no encontro jovem.',icon:WandSparkles},
   {id:'aurora',label:'Aurora',description:'Luz dourada em movimento.',icon:Waves},
   {id:'veil',label:'Véu',description:'Ondas suaves como tecido.',icon:Wind},
-  {id:'fju_aura',label:'Aura',description:'Luz e energia ao redor do centro.',icon:CircleDot},
+  {id:'fju_aura',label:'Luz dourada',description:'Faixas suaves nas bordas, com o centro livre.',icon:CircleDot},
   {id:'particles_2d',label:'Partículas 2D',description:'Fundo leve, mundo e fogo sem 3D.',icon:Sparkles},
   {id:'off',label:'Sem efeito',description:'Fundo desligado; mundo e fogo parados.',icon:CircleOff},
 ] as const;
