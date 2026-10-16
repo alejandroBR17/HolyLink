@@ -17,11 +17,12 @@ export function ProjectedVideo({media,currentSlideId,videoPinBehavior,onVideoEnd
  const isPresent=useIsPresent();
  const ref=useRef<HTMLVideoElement>(null);const[failed,setFailed]=useState(false),[attempt,setAttempt]=useState(0);
  const generation=useRef(0),watchdog=useRef<ReturnType<typeof setTimeout>|null>(null),audioBlocked=useRef(false);
+ const lastProgress=useRef(0);
  const volumeRef=useRef(volume);volumeRef.current=volume;
  const metadataRef=useRef(media);metadataRef.current=media;
  const notify=(state:Parameters<typeof reportPlayback>[0]['state'])=>reportPlayback({id:media.id,name:media.name,kind:'video',state,preview});
  const clearWatch=()=>{if(watchdog.current)clearTimeout(watchdog.current);watchdog.current=null;};
- const watch=()=>{clearWatch();watchdog.current=setTimeout(()=>{if(document.visibilityState==='hidden')return;setFailed(true);ref.current?.pause();notify('error');},15000);};
+ const watch=(progress=false)=>{if(watchdog.current&&!progress)return;clearWatch();watchdog.current=setTimeout(()=>{watchdog.current=null;if(document.visibilityState==='hidden')return;setFailed(true);ref.current?.pause();notify('error');},15000);};
  const applySound=(video:HTMLVideoElement)=>{const value=Number.isFinite(volumeRef.current)?Math.max(0,Math.min(1,volumeRef.current)):0;video.volume=preview||isBackgroundBlur?0:value;video.muted=preview||isBackgroundBlur||value===0||!!metadataRef.current.muted||audioBlocked.current;};
  const play=async(video:HTMLVideoElement,id:number)=>{
   if(document.visibilityState==='hidden')return;
@@ -39,6 +40,7 @@ export function ProjectedVideo({media,currentSlideId,videoPinBehavior,onVideoEnd
   // Restore the source released by the previous cleanup before starting it.
   if(video.getAttribute('src')!==media.url)video.src=media.url;
   if(currentSlideId&&currentSlideId!==media.id){video.pause();return;}
+  lastProgress.current=video.currentTime;
   notify('loading');applySound(video);watch();void play(video,id);
   const visible=()=>{if(document.visibilityState==='hidden'){clearWatch();video.pause();}else{watch();void play(video,id);}};
   const retry=(event:Event)=>{if((event as CustomEvent).detail?.id===media.id)setAttempt(value=>value+1);};
@@ -49,5 +51,5 @@ export function ProjectedVideo({media,currentSlideId,videoPinBehavior,onVideoEnd
  useEffect(()=>{if(ref.current)applySound(ref.current);},[volume,media.muted,preview,isBackgroundBlur]);
  const renderingFit=fit||media.fit||'contain';
  // Keep the element mounted on failure so a retry can replace its source reliably.
- return <div className="w-full h-full relative"><video key={`${media.id}:${media.url}:${attempt}`} ref={ref} src={media.url} playsInline preload="metadata" controls={false} loop={videoPinBehavior==='loop'} className={`w-full h-full ${renderingFit==='cover'?'object-cover':renderingFit==='fill'?'object-fill':'object-contain'} ${failed?'invisible':''}`} onPlaying={event=>{if(event.currentTarget!==ref.current||!isPresent)return;clearWatch();notify(audioBlocked.current?'audio-blocked':'playing');}} onTimeUpdate={event=>{if(event.currentTarget!==ref.current||!isPresent)return;if(ref.current&&!ref.current.paused)clearWatch();}} onWaiting={event=>{if(event.currentTarget!==ref.current||!isPresent)return;notify('buffering');watch();}} onStalled={event=>{if(event.currentTarget!==ref.current||!isPresent)return;notify('buffering');watch();}} onError={event=>{if(event.currentTarget!==ref.current||!isPresent)return;clearWatch();setFailed(true);notify('error');}} onEnded={event=>{if(event.currentTarget!==ref.current||!isPresent)return;clearWatch();if(videoPinBehavior!=='loop'&&!isBackgroundBlur)onVideoEnded?.();}}/>{failed&&<ProjectionMediaFallback preview={preview} name={media.name}/>}</div>;
+ return <div className="w-full h-full relative"><video key={`${media.id}:${media.url}:${attempt}`} ref={ref} src={media.url} playsInline preload="metadata" controls={false} loop={videoPinBehavior==='loop'} className={`w-full h-full ${renderingFit==='cover'?'object-cover':renderingFit==='fill'?'object-fill':'object-contain'} ${failed?'invisible':''}`} onPlaying={event=>{if(event.currentTarget!==ref.current||!isPresent)return;watch();notify(audioBlocked.current?'audio-blocked':'playing');}} onTimeUpdate={event=>{if(event.currentTarget!==ref.current||!isPresent)return;const video=event.currentTarget;if(!video.paused&&Math.abs(video.currentTime-lastProgress.current)>.01){lastProgress.current=video.currentTime;watch(true);}}} onWaiting={event=>{if(event.currentTarget!==ref.current||!isPresent)return;notify('buffering');watch();}} onStalled={event=>{if(event.currentTarget!==ref.current||!isPresent)return;notify('buffering');watch();}} onError={event=>{if(event.currentTarget!==ref.current||!isPresent)return;clearWatch();setFailed(true);notify('error');}} onEnded={event=>{if(event.currentTarget!==ref.current||!isPresent)return;clearWatch();if(videoPinBehavior!=='loop'&&!isBackgroundBlur)onVideoEnded?.();}}/>{failed&&<ProjectionMediaFallback preview={preview} name={media.name}/>}</div>;
 }
