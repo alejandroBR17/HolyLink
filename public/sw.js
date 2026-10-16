@@ -1,4 +1,4 @@
-const CACHE_NAME = 'holylink-pwa-v34-regular-stage';
+const CACHE_NAME = 'holylink-pwa-v35-restore-meeting-design';
 const MAX_ENTRIES = 120;
 const urlsToCache = ['/brand/fju-project-esportes.png','/brand/fju-project-cultura.png','/brand/fju-project-midia.png','/media/earth-land-fju.svg', '/brand/fju-white-v2.png', '/media/earth-land.svg', '/', '/index.html', '/pwa-bootstrap.js', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/app-v2-symbol-dark-192.png', '/pwa/app-v2-symbol-dark-512.png', '/pwa/adaptive-v2-symbol-dark-192.png', '/pwa/adaptive-v2-symbol-dark-512.png', '/pwa/apple-v2-symbol-dark-180.png'];
 self.addEventListener('message', event => {

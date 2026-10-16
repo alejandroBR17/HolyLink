@@ -287,7 +287,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       }
       return (
         <AgendaDaySlide
-          loopIteration={loopIteration}
           dayIndex={dayIndex}
           subType={subType}
           currentTime={currentTime}
@@ -395,8 +394,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       case 'campaigns':
         return (
           <CampaignSlide
-            currentTime={currentTime}
-            loopIteration={loopIteration}
             campaigns={customCampaigns}
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
@@ -446,7 +443,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   const project=isFJU?FJU_PROJECTS.find(p=>p.id===currentSlideId):undefined;
   const projectStyle=project?{'--project-accent':project.color}:undefined;
   return (
-    <MotionConfig reducedMotion="user"><div data-project={project?.id} style={projectStyle as React.CSSProperties} data-projection-theme={isFJU?'fju':'regular'} className={`holy-theme holy-projection ${isFJU?'projection-fju':'projection-regular'} w-full h-full relative select-none font-sans overflow-hidden bg-hl-canvas text-white flex flex-col justify-between`}>
+    <MotionConfig reducedMotion="user"><div data-project={project?.id} style={projectStyle as React.CSSProperties} data-projection-theme={isFJU?'fju':'regular'} className={`holy-theme holy-projection ${isFJU?'projection-fju':''} w-full h-full relative select-none font-sans overflow-hidden bg-hl-canvas text-white flex flex-col justify-between`}>
       {/* 3D Volumetric Background Engine */}
       <ThreeBackground3D
         disabled={background3DStyle === 'off' || background3DStyle === 'particles_2d'}
@@ -533,7 +530,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             className="absolute inset-0 flex flex-col"
           >
             <header className={`projection-loop-header h-[145px] shrink-0 px-20 flex items-center justify-between border-b border-white/[0.08] bg-hl-canvas/75 backdrop-blur-md relative z-50`}>
-              <div className={`flex justify-center ${isFJU?'projection-fju-heading':'projection-loop-heading flex-col'}`}>
+              <div className={`flex justify-center ${isFJU?'projection-fju-heading':'flex-col'}`}>
                 {isFJU&&<img src="/brand/fju-white-v2.png" alt="Força Jovem Universal"/>}
                 <div>
                   <h1 className="font-sans font-black text-[3rem] @[1280px]:text-[3.3rem] tracking-[0.12em] text-white leading-none uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
