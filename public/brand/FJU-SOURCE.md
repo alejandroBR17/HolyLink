@@ -1,9 +1,15 @@
-# Marca de terceiro — FJU
+# Marcas FJU — origem e uso
 
-`fju-official.png` foi obtido sem alteração dos bytes do site da Força Jovem Universal em 16/10/2026.
+## Versões atuais, recebidas do operador em 16/10/2026
 
-- Página: https://forcajovemuniversal.com/
-- Arquivo: https://forcajovemuniversal.com/_assets/images/236534a3d0ca242bd08d8c2e923dd06a.png
-- Uso no projeto: identificação da projeção de Encontro Jovem, a pedido do operador da igreja.
+- `fju-white-v2.png`: arquivo 1000051505.png, em uso no cabeçalho/assinatura da projeção FJU.
+- `fju-black-v2.png`: arquivo 1000051504.png, reservado para uso sobre fundo claro.
+- `fju-blue-v2.png`: arquivo 1000051506.png, reservado como alternativa azul.
 
-A marca e seus direitos pertencem aos respectivos titulares. Este recurso não é arte original do HolyLink e não recebe licença MIT por estar neste repositório. Não se afirma certificação/endosso do HolyLink pela instituição. O PNG é servido localmente e preparado para uso offline.
+Os três PNGs originais têm 1278×461 e canal alfa. Foram copiados sem edição, recorte, inversão ou remoção de fundo. A projeção usa a versão branca, preservando a proporção horizontal sem placa atrás. O preparo/cache local inclui o arquivo efetivamente usado.
+
+## Versão anterior, sem uso na interface
+
+`fju-official.png` foi obtido de https://forcajovemuniversal.com/_assets/images/236534a3d0ca242bd08d8c2e923dd06a.png em 16/10/2026, a partir do site https://forcajovemuniversal.com/ . Está preservado como recurso anterior, fora do preparo/cache e da interface atual.
+
+As marcas e seus direitos pertencem aos respectivos titulares. Não são arte original do HolyLink e não recebem licença MIT por estar no repositório. Uso para identificação do Encontro Jovem a pedido do operador. Não se afirma certificação/endosso do HolyLink pela instituição. O ícone de instalação do HolyLink permanece com sua identidade própria.

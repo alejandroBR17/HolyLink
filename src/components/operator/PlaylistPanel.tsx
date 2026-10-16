@@ -1,3 +1,4 @@
+import {FJU_CARDS} from '../../utils/fju-content';
 import {RemoteMediaLibrary} from './RemoteMediaLibrary';
 import type {MediaManifestItem} from '../../utils/media-manifest';
 import {useDialogFocus} from '../../hooks/useDialogFocus';
@@ -24,6 +25,7 @@ interface CustomMedia {
 }
 
 interface PlaylistPanelProps {
+  youth?:boolean;
   blackoutEnabled?:boolean;
   clearContentEnabled?:boolean;
   liveVerse?:{text:string;ref:string}|null;
@@ -66,6 +68,7 @@ interface PlaylistPanelProps {
 type QueueFilterMode = 'all' | 'active' | 'disabled' | 'media' | 'agenda';
 
 export const PlaylistPanel = React.memo(function PlaylistPanel({
+  youth=false,
   blackoutEnabled=false,
   clearContentEnabled=false,
   liveVerse=null,
@@ -191,6 +194,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   };
 
   const getSlideDetails = (slideId: string) => {
+    if((youth||slideId.startsWith('fju_'))&&FJU_CARDS[slideId])return{name:FJU_CARDS[slideId].title,desc:FJU_CARDS[slideId].subtitle,category:'fixo' as const};
+    if(youth&&slideId==='world_god')return{name:'Distrações / Conecte-se com Deus',desc:'Transição do encontro com mundo e fogo',category:'fixo' as const};
+    if(slideId==='fju_agenda')return{name:'Próximos encontros',desc:'Somente Encontros Jovens cadastrados',category:'agenda' as const};
+
     let name = slideId;
     let desc = "";
     let category: 'fixo' | 'agenda' | 'campanha' | 'midia' | 'evento' = 'fixo';
@@ -392,7 +399,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
       <section className="operator-card sequence-console" aria-labelledby="sequence-title">
         <header className="sequence-heading">
-          <div><span className="operator-eyebrow"><Layers size={16}/>Controle da reunião</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
+          <div><span className="operator-eyebrow"><Layers size={16}/>{youth?'Controle do encontro':'Controle da reunião'}</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
           {!draftOrder ? <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => {if (libraryRef.current) libraryRef.current.open = true; fileInputRef.current?.click();}}><Plus size={17}/>Adicionar mídia</button><button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button></div> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
         </header>
         <div className="sequence-status"><span className="sequence-status-light"/><span>{liveVerse ? 'Passagem bíblica sobre a fila' : manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{(manualSlideOverride || liveVerse) && <button onClick={resumeSequence}><RefreshCw size={15}/>Retomar</button>}</div>

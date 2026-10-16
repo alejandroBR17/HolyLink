@@ -1,3 +1,4 @@
+import {FjuSlide} from '../FjuSlide';
 import {symbolMotion} from '../../utils/projection-motion';
 import {ProjectionFire} from '../ProjectionFire';
 import {ProjectionGlobe} from '../ProjectionGlobe';
@@ -345,6 +346,8 @@ export const WorldGodSlide = ({ variant, backgroundStyle='auto',fps=30,detail='m
     }, 7500);
     return () => clearTimeout(t);
   }, []);
+
+  if(isFJU)return <FjuSlide title={phase==='world'?'Deixe as distrações':'Conecte-se com Deus'} subtitle={phase==='world'?'Fique ligado no que acontece aqui.':'Use a sua fé. Participe do encontro.'} symbol={phase==='world'?<ProjectionGlobe {...symbolSettings} youth/>:<ProjectionFire {...symbolSettings} youth/>}/>;
 
   return (
     <div className="flex flex-col items-center justify-center text-center max-w-6xl h-full w-full relative select-none">
@@ -998,7 +1001,7 @@ export const BaptismSlide = ({
           isLightMode ? 'bg-hl-canvas border-2 border-hl-line' : 'bg-hl-canvas/85 border border-hl-gold/30 backdrop-blur-md shadow-xl'
         }`}>
           <p className="projection-closing-note text-[1.9rem] @[1280px]:text-[2.4rem] text-hl-copy font-semibold tracking-wide">
-            {!post&&<>Após a reunião, </>}<span className="text-hl-gold-bright">{post?'Procure':'procure'} um pastor ou um dos obreiros.</span>
+            {!post&&<>{isFJU?'Após o encontro, ':'Após a reunião, '}</>}<span className="text-hl-gold-bright">{post?'Procure':'procure'} um pastor ou um dos obreiros.</span>
           </p>
         </div>
       </motion.div>

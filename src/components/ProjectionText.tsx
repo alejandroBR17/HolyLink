@@ -41,5 +41,5 @@ export function TextProjectionPreview({text, reference, backgroundStyle = 'auto'
     observer.observe(element); resize();
     return () => observer.disconnect();
   }, []);
-  return <div ref={ref} className="text-projection-preview" aria-label="Prévia do texto em 16:9"><div style={{width: 1920, height: 1080, transform: `scale(${scale})`, transformOrigin: 'top left', position: 'relative', background: '#020204'}}><ThreeBackground3D isFJU={isFJU} stylePreset={backgroundStyle} disabled={backgroundStyle === 'off' || backgroundStyle === 'particles_2d'} fpsLimit={30} intensity="low"/><ParticlesBackground disabled={backgroundStyle !== 'particles_2d'}/><ProjectionText text={text || 'Seu texto aparece aqui'} reference={reference} /></div></div>;
+  return <div ref={ref} className={`text-projection-preview ${isFJU?'projection-fju':''}`} aria-label="Prévia do texto em 16:9"><div style={{width: 1920, height: 1080, transform: `scale(${scale})`, transformOrigin: 'top left', position: 'relative', background: '#020204'}}><ThreeBackground3D isFJU={isFJU} stylePreset={backgroundStyle} disabled={backgroundStyle === 'off' || backgroundStyle === 'particles_2d'} fpsLimit={30} intensity="low"/><ParticlesBackground youth={isFJU} disabled={backgroundStyle !== 'particles_2d'}/><ProjectionText text={text || 'Seu texto aparece aqui'} reference={reference} /></div></div>;
 }

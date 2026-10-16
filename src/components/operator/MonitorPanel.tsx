@@ -16,6 +16,7 @@ interface MonitorPanelProps {
   onNavigate: (tab:'slides'|'texts'|'agenda'|'controls'|'sync') => void;
   onFullscreen: () => void;
   projectionMode: 'pre'|'post';
+  youth?:boolean;
   projectionTheme?:'auto'|'fju'|'regular';
   projectionWin: Window | null;
   setProjectionWin: (w: Window | null) => void;
@@ -64,6 +65,7 @@ export function MonitorPanel({
   onFullscreen,
   projectionMode,
   projectionTheme='auto',
+  youth=false,
   projectionWin,
   setProjectionWin,
   currentTime,
@@ -121,7 +123,7 @@ export function MonitorPanel({
     cacheFeedbackTimer.current=setTimeout(() => setRamCleared(false), 3000);
   };
 
-  const nextMedia=nextQueueItem(activeSlides,currentSlideId,customMediaList,customMeetings);
+  const nextMedia=nextQueueItem(activeSlides,currentSlideId,customMediaList,customMeetings,youth);
   const verseOverlay=!!customVerseText||activeVerseIndex!==null;
   const advanceQueue=()=>{
     if(!nextMedia.id)return;
@@ -134,9 +136,9 @@ export function MonitorPanel({
   const countdownActive=isFinalFiveMinutes||isFinalMinute;
   const verseVisible=!!customVerseText&&(verseDisplayPriority==='verse_over_video'||!countdownActive);
   const verse=selectProjectionVerse(VERSES,{text:customVerseText,ref:customVerseRef,index:activeVerseIndex,loop:isJustStarted?undefined:loopIteration,offset:!isJustStarted&&currentSlideId.startsWith('verse_')?Number(currentSlideId.slice(6))||0:0,timeMs:currentTime.getTime()}).verse;
-  const current=describeQueueItem(currentSlideId,customMediaList,customMeetings);
+  const current=describeQueueItem(currentSlideId,customMediaList,customMeetings,youth);
   const liveTitle=blackoutEnabled?'Tela preta':verseVisible?verse.ref:isFinalMinute||isFinalFiveMinutes?`${formatMinutesPart}:${formatSecondsPart}`:isJustStarted?verse.ref:clearContentEnabled?'Conteúdo da fila oculto':currentSlideId.startsWith('verse_')?verse.ref:current.title;
-  const liveDetail=blackoutEnabled?'Blackout ativo. O restante da composição permanece preparado.':verseVisible?'Passagem bíblica sobre a fila.':countdownActive?'Contagem para a próxima reunião.':isJustStarted?'Passagem do modo de reunião.':clearContentEnabled?'Limpar tela está ativo; avisos e letreiro podem continuar.':manualSlideOverride?'Conteúdo fixado pelo operador.':'Sequência automática.';
+  const liveDetail=blackoutEnabled?'Blackout ativo. O restante da composição permanece preparado.':verseVisible?'Passagem bíblica sobre a fila.':countdownActive?(youth?'Contagem para o próximo encontro.':'Contagem para a próxima reunião.'):isJustStarted?(youth?'Passagem do encontro.':'Passagem do modo de reunião.'):clearContentEnabled?'Limpar tela está ativo; avisos e letreiro podem continuar.':manualSlideOverride?'Conteúdo fixado pelo operador.':'Sequência automática.';
   const resumeSequence=()=>{updateStateAndBroadcast('customVerseText',null);updateStateAndBroadcast('customVerseRef',null);updateStateAndBroadcast('activeVerseIndex',null);updateStateAndBroadcast('manualSlideOverride',null);if(isJustStarted)updateStateAndBroadcast('dismissedJustStarted',true);};
 
   return (
@@ -223,7 +225,7 @@ export function MonitorPanel({
               <span className="text-[9px] font-mono font-extrabold text-hl-gold uppercase tracking-widest block mb-0.5">PRÓXIMO CONTEÚDO</span>
               <p className="text-xs sm:text-sm font-sans font-extrabold text-hl-copy leading-snug break-words">{nextMedia.title}</p>
               <p className="text-[11px] text-hl-muted font-medium leading-relaxed mt-0.5 break-words">
-                {blackoutEnabled?'Tela preta ativa: retire o blackout para ver o conteúdo.':clearContentEnabled?'Conteúdo oculto: retire Limpar tela para ver a fila.':verseOverlay?'Há uma passagem sobre a fila. Avançar retira a passagem e retoma este conteúdo.':isFinalFiveMinutes||isFinalMinute||isJustStarted?'O cronômetro ou modo de reunião pode estar sobre a fila.':'Próximo conteúdo da sequência deste operador.'}
+                {blackoutEnabled?'Tela preta ativa: retire o blackout para ver o conteúdo.':clearContentEnabled?'Conteúdo oculto: retire Limpar tela para ver a fila.':verseOverlay?'Há uma passagem sobre a fila. Avançar retira a passagem e retoma este conteúdo.':isFinalFiveMinutes||isFinalMinute||isJustStarted?(youth?'O cronômetro ou modo do encontro pode estar sobre a fila.':'O cronômetro ou modo de reunião pode estar sobre a fila.'):'Próximo conteúdo da sequência deste operador.'}
               </p>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import {useReducedMotion} from 'motion/react';
 import React, { useRef, useEffect } from 'react';
 
-export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }) => {
+export const ParticlesBackground = ({ disabled = false, youth = false }: { disabled?: boolean; youth?:boolean }) => {
   const reducedMotion=useReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -16,7 +16,7 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
     let height = canvas.height = 1080;
 
     const particles: any[] = [];
-    const colors = ['#ffd34f', '#ffe797', '#dba824', '#fff3c6']; // shared black/gold atmosphere
+    const colors = youth?['#78baff','#c9e4ff','#3c81da','#ffffff']:['#ffd34f', '#ffe797', '#dba824', '#fff3c6']; // shared black/gold atmosphere
     for (let i = 0; i < 15; i++) {
       particles.push({
         x: Math.random() * width,
@@ -64,7 +64,7 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [disabled,reducedMotion]);
+  }, [disabled,reducedMotion,youth]);
 
   if (disabled) return null;
 

@@ -1,6 +1,9 @@
+import {FJU_CARDS} from '../utils/fju-content';
+import {FjuAgendaSlide} from './FjuAgendaSlide';
+import {FjuSlide} from './FjuSlide';
 import {CountdownReadout,ProjectionCountdown,ProjectionMeetingStart} from './ProjectionCountdown';
 import {ProjectedImage,ProjectionMediaFallback} from './ProjectionMedia';
-import {Smartphone,Bell,ChurchBench,PrayingHands,Restroom,MessageSquareOff,Instagram,Flame,RefreshCw} from './ui/icons';
+import {Smartphone,Bell,ChurchBench,PrayingHands,Restroom,MessageSquareOff,Instagram,Flame,RefreshCw,Hand,HeartHandshake,CalendarDays} from './ui/icons';
 import {isYouthProjection} from '../utils/projection-theme';
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion, MotionConfig } from 'motion/react';
@@ -120,7 +123,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
   const themeColor = isFJU ? 'text-hl-gold' : 'text-hl-gold';
   const borderColor = isFJU ? 'border-hl-gold/40' : 'border-white/10';
-  const shadowColor = isFJU ? 'shadow-[0_40px_120px_rgba(180,83,9,0.5)]' : 'shadow-[0_40px_120px_rgba(0,0,0,0.9)]';
+  const shadowColor = isFJU ? 'shadow-[0_40px_120px_rgba(24,73,138,0.5)]' : 'shadow-[0_40px_120px_rgba(0,0,0,0.9)]';
 
   // Performance diagnostics hook
   const { isLightModeActive, isHighModeActive, effectiveMode } = usePerformanceDiagnostics();
@@ -160,6 +163,14 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
   };
 
   const renderSlide = (slideId: string) => {
+    if(isFJU){
+      if(slideId==='fju_agenda')return <FjuAgendaSlide meetings={customMeetings} now={currentTime}/>;
+      if(slideId.startsWith('meeting_event_')){const meeting=customMeetings.find(m=>m.id===slideId.slice('meeting_event_'.length));if(meeting)return <FjuSlide label="PRÓXIMO ENCONTRO" title={meeting.theme} subtitle={`${meeting.date?format(new Date(meeting.date+'T12:00:00'),'dd/MM',{locale:ptBR}):meeting.dayName} · ${meeting.time}`} symbol={<CalendarDays/>}/>;}
+
+      const card=FJU_CARDS[slideId];
+      if(card){const symbols={hand:<Hand/>,seat:<ChurchBench/>,door:<Restroom/>,phone:<Smartphone/>,chat:<MessageSquareOff/>,fire:<Flame/>,social:<Instagram/>,heart:<HeartHandshake/>};return <FjuSlide {...card} symbol={symbols[card.symbol]}/>;}
+    }
+
     if (slideId.startsWith("custom_")) {
       const media = customMediaList.find(m => m.id === slideId);
       if (!media) {
@@ -303,19 +314,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
     switch (slideId) {
       case 'seat':
-        if (isFJU) {
-          return (
-            <IconSlide
-              icon={ChurchBench}
-              title="Cola aí!"
-              subtitle="Encontre um lugar e acompanhe o Encontro Jovem."
-              layout="split-left"
-              variant="fju"
-              effectiveMode={effectiveMode}
-              isLightModeActive={isLightModeActive}
-            />
-          );
-        }
         return (
           <IconSlide
             icon={ChurchBench}
@@ -327,19 +325,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           />
         );
       case 'bathroom':
-        if (isFJU) {
-          return (
-            <IconSlide
-              icon={Restroom}
-              title="Antes do encontro"
-              subtitle="Se precisar, utilize o banheiro antes da reunião."
-              layout="split-right"
-              variant="fju"
-              effectiveMode={effectiveMode}
-              isLightModeActive={isLightModeActive}
-            />
-          );
-        }
         return (
           <IconSlide
             icon={Restroom}
@@ -351,19 +336,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           />
         );
       case 'phone':
-        if (isFJU) {
-          return (
-            <IconSlide
-              icon={Smartphone}
-              title="Foco Total"
-              subtitle="Evite distrações durante o Encontro Jovem."
-              layout="center"
-              variant="fju"
-              effectiveMode={effectiveMode}
-              isLightModeActive={isLightModeActive}
-            />
-          );
-        }
         return (
           <IconSlide
             icon={Smartphone}
@@ -375,20 +347,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           />
         );
       case 'no_chat':
-        if (isFJU) {
-          return (
-            <IconSlide
-              icon={MessageSquareOff}
-              title="Fica Ligado"
-              subtitle="Evite conversas. Concentre-se em Deus."
-              layout="split-left"
-              variant="fju"
-              category="FORÇA JOVEM UNIVERSAL"
-              effectiveMode={effectiveMode}
-              isLightModeActive={isLightModeActive}
-            />
-          );
-        }
         return (
           <IconSlide
             icon={MessageSquareOff}
@@ -401,20 +359,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           />
         );
       case 'soon':
-        if (isFJU) {
-          return (
-            <IconSlide
-              icon={Flame}
-              title="Vem pra FJU"
-              subtitle="Use a sua fé e mantenha seus pensamentos em Deus."
-              pulse
-              layout="center"
-              variant="fju"
-              effectiveMode={effectiveMode}
-              isLightModeActive={isLightModeActive}
-            />
-          );
-        }
         return (
           <IconSlide
             icon={PrayingHands}
@@ -427,19 +371,6 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           />
         );
       case 'social':
-        if (isFJU) {
-          return (
-            <IconSlide
-              icon={Instagram}
-              title="FJU no Story"
-              subtitle={`Siga a gente e marque o ${SOCIAL.instagram}`}
-              layout="split-left"
-              variant="fju"
-              effectiveMode={effectiveMode}
-              isLightModeActive={isLightModeActive}
-            />
-          );
-        }
         return (
           <IconSlide
             icon={Instagram}
@@ -519,9 +450,9 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         intensity={background3DIntensity}
       />
       {/* Efeitos 2D Clássicos */}
-      <ParticlesBackground disabled={background3DStyle !== 'particles_2d'} />
+      <ParticlesBackground youth={isFJU} disabled={background3DStyle !== 'particles_2d'} />
 
-      {isFJU&&(!isLooping||shouldShowVerse)&&!clearContentEnabled&&<div className="projection-fju-signature"><img src="/brand/fju-official.png" alt="Força Jovem Universal"/><span>Encontro Jovem</span></div>}
+      {isFJU&&(!isLooping||shouldShowVerse)&&!clearContentEnabled&&<div className="projection-fju-signature"><img src="/brand/fju-white-v2.png" alt="Força Jovem Universal"/><span>Encontro Jovem</span></div>}
       {/* BLACKOUT OVERLAY */}
       {blackoutEnabled && (
         <div className="absolute inset-0 bg-black z-[100] flex flex-col items-center justify-center">
@@ -562,9 +493,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: isLightModeActive ? 0.35 : 0.4 }}
-            className={`absolute inset-0 w-full h-full z-40 flex items-center justify-center ${
-              isLightModeActive ? 'bg-black/50' : 'bg-black/20 backdrop-blur-[2px]'
-            }`}
+            className="absolute inset-0 w-full h-full z-40 flex items-center justify-center"
           >
             <VerseSlide
               currentTime={currentTime}
@@ -578,7 +507,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           </motion.div>
         ) : isFinalMinute || isFinalFiveMinutes ? (
           <motion.div key={isFinalMinute?'final-minute':'final-five'} initial={reducedMotion?false:{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:.3}} className="absolute inset-0">
-            <ProjectionCountdown seconds={diffSeconds} final={isFinalMinute} video={isCurrentSlideVideo} fullVideo={finalMinuteDisplayMode==='full_video'}>
+            <ProjectionCountdown youth={isFJU} seconds={diffSeconds} final={isFinalMinute} video={isCurrentSlideVideo} fullVideo={finalMinuteDisplayMode==='full_video'}>
               <AnimatePresence><motion.div key={currentSlideId} {...getTransitionVariants(currentSlideId)} className="absolute inset-0 flex items-center justify-center">{clearContentEnabled?null:renderSlide(currentSlideId)}</motion.div></AnimatePresence>
             </ProjectionCountdown>
           </motion.div>
@@ -597,7 +526,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           >
             <header className={`h-[145px] shrink-0 px-20 flex items-center justify-between border-b border-white/[0.08] bg-hl-canvas/75 backdrop-blur-md relative z-50`}>
               <div className={`flex justify-center ${isFJU?'projection-fju-heading':'flex-col'}`}>
-                {isFJU&&<img src="/brand/fju-official.png" alt="Força Jovem Universal"/>}
+                {isFJU&&<img src="/brand/fju-white-v2.png" alt="Força Jovem Universal"/>}
                 <div>
                   <h1 className="font-sans font-black text-[3rem] @[1280px]:text-[3.3rem] tracking-[0.12em] text-white leading-none uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                     {isFJU?'Encontro Jovem':churchInfo.name}
@@ -610,7 +539,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
 
               <div className="flex items-center gap-10">
                 <div className="flex items-center gap-8">
-                  {projectionMode==='post'?<span className="projection-post-label">Após a reunião</span>:nextMeetingDate?<CountdownReadout hours={hoursStr} minutes={minutesStr}/>:<span className="projection-post-label">Sem reunião agendada</span>}
+                  {projectionMode==='post'?<span className="projection-post-label">{isFJU?'Após o encontro':'Após a reunião'}</span>:nextMeetingDate?<CountdownReadout hours={hoursStr} minutes={minutesStr}/>:<span className="projection-post-label">{isFJU?'Sem encontro agendado':'Sem reunião agendada'}</span>}
 
                   {!isMiniature && (
                     <>

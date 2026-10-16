@@ -44,7 +44,7 @@ html, body, #root {
   background-color: #030305;
   color-scheme: dark;
 }
-.projection-reading { width:100%; height:100%; padding:110px 150px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#fffaf0; background:radial-gradient(ellipse at 50% 0%,#342417 0%,#110f10 60%,#08090c 100%); gap:45px; }
+.projection-reading { width:100%; height:100%; padding:110px 150px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#fffaf0; background:transparent; gap:45px; text-shadow:0 3px 12px #000c; }
 .projection-reading-rule { width:96px; height:5px; border-radius:99px; background:#e7bd68; flex-shrink:0; }
 .projection-reading-text { max-width:100%; font-family:Inter,Arial,sans-serif; font-weight:600; line-height:1.35; letter-spacing:0; overflow-wrap:anywhere; white-space:pre-wrap; margin:0; }
 .projection-reading-reference { max-width:100%; font-family:Inter,Arial,sans-serif; font-size:38px; font-weight:500; line-height:1.4; color:#ebca8e; overflow-wrap:anywhere; margin:0; }
@@ -193,10 +193,10 @@ html, body, #root {
 .operator-shell .bible-unified .bible-passage h3 { color:#ffdd75; }
 .operator-shell :is(.bible-picker,.bible-current,.bible-unified .bible-passage:has(.bible-readable-text)) { border-color:#30303a; }
 .operator-shell :is(button,summary,input,textarea,select):focus-visible { outline-color:#ffda53; }
-.projection-reading { position:relative; z-index:1; background:radial-gradient(ellipse at center,#000b,transparent 85%); color:#fffdf6; }
+.projection-reading { position:relative; z-index:1; background:transparent; color:#fffdf6; }
 .projection-reading-text { text-shadow:0 3px 20px #000,0 1px 4px #000; }
-.projection-reading-rule { background:linear-gradient(90deg,transparent,#ffd34f 35%,#fff2b1 50%,#ffd34f 65%,transparent); box-shadow:0 0 20px #ffc40044; width:160px; height:3px; }
-.projection-reading-reference { color:#ffe17a; border:1px solid #ffd34f55; background:#020204aa; padding:12px 32px; border-radius:8px; letter-spacing:1px; box-shadow:0 0 30px #d9950017; }
+.projection-reading-rule { background:linear-gradient(90deg,transparent,var(--color-hl-gold) 35%,var(--color-hl-gold-bright) 50%,var(--color-hl-gold) 65%,transparent); box-shadow:none; width:160px; height:3px; }
+.projection-reading-reference { color:var(--color-hl-gold-bright); border:0; background:transparent; padding:0; border-radius:0; letter-spacing:1px; box-shadow:none; }
 .text-projection-preview { border-color:#665522; border-radius:10px; }
 .sequence-heading { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
 .sequence-heading h2 { font-size:25px; font-weight:700; margin:5px 0; }

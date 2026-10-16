@@ -31,6 +31,7 @@ const fragmentShader = `
   uniform vec2 uResolution;
   uniform int uStyle; // 0: Aurora Sacra (Ondas Horizontais), 1: Véu Divino (Raios Verticais), 2: Luz dourada (Faixas difusas)
   uniform float uIntensity;
+  uniform float uYouth;
   uniform int uOctaves;
   varying vec2 vUv;
 
@@ -143,6 +144,7 @@ const fragmentShader = `
       alpha = light * (0.35 + edge * 0.65) * 0.38 * uIntensity;
     }
 
+    if(uYouth>0.5){float l=dot(finalColor,vec3(0.299,0.587,0.114));finalColor=mix(vec3(0.08,0.22,0.48),vec3(0.65,0.84,1.0),l);}
     gl_FragColor = vec4(finalColor, alpha);
   }
 `;
@@ -252,6 +254,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       uResolution: { value: new THREE.Vector2(width, height) },
       uStyle: { value: styleInt },
       uIntensity: { value: intensityValue },
+      uYouth: { value: isFJU?1:0 },
       uOctaves: { value: currentOctaves },
     };
 
@@ -291,7 +294,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     if (ctxTex) {
       const grad = ctxTex.createRadialGradient(16, 16, 0, 16, 16, 16);
       grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-      grad.addColorStop(0.35, isFJU ? 'rgba(245, 158, 11, 0.4)' : 'rgba(234, 179, 8, 0.4)');
+      grad.addColorStop(0.35, isFJU ? 'rgba(105, 180, 255, 0.4)' : 'rgba(234, 179, 8, 0.4)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctxTex.fillStyle = grad;
       ctxTex.fillRect(0, 0, 32, 32);
@@ -396,7 +399,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 z-0 pointer-events-none overflow-hidden ${fallback || compatible ? 'atmosphere-fallback-host' : ''} ${reducedMotion?'atmosphere-still':''}`}
+      className={`absolute inset-0 z-0 pointer-events-none overflow-hidden ${fallback || compatible ? 'atmosphere-fallback-host' : ''} ${reducedMotion?'atmosphere-still':''} ${isFJU?'atmosphere-youth':''}`}
       data-renderer={fallback || compatible ? 'compatible' : 'webgl'}
     >{(fallback || compatible) && <div className={`atmosphere-compatible atmosphere-${stylePreset === 'auto' ? isFJU ? 'fju_aura' : 'aurora' : stylePreset} atmosphere-intensity-${intensity}`} aria-hidden="true"><i/><i/><i/></div>}</div>
   );

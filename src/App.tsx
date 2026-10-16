@@ -1,9 +1,10 @@
+import {FJU_PRE_SLIDES,FJU_POST_SLIDES} from './utils/fju-content';
 import {deriveCountdown} from './utils/countdown';
 import {ProjectionStage} from './components/ProjectionStage';
 import {HeaderScroll} from './utils/header-scroll';
 import {AppUpdateNotice} from './components/AppUpdateNotice';
 import {selectProjectionVerse} from './utils/verse-selection';
-import {isYouthProjection} from './utils/projection-theme';
+import {isYouthProjection,isYouthMeeting,availableInYouthLoop} from './utils/projection-theme';
 import { useSlideManager } from "./hooks/useSlideManager";
 import { useWakeLock } from "./hooks/useWakeLock";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -91,7 +92,7 @@ export default function App() {
   } = useProjectionState();
 
   const {
-    manualSlideOverride,
+    manualSlideOverride: storedManualSlideOverride,
     slidesOrder,
     disabledSlides,
     customVerseText,
@@ -236,8 +237,12 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  const {ongoingMeeting}=getNextMeeting(currentTime,customMeetings);
-  const countdown=deriveCountdown(currentTime,customMeetings,countdownOffset,countdownPaused,pausedSeconds,countdownAnchor,dismissedJustStarted);
+  const originalSchedule=getNextMeeting(currentTime,customMeetings);
+  const isFJUProjection=isYouthProjection(originalSchedule.ongoingMeeting,originalSchedule.nextMeeting,originalSchedule.nextMeetingDate,currentTime,projectionTheme);
+  const manualSlideOverride=storedManualSlideOverride&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):!storedManualSlideOverride.startsWith('fju_'))?storedManualSlideOverride:null;
+  const projectionMeetings=isFJUProjection?customMeetings.filter(isYouthMeeting):customMeetings;
+  const {ongoingMeeting}=getNextMeeting(currentTime,projectionMeetings);
+  const countdown=deriveCountdown(currentTime,projectionMeetings,countdownOffset,countdownPaused,pausedSeconds,countdownAnchor,dismissedJustStarted);
   const {nextMeeting,nextMeetingDate,isJustStartedRaw}=countdown;
   let {isJustStarted,diffSeconds,isFinalMinute,isFinalFiveMinutes,isLooping}=countdown;
   const formatMinutesPart=Math.floor(diffSeconds/60).toString().padStart(2,'0');
@@ -287,7 +292,9 @@ export default function App() {
   });
   const hasActiveCampaigns = activeCampaignsFiltered.length > 0;
 
-  const defaultBaseSlides = (projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES).filter(id => {
+  const defaultBaseSlides = (isFJUProjection?(projectionMode==='post'?FJU_POST_SLIDES:FJU_PRE_SLIDES):(projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES)).filter(id => {
+    if(isFJUProjection&&!availableInYouthLoop(id,customMeetings))return false;
+    if(id==='fju_agenda'&&!nextMeetingDate)return false;
     if(id==='soon'&&!nextMeetingDate)return false;
     if (id === 'campaigns' && !hasActiveCampaigns) return false;
     return true;
@@ -299,7 +306,7 @@ export default function App() {
     }
   });
   customMeetings.forEach((meet) => {
-    if (meet.date && meet.date >= todayStr) {
+    if (meet.date && meet.date >= todayStr && (!isFJUProjection||isYouthMeeting(meet))) {
       const meetSlideId = `meeting_event_${meet.id}`;
       if (!allAvailableSlides.includes(meetSlideId)) {
         allAvailableSlides.push(meetSlideId);
@@ -331,7 +338,7 @@ export default function App() {
   const timeInLoop = ((adjustedTime % (totalDuration || 1)) + (totalDuration || 1)) % (totalDuration || 1);
   const loopIteration = Math.floor(adjustedTime / (totalDuration || 1));
   let accumulatedTime = 0;
-  let currentSlideId = activeSlides[0] || 'agenda_day_0';
+  let currentSlideId = activeSlides[0] || (isFJUProjection?'seat':'agenda_day_0');
 
   if (manualSlideOverride) {
     currentSlideId = manualSlideOverride;
@@ -688,6 +695,7 @@ export default function App() {
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (
               <PlaylistPanel
+                youth={isFJUProjection}
                 blackoutEnabled={blackoutEnabled}
                 clearContentEnabled={clearContentEnabled}
                 currentVerse={currentSlideId.startsWith('verse_') ? selectProjectionVerse(VERSES,{text:customVerseText,ref:customVerseRef,index:activeVerseIndex,loop:loopIteration,offset:Number(currentSlideId.replace('verse_',''))||0,timeMs:currentTime.getTime()}).verse : null}
@@ -729,7 +737,7 @@ export default function App() {
 
             {activeMobileTab === 'texts' && (
               <BiblePanel
-                isFJU={isYouthProjection(ongoingMeeting, nextMeeting, nextMeetingDate, currentTime, projectionTheme)}
+                isFJU={isFJUProjection}
                 backgroundStyle={background3DStyle}
                 activeVerseIndex={activeVerseIndex}
                 customVerseText={customVerseText}
@@ -774,6 +782,7 @@ export default function App() {
                 background3DIntensity={background3DIntensity}
                 projectionMode={projectionMode}
                 projectionTheme={projectionTheme}
+                youth={isFJUProjection}
                 manualSlideOverride={manualSlideOverride}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 currentTime={currentTime}
@@ -790,6 +799,7 @@ export default function App() {
 
             {activeMobileTab === 'monitor' && (
               <MonitorPanel
+                youth={isFJUProjection}
                 onNavigate={setActiveMobileTab}
                 onFullscreen={toggleFullscreen}
                 projectionMode={projectionMode}
@@ -821,7 +831,7 @@ export default function App() {
                 verseDisplayPriority={verseDisplayPriority}
                 loopIteration={loopIteration}
                 updateStateAndBroadcast={updateStateAndBroadcast}
-                customMeetings={customMeetings}
+                customMeetings={projectionMeetings}
                 customCampaigns={customCampaigns}
                 nextMeeting={nextMeeting}
                 nextMeetingDate={nextMeetingDate}
@@ -908,7 +918,7 @@ export default function App() {
           verseDisplayPriority={verseDisplayPriority}
           loopIteration={loopIteration}
           onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
-          customMeetings={customMeetings}
+          customMeetings={projectionMeetings}
           customCampaigns={customCampaigns}
           nextMeeting={nextMeeting}
           nextMeetingDate={nextMeetingDate}

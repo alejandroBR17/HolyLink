@@ -1,6 +1,6 @@
-const CACHE_NAME = 'holylink-pwa-v28-fju-signature';
+const CACHE_NAME = 'holylink-pwa-v29-youth-encounter';
 const MAX_ENTRIES = 120;
-const urlsToCache = ['/brand/fju-official.png', '/media/earth-land.svg', '/', '/index.html', '/pwa-bootstrap.js', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/app-v2-symbol-dark-192.png', '/pwa/app-v2-symbol-dark-512.png', '/pwa/adaptive-v2-symbol-dark-192.png', '/pwa/adaptive-v2-symbol-dark-512.png', '/pwa/apple-v2-symbol-dark-180.png'];
+const urlsToCache = ['/media/earth-land-fju.svg', '/brand/fju-white-v2.png', '/media/earth-land.svg', '/', '/index.html', '/pwa-bootstrap.js', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/app-v2-symbol-dark-192.png', '/pwa/app-v2-symbol-dark-512.png', '/pwa/adaptive-v2-symbol-dark-192.png', '/pwa/adaptive-v2-symbol-dark-512.png', '/pwa/apple-v2-symbol-dark-180.png'];
 self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
@@ -43,7 +43,7 @@ self.addEventListener('fetch', event => {
     return;
   }
   // Bible/API/P2P traffic has its own policy; never cache arbitrary remote responses.
-  const asset = /^\/(assets|brand|pwa)\//.test(url.pathname) || ['/pwa-bootstrap.js','/manifest.json','/media/earth-land.svg'].includes(url.pathname);
+  const asset = /^\/(assets|brand|pwa)\//.test(url.pathname) || ['/pwa-bootstrap.js','/manifest.json','/media/earth-land.svg','/media/earth-land-fju.svg'].includes(url.pathname);
   if (!asset) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
