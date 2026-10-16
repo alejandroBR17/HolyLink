@@ -195,3 +195,6 @@ O versículo é transparente em ambos os modos: sem imagem/gradiente opaco, plac
 
 ### Agenda jovem com eventos
 Em Agenda, use Agenda de FJU para incluir eventos com qualquer título (vigília, encontro ou programação especial). O cartão Próximos eventos FJU mostra as três próximas ocorrências em ordem cronológica, misturando semanal e pontual. Eventos expirados e itens marcados Igreja ficam fora. Cadastros antigos sem categoria continuam reconhecidos por FJU/Jovem/Algo a Mais; a categoria explícita prevalece. Modelos editáveis: Encontro Jovem sábado15h e Algo a Mais sexta19h. Horários já salvos não são migrados automaticamente; adicione os modelos ou edite os registros existentes conforme a programação local.
+
+### Divulgação nas duas agendas
+Agenda de oferece três destinos: FJU (somente jovem), Igreja (somente reuniões) ou FJU e reuniões (ambas). O vínculo compartilhado usa um cadastro, sem cópia. Eventos legados reconhecidos como FJU ficam exclusivos do modo jovem até escolha explícita de ambos. A filtragem também vale para contagem, Monitor, fila, cartões diários e eventos fixados. Filtros temporais e limpeza de passados respeitam o contexto atual; Todas permite consultar a base administrativa completa.
