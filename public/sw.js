@@ -1,4 +1,4 @@
-const CACHE_NAME = 'holylink-pwa-v27-manual-fju';
+const CACHE_NAME = 'holylink-pwa-v28-fju-signature';
 const MAX_ENTRIES = 120;
 const urlsToCache = ['/brand/fju-official.png', '/media/earth-land.svg', '/', '/index.html', '/pwa-bootstrap.js', '/manifest.json', '/brand/hl-symbol-20261014.webp', '/brand/hl-text-20261014.webp', '/brand/hl-full-20261014.webp', '/pwa/app-v2-symbol-dark-192.png', '/pwa/app-v2-symbol-dark-512.png', '/pwa/adaptive-v2-symbol-dark-192.png', '/pwa/adaptive-v2-symbol-dark-512.png', '/pwa/apple-v2-symbol-dark-180.png'];
 self.addEventListener('message', event => {
