@@ -7,6 +7,7 @@ export type BackgroundStyleOption = 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'p
 interface ThreeBackground3DProps {
   disabled?: boolean;
   isFJU?: boolean;
+  accent?:string;
   diffSeconds?: number;
   stylePreset?: BackgroundStyleOption;
   fpsLimit?: 30 | 60;
@@ -32,6 +33,8 @@ const fragmentShader = `
   uniform int uStyle; // 0: Aurora Sacra (Ondas Horizontais), 1: Véu Divino (Raios Verticais), 2: Luz dourada (Faixas difusas)
   uniform float uIntensity;
   uniform float uYouth;
+  uniform vec3 uAccent;
+  uniform float uCustomAccent;
   uniform int uOctaves;
   varying vec2 vUv;
 
@@ -145,6 +148,7 @@ const fragmentShader = `
     }
 
     if(uYouth>0.5){float l=dot(finalColor,vec3(0.299,0.587,0.114));finalColor=mix(vec3(0.08,0.22,0.48),vec3(0.65,0.84,1.0),l);}
+    if(uCustomAccent>0.5){float l=dot(finalColor,vec3(0.299,0.587,0.114));finalColor=mix(uAccent*0.22,mix(uAccent,vec3(1.0),0.38),l);}
     gl_FragColor = vec4(finalColor, alpha);
   }
 `;
@@ -152,6 +156,7 @@ const fragmentShader = `
 export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
   disabled = false,
   isFJU = false,
+  accent,
   diffSeconds = 9999,
   stylePreset = 'auto',
   fpsLimit = 60,
@@ -162,6 +167,9 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
   const reducedMotion=useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   const [fallback, setFallback] = useState(false);
+  const palette=useRef<{uniforms:{uAccent:{value:THREE.Color};uCustomAccent:{value:number}};particles:THREE.PointsMaterial;render:()=>void}|null>(null);
+  const accentRef=useRef(accent);
+  accentRef.current=accent;
 
   const diffSecondsRef = useRef(diffSeconds);
   useEffect(() => {
@@ -255,6 +263,8 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       uStyle: { value: styleInt },
       uIntensity: { value: intensityValue },
       uYouth: { value: isFJU?1:0 },
+      uAccent:{value:new THREE.Color(accentRef.current||'#78baff')},
+      uCustomAccent:{value:accentRef.current?1:0},
       uOctaves: { value: currentOctaves },
     };
 
@@ -294,7 +304,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     if (ctxTex) {
       const grad = ctxTex.createRadialGradient(16, 16, 0, 16, 16, 16);
       grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-      grad.addColorStop(0.35, isFJU ? 'rgba(105, 180, 255, 0.4)' : 'rgba(234, 179, 8, 0.4)');
+      grad.addColorStop(0.35, 'rgba(255, 255, 255, 0.4)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctxTex.fillStyle = grad;
       ctxTex.fillRect(0, 0, 32, 32);
@@ -302,6 +312,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     const pTexture = new THREE.CanvasTexture(canvasTex);
 
     const particleMaterial = new THREE.PointsMaterial({
+      color:accentRef.current||(isFJU?'#78baff':'#eab308'),
       size: 1.8,
       map: pTexture,
       transparent: true,
@@ -309,6 +320,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       depthWrite: false,
       opacity: 0.35,
     });
+    palette.current={uniforms,particles:particleMaterial,render:()=>{if(reducedMotion)animate(performance.now());}};
     const particleSystem = new THREE.Points(geometryParticles, particleMaterial);
     particleScene.add(particleSystem);
 
@@ -383,6 +395,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       planeGeometry.dispose();
       shaderMaterial.dispose();
       geometryParticles.dispose();
+      palette.current=null;
       particleMaterial.dispose();
       pTexture.dispose();
       renderer.dispose();
@@ -394,12 +407,16 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     };
   }, [disabled, isFJU, stylePreset, fpsLimit, intensity, onStatus, compatible, reducedMotion]);
 
+  useEffect(()=>{const active=palette.current;if(!active)return;active.uniforms.uAccent.value.set(accent||'#78baff');active.uniforms.uCustomAccent.value=accent?1:0;active.particles.color.set(accent||(isFJU?'#78baff':'#eab308'));active.render();},[accent,isFJU,disabled,stylePreset,fpsLimit,intensity,compatible,reducedMotion,onStatus]);
+
   if (disabled || stylePreset === 'off' || stylePreset === 'particles_2d') return null;
 
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 z-0 pointer-events-none overflow-hidden ${fallback || compatible ? 'atmosphere-fallback-host' : ''} ${reducedMotion?'atmosphere-still':''} ${isFJU?'atmosphere-youth':''}`}
+      style={{'--atmosphere-accent':accent} as React.CSSProperties}
+      data-accent={accent}
+      className={`absolute inset-0 z-0 pointer-events-none overflow-hidden ${fallback || compatible ? 'atmosphere-fallback-host' : ''} ${reducedMotion?'atmosphere-still':''} ${isFJU?'atmosphere-youth':''} ${accent?'atmosphere-project':''}`}
       data-renderer={fallback || compatible ? 'compatible' : 'webgl'}
     >{(fallback || compatible) && <div className={`atmosphere-compatible atmosphere-${stylePreset === 'auto' ? isFJU ? 'fju_aura' : 'aurora' : stylePreset} atmosphere-intensity-${intensity}`} aria-hidden="true"><i/><i/><i/></div>}</div>
   );

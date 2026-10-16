@@ -1,4 +1,4 @@
-import {FJU_CARDS,isFjuProject} from '../utils/fju-content';
+import {FJU_CARDS,FJU_PROJECTS,isFjuProject} from '../utils/fju-content';
 import {FjuAgendaSlide} from './FjuAgendaSlide';
 import {FjuProjectsSlide} from './FjuProjectsSlide';
 import {FjuSlide} from './FjuSlide';
@@ -287,6 +287,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       }
       return (
         <AgendaDaySlide
+          loopIteration={loopIteration}
           dayIndex={dayIndex}
           subType={subType}
           currentTime={currentTime}
@@ -394,6 +395,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       case 'campaigns':
         return (
           <CampaignSlide
+            currentTime={currentTime}
+            loopIteration={loopIteration}
             campaigns={customCampaigns}
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
@@ -440,19 +443,22 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
     )
   );
 
+  const project=isFJU?FJU_PROJECTS.find(p=>p.id===currentSlideId):undefined;
+  const projectStyle=project?{'--project-accent':project.color}:undefined;
   return (
-    <MotionConfig reducedMotion="user"><div data-projection-theme={isFJU?'fju':'regular'} className={`holy-theme holy-projection ${isFJU?'projection-fju':''} w-full h-full relative select-none font-sans overflow-hidden bg-hl-canvas text-white flex flex-col justify-between`}>
+    <MotionConfig reducedMotion="user"><div data-project={project?.id} style={projectStyle as React.CSSProperties} data-projection-theme={isFJU?'fju':'regular'} className={`holy-theme holy-projection ${isFJU?'projection-fju':'projection-regular'} w-full h-full relative select-none font-sans overflow-hidden bg-hl-canvas text-white flex flex-col justify-between`}>
       {/* 3D Volumetric Background Engine */}
       <ThreeBackground3D
         disabled={background3DStyle === 'off' || background3DStyle === 'particles_2d'}
         isFJU={isFJU}
+        accent={project?.color}
         diffSeconds={diffSeconds}
         stylePreset={background3DStyle}
         fpsLimit={background3DFps}
         intensity={background3DIntensity}
       />
       {/* Efeitos 2D Clássicos */}
-      <ParticlesBackground youth={isFJU} disabled={background3DStyle !== 'particles_2d'} />
+      <ParticlesBackground youth={isFJU} accent={project?.color} disabled={background3DStyle !== 'particles_2d'} />
 
       {isFJU&&(!isLooping||shouldShowVerse)&&!clearContentEnabled&&<div className="projection-fju-signature"><img src="/brand/fju-white-v2.png" alt="Força Jovem Universal"/><span>Encontro Jovem</span></div>}
       {/* BLACKOUT OVERLAY */}
@@ -526,8 +532,8 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex flex-col"
           >
-            <header className={`h-[145px] shrink-0 px-20 flex items-center justify-between border-b border-white/[0.08] bg-hl-canvas/75 backdrop-blur-md relative z-50`}>
-              <div className={`flex justify-center ${isFJU?'projection-fju-heading':'flex-col'}`}>
+            <header className={`projection-loop-header h-[145px] shrink-0 px-20 flex items-center justify-between border-b border-white/[0.08] bg-hl-canvas/75 backdrop-blur-md relative z-50`}>
+              <div className={`flex justify-center ${isFJU?'projection-fju-heading':'projection-loop-heading flex-col'}`}>
                 {isFJU&&<img src="/brand/fju-white-v2.png" alt="Força Jovem Universal"/>}
                 <div>
                   <h1 className="font-sans font-black text-[3rem] @[1280px]:text-[3.3rem] tracking-[0.12em] text-white leading-none uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
@@ -546,7 +552,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
                   {!isMiniature && (
                     <>
                       <div className="h-14 w-[1px] bg-white/[0.15]" />
-                      <div className={`border-2 px-7 py-3 rounded-2xl flex flex-col items-center justify-center ${isFJU ? 'bg-hl-gold-strong/15 border-hl-gold/40 shadow-lg' : 'bg-white/[0.06] border-white/[0.15] shadow-lg'}`}>
+                      <div className={`projection-loop-clock border-2 px-7 py-3 rounded-2xl flex flex-col items-center justify-center ${isFJU ? 'bg-hl-gold-strong/15 border-hl-gold/40 shadow-lg' : 'bg-white/[0.06] border-white/[0.15] shadow-lg'}`}>
                         <span className={`font-mono text-3xl @[1280px]:text-4xl font-black tracking-wider ${isFJU ? 'text-hl-gold-bright' : 'text-hl-copy'}`}>
                           {format(currentTime, 'HH:mm:ss')}
                         </span>
