@@ -1,9 +1,8 @@
 import {ProjectedImage,ProjectionMediaFallback} from './ProjectionMedia';
-import {Smartphone} from './ui/icons';
+import {Smartphone,Bell,Armchair,Restroom,MessageSquareOff,Clock,Instagram,Flame,RefreshCw} from './ui/icons';
 import {isYouthProjection} from '../utils/projection-theme';
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion, MotionConfig } from 'motion/react';
-import { Bell, X, Armchair, DoorOpen, MessageSquareOff, Clock, Instagram, Globe, Flame, Users2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ParticlesBackground } from './ParticlesBackground';
@@ -326,7 +325,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         if (isFJU) {
           return (
             <IconSlide
-              icon={DoorOpen}
+              icon={Restroom}
               title="Pit Stop"
               subtitle="Aproveite agora para ir ao banheiro. Depois que começar, ninguém quer sair!"
               layout="split-right"
@@ -338,7 +337,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
         }
         return (
           <IconSlide
-            icon={DoorOpen}
+            icon={Restroom}
             title="Vá ao banheiro"
             subtitle="Aproveite para ir antes da reunião começar."
             layout="split-right"
@@ -533,23 +532,16 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
             initial={reducedMotion?false:{ opacity: 0, y: isMiniature ? -50 : -100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: isMiniature ? -50 : -100 }}
-            className={`absolute ${isMiniature ? 'top-10' : 'top-12'} left-1/2 -translate-x-1/2 z-[90] bg-hl-gold text-black ${isMiniature ? 'px-10 py-6 rounded-[2rem] border-2' : 'px-12 py-7 rounded-[2rem] border-2 shadow-[0_25px_60px_rgba(0,0,0,0.6)] min-w-[700px]'} border-hl-gold flex items-center gap-8 max-w-[90%]`}
+            className={`projection-notice ${isLooping&&!shouldShowVerse?'projection-notice-below-header':''} absolute ${isMiniature ? 'top-10' : 'top-12'} left-1/2 -translate-x-1/2 z-[90] bg-hl-gold text-black ${isMiniature ? 'px-10 py-6 rounded-[2rem] border-2' : 'px-12 py-7 rounded-[2rem] border-2 shadow-[0_25px_60px_rgba(0,0,0,0.6)] min-w-[700px]'} border-hl-gold flex items-center gap-8 max-w-[90%]`}
           >
-            <Bell className={`${isMiniature ? 'w-12 h-12' : 'w-14 h-14 animate-[bounce_2s_infinite]'} text-black`} strokeWidth={2.5} />
+            <Bell className={`${isMiniature ? 'w-12 h-12' : 'w-14 h-14 animate-[bounce_2s_infinite]'} text-black`} />
             <div className="text-left flex-1">
               <h2 className={`font-black ${isMiniature ? 'text-2xl' : 'text-2xl'} uppercase tracking-widest leading-none text-black`}>Aviso Importante</h2>
               <p className={`font-bold ${isMiniature ? 'text-3xl' : 'text-3xl'} mt-2 text-black leading-snug`}>
                 {activeAlert === 'baby' ? alerts.baby.message : activeAlert === 'car' ? alerts.car.message : activeAlert}
               </p>
             </div>
-            {!isMiniature && (
-              <button
-                onClick={onClearAlert}
-                className="bg-black/10 hover:bg-black/25 p-3 rounded-full transition-colors cursor-pointer pointer-events-auto shrink-0 flex items-center justify-center"
-              >
-                <X className="w-7 h-7 text-black" strokeWidth={2.5} />
-              </button>
-            )}
+
           </motion.div>
         )}
       </AnimatePresence>

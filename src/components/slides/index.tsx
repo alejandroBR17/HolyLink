@@ -1,7 +1,6 @@
-import {Smartphone} from '../ui/icons';
+import {Globe,Flame,HeartHandshake,CalendarDays,WifiOff,Info,Droplets,PrayingHands,BookOpen} from '../ui/icons';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { Globe, Flame, HeartHandshake, CalendarDays, WifiOff, MessageSquareOff, Clock, Instagram, DoorOpen, Armchair, QrCode, Sparkles, Info, CheckCircle2, Droplets, Heart } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { CHURCH_INFO, DONATION, WEEK_SCHEDULES } from '../../data';
 import { Meeting } from '../../types';
@@ -128,7 +127,7 @@ export const IconSlide = ({
             variants={itemVariants}
             className="flex-shrink-0 relative"
           >
-            <div className={`p-10 @[1280px]:p-14 ${
+            <div className={`projection-emblem p-10 @[1280px]:p-14 ${
               isFJU ? 'rounded-[3.5rem]' : 'rounded-3xl'
             } ${
               isLightMode
@@ -148,7 +147,6 @@ export const IconSlide = ({
                     ? 'text-hl-gold-bright drop-shadow-[0_0_55px_rgba(255,211,79,0.45)]'
                     : 'text-hl-gold-bright/90 drop-shadow-[0_0_35px_rgba(255,211,79,0.25)]'
                 } ${pulse && isHighMode ? (isFJU ? 'animate-pulse' : 'opacity-95') : ''}`}
-                strokeWidth={1.35}
               />
             </div>
           </motion.div>
@@ -177,7 +175,7 @@ export const IconSlide = ({
             variants={itemVariants}
             className="flex-shrink-0 relative"
           >
-            <div className={`p-10 @[1280px]:p-14 ${
+            <div className={`projection-emblem p-10 @[1280px]:p-14 ${
               isFJU ? 'rounded-[3.5rem]' : 'rounded-3xl'
             } ${
               isLightMode
@@ -197,7 +195,6 @@ export const IconSlide = ({
                     ? 'text-hl-gold-bright drop-shadow-[0_0_55px_rgba(255,211,79,0.45)]'
                     : 'text-hl-gold-bright/90 drop-shadow-[0_0_35px_rgba(255,211,79,0.25)]'
                 } ${pulse && isHighMode ? (isFJU ? 'animate-pulse' : 'opacity-95') : ''}`}
-                strokeWidth={1.35}
               />
             </div>
           </motion.div>
@@ -284,7 +281,7 @@ export const IconSlide = ({
           variants={itemVariants}
           className="mb-6"
         >
-          <div className={`p-8 @[1280px]:p-10 ${
+          <div className={`projection-emblem p-8 @[1280px]:p-10 ${
             isFJU ? 'rounded-[3rem]' : 'rounded-3xl'
           } ${
             isLightMode
@@ -299,7 +296,6 @@ export const IconSlide = ({
                   ? 'text-hl-gold-bright drop-shadow-[0_0_45px_rgba(255,211,79,0.45)]'
                   : 'text-hl-gold-bright/90 drop-shadow-[0_0_30px_rgba(255,211,79,0.25)]'
               } ${pulse && isHighMode ? (isFJU ? 'animate-pulse' : 'opacity-95') : ''}`}
-              strokeWidth={1.35}
             />
           </div>
         </motion.div>
@@ -375,12 +371,12 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
               </span>
             </div>
 
-            <div className={`p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+            <div className={`projection-emblem p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
               isLightMode
                 ? 'bg-hl-canvas border-2 border-hl-line'
                 : 'bg-hl-panel/70 backdrop-blur-md border border-hl-line/60 shadow-[0_20px_50px_rgba(0,0,0,0.6)]'
             } mb-6`}>
-              <Globe className={`w-32 h-32 @[1280px]:w-40 @[1280px]:h-40 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-soft drop-shadow-[0_0_35px_rgba(255,255,255,0.2)]'} ${!isLightMode ? 'animate-[spin_30s_linear_infinite]' : ''}`} strokeWidth={1.3} />
+              <Globe className={`w-32 h-32 @[1280px]:w-40 @[1280px]:h-40 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-soft drop-shadow-[0_0_35px_rgba(255,255,255,0.2)]'} `} />
             </div>
 
             <h1 className="font-sans font-black text-[4.4rem] @[1280px]:text-[5.4rem] @[1536px]:text-[6.2rem] tracking-tight text-white leading-[1.08] mb-4 uppercase drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)]">
@@ -408,12 +404,12 @@ export const WorldGodSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
               </span>
             </div>
 
-            <div className={`p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+            <div className={`projection-emblem p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
               isLightMode
                 ? 'bg-hl-canvas border-2 border-hl-gold/40'
                 : 'bg-hl-canvas/80 backdrop-blur-md border border-hl-gold/35 shadow-[0_0_50px_rgba(255,211,79,0.2)]'
             } mb-6`}>
-              <Flame className={`w-32 h-32 @[1280px]:w-40 @[1280px]:h-40 ${isFJU ? 'text-hl-gold-bright drop-shadow-[0_0_50px_rgba(255,211,79,0.65)]' : 'text-hl-gold-bright drop-shadow-[0_0_45px_rgba(255,211,79,0.4)]'}`} strokeWidth={1.35} />
+              <Flame className={`w-32 h-32 @[1280px]:w-40 @[1280px]:h-40 ${isFJU ? 'text-hl-gold-bright drop-shadow-[0_0_50px_rgba(255,211,79,0.65)]' : 'text-hl-gold-bright drop-shadow-[0_0_45px_rgba(255,211,79,0.4)]'}`} />
             </div>
 
             <h1 className={`font-sans font-black text-[4.4rem] @[1280px]:text-[5.4rem] @[1536px]:text-[6.2rem] tracking-tight ${isFJU ? 'text-white drop-shadow-[0_0_60px_rgba(255,211,79,0.45)]' : 'text-hl-gold-bright drop-shadow-[0_0_50px_rgba(255,211,79,0.35)]'} leading-[1.08] mb-4 uppercase`}>
@@ -656,7 +652,7 @@ export const DonationSlide = ({ variant, effectiveMode: propEffectiveMode, isLig
           <div className={`inline-flex items-center gap-3 px-8 py-3 rounded-full mb-5 ${
             isFJU ? 'bg-hl-gold/10 border border-hl-gold/30' : 'bg-white/[0.04] border border-hl-gold/25'
           } backdrop-blur-md`}>
-            <HeartHandshake className={`w-7 h-7 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'}`} strokeWidth={1.5} />
+            <HeartHandshake className={`w-7 h-7 ${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'}`} />
             <span className={`text-xl @[1280px]:text-2xl font-black tracking-[0.25em] uppercase font-mono ${isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright/95'}`}>
               DÍZIMOS E OFERTAS
             </span>
@@ -754,7 +750,7 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
               } else if (iconKey === 'globe' || iconKey.includes('globe') || iconKey.includes('ide')) {
                 Icon = Globe;
               } else if (iconKey === 'faith' || iconKey.includes('faith') || iconKey.includes('agenda')) {
-                Icon = CalendarDays;
+                Icon = BookOpen;
               }
 
               if (activeCampaigns.length === 1) {
@@ -778,7 +774,7 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
                     </div>
 
                     <div className={`p-10 rounded-2xl ${isLightMode ? 'bg-hl-panel border border-hl-line' : 'bg-hl-gold/10 border border-hl-gold/30 shadow-inner'} flex-shrink-0`}>
-                      <Icon className="w-28 h-28 @[1280px]:w-32 @[1280px]:h-32 text-hl-gold-bright" strokeWidth={1.35} />
+                      <Icon className="w-28 h-28 @[1280px]:w-32 @[1280px]:h-32 text-hl-gold-bright" />
                     </div>
                   </div>
                 );
@@ -789,7 +785,7 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
                   isLightMode ? 'bg-hl-canvas border-2 border-hl-line' : 'bg-hl-canvas/80 backdrop-blur-md border border-hl-gold/20 shadow-xl'
                 }`}>
                   <div className="p-6 bg-hl-gold/10 border border-hl-gold/20 rounded-2xl mb-5">
-                    <Icon className="w-20 h-20 text-hl-gold-bright" strokeWidth={1.35} />
+                    <Icon className="w-20 h-20 text-hl-gold-bright" />
                   </div>
 
                   <h3 className="text-white font-black text-[2.8rem] @[1280px]:text-[3.4rem] leading-tight mb-4 tracking-tight whitespace-pre-line">
@@ -809,7 +805,7 @@ export const CampaignSlide = ({ campaigns = [], effectiveMode: propEffectiveMode
               isLightMode ? 'bg-hl-canvas border-2 border-hl-line' : 'bg-hl-canvas/80 backdrop-blur-md border border-hl-gold/20'
             }`}>
               <div className="p-6 bg-hl-gold/10 border border-hl-gold/20 rounded-2xl mb-5">
-                <Flame className="w-18 h-18 text-hl-gold-bright" strokeWidth={1.35} />
+                <Flame className="w-18 h-18 text-hl-gold-bright" />
               </div>
               <h3 className="text-white font-extrabold text-[2.8rem] @[1280px]:text-[3.4rem] tracking-tight mb-3">Ainda Não Há Propósitos em Andamento</h3>
               <p className="text-hl-soft text-xl @[1280px]:text-2xl leading-relaxed max-w-2xl font-normal">
@@ -898,7 +894,7 @@ export const MeetingEventSlide = ({
           </span>
         </div>
 
-        <div className={`p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+        <div className={`projection-emblem p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode
             ? 'bg-hl-canvas border-2 border-hl-line'
             : isFJU
@@ -909,7 +905,7 @@ export const MeetingEventSlide = ({
             isFJU
               ? 'text-hl-gold-bright drop-shadow-[0_0_45px_rgba(255,211,79,0.45)]'
               : 'text-hl-gold-bright/90 drop-shadow-[0_0_35px_rgba(255,211,79,0.25)]'
-          } ${pulse && isHighMode ? (isFJU ? 'animate-pulse' : 'opacity-95') : ''}`} strokeWidth={1.35} />
+          } ${pulse && isHighMode ? (isFJU ? 'animate-pulse' : 'opacity-95') : ''}`} />
         </div>
 
         <h1 className={`font-sans font-black text-[4.4rem] @[1280px]:text-[5.4rem] @[1536px]:text-[6.2rem] tracking-tight ${
@@ -976,7 +972,7 @@ export const BaptismSlide = ({
           </span>
         </div>
 
-        <div className={`p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+        <div className={`projection-emblem p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode
             ? 'bg-hl-canvas border-2 border-hl-line'
             : isFJU
@@ -987,7 +983,7 @@ export const BaptismSlide = ({
             isFJU
               ? 'text-hl-gold-bright drop-shadow-[0_0_45px_rgba(255,211,79,0.45)]'
               : 'text-hl-gold-bright/95 drop-shadow-[0_0_35px_rgba(255,211,79,0.25)]'
-          }`} strokeWidth={1.35} />
+          }`} />
         </div>
 
         <h1 className={`font-sans font-black text-[4.4rem] @[1280px]:text-[5.4rem] @[1536px]:text-[6.2rem] tracking-tight text-white leading-[1.08] mb-5 drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]`}>
@@ -1003,7 +999,7 @@ export const BaptismSlide = ({
         <div className={`inline-flex items-center gap-4 px-8 py-3.5 rounded-full ${
           isLightMode ? 'bg-hl-canvas border-2 border-hl-line' : 'bg-hl-canvas/85 border border-hl-gold/30 backdrop-blur-md shadow-xl'
         }`}>
-          <p className="text-[1.9rem] @[1280px]:text-[2.4rem] text-hl-copy font-bold font-mono tracking-wide">
+          <p className="projection-closing-note text-[1.9rem] @[1280px]:text-[2.4rem] text-hl-copy font-semibold tracking-wide">
             Para se batizar hoje, <span className={isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'}>procure o Pastor ou um de nossos Obreiros</span>.
           </p>
         </div>
@@ -1058,18 +1054,18 @@ export const BlessingSlide = ({
           </span>
         </div>
 
-        <div className={`p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
+        <div className={`projection-emblem p-8 @[1280px]:p-10 ${isFJU ? 'rounded-[3rem]' : 'rounded-3xl'} ${
           isLightMode
             ? 'bg-hl-canvas border-2 border-hl-line'
             : isFJU
               ? 'bg-black/60 backdrop-blur-md border border-hl-gold/30 shadow-2xl'
               : 'bg-hl-canvas/80 backdrop-blur-md border border-hl-gold/25 shadow-2xl'
         } mb-6`}>
-          <Sparkles className={`w-28 h-28 @[1280px]:w-32 @[1280px]:h-32 ${
+          <PrayingHands className={`w-28 h-28 @[1280px]:w-32 @[1280px]:h-32 ${
             isFJU
               ? 'text-hl-gold-bright drop-shadow-[0_0_45px_rgba(255,211,79,0.45)]'
               : 'text-hl-gold-bright/95 drop-shadow-[0_0_35px_rgba(255,211,79,0.25)]'
-          }`} strokeWidth={1.35} />
+          }`} />
         </div>
 
         <h1 className={`font-sans font-black text-[4.4rem] @[1280px]:text-[5.4rem] @[1536px]:text-[6.2rem] tracking-tight text-white leading-[1.08] mb-5 drop-shadow-[0_12px_40px_rgba(0,0,0,0.85)]`}>
@@ -1085,7 +1081,7 @@ export const BlessingSlide = ({
         <div className={`inline-flex items-center gap-4 px-8 py-3.5 rounded-full ${
           isLightMode ? 'bg-hl-canvas border-2 border-hl-line' : 'bg-hl-canvas/85 border border-hl-gold/30 backdrop-blur-md shadow-xl'
         }`}>
-          <p className="text-[1.9rem] @[1280px]:text-[2.4rem] text-hl-copy font-bold font-mono tracking-wide">
+          <p className="projection-closing-note text-[1.9rem] @[1280px]:text-[2.4rem] text-hl-copy font-semibold tracking-wide">
             {CHURCH_INFO.name} — <span className={isFJU ? 'text-hl-gold-bright' : 'text-hl-gold-bright'}>{CHURCH_INFO.location}</span>
           </p>
         </div>

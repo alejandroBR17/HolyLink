@@ -328,3 +328,20 @@ Antes da correção, o cenário controlado terminou sem fallback e falhou. Depoi
 
 
 Complemento entregue `890c51e35da7ccf14d072d945dd1dbaea91393f3`, Preview READY `dpl_hNwDDqTqkrVguc1r7QrtvH1DE9cV`, alias confirmado. Online passou o cenário novo: progresso real renova prazo, eventos waiting/timeupdate sem avanço deixam expirar; também reprodução, volume, liberação de áudio, recuperação de vídeo/imagem, descarte e fim natural. Lint/build e 77 testes aprovados. PR #1 rascunho atualizada. Produção segue `dpl_HP5ZpF3HuonTDoFfYVzKx2zp6cgi`; main preservada. Checkpoint documental local sem outra implantação. Etapa de software concluída com as limitações físicas já registradas.
+
+
+### 16/10 — ícones e acabamento dos cartões da segunda tela
+
+Responsável confirmou pessoalmente enquadramento, leitura à distância e controle pelo celular; somente áudio físico ainda não foi testado, por não ter usado vídeo. Esse relato substitui a pendência desses três ensaios, sem atribuí-los à automação. Solicitou corrigir os ícones antigos da projeção e revisar seus cartões, antes de suas próprias anotações.
+
+Removidas importações Lucide do renderer e dos slides, usando o módulo Phosphor compartilhado já aprovado. Assentos, banheiro (porta discreta), silêncio, concentração, relógio, Instagram, ofertas, mundo, fogo, agenda, informações e batismo seguem o mesmo peso. Despedida usa mãos em oração no lugar de brilhos; propósitos de fé usam livro em vez de calendário. Removidas espessuras antigas e rotação do globo. Painéis dos símbolos ganharam base preto/dourado, luz discreta e acabamento comum; notas finais de Batismo/Despedida usam fonte proporcional e quebra equilibrada. Fundos, textos, biblioteca e configurações legítimos preservados.
+
+Revisão da saída real encontrou aviso amarelo sobrepondo o cabeçalho da igreja. Faixa passa para baixo dele no ciclo normal, com tipografia maior no corpo, área contida, contraste e símbolo estável. Em modos sem cabeçalho permanece no topo. Removido botão de fechar dentro da composição pública; retirar avisos continua no operador.
+
+Conferência local dos doze cartões (incluindo agenda), aviso e contagem em 1920×1080/390×844 sem texto fora da composição, ícones Lucide na saída ou botões de operação no aviso. Trecho de 320 caracteres e fundos normal/reduzido/contexto perdido também passaram após a troca dos ícones. Capturas de banheiro/despedida inspecionadas. Ajuste final de faixa do aviso sendo conferido antes da Preview. Cache v22 mantém atualização explícita. Produção/main preservadas.
+
+
+Ajuste durante a revisão: responsável rejeitou vaso sanitário por ser indiscreto no telão. Substituído por porta aberta da mesma família de ícones, conforme alternativa sugerida. Não é necessário manter o desenho anterior.
+
+
+Fechamento local: porta discreta conferida em 1920/390 após solicitação do responsável, sem cortes. Faixa do aviso revisada nesses tamanhos, agora sem cobrir o cabeçalho; captura final inspecionada. TypeScript, 77 testes nativos e build aprovados; build repetido somente após a troca final de ícone. Verificação de React manteve imports estáticos por símbolo, ícones decorativos, conteúdo/estado existentes e escopo da saída. Preparando publicação somente Preview.

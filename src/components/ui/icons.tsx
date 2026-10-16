@@ -1,3 +1,14 @@
+import {Armchair as PhArmchair} from '@phosphor-icons/react/dist/csr/Armchair';
+import {DoorOpen as PhDoorOpen} from '@phosphor-icons/react/dist/csr/DoorOpen';
+import {ChatCircleSlash as PhChatCircleSlash} from '@phosphor-icons/react/dist/csr/ChatCircleSlash';
+import {Clock as PhClock} from '@phosphor-icons/react/dist/csr/Clock';
+import {InstagramLogo as PhInstagramLogo} from '@phosphor-icons/react/dist/csr/InstagramLogo';
+import {GlobeHemisphereWest as PhGlobeHemisphereWest} from '@phosphor-icons/react/dist/csr/GlobeHemisphereWest';
+import {Fire as PhFire} from '@phosphor-icons/react/dist/csr/Fire';
+import {HandHeart as PhHandHeart} from '@phosphor-icons/react/dist/csr/HandHeart';
+import {Info as PhInfo} from '@phosphor-icons/react/dist/csr/Info';
+import {WifiSlash as PhWifiSlash} from '@phosphor-icons/react/dist/csr/WifiSlash';
+import {HandsPraying as PhHandsPraying} from '@phosphor-icons/react/dist/csr/HandsPraying';
 import {SkipForward as PhSkipForward} from '@phosphor-icons/react/dist/csr/SkipForward';
 import {Lightning as PhLightning} from '@phosphor-icons/react/dist/csr/Lightning';
 import {Flask as PhFlask} from '@phosphor-icons/react/dist/csr/Flask';
@@ -145,3 +156,15 @@ export const FlaskConical = themed(PhFlask);
 export const Zap = themed(PhLightning);
 
 export const SkipForward=themed(PhSkipForward);
+
+export const Armchair=themed(PhArmchair);
+export const Restroom=themed(PhDoorOpen);
+export const MessageSquareOff=themed(PhChatCircleSlash);
+export const Clock=themed(PhClock);
+export const Instagram=themed(PhInstagramLogo);
+export const Globe=themed(PhGlobeHemisphereWest);
+export const Flame=themed(PhFire);
+export const HeartHandshake=themed(PhHandHeart);
+export const Info=themed(PhInfo);
+export const WifiOff=themed(PhWifiSlash);
+export const PrayingHands=themed(PhHandsPraying);
