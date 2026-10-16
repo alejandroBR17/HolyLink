@@ -3,7 +3,7 @@ import {FjuAgendaSlide} from './FjuAgendaSlide';
 import {FjuSlide} from './FjuSlide';
 import {CountdownReadout,ProjectionCountdown,ProjectionMeetingStart} from './ProjectionCountdown';
 import {ProjectedImage,ProjectionMediaFallback} from './ProjectionMedia';
-import {Smartphone,Bell,ChurchBench,PrayingHands,Restroom,MessageSquareOff,Instagram,Flame,RefreshCw,Hand,HeartHandshake,CalendarDays} from './ui/icons';
+import {Smartphone,Bell,ChurchBench,PrayingHands,Restroom,MessageSquareOff,Instagram,Flame,RefreshCw,Hand,HeartHandshake,CalendarDays,MessageSquareText} from './ui/icons';
 import {isYouthProjection} from '../utils/projection-theme';
 import React, { useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion, MotionConfig } from 'motion/react';
@@ -168,7 +168,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
       if(slideId.startsWith('meeting_event_')){const meeting=customMeetings.find(m=>m.id===slideId.slice('meeting_event_'.length));if(meeting)return <FjuSlide label="PRÓXIMO ENCONTRO" title={meeting.theme} subtitle={`${meeting.date?format(new Date(meeting.date+'T12:00:00'),'dd/MM',{locale:ptBR}):meeting.dayName} · ${meeting.time}`} symbol={<CalendarDays/>}/>;}
 
       const card=FJU_CARDS[slideId];
-      if(card){const symbols={hand:<Hand/>,seat:<ChurchBench/>,door:<Restroom/>,phone:<Smartphone/>,chat:<MessageSquareOff/>,fire:<Flame/>,social:<Instagram/>,heart:<HeartHandshake/>};return <FjuSlide {...card} symbol={symbols[card.symbol]}/>;}
+      if(card){const symbols={hand:<Hand/>,seat:<ChurchBench/>,door:<Restroom/>,phone:<Smartphone/>,chat:<MessageSquareText/>,mute:<MessageSquareOff/>,fire:<Flame/>,social:<Instagram/>,heart:<HeartHandshake/>};return <FjuSlide {...card} symbol={symbols[card.symbol]}/>;}
     }
 
     if (slideId.startsWith("custom_")) {
