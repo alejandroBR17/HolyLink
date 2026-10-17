@@ -8,6 +8,10 @@ dist-ssr/
 *.log
 .env*
 !.env.example
+.vercel/
+*.private.*
+*.pem
+*.key
 bun.lock
 bun.lockb
 *.exe

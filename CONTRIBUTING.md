@@ -4,6 +4,8 @@ Use Node.js 24 e instale com `npm ci`. Consulte o [README](README.md) para inici
 
 Faça mudanças pequenas, com nomes que expliquem a intenção. Regras de agenda, fila, autorização e validação pertencem a funções testáveis; componentes cuidam da interação e apresentação. Preserve conteúdo e dados locais durante migrações. Não registre tokens, códigos de pareamento ou arquivos pessoais em logs, testes ou commits.
 
+`npm run clean` remove somente a pasta de saída `dist`, usando Node.js em Windows, Linux e macOS. Arquivos `.env`, configuração local `.vercel` e arquivos privados de chaves não devem ser versionados; `.env.example` continua disponível como referência sem credenciais.
+
 Antes de abrir uma PR:
 
 ```sh
