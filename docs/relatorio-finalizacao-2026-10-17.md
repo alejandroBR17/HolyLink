@@ -56,3 +56,11 @@ Produção confirmada: `dpl_8KbvAeZFY1CKCrrELgSEGH28Rd5k` READY, target producti
 ## Novo disparo antecipado — 16/10 às 23h51 de Brasília
 
 Relógio confirmado: 17/10 02h51 UTC, equivalente a 16/10 23h51 America/Sao_Paulo. Aplicada a guarda anterior a 00h50 local: nenhuma nova etapa de código, teste repetido ou publicação. Git estava limpo em `99886fb`; agendamento da madrugada preservado. A próxima rodada válida começa a partir de 00h50 local.
+
+## Rodada de 00h50 — seleção da fila ativa
+
+Relógio conferido: 17/10 03h53 UTC, 00h53 em Brasília. PR #3 integrada, domínio de produção ainda no deploy validado `dpl_8KbvAeZFY1CKCrrELgSEGH28Rd5k`, main remota `85baa30`. Registros locais de fechamento preservados na branch `refactor/active-queue`. Cota semanal consultada: aproximadamente 5% restantes; nenhum reset ou compra.
+
+Extraída de App a regra de participação/ordem em `buildActiveQueue`, função pura com entradas readonly e tipo mínimo de mídia. Preservados: flags de ocultação, exclusão de mídias ausentes/desativadas, ordem salva, inclusão ao final de itens novos e blocos de projetos/momentos conectados no modo FJU. Disponibilidade por agenda e pré/pós continua definida antes, sem inserir cartões não selecionados. Nenhuma migração, mudança visual ou nova assinatura de protocolo. Cache v44. Arquitetura atualizada e conferência histórica marcada explicitamente como anterior à publicação.
+
+112 testes nativos e TypeScript aprovados nesta rodada; dois testes novos verificam a fila com mídias desligadas/ausentes, ordem relativa, snapshots imutáveis, flags legadas e blocos FJU. Resultado de build, browser, CI e eventual publicação será registrado no fechamento. Dependências não mudaram; auditoria sem vulnerabilidades da rodada anterior não foi repetida sem motivo. Próxima rodada não deve repetir esta extração.

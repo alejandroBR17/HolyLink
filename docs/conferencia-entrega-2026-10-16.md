@@ -1,5 +1,7 @@
 # Conferência de entrega — HolyLink — 16/10/2026
 
+Este documento registra a candidata anterior à autorização de publicação. O estado atual de produção e as refatorações posteriores estão no [relatório de finalização](relatorio-finalizacao-2026-10-17.md).
+
 ## Estado
 
 Candidata à entrega técnica em Preview. A publicação definitiva ainda não foi executada. O responsável adiou o teste no equipamento físico; essa pendência continua explícita e não equivale a uma falha confirmada do código.

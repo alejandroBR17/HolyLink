@@ -17,6 +17,7 @@ HolyLink é uma aplicação React/TypeScript compilada pelo Vite. A composição
 | `src/hooks/useCustomMedia.ts` | Biblioteca, leitura e ciclo de vida das fontes locais |
 | `src/utils.ts` | Adaptador IndexedDB e utilitários legados ainda compartilhados |
 | `src/utils` | Regras menores de agenda, fila, Bíblia, autorização, mídia e backup |
+| `src/utils/active-queue.ts` | Participação e ordem da fila ativa, preservando blocos FJU |
 | `public/sw.js` e `public/pwa*` | Cache, instalação e ícones do aplicativo |
 | `tests` | Testes nativos de regras, validação e gerenciamento de recursos |
 

@@ -1,6 +1,7 @@
 import {useProjectionWindow} from './hooks/useProjectionWindow';
-import {availablePreparedMoment,connectFjuMoments,preparedMomentSlides,isFjuMoment} from './utils/fju-moments';
-import {FJU_PRE_SLIDES,FJU_POST_SLIDES,FJU_PROJECT_SLIDES,isFjuProject,connectFjuProjects} from './utils/fju-content';
+import {availablePreparedMoment,preparedMomentSlides,isFjuMoment} from './utils/fju-moments';
+import {FJU_PRE_SLIDES,FJU_POST_SLIDES,FJU_PROJECT_SLIDES,isFjuProject} from './utils/fju-content';
+import {buildActiveQueue} from './utils/active-queue';
 import {deriveCountdown} from './utils/countdown';
 import {ProjectionStage} from './components/ProjectionStage';
 import {HeaderScroll} from './utils/header-scroll';
@@ -322,23 +323,13 @@ export default function App() {
     allAvailableSlides.push('soon');
   }
 
-  const baseActiveSlides: SlideType[] = allAvailableSlides.filter((id) => {
-    if (!isFjuProject(id)&&!isFjuMoment(id)&&disabledSlides && disabledSlides.includes(id)) return false;
-    if (id.startsWith('custom_')) {
-      const media = customMediaList.find((m) => m.id === id);
-      return media ? media.enabledInLoop : false;
-    }
-    return true;
-  }) as SlideType[];
-
-  let activeSlides = slidesOrder.filter((id) => baseActiveSlides.includes(id));
-  baseActiveSlides.forEach((id) => {
-    if (!activeSlides.includes(id)) {
-      activeSlides.push(id);
-    }
+  const activeSlides = buildActiveQueue({
+    available: allAvailableSlides,
+    order: slidesOrder,
+    disabled: disabledSlides || [],
+    media: customMediaList,
+    youth: isFJUProjection,
   });
-
-  if(isFJUProjection)activeSlides=connectFjuMoments(connectFjuProjects(activeSlides));
   const totalDuration = activeSlides.reduce((sum, id) => sum + getSlideDuration(id, customMediaList), 0);
   const adjustedTime = currentTime.getTime() - carouselStartTimeOffset;
   const timeInLoop = ((adjustedTime % (totalDuration || 1)) + (totalDuration || 1)) % (totalDuration || 1);
