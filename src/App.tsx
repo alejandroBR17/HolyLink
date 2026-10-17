@@ -22,7 +22,7 @@ import { getNextMeeting, getSlideDuration } from './utils';
 import { mediaPreloader } from './utils/preloader';
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { SmartSplashLoader } from './components/SmartSplashLoader';
-import { Meeting } from './types';
+import { Meeting, type OperatorTab } from './types';
 import { ProjectionContent } from './components/ProjectionContent';
 import { SyncSection } from './components/SyncSection';
 import { CustomModal, CustomToast } from './components/Modal';
@@ -413,7 +413,7 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Responsive Operator's Panel Navigation State
-  const [activeMobileTab, setActiveMobileTab] = useState<'slides' | 'texts' | 'agenda' | 'controls' | 'sync' | 'monitor'>('slides');
+  const [activeMobileTab, setActiveMobileTab] = useState<OperatorTab>('slides');
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -662,11 +662,11 @@ export default function App() {
 
         </div></div>
         <nav className="holy-navigation" role="tablist" aria-label="Áreas do operador">
-          {[
+          {([
             {id:'slides',label:'Sequência',icon:Layout}, {id:'texts',label:'Bíblia',icon:BookOpen},
             {id:'agenda',label:'Agenda',icon:CalendarDays}, {id:'controls',label:'Ajustes',icon:Settings},
             {id:'sync',label:'Conexão',icon:Smartphone}, {id:'monitor',label:'Monitor',icon:Monitor}
-          ].map(tab => {const Icon = tab.icon; return <button type="button" role="tab" key={tab.id} aria-selected={activeMobileTab===tab.id} aria-label={'Aba '+tab.label} onClick={() => setActiveMobileTab(tab.id as any)}><Icon size={19} aria-hidden="true" /><span>{tab.label}</span></button>;})}
+          ] as const).map(tab => {const Icon = tab.icon; return <button type="button" role="tab" key={tab.id} aria-selected={activeMobileTab===tab.id} aria-label={'Aba '+tab.label} onClick={() => setActiveMobileTab(tab.id)}><Icon size={19} aria-hidden="true" /><span>{tab.label}</span></button>;})}
         </nav>
         {/* MAIN PANEL CONTENT GRID */}
         <div className="operator-workspace flex-1 flex flex-col overflow-hidden min-h-0">

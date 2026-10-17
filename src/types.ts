@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export type OperatorTab = 'slides' | 'texts' | 'agenda' | 'controls' | 'sync' | 'monitor';
+
 export interface Meeting {
   id: string;
   day?: number; // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado (para recorrentes)

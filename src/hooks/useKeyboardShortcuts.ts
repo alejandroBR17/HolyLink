@@ -1,4 +1,22 @@
 import { useEffect } from 'react';
+import type { OperatorTab } from '../types';
+
+interface KeyboardShortcutOptions {
+  updateStateAndBroadcast: (key: string, value: unknown) => void;
+  blackoutEnabled: boolean;
+  clearContentEnabled: boolean;
+  activeSlides: readonly string[];
+  currentSlideId: string;
+  isLocalProjection: boolean;
+  setIsLocalProjection: (enabled: boolean) => void;
+  manualSlideOverride: string | null;
+  customVerseText: string;
+  activeAlert: string | null;
+  volume: number;
+  toggleFullscreen: () => void;
+  setActiveMobileTab: (tab: OperatorTab) => void;
+  projectionMode: 'pre' | 'post';
+}
 
 export function useKeyboardShortcuts({
   updateStateAndBroadcast,
@@ -15,7 +33,7 @@ export function useKeyboardShortcuts({
   toggleFullscreen,
   setActiveMobileTab,
   projectionMode
-}: any) {
+}: KeyboardShortcutOptions) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -95,7 +113,7 @@ export function useKeyboardShortcuts({
       }
       // 1-5: Switch tab
       else if (['1', '2', '3', '4', '5'].includes(key)) {
-        const tabMap: Record<string, string> = {
+        const tabMap: Record<string, OperatorTab> = {
           '1': 'slides',
           '2': 'texts',
           '3': 'agenda',
@@ -103,7 +121,7 @@ export function useKeyboardShortcuts({
           '5': 'sync'
         };
         if (tabMap[key]) {
-          setActiveMobileTab(tabMap[key] as any);
+          setActiveMobileTab(tabMap[key]);
         }
       }
     };
