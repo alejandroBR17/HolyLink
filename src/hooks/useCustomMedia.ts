@@ -1,6 +1,12 @@
-import { useState, useEffect, useCallback, ChangeEvent } from 'react';
+import {readVideoDuration,VideoMetadataError} from '../utils/video-metadata';
+import {MediaUrlPool} from '../utils/media-urls';
+import {readTransferMetadata} from '../utils/chunk-assembler';
+import {readMediaCatalog, describeMedia} from '../utils/media-manifest';
+import type {MediaManifestItem} from '../utils/media-manifest';
+import {sendPeerChunk} from '../utils/peer-send';
+import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import { saveMediaItem, getAllMediaItems, deleteMediaItem } from '../utils';
-import { broadcastToPeers } from '../components/SyncSection';
+import { broadcastToPeers, getApprovedPeerConnections } from '../components/SyncSection';
 import { sendMediaInChunks } from '../utils/webrtcChunking';
 import { mediaPreloader } from '../utils/preloader';
 
@@ -21,113 +27,58 @@ export function useCustomMedia(
   updateStateAndBroadcast: (key: string, value: any) => void
 ) {
   const [customMediaList, setCustomMediaList] = useState<CustomMedia[]>([]);
+  const [remoteMediaList,setRemoteMediaList]=useState<MediaManifestItem[]>([]);
+  useEffect(()=>{const receive=(event:Event)=>{try {setRemoteMediaList(readMediaCatalog((event as CustomEvent).detail));} catch {}};window.addEventListener('holylink_remote_catalog',receive);return()=>window.removeEventListener('holylink_remote_catalog',receive);},[]);
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+  const [mediaLoadError,setMediaLoadError]=useState<string|null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Load custom media files from IndexedDB and safely manage Blob Object URLs
-  useEffect(() => {
-    let active = true;
-    const objectUrlsToRevoke: string[] = [];
+  const uploadBusy=useRef(false),uploadController=useRef<AbortController|null>(null),mounted=useRef(false);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;uploadController.current?.abort();};},[]);
+  const urlPool=useRef<MediaUrlPool|null>(null);
+  useEffect(()=>()=>{urlPool.current?.dispose();urlPool.current=null;},[]);
 
-    const loadMedia = async () => {
-      try {
-        const items = await getAllMediaItems();
-        if (!active) return;
-        
-        setCustomMediaList((prevList) => {
-          const prevMap = new Map(prevList.map(m => [m.id, m]));
-          const currentIds = new Set(items.map(i => i.id));
+  // Reads may finish out of order; only the latest effect publishes a snapshot.
+  useEffect(()=>{
+    let active=true;
+    void getAllMediaItems().then(items=>{
+      if(!active)return;
+      const pool=urlPool.current??(urlPool.current=new MediaUrlPool());
+      const retryId=mediaUpdateTrigger.startsWith('retry:')?mediaUpdateTrigger.slice(6,mediaUpdateTrigger.lastIndexOf(':')):undefined;
+      const urls=pool.update(items,retryId);
+      const sorted=[...items].sort((a,b)=>{
+        if(a.order!==undefined&&b.order!==undefined)return a.order-b.order;
+        if(a.order!==undefined)return -1;if(b.order!==undefined)return 1;
+        const ai=a.id.match(/\d+$/),bi=b.id.match(/\d+$/);
+        return ai&&bi?Number(ai[0])-Number(bi[0]):a.id.localeCompare(b.id);
+      });
+      setCustomMediaList(sorted.map(item=>({id:item.id,type:item.type,name:item.name,
+        duration:item.duration,enabledInLoop:item.enabledInLoop,url:urls.get(item.id)||'',
+        muted:item.muted??true,order:item.order,fit:item.fit})));
+      setMediaLoadError(null);setIsMediaLoaded(true);
+    }).catch(error=>{
+      if(!active)return;
+      console.error('Failed to load custom media from DB',error);
+      setMediaLoadError('Não foi possível ler a biblioteca local.');setIsMediaLoaded(true);
+    });
+    return()=>{active=false;};
+  },[mediaUpdateTrigger]);
 
-          // Revoke URLs for deleted items only
-          prevList.forEach((m) => {
-            if (!currentIds.has(m.id) && m.url && m.url.startsWith('blob:')) {
-              objectUrlsToRevoke.push(m.url);
-            }
-          });
-          
-          const sortedItems = [...items].sort((a, b) => {
-            if (a.order !== undefined && b.order !== undefined) {
-              return a.order - b.order;
-            }
-            if (a.order !== undefined) return -1;
-            if (b.order !== undefined) return 1;
-            
-            const aMatch = a.id.match(/\d+$/);
-            const bMatch = b.id.match(/\d+$/);
-            if (aMatch && bMatch) {
-              return parseInt(aMatch[0], 10) - parseInt(bMatch[0], 10);
-            }
-            return a.id.localeCompare(b.id);
-          });
-
-          const finalMediaList = sortedItems.map((item) => {
-            const existing = prevMap.get(item.id);
-            let itemUrl = '';
-
-            // Reuse existing Object URL if valid
-            if (existing && existing.url && existing.url.startsWith('blob:')) {
-              itemUrl = existing.url;
-            } else if (item.blob instanceof Blob) {
-              try {
-                itemUrl = URL.createObjectURL(item.blob);
-              } catch (e) {
-                console.error("Error creating Object URL for item:", item.id, e);
-              }
-            } else if (item.blob && typeof item.blob === 'object') {
-              try {
-                const anyBlob = item.blob as any;
-                if (anyBlob.buffer && (anyBlob.buffer instanceof ArrayBuffer || anyBlob.buffer instanceof Uint8Array)) {
-                  const b = new Blob([anyBlob.buffer], { type: anyBlob.type || 'application/octet-stream' });
-                  itemUrl = URL.createObjectURL(b);
-                } else if (anyBlob.bytes) {
-                  const b = new Blob([anyBlob.bytes], { type: anyBlob.type || 'application/octet-stream' });
-                  itemUrl = URL.createObjectURL(b);
-                }
-              } catch (e) {
-                console.error("Error reconstructing blob for item:", item.id, e);
-              }
-            }
-
-            return {
-              id: item.id,
-              type: item.type,
-              name: item.name,
-              duration: item.duration,
-              enabledInLoop: item.enabledInLoop,
-              url: itemUrl,
-              muted: item.muted !== undefined ? item.muted : true,
-              order: item.order,
-              fit: item.fit
-            };
-          });
-
-          return finalMediaList;
-        });
-
-        // Revoke replaced URLs asynchronously after DOM update
-        setTimeout(() => {
-          objectUrlsToRevoke.forEach(url => {
-            try {
-              URL.revokeObjectURL(url);
-            } catch (e) {}
-          });
-        }, 1000);
-        if (active) setIsMediaLoaded(true);
-      } catch (err) {
-        console.error("Failed to load custom media from DB", err);
-        if (active) setIsMediaLoaded(true);
-      }
+  const broadcastMediaSave = useCallback(async (item: any, includeFile = false) => {
+    // Snapshot the recipients: a phone joining midway must not receive orphaned blocks.
+    let targets = getApprovedPeerConnections();
+    if (!targets.length) return;
+    if (!includeFile) {
+      broadcastToPeers({type:'MEDIA_SAVE', version:1, mediaItem:{id:item.id,type:item.type,name:item.name,
+        duration:item.duration,enabledInLoop:item.enabledInLoop,muted:item.muted,order:item.order,fit:item.fit}});
+      return;
+    }
+    const send = async (data: any) => {
+      const results = await Promise.allSettled(targets.map(conn => sendPeerChunk(conn, data, () => getApprovedPeerConnections().includes(conn))));
+      targets = targets.filter((_, index) => results[index].status === 'fulfilled');
+      if (!targets.length) throw new Error('A transferência foi interrompida: não há aparelhos conectados.');
     };
-
-    loadMedia();
-
-    return () => {
-      active = false;
-    };
-  }, [mediaUpdateTrigger]);
-
-  const broadcastMediaSave = useCallback(async (item: any) => {
     try {
       let blobToUse = item.blob;
       if (!blobToUse) {
@@ -154,8 +105,15 @@ export function useCustomMedia(
 
       if (realBlob && realBlob.size > 0) {
         const mimeType = realBlob.type || 'application/octet-stream';
+        if(localStorage.getItem('projection_deviceRole')==='phone') {
+          readTransferMetadata({...item,mimeType,size:realBlob.size});
+          const manifest=await describeMedia([{...item,blob:realBlob}],()=>targets.some(conn=>conn.open));
+          await send({type:'SYNC_MANIFEST',version:1,localStorage:{},mediaManifest:manifest,scope:'media-only'});
+          return;
+        }
+
         await sendMediaInChunks(
-          (data) => broadcastToPeers(data),
+          send,
           {
             id: item.id,
             type: item.type,
@@ -188,6 +146,7 @@ export function useCustomMedia(
       }
     } catch (e) {
       console.error("Error broadcasting media save:", e);
+      setUploadError('Mídia salva neste aparelho, mas não enviada aos outros. ' + (e instanceof Error ? e.message : 'Confira a conexão e tente sincronizar novamente.'));
     }
   }, []);
 
@@ -200,10 +159,9 @@ export function useCustomMedia(
   }, []);
 
   const handleFileUpload = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
+    const input=e.target;
+    const file=input.files?.[0];
+    if(!file||uploadBusy.current)return;
     setUploadError(null);
 
     const isVideo = file.type.startsWith('video/');
@@ -211,10 +169,12 @@ export function useCustomMedia(
 
     if (!isImage && !isVideo) {
       setUploadError("Por favor, selecione apenas arquivos de imagem ou vídeo.");
-      setIsUploading(false);
+      input.value='';
       return;
     }
 
+    if(!file.size){setUploadError('O arquivo está vazio. Escolha outro arquivo.');input.value='';return;}
+    const controller=new AbortController();uploadController.current=controller;uploadBusy.current=true;setIsUploading(true);
     try {
       let duration = 10000;
       if (isImage) {
@@ -225,28 +185,12 @@ export function useCustomMedia(
       }
 
       if (isVideo) {
-        duration = await new Promise<number>((resolve) => {
-          const video = document.createElement('video');
-          video.preload = 'metadata';
-          const objectUrl = URL.createObjectURL(file);
-          video.src = objectUrl;
-          video.onloadedmetadata = () => {
-            URL.revokeObjectURL(objectUrl);
-            const d = video.duration;
-            if (typeof d === 'number' && !isNaN(d) && isFinite(d) && d > 0) {
-              resolve(Math.round(d * 1000));
-            } else {
-              resolve(10000);
-            }
-          };
-          video.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            resolve(10000);
-          };
-        });
+        duration=await readVideoDuration(file,{signal:controller.signal});
       }
+      controller.signal.throwIfAborted();
 
       const currentItems = await getAllMediaItems();
+      controller.signal.throwIfAborted();
       const maxOrder = currentItems.reduce((max, item) => Math.max(max, item.order ?? 0), -1);
       const order = maxOrder + 1;
 
@@ -261,8 +205,9 @@ export function useCustomMedia(
         muted: isVideo ? true : undefined,
         order
       };
-      await saveMediaItem(mediaItemPayload);
-      broadcastMediaSave(mediaItemPayload);
+      await saveMediaItem(mediaItemPayload,controller.signal);
+      controller.signal.throwIfAborted();
+      void broadcastMediaSave(mediaItemPayload, true);
 
       try {
         const savedOrderStr = localStorage.getItem('projection_slidesOrder');
@@ -280,11 +225,13 @@ export function useCustomMedia(
 
       updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
     } catch (err: any) {
-      console.error("Error saving uploaded file:", err);
-      setUploadError("Não foi possível salvar o arquivo. Limite de armazenamento pode ter sido excedido.");
+      if(!controller.signal.aborted&&mounted.current){
+        console.error("Error saving uploaded file:", err);
+        setUploadError(err instanceof VideoMetadataError?err.message:'Não foi possível salvar o arquivo. Confira o armazenamento e tente novamente.');
+      }
     } finally {
-      setIsUploading(false);
-      e.target.value = '';
+      if(uploadController.current===controller){uploadController.current=null;uploadBusy.current=false;if(mounted.current)setIsUploading(false);}
+      input.value='';
     }
   }, [broadcastMediaSave, updateStateAndBroadcast]);
 
@@ -324,7 +271,8 @@ export function useCustomMedia(
 
       for (let i = 0; i < sortedItems.length; i++) {
         sortedItems[i].order = i;
-        await saveMediaItem(sortedItems[i]);
+        const {blob:_blob,localBlobVersion:_version,...metadata}=sortedItems[i];
+        await saveMediaItem(metadata);
         broadcastMediaSave(sortedItems[i]);
       }
 
@@ -346,8 +294,10 @@ export function useCustomMedia(
   }, [broadcastMediaSave, updateStateAndBroadcast]);
 
   return {
+    remoteMediaList,
     customMediaList,
     isMediaLoaded,
+    mediaLoadError,
     isUploading,
     uploadError,
     handleFileUpload,

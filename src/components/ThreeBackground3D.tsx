@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import {useReducedMotion} from 'motion/react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
 export type BackgroundStyleOption = 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'particles_2d' | 'off';
@@ -6,10 +7,13 @@ export type BackgroundStyleOption = 'auto' | 'aurora' | 'veil' | 'fju_aura' | 'p
 interface ThreeBackground3DProps {
   disabled?: boolean;
   isFJU?: boolean;
+  accent?:string;
   diffSeconds?: number;
   stylePreset?: BackgroundStyleOption;
   fpsLimit?: 30 | 60;
   intensity?: 'high' | 'medium' | 'low';
+  onStatus?: (status: 'active' | 'unavailable') => void;
+  compatible?: boolean;
 }
 
 // ----------------------------------------------------------------------
@@ -26,8 +30,11 @@ const vertexShader = `
 const fragmentShader = `
   uniform float uTime;
   uniform vec2 uResolution;
-  uniform int uStyle; // 0: Aurora Sacra (Ondas Horizontais), 1: Véu Divino (Raios Verticais), 2: Aura FJU (Halo Concêntrico)
+  uniform int uStyle; // 0: Aurora Sacra (Ondas Horizontais), 1: Véu Divino (Raios Verticais), 2: Luz dourada (Faixas difusas)
   uniform float uIntensity;
+  uniform float uYouth;
+  uniform vec3 uAccent;
+  uniform float uCustomAccent;
   uniform int uOctaves;
   varying vec2 vUv;
 
@@ -100,7 +107,7 @@ const fragmentShader = `
       vec3 waveColor = mix(colGold, colCrimson, mixRatio);
       finalColor = mix(waveColor, colAmber, glow * 0.5);
 
-      alpha = glow * 0.45 * uIntensity * smoothstep(1.0, 0.1, st.y);
+      alpha = glow * 0.65 * uIntensity * (1.0 - smoothstep(0.1, 1.0, st.y));
     }
     // =============================================================
     // ESTILO 1: VÉU DIVINO / RAIOS CELESTIAIS 3D
@@ -116,7 +123,7 @@ const fragmentShader = `
       float rayPattern2 = cos(angle * 20.0 - time * 1.1 + fbm(st * 1.0)) * 0.5 + 0.5;
       float rays = (rayPattern1 * 0.65 + rayPattern2 * 0.35);
 
-      float coneMask = smoothstep(1.5, 0.1, distToTop) * smoothstep(0.0, 0.85, 1.0 - st.y);
+      float coneMask = (1.0 - smoothstep(0.1, 1.5, distToTop)) * smoothstep(0.0, 0.85, 1.0 - st.y);
       
       vec3 colPearlWhite = vec3(0.98, 0.96, 0.82); // Marfim Celestial
       vec3 colDivineGold = vec3(0.92, 0.68, 0.15); // Dourado Divino
@@ -125,29 +132,23 @@ const fragmentShader = `
       alpha = rays * coneMask * 0.40 * uIntensity;
     }
     // =============================================================
-    // ESTILO 2: AURA FJU 3D
-    // VISUAL: Portal / Halo Concêntrico Pulsante Energético Jovem
+    // ESTILO 2: LUZ DOURADA
+    // Broad, slowly drifting light at the edges; no portal, rings or flashing core.
     // =============================================================
     else if (uStyle == 2) {
-      vec2 center = vec2(0.5, 0.5);
-      vec2 distVec = (st - center);
-      distVec.x *= (uResolution.x / uResolution.y);
-      float r = length(distVec);
-
-      float pulse = sin(r * 16.0 - time * 2.2 + fbm(st * 2.5) * 1.8) * 0.5 + 0.5;
-      float ringHalo = smoothstep(0.65, 0.25, abs(r - 0.35 - sin(time * 0.7) * 0.04));
-
-      vec3 colBlueFJU = vec3(0.22, 0.74, 0.97);  // Azul Céu FJU
-      vec3 colAmberFJU = vec3(0.98, 0.62, 0.08); // Âmbar Energia
-      vec3 colIndigo = vec3(0.38, 0.40, 0.94);   // Indigo Jovem
-
-      vec3 auraColor = mix(colBlueFJU, colAmberFJU, pulse);
-      finalColor = mix(auraColor, colIndigo, smoothstep(0.0, 0.65, r));
-
-      float coreGlow = smoothstep(0.85, 0.0, r);
-      alpha = (ringHalo * 0.55 + pulse * 0.3) * coreGlow * 0.42 * uIntensity;
+      vec2 p = st - vec2(0.5);
+      p.x *= uResolution.x / uResolution.y;
+      float drift = fbm(st * 1.5 + vec2(time * 0.18, -time * 0.12)) * 0.06;
+      float lower = exp(-pow((p.y + 0.36 + p.x * 0.12 + sin(time * 0.5 + p.x) * 0.05 + drift) * 6.0, 2.0));
+      float upper = exp(-pow((p.y - 0.45 + p.x * 0.18 + cos(time * 0.4 + p.x) * 0.04 - drift) * 7.0, 2.0));
+      float edge = smoothstep(0.12, 0.7, length(p * vec2(0.7, 1.0)));
+      float light = lower * 0.72 + upper * 0.48;
+      finalColor = mix(vec3(0.68, 0.36, 0.06), vec3(1.0, 0.79, 0.30), light * 0.65);
+      alpha = light * (0.35 + edge * 0.65) * 0.38 * uIntensity;
     }
 
+    if(uYouth>0.5){float l=dot(finalColor,vec3(0.299,0.587,0.114));finalColor=mix(vec3(0.08,0.22,0.48),vec3(0.65,0.84,1.0),l);}
+    if(uCustomAccent>0.5){float l=dot(finalColor,vec3(0.299,0.587,0.114));finalColor=mix(uAccent*0.22,mix(uAccent,vec3(1.0),0.38),l);}
     gl_FragColor = vec4(finalColor, alpha);
   }
 `;
@@ -155,12 +156,20 @@ const fragmentShader = `
 export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
   disabled = false,
   isFJU = false,
+  accent,
   diffSeconds = 9999,
   stylePreset = 'auto',
   fpsLimit = 60,
   intensity = 'high',
+  onStatus,
+  compatible = false,
 }) => {
+  const reducedMotion=useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
+  const [fallback, setFallback] = useState(false);
+  const palette=useRef<{uniforms:{uAccent:{value:THREE.Color};uCustomAccent:{value:number}};particles:THREE.PointsMaterial;render:()=>void}|null>(null);
+  const accentRef=useRef(accent);
+  accentRef.current=accent;
 
   const diffSecondsRef = useRef(diffSeconds);
   useEffect(() => {
@@ -169,6 +178,8 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
 
   useEffect(() => {
     if (disabled || stylePreset === 'off' || stylePreset === 'particles_2d') return;
+    if (compatible) return;
+    setFallback(false);
 
     const container = containerRef.current;
     if (!container) return;
@@ -190,10 +201,18 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
         alpha: true,
         antialias: false,
         powerPreference: 'default', // Evita superaquecimento e reset de GPU em notebooks/PCs modestos
-        precision: 'mediump',
+        // Simplex permutation exceeds the minimum mediump range on mobile GPUs.
+        precision: 'highp',
       });
     } catch (e) {
+      setFallback(true);
+      onStatus?.('unavailable');
       console.warn("WebGL renderer creation failed, falling back safely.");
+      return;
+    }
+    if (renderer.capabilities.precision !== 'highp') {
+      renderer.dispose();
+      setFallback(true); onStatus?.('unavailable');
       return;
     }
 
@@ -207,12 +226,15 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     renderer.domElement.style.left = '0';
     renderer.domElement.style.pointerEvents = 'none';
     container.appendChild(renderer.domElement);
+    onStatus?.('active');
 
     // Proteção contra crash da aba em caso de GPU overload (webglcontextlost)
     let isContextLost = false;
     const handleContextLost = (e: Event) => {
       e.preventDefault();
       isContextLost = true;
+      setFallback(true);
+      onStatus?.('unavailable');
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       console.warn("WebGL Context Lost - Interrompendo renderização 3D com segurança para proteger o navegador.");
     };
@@ -221,7 +243,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     canvasEl.addEventListener('webglcontextlost', handleContextLost, false);
 
     // Decisão do estilo efetivo
-    let styleInt = 0; // 0: Aurora, 1: Véu Divino, 2: Aura FJU
+    let styleInt = 0; // 0: Aurora, 1: Véu Divino, 2: Luz dourada
     let effectiveStyle = stylePreset;
     if (effectiveStyle === 'auto') {
       effectiveStyle = isFJU ? 'fju_aura' : 'aurora';
@@ -240,6 +262,9 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       uResolution: { value: new THREE.Vector2(width, height) },
       uStyle: { value: styleInt },
       uIntensity: { value: intensityValue },
+      uYouth: { value: isFJU?1:0 },
+      uAccent:{value:new THREE.Color(accentRef.current||'#78baff')},
+      uCustomAccent:{value:accentRef.current?1:0},
       uOctaves: { value: currentOctaves },
     };
 
@@ -279,7 +304,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     if (ctxTex) {
       const grad = ctxTex.createRadialGradient(16, 16, 0, 16, 16, 16);
       grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-      grad.addColorStop(0.35, isFJU ? 'rgba(245, 158, 11, 0.4)' : 'rgba(234, 179, 8, 0.4)');
+      grad.addColorStop(0.35, 'rgba(255, 255, 255, 0.4)');
       grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctxTex.fillStyle = grad;
       ctxTex.fillRect(0, 0, 32, 32);
@@ -287,6 +312,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     const pTexture = new THREE.CanvasTexture(canvasTex);
 
     const particleMaterial = new THREE.PointsMaterial({
+      color:accentRef.current||(isFJU?'#78baff':'#eab308'),
       size: 1.8,
       map: pTexture,
       transparent: true,
@@ -294,6 +320,7 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       depthWrite: false,
       opacity: 0.35,
     });
+    palette.current={uniforms,particles:particleMaterial,render:()=>{if(reducedMotion)animate(performance.now());}};
     const particleSystem = new THREE.Points(geometryParticles, particleMaterial);
     particleScene.add(particleSystem);
 
@@ -301,16 +328,22 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
     let animationFrameId: number;
     let lastTime = performance.now();
     const frameInterval = 1000 / fpsLimit;
+    renderer.debug.onShaderError = () => {
+      isContextLost = true;
+      setFallback(true); onStatus?.('unavailable');
+    };
+    const startTime = performance.now();
 
     const animate = (now: number) => {
       if (isContextLost) return;
-      animationFrameId = requestAnimationFrame(animate);
+      if(!reducedMotion)animationFrameId = requestAnimationFrame(animate);
+      if(document.visibilityState==='hidden'&&!reducedMotion)return;
 
       const delta = now - lastTime;
-      if (delta < frameInterval) return;
+      if (!reducedMotion && delta < frameInterval) return;
       lastTime = now - (delta % frameInterval);
 
-      const elapsedTime = now * 0.001;
+      const elapsedTime = reducedMotion ? .5 :(now - startTime) * 0.001;
       uniforms.uTime.value = elapsedTime;
 
       // Movimento ultra leve das micro-partículas
@@ -330,6 +363,8 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
         renderer.render(particleScene, particleCamera);
       } catch (e) {
         console.warn("Render loop caught WebGL exception, pausing animation safely:", e);
+        onStatus?.('unavailable');
+        setFallback(true);
         isContextLost = true;
       }
     };
@@ -344,34 +379,45 @@ export const ThreeBackground3D: React.FC<ThreeBackground3DProps> = ({
       particleCamera.aspect = width / height;
       particleCamera.updateProjectionMatrix();
       renderer.setSize(width, height);
+      if(reducedMotion)animate(performance.now());
     };
 
     window.addEventListener('resize', handleResize);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       canvasEl.removeEventListener('webglcontextlost', handleContextLost);
 
       planeGeometry.dispose();
       shaderMaterial.dispose();
       geometryParticles.dispose();
+      palette.current=null;
       particleMaterial.dispose();
       pTexture.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
 
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [disabled, isFJU, stylePreset, fpsLimit, intensity]);
+  }, [disabled, isFJU, stylePreset, fpsLimit, intensity, onStatus, compatible, reducedMotion]);
+
+  useEffect(()=>{const active=palette.current;if(!active)return;active.uniforms.uAccent.value.set(accent||'#78baff');active.uniforms.uCustomAccent.value=accent?1:0;active.particles.color.set(accent||(isFJU?'#78baff':'#eab308'));active.render();},[accent,isFJU,disabled,stylePreset,fpsLimit,intensity,compatible,reducedMotion,onStatus]);
 
   if (disabled || stylePreset === 'off' || stylePreset === 'particles_2d') return null;
 
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 z-0 pointer-events-none overflow-hidden transition-opacity duration-1000"
-    />
+      style={{'--atmosphere-accent':accent} as React.CSSProperties}
+      data-accent={accent}
+      className={`absolute inset-0 z-0 pointer-events-none overflow-hidden ${fallback || compatible ? 'atmosphere-fallback-host' : ''} ${reducedMotion?'atmosphere-still':''} ${isFJU?'atmosphere-youth':''} ${accent?'atmosphere-project':''}`}
+      data-renderer={fallback || compatible ? 'compatible' : 'webgl'}
+    >{(fallback || compatible) && <div className={`atmosphere-compatible atmosphere-${stylePreset === 'auto' ? isFJU ? 'fju_aura' : 'aurora' : stylePreset} atmosphere-intensity-${intensity}`} aria-hidden="true"><i/><i/><i/></div>}</div>
   );
 };

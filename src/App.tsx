@@ -1,13 +1,22 @@
+import {useProjectionWindow} from './hooks/useProjectionWindow';
+import {availablePreparedMoment,connectFjuMoments,preparedMomentSlides,isFjuMoment} from './utils/fju-moments';
+import {FJU_PRE_SLIDES,FJU_POST_SLIDES,FJU_PROJECT_SLIDES,isFjuProject,connectFjuProjects} from './utils/fju-content';
+import {deriveCountdown} from './utils/countdown';
+import {ProjectionStage} from './components/ProjectionStage';
+import {HeaderScroll} from './utils/header-scroll';
+import {AppUpdateNotice} from './components/AppUpdateNotice';
+import {selectProjectionVerse} from './utils/verse-selection';
+import {isYouthProjection,isYouthMeeting,isChurchMeeting,availableInYouthLoop,availableInChurchLoop} from './utils/projection-theme';
 import { useSlideManager } from "./hooks/useSlideManager";
 import { useWakeLock } from "./hooks/useWakeLock";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen, 
+import {
+  Tv, Monitor, Smartphone, RefreshCw, Layout, BookOpen,
   CalendarDays, Settings, ExternalLink, Maximize, Minimize, Download, Sparkles,
-  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen
-} from 'lucide-react';
-import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS } from './data';
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen, EyeOff, Eye
+} from './components/ui/icons';
+import { CHURCH_INFO, ALERTS, CAMPAIGNS, MEETINGS, VERSES } from './data';
 import { getNextMeeting, getSlideDuration } from './utils';
 import { mediaPreloader } from './utils/preloader';
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
@@ -81,13 +90,16 @@ export default function App() {
   const {
     state,
     updateStateAndBroadcast: baseUpdateStateAndBroadcast,
-    setProjectionWin
+    setProjectionWin,
+    projectionWinRef
   } = useProjectionState();
 
   const {
-    manualSlideOverride,
+    manualSlideOverride: storedManualSlideOverride,
     slidesOrder,
     disabledSlides,
+    fjuProjectsEnabled,
+    fjuMoments,
     customVerseText,
     customVerseRef,
     activeVerseIndex,
@@ -97,8 +109,9 @@ export default function App() {
     pausedSeconds,
     countdownPaused,
     countdownOffset,
+    countdownAnchor,
     dismissedJustStarted,
-    
+
     videoPinBehavior,
     finalMinuteDisplayMode,
     verseDisplayPriority,
@@ -113,13 +126,16 @@ export default function App() {
     background3DFps,
     background3DIntensity,
     projectionMode,
+    projectionTheme,
     syncStatus
   } = state;
 
   // Custom media management hook
   const {
+    remoteMediaList,
     customMediaList,
     isMediaLoaded,
+    mediaLoadError,
     isUploading,
     uploadError,
     handleFileUpload,
@@ -205,23 +221,19 @@ export default function App() {
 
   const [isSmartBooting, setIsSmartBooting] = useState<boolean>(true);
   const [showPwaModal, setShowPwaModal] = useState<boolean>(false);
+  useEffect(() => {
+    try { if (sessionStorage.getItem('holylink_reopen_install')) { sessionStorage.removeItem('holylink_reopen_install'); setShowPwaModal(true); } } catch { /* optional */ }
+  }, []);
   const { isInstalled, hasUpdateAvailable, forceAppUpdate, isUpdating } = usePWAInstall();
 
   const [isScrolledDown, setIsScrolledDown] = useState<boolean>(false);
-  const lastScrollTopRef = useRef<number>(0);
-
-  const handleMainScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
-    const currentScrollTop = e.currentTarget.scrollTop;
-    const delta = currentScrollTop - lastScrollTopRef.current;
-    
-    // Auto-collapse header on mobile when scrolling down, restore when scrolling up or at top
-    if (currentScrollTop > 40 && delta > 8) {
-      setIsScrolledDown(true);
-    } else if (delta < -10 || currentScrollTop <= 15) {
-      setIsScrolledDown(false);
-    }
-    lastScrollTopRef.current = currentScrollTop;
-  }, []);
+  const headerScrollRef=useRef(new HeaderScroll());
+  const touchYRef=useRef<number|null>(null);
+  const handleMainScroll=useCallback((event:React.UIEvent<HTMLElement>)=>{
+    const el=event.currentTarget;
+    if((document.activeElement?.matches(':focus-visible')&&document.activeElement.closest('.operator-chrome'))||document.querySelector('.holy-options[open]'))return;
+    setIsScrolledDown(headerScrollRef.current.scroll(el.scrollTop,el.scrollHeight-el.clientHeight,performance.now()));
+  },[]);
 
   // Time ticker (updates currentTime every second) & global audio unlock
   useEffect(() => {
@@ -230,39 +242,16 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Meeting & Countdown calculation logic
-  const { nextMeeting, nextMeetingDate, ongoingMeeting } = getNextMeeting(currentTime, customMeetings);
-
-  let isJustStartedRaw = false;
-  if (ongoingMeeting) {
-    const mStart = new Date(currentTime);
-    mStart.setHours(ongoingMeeting.hours, ongoingMeeting.minutes, 0, 0);
-    const elapsedSinceStart = currentTime.getTime() - mStart.getTime();
-    if (elapsedSinceStart >= 0 && elapsedSinceStart <= 30 * 60 * 1000) {
-      isJustStartedRaw = true;
-    }
-  }
-
-  const adjustedNextMeetingDate = new Date(nextMeetingDate.getTime() + countdownOffset);
-  const diffMs = adjustedNextMeetingDate.getTime() - currentTime.getTime();
-
-  if (!isJustStartedRaw && diffMs <= 0) {
-    isJustStartedRaw = true;
-  }
-
-  let isJustStarted = isJustStartedRaw && !dismissedJustStarted;
-  let diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
-  
-  if (countdownPaused && pausedSeconds !== null) {
-    diffSeconds = pausedSeconds;
-  }
-
-  const formatMinutesPart = Math.floor(diffSeconds / 60).toString().padStart(2, '0');
-  const formatSecondsPart = (diffSeconds % 60).toString().padStart(2, '0');
-
-  let isFinalMinute = !isJustStarted && diffSeconds <= 60 && diffSeconds > 0;
-  let isFinalFiveMinutes = !isJustStarted && diffSeconds <= 300 && diffSeconds > 60;
-  let isLooping = !isJustStarted && !isFinalFiveMinutes && !isFinalMinute;
+  const originalSchedule=getNextMeeting(currentTime,customMeetings);
+  const isFJUProjection=isYouthProjection(originalSchedule.ongoingMeeting,originalSchedule.nextMeeting,originalSchedule.nextMeetingDate,currentTime,projectionTheme);
+  const manualSlideOverride=storedManualSlideOverride&&!(isFjuMoment(storedManualSlideOverride)&&projectionMode==='post')&&availablePreparedMoment(storedManualSlideOverride,fjuMoments)&&(!isFjuProject(storedManualSlideOverride)||fjuProjectsEnabled)&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):availableInChurchLoop(storedManualSlideOverride,customMeetings))?storedManualSlideOverride:null;
+  const projectionMeetings=customMeetings.filter(isFJUProjection?isYouthMeeting:isChurchMeeting);
+  const {ongoingMeeting}=getNextMeeting(currentTime,projectionMeetings);
+  const countdown=deriveCountdown(currentTime,projectionMeetings,countdownOffset,countdownPaused,pausedSeconds,countdownAnchor,dismissedJustStarted);
+  const {nextMeeting,nextMeetingDate,isJustStartedRaw}=countdown;
+  let {isJustStarted,diffSeconds,isFinalMinute,isFinalFiveMinutes,isLooping}=countdown;
+  const formatMinutesPart=Math.floor(diffSeconds/60).toString().padStart(2,'0');
+  const formatSecondsPart=(diffSeconds%60).toString().padStart(2,'0');
 
   // No modo Pós-Reunião, desativamos contagem regressiva de início e priorizamos carrossel de saída
   if (projectionMode === 'post') {
@@ -308,30 +297,33 @@ export default function App() {
   });
   const hasActiveCampaigns = activeCampaignsFiltered.length > 0;
 
-  const defaultBaseSlides = (projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES).filter(id => {
+  const defaultBaseSlides = (isFJUProjection?(projectionMode==='post'?FJU_POST_SLIDES:FJU_PRE_SLIDES):(projectionMode === 'post' ? POST_MEETING_DEFAULT_SLIDES : DEFAULT_SLIDES)).filter(id => {
+    if(!(isFJUProjection?availableInYouthLoop(id,customMeetings):availableInChurchLoop(id,customMeetings)))return false;
+    if(id==='fju_agenda'&&!nextMeetingDate)return false;
+    if(id==='soon'&&!nextMeetingDate)return false;
     if (id === 'campaigns' && !hasActiveCampaigns) return false;
     return true;
   });
-  const allAvailableSlides: string[] = [...defaultBaseSlides];
+  const allAvailableSlides: string[] = [...defaultBaseSlides,...(isFJUProjection?preparedMomentSlides(fjuMoments,projectionMode):[]),...(isFJUProjection&&fjuProjectsEnabled?FJU_PROJECT_SLIDES:[])];
   customMediaList.forEach((media) => {
     if (!allAvailableSlides.includes(media.id)) {
       allAvailableSlides.push(media.id);
     }
   });
-  customMeetings.forEach((meet) => {
-    if (meet.date && meet.date >= todayStr) {
+  projectionMeetings.forEach((meet) => {
+    if (meet.date && meet.date >= todayStr && (!isFJUProjection||isYouthMeeting(meet))) {
       const meetSlideId = `meeting_event_${meet.id}`;
       if (!allAvailableSlides.includes(meetSlideId)) {
         allAvailableSlides.push(meetSlideId);
       }
     }
   });
-  if (projectionMode !== 'post' && diffSeconds <= 15 * 60 && !allAvailableSlides.includes('soon')) {
+  if (nextMeetingDate && projectionMode !== 'post' && diffSeconds <= 15 * 60 && !allAvailableSlides.includes('soon')) {
     allAvailableSlides.push('soon');
   }
 
   const baseActiveSlides: SlideType[] = allAvailableSlides.filter((id) => {
-    if (disabledSlides && disabledSlides.includes(id)) return false;
+    if (!isFjuProject(id)&&!isFjuMoment(id)&&disabledSlides && disabledSlides.includes(id)) return false;
     if (id.startsWith('custom_')) {
       const media = customMediaList.find((m) => m.id === id);
       return media ? media.enabledInLoop : false;
@@ -346,12 +338,13 @@ export default function App() {
     }
   });
 
+  if(isFJUProjection)activeSlides=connectFjuMoments(connectFjuProjects(activeSlides));
   const totalDuration = activeSlides.reduce((sum, id) => sum + getSlideDuration(id, customMediaList), 0);
   const adjustedTime = currentTime.getTime() - carouselStartTimeOffset;
   const timeInLoop = ((adjustedTime % (totalDuration || 1)) + (totalDuration || 1)) % (totalDuration || 1);
   const loopIteration = Math.floor(adjustedTime / (totalDuration || 1));
   let accumulatedTime = 0;
-  let currentSlideId = activeSlides[0] || 'agenda_day_0';
+  let currentSlideId = activeSlides[0] || (isFJUProjection?'seat':'agenda_day_0');
 
   if (manualSlideOverride) {
     currentSlideId = manualSlideOverride;
@@ -388,6 +381,10 @@ export default function App() {
 
     baseUpdateStateAndBroadcast(key, value);
   }, [activeSlides, customMediaList, baseUpdateStateAndBroadcast]);
+
+  useEffect(()=>{if(!localStorage.getItem('holylink_fju_moments_queue_v1')){localStorage.setItem('holylink_fju_moments_queue_v1','true');if(isFjuMoment(localStorage.getItem('projection_manualSlideOverride')||''))baseUpdateStateAndBroadcast('manualSlideOverride',null);}},[baseUpdateStateAndBroadcast]);
+
+  const outputControl=useProjectionWindow({view:isProjectionView,windowRef:projectionWinRef,setWindow:setProjectionWin,update:baseUpdateStateAndBroadcast});
 
   // Preload static assets on boot
   useEffect(() => {
@@ -480,13 +477,14 @@ export default function App() {
   useEffect(() => {
     if (isProjectionView) {
       updateStateAndBroadcast('isProjectionOpen', true);
-      
+
       const handleBeforeUnload = () => {
+        try{localStorage.setItem('holylink_projection_bounds',JSON.stringify({left:window.screenX,top:window.screenY,width:window.outerWidth,height:window.outerHeight}));}catch{}
         updateStateAndBroadcast('isProjectionOpen', false);
       };
-      
+
       window.addEventListener('beforeunload', handleBeforeUnload);
-      
+
       return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
       };
@@ -495,7 +493,7 @@ export default function App() {
 
   const { width, height } = dimensions;
   const shouldRotate = manualRotateMode === 'auto' && height > width;
-  
+
   let scale = 1;
   if (shouldRotate) {
     scale = Math.min(height / 1920, width / 1080);
@@ -505,8 +503,8 @@ export default function App() {
 
   const countHours = Math.floor(diffSeconds / 3600);
   const countMinutes = Math.floor((diffSeconds % 3600) / 60);
-  const hoursStr = countHours.toString().padStart(2, '0');
-  const minutesStr = countMinutes.toString().padStart(2, '0');
+  const hoursStr = nextMeetingDate?countHours.toString().padStart(2, '0'):'--';
+  const minutesStr = nextMeetingDate?countMinutes.toString().padStart(2, '0'):'--';
 
   // Re-sync time immediately when returning to tab from background
   useEffect(() => {
@@ -532,15 +530,17 @@ export default function App() {
         }
       } else if (manualSlideOverride.startsWith('meeting_event_')) {
         const meetId = manualSlideOverride.replace('meeting_event_', '');
-        const exists = customMeetings.some((m) => m.id === meetId);
+        const exists = customMeetings.some((m) => m.id === meetId && (!m.date || m.date >= todayStr));
         if (!exists) {
           updateStateAndBroadcast('manualSlideOverride', null);
         }
       }
     }
-  }, [manualSlideOverride, customMediaList, customMeetings, isMediaLoaded, isProjectionView, updateStateAndBroadcast]);
+  }, [manualSlideOverride, customMediaList, customMeetings, isMediaLoaded, isProjectionView, updateStateAndBroadcast,todayStr]);
 
+  const currentOutputRef=useRef(currentSlideId);currentOutputRef.current=currentSlideId;
   const handleVideoEnded = useCallback(() => {
+    if(currentOutputRef.current!==currentSlideId)return;
     if (videoPinBehavior === 'unpin') {
       const activeSlideId = currentSlideId;
       if (activeSlides.length > 0) {
@@ -560,61 +560,64 @@ export default function App() {
     }
   }, [videoPinBehavior, currentSlideId, activeSlides, customMediaList, updateStateAndBroadcast]);
 
-  const [isCurrentlyFullscreen, setIsCurrentlyFullscreen] = useState(false);
-
-  useEffect(() => {
-    const handleFsChange = () => {
-      setIsCurrentlyFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
-  }, []);
-
-  if (isSmartBooting) {
+  const navigateOutput = (direction: number) => {
+    if (!activeSlides.length) return;
+    const index = activeSlides.indexOf(currentSlideId);
+    const next = ((index < 0 ? 0 : index) + direction + activeSlides.length) % activeSlides.length;
+    updateStateAndBroadcast('customVerseText', null);
+    updateStateAndBroadcast('customVerseRef', null);
+    updateStateAndBroadcast('activeVerseIndex', null);
+    updateStateAndBroadcast('manualSlideOverride', activeSlides[next]);
+  };
+  if (isSmartBooting && !isProjectionView) {
     return (
-      <SmartSplashLoader 
-        customMediaList={customMediaList} 
-        onComplete={() => setIsSmartBooting(false)} 
+      <SmartSplashLoader
+        mediaReady={isMediaLoaded}
+        mediaLoadError={mediaLoadError}
+        currentSlideId={currentSlideId}
+        activeSlides={activeSlides}
+        customMediaList={customMediaList}
+        onComplete={() => setIsSmartBooting(false)}
       />
     );
   }
 
   if (!isProjectionView && !isLocalProjection) {
     return (
-      <div className="w-full h-full bg-[#09090b] text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
-        
+      <div className="holy-theme operator-shell w-full h-full text-hl-copy flex flex-col font-sans select-none overflow-hidden">
+
         {/* GLOBAL SYNC OVERLAY */}
         <AnimatePresence>
           {syncStatus?.active && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
+              className="holy-theme holy-sync-progress fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
             >
               <div className="relative w-24 h-24 mb-8">
-                <div className="absolute inset-0 border-4 border-amber-500/20 rounded-full" />
-                <motion.div 
+                <div className="absolute inset-0 border-4 border-hl-gold/20 rounded-full" />
+                <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                   className="absolute inset-0 border-4 border-transparent border-t-amber-500 rounded-full"
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <RefreshCw className="w-8 h-8 text-amber-500 animate-pulse" />
+                  <RefreshCw className="w-8 h-8 text-hl-gold animate-pulse" />
                 </div>
               </div>
-              
+
               <h2 className="text-2xl font-black text-white uppercase tracking-[0.2em] mb-2">Sincronizando Dados</h2>
-              <p className="text-zinc-400 font-medium tracking-wide max-w-md mx-auto leading-relaxed">
+              <p className="text-hl-muted font-medium tracking-wide max-w-md mx-auto leading-relaxed">
                 {syncStatus.message}
               </p>
-              
+
               {syncStatus.progress !== undefined && (
-                <div className="w-full max-w-xs bg-zinc-900 h-1.5 rounded-full mt-6 overflow-hidden border border-zinc-800">
-                  <motion.div 
+                <div className="w-full max-w-xs bg-hl-panel h-1.5 rounded-full mt-6 overflow-hidden border border-hl-line">
+                  <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${syncStatus.progress}%` }}
-                    className="h-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                    className="h-full bg-hl-gold shadow-[0_0_10px_rgba(255,211,79,0.5)]"
                   />
                 </div>
               )}
@@ -622,212 +625,27 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* PWA UPDATE NOTIFICATION BANNER */}
-        {hasUpdateAvailable && (
-          <div className="bg-amber-500 text-zinc-950 px-4 py-2 flex items-center justify-between text-xs font-bold shrink-0 z-50 shadow-md">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-zinc-950 animate-bounce" />
-              <span>Nova versão do HolyLink disponível! Atualize para ter acesso aos recursos mais recentes.</span>
-            </div>
-            <button
-              onClick={forceAppUpdate}
-              disabled={isUpdating}
-              className="bg-zinc-950 hover:bg-zinc-900 text-amber-400 px-3 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer shadow flex items-center gap-1.5"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isUpdating ? 'animate-spin' : ''}`} />
-              <span>{isUpdating ? 'Atualizando...' : 'Atualizar PWA Agora'}</span>
-            </button>
-          </div>
-        )}
+        {hasUpdateAvailable && <AppUpdateNotice updating={isUpdating} onUpdate={forceAppUpdate}/>}
 
-        {/* TOP BAR / NAVIGATION - SKEUOMORPHIC RACK-MOUNT FRAME */}
-        <header className={`px-4 lg:px-6 bg-[#08080a] flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-0 z-20 shrink-0 shadow-[0_8px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.05)] relative transition-all duration-300 ${
-          isScrolledDown
-            ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:h-16 lg:py-0 lg:opacity-100 lg:border-b lg:border-[#27272a] lg:pointer-events-auto'
-            : 'max-h-[500px] h-auto lg:h-16 py-3 lg:py-0 border-b border-[#27272a] opacity-100'
-        }`}>
-          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-          
-          <div className="relative z-10 flex items-center justify-between w-full lg:w-auto gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/40 shadow-[0_4px_12px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] shrink-0 bg-[#111113] flex items-center justify-center p-1 group">
-                <img 
-                  src={LOGO_URLS.symbol} 
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const img = e.currentTarget;
-                    if (img.src !== window.location.origin + LOGO_URLS.symbolLocal && !img.src.endsWith(LOGO_URLS.symbolLocal)) {
-                      img.src = LOGO_URLS.symbolLocal;
-                    }
-                  }}
-                  alt="HolyLink Símbolo" 
-                  className="w-full h-full object-contain rounded-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" 
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
-                <div className="flex items-center h-7">
-                  <img 
-                    src={LOGO_URLS.text} 
-                    onError={(e) => {
-                      const img = e.currentTarget;
-                      if (img.src !== LOGO_URLS.textCdn) {
-                        img.src = LOGO_URLS.textCdn;
-                      } else {
-                        img.style.display = 'none';
-                        const fallback = document.getElementById('holylink-text-fallback');
-                        if (fallback) fallback.style.display = 'inline-block';
-                      }
-                    }}
-                    alt="HolyLink" 
-                    className="h-6 sm:h-7 w-auto max-w-[150px] object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]" 
-                  />
-                  <span 
-                    id="holylink-text-fallback" 
-                    className="hidden font-sans font-black text-lg tracking-wider text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                  >
-                    HOLYLINK
-                  </span>
-                </div>
-                <span className="text-zinc-300 text-xs font-black sm:border-l sm:border-[#333] sm:pl-2.5 font-sans uppercase tracking-wider">
-                  Painel do Operador
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-[#0d0d0f] border border-[#2a2a2e] px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold text-zinc-300 uppercase tracking-wider shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
-                {localStorage.getItem('projection_deviceRole') === 'phone' ? (
-                  <span className="flex items-center gap-1 text-amber-400 font-black">
-                    <Smartphone className="w-3.5 h-3.5" />
-                    Móvel
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-zinc-300">
-                    <Monitor className="w-3.5 h-3.5 text-amber-500" />
-                    Console
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="relative z-10 grid grid-cols-2 sm:flex items-center gap-2 w-full lg:w-auto">
-            {isElectron && (
-              <button
-                type="button"
-                aria-label={isProjectionWindowShowing ? 'Apagar Projetor' : 'Ligar Projetor'}
-                onClick={() => {
-                  if (isProjectionWindowShowing) {
-                    ipcRendererRef.current?.send('hide-projection');
-                    setIsProjectionWindowShowing(false);
-                  } else {
-                    ipcRendererRef.current?.send('show-projection');
-                    setIsProjectionWindowShowing(true);
-                  }
-                }}
-                className={`col-span-1 sm:flex-none min-h-[38px] border text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ${
-                  isProjectionWindowShowing
-                    ? 'bg-red-950/80 border-red-800/80 hover:bg-red-900/80 text-red-300 shadow-[0_0_12px_rgba(220,38,38,0.2)]'
-                    : 'bg-emerald-950/80 border-emerald-800/80 hover:bg-emerald-900/80 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
-                }`}
-              >
-                <Tv className="w-3.5 h-3.5 shrink-0" />
-                <span className="whitespace-nowrap truncate">{isProjectionWindowShowing ? 'Apagar' : 'Ligar Projetor'}</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              aria-label="Projetar neste navegador"
-              onClick={() => {
-                setIsLocalProjection(true);
-                toggleFullscreen();
-              }}
-              className="col-span-1 sm:flex-none min-h-[38px] bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-200 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]"
-            >
-              <Monitor className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="whitespace-nowrap truncate">Projetar Aqui</span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="Sincronizar ou conectar celular"
-              onClick={() => setActiveMobileTab('sync')}
-              className={`col-span-1 sm:flex-none min-h-[38px] border text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)] ${
-                activeMobileTab === 'sync'
-                  ? 'bg-amber-500 border-amber-400 text-black font-black shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-                  : 'bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-[#444] text-zinc-300'
-              }`}
-            >
-              <Smartphone className="w-3.5 h-3.5 shrink-0" />
-              <span className="whitespace-nowrap truncate">Conectar Celular</span>
-            </button>
-
-            {!isInstalled && (
-              <button
-                type="button"
-                aria-label="Instalar App HolyLink"
-                onClick={() => setShowPwaModal(true)}
-                className="col-span-1 sm:flex-none min-h-[38px] bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-amber-900/50 hover:border-amber-500/50 text-amber-400 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer active:translate-y-[1px] shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-              >
-                <Download className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="whitespace-nowrap truncate">Instalar</span>
-              </button>
-            )}
-
-            {!isProjectionOpen ? (
-              <button
-                type="button"
-                aria-label="Abrir janela do monitor em segunda tela"
-                onClick={() => {
-                  try {
-                    const url = window.location.origin + window.location.pathname + '?projection';
-                    const newWin = window.open(url, 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
-                    if (newWin) {
-                      setProjectionWin(newWin);
-                      updateStateAndBroadcast('isProjectionOpen', true);
-                      updateStateAndBroadcast('projectionCloseTrigger', null);
-                    } else {
-                      showAlert('A janela de projeção foi bloqueada pelo navegador. Permita pop-ups nas configurações e tente novamente.', 'error');
-                    }
-                  } catch (err) {
-                    showAlert('Erro ao tentar abrir a janela de projeção. Verifique permissões de pop-up.', 'error');
-                  }
-                }}
-                className="col-span-2 sm:col-span-1 sm:w-auto min-h-[38px] bg-amber-500 hover:bg-amber-400 text-black font-black text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all cursor-pointer active:translate-y-[1px]"
-              >
-                <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-                <span className="whitespace-nowrap">Monitor 2ª Tela</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                aria-label="Fechar janela do monitor em segunda tela"
-                onClick={() => {
-                  setProjectionWin(null);
-                  updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
-                  updateStateAndBroadcast('isProjectionOpen', false);
-                }}
-                className="col-span-2 sm:col-span-1 sm:w-auto min-h-[38px] bg-red-600 hover:bg-red-500 text-white font-black text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(220,38,38,0.35)] transition-all cursor-pointer active:translate-y-[1px]"
-              >
-                <ExternalLink className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
-                <span className="whitespace-nowrap">Fechar 2ª Tela</span>
-              </button>
-            )}
+        <div className={`operator-chrome ${isScrolledDown?'is-collapsed':''}`} data-collapsed={isScrolledDown} aria-hidden={isScrolledDown} inert={isScrolledDown}><div className="operator-chrome-body">
+        <header className="holy-topbar">
+          <div className="holy-brand"><img src={LOGO_URLS.symbol} alt="Símbolo HolyLink" width={44} height={44} /><div><h1>HolyLink</h1><span>Projeção · 16:9</span></div></div>
+          <div className="holy-header-actions">
+            <button type="button" className="holy-output-button" onClick={()=>outputControl.request(isProjectionOpen?'close':'open')}><ExternalLink size={18} aria-hidden="true"/><span>{isProjectionOpen?'Fechar telão':'Abrir telão'}</span></button>
+            <details className="holy-options"><summary aria-label="Mais opções">Opções<ChevronDown size={16} aria-hidden="true" /></summary><div>
+              <button type="button" onClick={event => {setIsLocalProjection(true); event.currentTarget.closest('details')?.removeAttribute('open');}}><Maximize size={18} />Projetar neste aparelho</button>
+              <button type="button" onClick={event => {setActiveMobileTab('sync'); event.currentTarget.closest('details')?.removeAttribute('open');}}><Smartphone size={18} />Conectar celular</button>
+              <button type="button" onClick={event => {setShowPwaModal(true); event.currentTarget.closest('details')?.removeAttribute('open');}}><Download size={18} />Instalar HolyLink</button>
+              {isElectron && <button type="button" onClick={() => {ipcRendererRef.current?.send(isProjectionWindowShowing ? 'hide-projection' : 'show-projection'); setIsProjectionWindowShowing(!isProjectionWindowShowing);}}><Tv size={18} />Alternar janela do projetor</button>}
+            </div></details>
           </div>
         </header>
-
         {/* ACTIVE BROADCAST HEADER BANNER - SKEUOMORPHIC LED DISPLAY */}
         {isJustStartedRaw && (
-          <div className={`px-4 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 transition-all duration-300 z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
-            isScrolledDown
-              ? 'max-h-0 py-0 opacity-0 overflow-hidden border-b-0 pointer-events-none lg:max-h-24 lg:py-2.5 lg:border-b lg:opacity-100 lg:pointer-events-auto'
-              : 'max-h-40 py-2.5 border-b opacity-100'
-          } ${
-            dismissedJustStarted 
-              ? "bg-emerald-950/40 border-emerald-800/50 text-emerald-400" 
-              : "bg-amber-950/40 border-amber-800/50 text-amber-400"
+          <div data-operator-banner data-collapsed={isScrolledDown} className={`px-4 py-2.5 border-b flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 z-10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)] ${
+            dismissedJustStarted
+              ? "bg-emerald-950/40 border-emerald-800/50 text-emerald-400"
+              : "bg-hl-gold-well/40 border-hl-line-strong/50 text-hl-gold-bright"
           }`}>
             <div className="flex items-center gap-2 text-xs font-bold font-sans">
               {dismissedJustStarted ? (
@@ -840,18 +658,18 @@ export default function App() {
                 </>
               ) : (
                 <>
-                  <BookOpen className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+                  <BookOpen className="w-4 h-4 text-hl-gold-bright animate-pulse shrink-0" />
                   <span><strong>Modo Reunião Ativo:</strong> Exibindo Bíblia (Carrossel Pausado).</span>
                 </>
               )}
             </div>
-            
+
             <button
               onClick={() => updateStateAndBroadcast('dismissedJustStarted', !dismissedJustStarted)}
               className={`text-xs font-black px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.5)] shrink-0 w-full md:w-auto text-center active:translate-y-[1px] ${
-                dismissedJustStarted 
-                  ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.3)]" 
-                  : "bg-amber-500 hover:bg-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                dismissedJustStarted
+                  ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.3)]"
+                  : "bg-hl-gold hover:bg-hl-gold-bright text-black shadow-[0_0_12px_rgba(255,211,79,0.3)]"
               }`}
             >
               {dismissedJustStarted ? "Exibir Bíblia" : "Liberar Carrossel"}
@@ -859,117 +677,50 @@ export default function App() {
           </div>
         )}
 
-        {/* MOBILE NAVIGATION TABS (Skeuomorphic hardware console tabs) */}
-        <nav aria-label="Navegação Principal do Operador" className="lg:hidden flex items-center overflow-x-auto no-scrollbar bg-[#050507] border-b border-[#222] sticky top-0 z-20 shrink-0 p-1.5 gap-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.95)]">
+        </div></div>
+        <nav className="holy-navigation" role="tablist" aria-label="Áreas do operador">
           {[
-            { id: 'slides', label: 'Mídias', icon: Layout },
-            { id: 'texts', label: 'Bíblia', icon: BookOpen },
-            { id: 'agenda', label: 'Agenda', icon: CalendarDays },
-            { id: 'controls', label: 'Ações', icon: Settings },
-            { id: 'sync', label: 'Celular', icon: RefreshCw },
-            { id: 'monitor', label: 'Monitor', icon: Monitor },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeMobileTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-label={`Aba ${tab.label}`}
-                onClick={() => setActiveMobileTab(tab.id as any)}
-                className={`flex-1 min-w-[56px] py-2 px-1 text-[10px] font-extrabold uppercase tracking-wider flex flex-col items-center justify-center gap-1 transition-all cursor-pointer rounded-xl relative overflow-hidden active:translate-y-[1px] ${
-                  isActive
-                    ? "bg-amber-500 border border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                    : "bg-[#111113] text-zinc-400 border border-[#27272a] hover:text-white hover:border-[#333]"
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 shrink-0 relative z-10 transition-colors ${isActive ? 'text-black' : 'text-zinc-400'}`} />
-                <span className="truncate max-w-full relative z-10 text-[9px]">{tab.label}</span>
-              </button>
-            );
-          })}
+            {id:'slides',label:'Sequência',icon:Layout}, {id:'texts',label:'Bíblia',icon:BookOpen},
+            {id:'agenda',label:'Agenda',icon:CalendarDays}, {id:'controls',label:'Ajustes',icon:Settings},
+            {id:'sync',label:'Conexão',icon:Smartphone}, {id:'monitor',label:'Monitor',icon:Monitor}
+          ].map(tab => {const Icon = tab.icon; return <button type="button" role="tab" key={tab.id} aria-selected={activeMobileTab===tab.id} aria-label={'Aba '+tab.label} onClick={() => setActiveMobileTab(tab.id as any)}><Icon size={19} aria-hidden="true" /><span>{tab.label}</span></button>;})}
         </nav>
-
         {/* MAIN PANEL CONTENT GRID */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
-          
-          {/* DESKTOP SIDEBAR PANEL - SKEUOMORPHIC RACK DECK */}
-          <aside className="hidden lg:flex flex-col w-[240px] px-4 bg-[#070709] border-r border-[#27272a] py-6 shrink-0 justify-between shadow-[inset_-10px_0_20px_rgba(0,0,0,0.8)] relative">
-            <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-            
-            <div className="relative z-10 flex flex-col gap-6">
-              <div className="flex items-center justify-between border-b border-[#222] pb-3 px-1">
-                <span className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest font-mono">NAVEGAÇÃO DECK</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
-              </div>
-              
-              <nav aria-label="Navegação Lateral" className="flex flex-col gap-2">
-                {[
-                  { id: 'slides', label: 'Playlists & Mídias', icon: Layout },
-                  { id: 'texts', label: 'Textos & Bíblia', icon: BookOpen },
-                  { id: 'agenda', label: 'Agenda & Eventos', icon: CalendarDays },
-                  { id: 'controls', label: 'Controles Gerais', icon: Settings },
-                  { id: 'sync', label: 'Sincronizar Celular', icon: RefreshCw },
-                ].map((item) => {
-                  const IconComponent = item.icon;
-                  const isActive = activeMobileTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      title={item.label}
-                      onClick={() => setActiveMobileTab(item.id as any)}
-                      className={`flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-extrabold transition-all text-left cursor-pointer active:translate-y-[1px] relative overflow-hidden group ${
-                        isActive
-                          ? "bg-amber-500 border border-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.35)] font-black"
-                          : "bg-[#0d0d0f] text-zinc-400 border border-[#222] hover:bg-[#141417] hover:border-[#333] hover:text-zinc-200"
-                      }`}
-                    >
-                      <IconComponent className={`w-4 h-4 shrink-0 relative z-10 transition-colors ${isActive ? "text-black" : "text-amber-500/80 group-hover:text-amber-400"}`} />
-                      <span className="relative z-10 truncate">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
+        <div className="operator-workspace flex-1 flex flex-col overflow-hidden min-h-0">
 
-            {/* Sidebar Footer status */}
-            <div className="relative z-10 border-t border-[#222] pt-4 px-2 flex flex-col gap-1.5 text-left bg-[#030304] p-3 rounded-xl border">
-              <span className="text-[9px] text-zinc-500 font-black uppercase font-mono tracking-widest">STATUS HARDWARE</span>
-              <div className="flex items-center gap-2 text-[10px] text-zinc-300 font-mono font-bold">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
-                <span>OPERADOR ON-LINE</span>
-              </div>
-            </div>
-          </aside>
 
           {/* ACTIVE CONTENT WORKSPACE */}
-          <main onScroll={handleMainScroll} className="flex-1 overflow-y-auto bg-zinc-950/20 p-3.5 sm:p-6 pb-36 lg:pb-28 flex flex-col gap-4 sm:gap-6 min-h-0">
-            
-            <div className="text-left flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-amber-500 font-black uppercase tracking-widest block">
-                  {activeMobileTab === 'slides' ? 'Mídia' : activeMobileTab === 'texts' ? 'Escrituras' : activeMobileTab === 'agenda' ? 'Programação' : activeMobileTab === 'controls' ? 'Broadcasting' : 'Segurança'}
-                </span>
-                <h2 className="text-base sm:text-xl font-extrabold text-zinc-100 uppercase tracking-tight mt-0.5">
-                  {activeMobileTab === 'slides' ? 'Fila de Mídias & Slides' : activeMobileTab === 'texts' ? 'Bíblia & Textos' : activeMobileTab === 'agenda' ? 'Programação & Agenda' : activeMobileTab === 'controls' ? 'Controles & Stage' : 'Conexão & Backup'}
-                </h2>
-              </div>
-            </div>
+          <nav className="operator-quick-strip" aria-label="Controles essenciais da projeção">
+            {isScrolledDown&&<button type="button" className="operator-reveal-top" aria-label="Mostrar topo" title="Mostrar topo" onClick={()=>{headerScrollRef.current.reveal(performance.now());setIsScrolledDown(false);requestAnimationFrame(()=>document.querySelector<HTMLElement>('.holy-options summary')?.focus({preventScroll:true}));}}><ChevronUp size={20}/></button>}
+            <button type="button" aria-pressed={blackoutEnabled} onClick={() => updateStateAndBroadcast('blackoutEnabled', !blackoutEnabled)}><EyeOff size={18} aria-hidden="true" />Blackout</button>
+            <button type="button" aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled', !clearContentEnabled)}><Eye size={18} aria-hidden="true" />Limpar tela</button>
+            <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(-1)}><ChevronLeft size={18} aria-hidden="true" />Slide anterior</button>
+            <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
+          </nav>          <main onWheelCapture={event=>headerScrollRef.current.userIntent(event.deltaY,performance.now())} onTouchStartCapture={event=>{touchYRef.current=event.touches[0]?.clientY??null;}} onTouchMoveCapture={event=>{const y=event.touches[0]?.clientY;if(y!==undefined&&touchYRef.current!==null)headerScrollRef.current.userIntent(touchYRef.current-y,performance.now());touchYRef.current=y??null;}} onKeyDownCapture={event=>{if((event.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]'))return;const direction=['ArrowDown','PageDown','End'].includes(event.key)?1:['ArrowUp','PageUp','Home'].includes(event.key)?-1:0;headerScrollRef.current.userIntent(direction,performance.now());}} onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">
 
+            {outputControl.message&&<div className="operator-notice" role="status">{outputControl.message}</div>}
+            {mediaLoadError&&<div className="operator-notice" role="alert"><p>{mediaLoadError} Os arquivos já carregados foram mantidos.</p><button type="button" className="sequence-secondary" onClick={()=>baseUpdateStateAndBroadcast('mediaUpdateTrigger',Date.now().toString())}><RefreshCw size={17}/>Tentar ler biblioteca</button></div>}
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (
               <PlaylistPanel
+                youth={isFJUProjection}
+                blackoutEnabled={blackoutEnabled}
+                clearContentEnabled={clearContentEnabled}
+                currentVerse={currentSlideId.startsWith('verse_') ? selectProjectionVerse(VERSES,{text:customVerseText,ref:customVerseRef,index:activeVerseIndex,loop:loopIteration,offset:Number(currentSlideId.replace('verse_',''))||0,timeMs:currentTime.getTime()}).verse : null}
+                liveVerse={Boolean(customVerseText && (verseDisplayPriority === 'verse_over_video' || !(isFinalMinute || isFinalFiveMinutes))) ? {text:customVerseText!,ref:customVerseRef || 'Passagem bíblica'} : null}
+                countdownMode={isFinalMinute ? 'Contagem final · último minuto' : isFinalFiveMinutes ? 'Contagem final · últimos cinco minutos' : isJustStarted ? 'Horário previsto atingido' : null}
+                onOpenMonitor={() => setActiveMobileTab('monitor')}
+                fjuProjectsEnabled={fjuProjectsEnabled}
+                fjuMoments={fjuMoments}
+                projectionMode={projectionMode}
+                slidesOrder={slidesOrder}
                 currentSlideId={currentSlideId}
                 manualSlideOverride={manualSlideOverride}
                 activeSlides={activeSlides}
                 allAvailableSlides={allAvailableSlides}
                 disabledSlides={disabledSlides}
                 customMediaList={customMediaList}
+                remoteMediaList={remoteMediaList}
                 getSlideDuration={getSlideDuration}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 handleMoveSlide={handleMoveSlide}
@@ -991,12 +742,14 @@ export default function App() {
                 broadcastMediaDelete={broadcastMediaDelete}
                 broadcastMediaSave={broadcastMediaSave}
                 saveMediaItem={saveMediaItem}
-                customMeetings={customMeetings}
+                customMeetings={projectionMeetings}
               />
             )}
 
             {activeMobileTab === 'texts' && (
               <BiblePanel
+                isFJU={isFJUProjection}
+                backgroundStyle={background3DStyle}
                 activeVerseIndex={activeVerseIndex}
                 customVerseText={customVerseText}
                 customVerseRef={customVerseRef}
@@ -1008,6 +761,7 @@ export default function App() {
 
             {activeMobileTab === 'agenda' && (
               <AgendaPanel
+                youth={isFJUProjection}
                 customMeetings={customMeetings}
                 customCampaigns={customCampaigns}
                 updateStateAndBroadcast={updateStateAndBroadcast}
@@ -1020,8 +774,7 @@ export default function App() {
 
             {activeMobileTab === 'controls' && (
               <ControlsPanel
-                projectionWin={null}
-                setProjectionWin={setProjectionWin}
+                onToggleOutput={()=>outputControl.request(isProjectionOpen?'close':'open')}
                 blackoutEnabled={blackoutEnabled}
                 clearContentEnabled={clearContentEnabled}
                 nextMeeting={nextMeeting}
@@ -1039,6 +792,9 @@ export default function App() {
                 background3DFps={background3DFps}
                 background3DIntensity={background3DIntensity}
                 projectionMode={projectionMode}
+                projectionTheme={projectionTheme}
+                youth={isFJUProjection}
+                manualSlideOverride={manualSlideOverride}
                 updateStateAndBroadcast={updateStateAndBroadcast}
                 currentTime={currentTime}
                 isProjectionOpen={isProjectionOpen}
@@ -1054,6 +810,11 @@ export default function App() {
 
             {activeMobileTab === 'monitor' && (
               <MonitorPanel
+                youth={isFJUProjection}
+                onNavigate={setActiveMobileTab}
+                onFullscreen={toggleFullscreen}
+                projectionMode={projectionMode}
+                projectionTheme={projectionTheme}
                 projectionWin={null}
                 setProjectionWin={setProjectionWin}
                 currentTime={currentTime}
@@ -1065,6 +826,7 @@ export default function App() {
                 blackoutEnabled={blackoutEnabled}
                 clearContentEnabled={clearContentEnabled}
                 currentSlideId={currentSlideId}
+                manualSlideOverride={manualSlideOverride}
                 hoursStr={hoursStr}
                 minutesStr={minutesStr}
                 diffSeconds={diffSeconds}
@@ -1074,13 +836,13 @@ export default function App() {
                 customVerseRef={customVerseRef}
                 activeVerseIndex={activeVerseIndex}
                 customMediaList={customMediaList}
-                
+
                 videoPinBehavior={videoPinBehavior}
                 finalMinuteDisplayMode={finalMinuteDisplayMode}
                 verseDisplayPriority={verseDisplayPriority}
                 loopIteration={loopIteration}
                 updateStateAndBroadcast={updateStateAndBroadcast}
-                customMeetings={customMeetings}
+                customMeetings={projectionMeetings}
                 customCampaigns={customCampaigns}
                 nextMeeting={nextMeeting}
                 nextMeetingDate={nextMeetingDate}
@@ -1097,65 +859,10 @@ export default function App() {
             )}
           </main>
 
-          {/* DESKTOP RIGHT PREVIEW MONITOR SIDEBAR */}
-          <aside className="hidden lg:flex w-[320px] xl:w-[360px] border-l border-zinc-900 bg-zinc-950/40 p-6 flex-col gap-6 overflow-y-auto shrink-0 text-left">
-            <MonitorPanel
-              projectionWin={null}
-              setProjectionWin={setProjectionWin}
-              currentTime={currentTime}
-              isLooping={isLooping}
-              isFinalFiveMinutes={isFinalFiveMinutes}
-              isFinalMinute={isFinalMinute}
-              isJustStarted={isJustStarted}
-              activeAlert={activeAlert}
-              blackoutEnabled={blackoutEnabled}
-              clearContentEnabled={clearContentEnabled}
-              currentSlideId={currentSlideId}
-              hoursStr={hoursStr}
-              minutesStr={minutesStr}
-              diffSeconds={diffSeconds}
-              formatMinutesPart={formatMinutesPart}
-              formatSecondsPart={formatSecondsPart}
-              customVerseText={customVerseText}
-              customVerseRef={customVerseRef}
-              activeVerseIndex={activeVerseIndex}
-              customMediaList={customMediaList}
-              
-              videoPinBehavior={videoPinBehavior}
-              finalMinuteDisplayMode={finalMinuteDisplayMode}
-              verseDisplayPriority={verseDisplayPriority}
-              loopIteration={loopIteration}
-              updateStateAndBroadcast={updateStateAndBroadcast}
-              customMeetings={customMeetings}
-              customCampaigns={customCampaigns}
-              nextMeeting={nextMeeting}
-              nextMeetingDate={nextMeetingDate}
-              ongoingMeeting={ongoingMeeting}
-              volume={volume}
-              tickerText={tickerText}
-              background3DStyle={background3DStyle}
-              background3DFps={background3DFps}
-              background3DIntensity={background3DIntensity}
-              syncStatus={syncStatus}
-              isProjectionOpen={isProjectionOpen}
-              activeSlides={activeSlides}
-            />
 
-            <div className="text-xs text-zinc-500 leading-relaxed mt-4 border-t border-zinc-900 pt-4">
-              <strong>Guia de Transmissão:</strong>
-              <br />
-              1. Conecte o projetor ou TV na saída HDMI da sua máquina.
-              <br />
-              2. Use o botão <strong>"Abrir Monitor"</strong> acima.
-              <br />
-              3. Na janela que abrir na TV, clique em qualquer lugar para ativar a <strong>Tela Cheia</strong> automática.
-              <br />
-              4. Use este painel para monitorar, trocar slides e disparar alertas instantâneos!
-            </div>
-          </aside>
         </div>
 
-        <CustomModal 
+        <CustomModal
           isOpen={modalConfig.isOpen}
           title={modalConfig.title}
           message={modalConfig.message}
@@ -1163,54 +870,23 @@ export default function App() {
           onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
           variant={modalConfig.variant}
         />
-        <CustomToast 
+        <CustomToast
           isVisible={toastConfig.isVisible}
           message={toastConfig.message}
           type={toastConfig.type}
           onClose={() => setToastConfig(prev => ({ ...prev, isVisible: false }))}
         />
-        <PWAInstallModal 
-          isOpen={showPwaModal} 
-          onClose={() => setShowPwaModal(false)} 
+        <PWAInstallModal
+          isOpen={showPwaModal}
+          onClose={() => setShowPwaModal(false)}
         />
       </div>
     );
   }
 
-  // MAIN HDMI 16:9 DUAL-SCREEN VIEWPORT
+  // Preparation belongs to this output window, not to the audience composition.
   return (
-    <div 
-      onClick={async () => {
-        if (!isCurrentlyFullscreen) {
-          try {
-            if ('getScreenDetails' in window) {
-              const screenDetails = await (window as any).getScreenDetails();
-              const secondaryScreen = screenDetails.screens.find((s: any) => s.isExtended || !s.isPrimary);
-              
-              if (secondaryScreen) {
-                await (document.documentElement as any).requestFullscreen({ screen: secondaryScreen });
-                return;
-              }
-            }
-          } catch (e) {
-            console.warn("Window Management API failed:", e);
-          }
-          document.documentElement.requestFullscreen().catch(() => {});
-        }
-      }}
-      className={`w-screen h-screen bg-black overflow-hidden relative select-none font-sans flex items-center justify-center ${isCurrentlyFullscreen ? 'cursor-none' : 'cursor-pointer'}`}
-    >
-      
-      {!isCurrentlyFullscreen && (
-        <div className="absolute inset-0 z-[200] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white p-10 text-center animate-in fade-in duration-500">
-          <div className="bg-amber-500 text-black p-6 rounded-full mb-6 shadow-[0_0_50px_rgba(245,158,11,0.4)] animate-bounce">
-            <Maximize className="w-12 h-12" />
-          </div>
-          <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">Clique para Enviar à 2ª Tela</h2>
-          <p className="text-zinc-300 text-xl font-medium">Ele detectará o projetor/TV automaticamente e ficará em tela cheia.</p>
-        </div>
-      )}
-      
+    <ProjectionStage local={isLocalProjection} ready={isMediaLoaded} loadError={mediaLoadError} currentId={currentSlideId} onExit={()=>setIsLocalProjection(false)} onNext={()=>navigateOutput(1)} onRetry={()=>window.dispatchEvent(new CustomEvent('projection_sync_update',{detail:{key:'mediaUpdateTrigger',value:'retry:'+currentSlideId+':'+Date.now()}}))}>
       {/* 16:9 PROJECTION FRAME */}
       <div
         id="painel-16-9"
@@ -1222,9 +898,11 @@ export default function App() {
           left: '50%',
           top: '50%',
         }}
-        className="bg-[#050000] text-white shadow-[0_0_250px_rgba(0,0,0,0.99)] overflow-hidden flex flex-col z-10"
+        className="bg-hl-canvas text-white shadow-[0_0_250px_rgba(0,0,0,0.99)] overflow-hidden flex flex-col z-10"
       >
         <ProjectionContent
+          projectionMode={projectionMode}
+                projectionTheme={projectionTheme}
           currentTime={currentTime}
           isLooping={isLooping}
           isFinalFiveMinutes={isFinalFiveMinutes}
@@ -1245,13 +923,13 @@ export default function App() {
           churchInfo={CHURCH_INFO}
           alerts={ALERTS}
           customMediaList={customMediaList}
-          
+
           videoPinBehavior={videoPinBehavior}
           finalMinuteDisplayMode={finalMinuteDisplayMode}
           verseDisplayPriority={verseDisplayPriority}
           loopIteration={loopIteration}
           onClearAlert={() => updateStateAndBroadcast('activeAlert', null)}
-          customMeetings={customMeetings}
+          customMeetings={projectionMeetings}
           customCampaigns={customCampaigns}
           nextMeeting={nextMeeting}
           nextMeetingDate={nextMeetingDate}
@@ -1266,68 +944,6 @@ export default function App() {
         />
       </div>
 
-      {/* PRELOAD SYSTEM */}
-      <div className="hidden absolute w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        {customMediaList.map((media) => {
-          if (!media.url) return null;
-          if (media.type === 'image') {
-            return (
-              <img 
-                key={`preload-${media.id}`} 
-                src={media.url} 
-                alt="" 
-                referrerPolicy="no-referrer" 
-              />
-            );
-          } else {
-            return (
-              <video 
-                key={`preload-${media.id}`} 
-                src={media.url} 
-                preload="auto" 
-                muted 
-              />
-            );
-          }
-        })}
-      </div>
-
-      {shouldRotate && (
-        <div className="absolute top-6 left-6 z-50 bg-black/95 text-white border border-zinc-800 rounded-xl px-5 py-3 text-sm flex items-center gap-2 font-medium pointer-events-none tracking-wide shadow-xl backdrop-blur-md animate-pulse">
-          <Tv className="w-5 h-5 text-amber-500" />
-          <span>Modo Widescreen Bloqueado. Deite a tela.</span>
-        </div>
-      )}
-
-      <button
-        onClick={toggleFullscreen}
-        className="absolute top-6 right-6 z-50 bg-black/80 hover:bg-black/95 text-white border border-zinc-800 hover:border-zinc-600 rounded-full p-4 shadow-xl backdrop-blur-md transition-all cursor-pointer flex items-center justify-center gap-2 group lg:hidden"
-        aria-label="Alternar Tela Cheia"
-      >
-        {isFullscreen ? (
-          <Minimize className="w-6 h-6 text-amber-500" />
-        ) : (
-          <Maximize className="w-6 h-6 text-amber-500" />
-        )}
-        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out whitespace-nowrap text-zinc-200 text-sm font-semibold pr-0 group-hover:pr-2">
-          {isFullscreen ? "Sair" : "Tela Cheia"}
-        </span>
-      </button>
-
-      <CustomModal 
-        isOpen={modalConfig.isOpen}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        onConfirm={modalConfig.onConfirm}
-        onCancel={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
-        variant={modalConfig.variant}
-      />
-      <CustomToast 
-        isVisible={toastConfig.isVisible}
-        message={toastConfig.message}
-        type={toastConfig.type}
-        onClose={() => setToastConfig(prev => ({ ...prev, isVisible: false }))}
-      />
-    </div>
+    </ProjectionStage>
   );
 }

@@ -1,0 +1,11 @@
+# Auditoria visual global — 14/10/2026
+
+Após a avaliação de que ainda existiam estilos antigos, esta etapa substitui a paleta nos próprios componentes internos, não apenas nos contêineres das áreas. src/styles/design-system.css declara os papéis compartilhados de fundo, superfície, borda, texto e dourado. Controles de faixa, seletores, calendário, arquivo, foco, seleção e rolagem recebem acabamento comum. Cores de erro/sucesso/informação permanecem semânticas.
+
+Cobertura: áreas de operação e seus grupos/formulários abertos, biblioteca/edição/prévia de mídia, instalação e personalização de ícone, hardware, confirmação/toast, inicialização, sincronização, recuperação de erro e ativação de tela cheia. Também foram migrados os componentes de slides: orientações, agenda/reunião, campanhas, contribuição, preparação, batismo e despedida, além do cabeçalho/relógio, avisos e letreiro da projeção. Conteúdo, dados e dimensões da composição não foram removidos. Efeitos animados preservados; partículas usam o dourado compartilhado.
+
+O fundo inicial do HTML, metadado do navegador, manifesto e escolha de ícone usam o preto da aplicação, evitando a barra azul anterior. Escolher fundo claro para o ícone não muda a cor do app. Identidade/start_url/scope/arquivos de imagem preservados. Cache do service worker versionado para atualizar o manifesto; nenhuma limpeza de dados locais/IndexedDB.
+
+Validação: TypeScript/build e 11 testes (incluindo contrato de cores declaradas, ausência das antigas classes de paleta e consistência do manifesto). QA das seis áreas em 320/390/430/768/844 paisagem/1365/1920px; formulários abertos, grupos, instalação/atalhos e foco/Escape. Fluxos locais de mídia/agenda/diálogos em 320/390/1365. Treze tipos de slide em 1920x1080 verificados sem títulos saindo do quadro; aviso e letreiro capturados. Seleção de efeito, recuperação de erro, sincronização e boot inspecionados. Falha controlada somente em contexto isolado de teste, sem acionar redefinição/limpeza de dados. Movimento do fundo e reinício de partículas revalidados; texto extremo mantém margens a 45px.
+
+Tudo permanece na branch/draft PR de avaliação e exclusivamente Preview no projeto holylink. Produção, outras aplicações e imagens da marca preservadas. Esta auditoria visual não confirma uso em HDMI/aparelhos físicos nem resolve as pendências do protocolo de pareamento.

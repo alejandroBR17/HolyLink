@@ -1,155 +1,69 @@
-// WebRTC Chunking Helper for safe large file transfer (videos, images, audio) over PeerJS DataChannels
-import { saveMediaItem } from '../utils';
+import {saveMediaItem} from '../utils';
+import {MediaChunkAssembler, MEDIA_CHUNK_BYTES, readTransferMetadata} from './chunk-assembler';
+import type {ChunkTransferMetadata} from './chunk-assembler';
+export type {ChunkTransferMetadata} from './chunk-assembler';
 
-const CHUNK_SIZE = 64 * 1024; // 64 KB per chunk (optimal for WebRTC)
-
-export interface ChunkTransferMetadata {
-  id: string;
-  type: 'image' | 'video';
-  name: string;
-  duration: number;
-  enabledInLoop: boolean;
-  muted?: boolean;
-  order?: number;
-  fit?: 'contain' | 'cover' | 'fill';
-  mimeType: string;
-  size: number;
-}
-
-// Fast Uint8Array to Base64 using chunked String.fromCharCode.apply
 function uint8ToBase64(bytes: Uint8Array): string {
   let binary = '';
-  const len = bytes.byteLength;
-  const CHUNK_LEN = 8192;
-  for (let i = 0; i < len; i += CHUNK_LEN) {
-    const chunk = bytes.subarray(i, Math.min(i + CHUNK_LEN, len));
-    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
-  }
+  for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
   return btoa(binary);
 }
+interface Incoming {assembler: MediaChunkAssembler; abort: AbortController; timer?: ReturnType<typeof setInterval>; noticeAt: number;}
+const incomingByConnection = new WeakMap<object, Incoming>();
 
-// In-memory buffer for assembling chunks on receiving side
-const transferBuffers = new Map<string, {
-  metadata: ChunkTransferMetadata;
-  totalChunks: number;
-  chunks: (Uint8Array | null)[];
-  receivedCount: number;
-}>();
+export function cancelIncomingTransfers(connection: object) {
+  const incoming = incomingByConnection.get(connection);
+  if (!incoming) return;
+  incoming.abort.abort();
+  incoming.assembler.clear();
+  clearInterval(incoming.timer);
+  incomingByConnection.delete(connection);
+}
 
 export async function sendMediaInChunks(
-  sendFn: (data: any) => void,
-  metadata: ChunkTransferMetadata,
-  blob: Blob,
+  sendFn: (data: any) => void | Promise<void>, metadata: ChunkTransferMetadata, blob: Blob,
   onProgress?: (progress: number) => void
 ): Promise<void> {
-  const transferId = `transfer_${metadata.id}_${Date.now()}`;
-  const arrayBuffer = await blob.arrayBuffer();
-  const totalSize = arrayBuffer.byteLength;
-  const totalChunks = Math.ceil(totalSize / CHUNK_SIZE);
-
-  const fallbackMime = metadata.mimeType || (metadata.type === 'image' ? 'image/png' : 'video/mp4');
-
-  // Send header
-  sendFn({
-    type: 'MEDIA_CHUNK_START',
-    transferId,
-    metadata: { ...metadata, mimeType: fallbackMime },
-    totalChunks,
-    mimeType: blob.type || fallbackMime,
-    size: totalSize,
-    version: 1
-  });
-
-  // Send chunks
+  const safe = readTransferMetadata({...metadata, size:blob.size});
+  const transferId = `transfer_${safe.id}_${crypto.randomUUID()}`;
+  const totalChunks = Math.ceil(blob.size / MEDIA_CHUNK_BYTES);
+  await sendFn({type:'MEDIA_CHUNK_START', transferId, metadata:safe, totalChunks, size:blob.size, version:1});
   for (let i = 0; i < totalChunks; i++) {
-    const start = i * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, totalSize);
-    const chunkBuffer = arrayBuffer.slice(start, end);
-    const bytes = new Uint8Array(chunkBuffer);
-    const chunkBase64 = uint8ToBase64(bytes);
-
-    sendFn({
-      type: 'MEDIA_CHUNK_DATA',
-      transferId,
-      chunkIndex: i,
-      chunkBase64,
-      version: 1
-    });
-
-    if (onProgress) {
-      const progress = Math.round(((i + 1) / totalChunks) * 100);
-      onProgress(progress);
-    }
-
-    // Yield every 5 chunks to keep UI and event loop responsive
-    if (i % 5 === 0) {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+    // Read just this block. A large video no longer requires a whole-file ArrayBuffer.
+    const bytes = new Uint8Array(await blob.slice(i * MEDIA_CHUNK_BYTES, (i + 1) * MEDIA_CHUNK_BYTES).arrayBuffer());
+    await sendFn({type:'MEDIA_CHUNK_DATA', transferId, chunkIndex:i, chunkBase64:uint8ToBase64(bytes), version:1});
+    onProgress?.(Math.round(100 * (i + 1) / totalChunks));
+    if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 5));
   }
 }
 
-export async function handleIncomingChunk(data: any): Promise<{ complete: boolean; item?: any }> {
-  if (data.type === 'MEDIA_CHUNK_START') {
-    transferBuffers.set(data.transferId, {
-      metadata: data.metadata,
-      totalChunks: data.totalChunks,
-      chunks: new Array(data.totalChunks).fill(null),
-      receivedCount: 0
-    });
-    return { complete: false };
+export async function handleIncomingChunk(data: any, connection: object): Promise<{complete: boolean; item?: any}> {
+  let incoming = incomingByConnection.get(connection);
+  if (!incoming) {
+    incoming = {assembler:new MediaChunkAssembler(), abort:new AbortController(), noticeAt:0};
+    incomingByConnection.set(connection, incoming);
   }
-
-  if (data.type === 'MEDIA_CHUNK_DATA') {
-    const buffer = transferBuffers.get(data.transferId);
-    if (!buffer) return { complete: false };
-
-    if (!buffer.chunks[data.chunkIndex]) {
-      const binaryString = atob(data.chunkBase64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      buffer.chunks[data.chunkIndex] = bytes;
-      buffer.receivedCount++;
-
-      const progress = Math.round((buffer.receivedCount / buffer.totalChunks) * 100);
-      window.dispatchEvent(new CustomEvent('projection_sync_progress', {
-        detail: { message: `Recebendo mídia: ${buffer.metadata.name} (${progress}%)`, progress }
-      }));
-    }
-
-    if (buffer.receivedCount >= buffer.totalChunks) {
-      // All chunks received -> combine into single Blob
-      const combinedBlobParts: Uint8Array[] = [];
-      for (let i = 0; i < buffer.totalChunks; i++) {
-        const chunk = buffer.chunks[i];
-        if (chunk) combinedBlobParts.push(chunk);
-      }
-
-      const mimeType = buffer.metadata.mimeType && buffer.metadata.mimeType !== 'application/octet-stream'
-        ? buffer.metadata.mimeType
-        : (buffer.metadata.type === 'image' ? 'image/png' : 'video/mp4');
-
-      const blob = new Blob(combinedBlobParts, { type: mimeType });
-      
-      const savePayload = {
-        id: buffer.metadata.id,
-        type: buffer.metadata.type,
-        name: buffer.metadata.name,
-        duration: buffer.metadata.duration,
-        enabledInLoop: buffer.metadata.enabledInLoop,
-        muted: buffer.metadata.muted,
-        order: buffer.metadata.order,
-        fit: buffer.metadata.fit,
-        blob
-      };
-
-      await saveMediaItem(savePayload);
-      transferBuffers.delete(data.transferId);
-      
-      return { complete: true, item: savePayload };
-    }
+  const result = incoming.assembler.accept(data);
+  if (incoming.assembler.pendingCount && !incoming.timer) {
+    const current = incoming;
+    current.timer = setInterval(() => {
+      current.assembler.prune();
+      if (!current.assembler.pendingCount) {clearInterval(current.timer); current.timer = undefined;}
+    }, 10_000);
+  } else if (!incoming.assembler.pendingCount) {
+    clearInterval(incoming.timer);
+    incoming.timer = undefined;
   }
-
-  return { complete: false };
+  const progress = result ? {name:result.metadata.name, progress:100} : incoming.assembler.progressFor(data.transferId);
+  if (progress && !result && Date.now() - incoming.noticeAt >= 100) {
+    incoming.noticeAt = Date.now();
+    window.dispatchEvent(new CustomEvent('projection_sync_progress', {detail:{message:`Recebendo mídia: ${progress.name} (${progress.progress}%)`, progress:progress.progress}}));
+  }
+  if (!result) return {complete:false};
+  const {size: _size, mimeType: _mime, ...metadata} = result.metadata;
+  const item = {...metadata, blob:result.blob};
+  await saveMediaItem(item, incoming.abort.signal);
+  incoming.abort.signal.throwIfAborted();
+  window.dispatchEvent(new CustomEvent('projection_sync_progress', {detail:{message:`Mídia salva: ${result.metadata.name}`, progress:100}}));
+  return {complete:true, item};
 }

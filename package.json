@@ -10,9 +10,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
+    "@phosphor-icons/react": "2.1.10",
     "@tailwindcss/vite": "^4.1.14",
     "@types/three": "^0.185.1",
     "@vitejs/plugin-react": "^5.0.4",

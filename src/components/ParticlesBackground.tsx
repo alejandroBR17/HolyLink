@@ -1,6 +1,11 @@
+import {useReducedMotion} from 'motion/react';
 import React, { useRef, useEffect } from 'react';
 
-export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }) => {
+export const ParticlesBackground = ({ disabled = false, youth = false,accent }: { disabled?: boolean; youth?:boolean;accent?:string }) => {
+  const reducedMotion=useReducedMotion();
+  const accentRef=useRef(accent);
+  const redraw=useRef<(()=>void)|null>(null);
+  useEffect(()=>{accentRef.current=accent;redraw.current?.();},[accent]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -14,7 +19,7 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
     let height = canvas.height = 1080;
 
     const particles: any[] = [];
-    const colors = ['#dc2626', '#b91c1c', '#f59e0b', '#fbbf24']; // reds and yellows
+    const colors = youth?['#78baff','#c9e4ff','#3c81da','#ffffff']:['#ffd34f', '#ffe797', '#dba824', '#fff3c6']; // shared black/gold atmosphere
     for (let i = 0; i < 15; i++) {
       particles.push({
         x: Math.random() * width,
@@ -48,28 +53,31 @@ export const ParticlesBackground = ({ disabled = false }: { disabled?: boolean }
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
+        ctx.fillStyle = accentRef.current||p.color;
         ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
         ctx.fill();
         ctx.globalAlpha = 1.0;
       });
 
-      animationFrameId = requestAnimationFrame(render);
+      if(!reducedMotion)animationFrameId = requestAnimationFrame(render);
     };
 
+    redraw.current=()=>{if(reducedMotion)render();};
     render();
 
     return () => {
+      redraw.current=null;
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [disabled,reducedMotion,youth]);
 
   if (disabled) return null;
 
   return (
     <canvas 
-      ref={canvasRef} 
-      className="absolute inset-0 z-0 pointer-events-none opacity-40"
+      ref={canvasRef}
+      data-accent={accent}
+      className="absolute inset-0 z-0 pointer-events-none opacity-40 w-full h-full"
     />
   );
 };

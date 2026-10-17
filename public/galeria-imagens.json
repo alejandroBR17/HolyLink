@@ -1,0 +1,260 @@
+{
+  "date": "2026-10-14",
+  "groups": [
+    {
+      "number": 1,
+      "name": "Símbolo HolyLink",
+      "image": "/brand/hl-symbol-20261014.webp",
+      "status": "Em uso",
+      "where": "Cabeçalho do operador e variantes de ícone",
+      "files": [
+        "/brand/originals/symbol.png",
+        "/brand/hl-symbol-20261014.webp"
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Nome HolyLink",
+      "image": "/brand/hl-text-20261014.webp",
+      "status": "Em uso",
+      "where": "Arte das variantes de ícone com o nome HolyLink; não é a tipografia do cabeçalho",
+      "files": [
+        "/brand/originals/text.png",
+        "/brand/hl-text-20261014.webp"
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Logo completa HolyLink",
+      "image": "/brand/hl-full-20261014.webp",
+      "status": "Em uso",
+      "where": "Abertura do app e variantes de ícone",
+      "files": [
+        "/brand/originals/full.png",
+        "/brand/hl-full-20261014.webp"
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Símbolo · fundo escuro",
+      "image": "/pwa/local-symbol-dark-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-symbol-dark-192.png",
+        "/pwa/local-symbol-dark-512.png"
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Símbolo · fundo claro",
+      "image": "/pwa/local-symbol-light-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-symbol-light-192.png",
+        "/pwa/local-symbol-light-512.png"
+      ]
+    },
+    {
+      "number": 6,
+      "name": "Símbolo · transparente",
+      "image": "/pwa/local-symbol-transparent-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-symbol-transparent-192.png",
+        "/pwa/local-symbol-transparent-512.png"
+      ]
+    },
+    {
+      "number": 7,
+      "name": "Nome · fundo escuro",
+      "image": "/pwa/local-text-dark-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-text-dark-192.png",
+        "/pwa/local-text-dark-512.png"
+      ]
+    },
+    {
+      "number": 8,
+      "name": "Nome · fundo claro",
+      "image": "/pwa/local-text-light-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-text-light-192.png",
+        "/pwa/local-text-light-512.png"
+      ]
+    },
+    {
+      "number": 9,
+      "name": "Nome · transparente",
+      "image": "/pwa/local-text-transparent-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-text-transparent-192.png",
+        "/pwa/local-text-transparent-512.png"
+      ]
+    },
+    {
+      "number": 10,
+      "name": "Logo completa · fundo escuro",
+      "image": "/pwa/local-full-dark-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-full-dark-192.png",
+        "/pwa/local-full-dark-512.png"
+      ]
+    },
+    {
+      "number": 11,
+      "name": "Logo completa · fundo claro",
+      "image": "/pwa/local-full-light-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-full-light-192.png",
+        "/pwa/local-full-light-512.png"
+      ]
+    },
+    {
+      "number": 12,
+      "name": "Logo completa · transparente",
+      "image": "/pwa/local-full-transparent-512.png",
+      "status": "Em uso opcional",
+      "where": "Escolha do ícone em Opções → Instalar HolyLink; o manifesto padrão usa símbolo escuro",
+      "files": [
+        "/pwa/local-full-transparent-192.png",
+        "/pwa/local-full-transparent-512.png"
+      ]
+    },
+    {
+      "number": 13,
+      "name": "Arquivo legado · apple-touch-icon.png",
+      "image": null,
+      "status": "Arquivo inválido",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/apple-touch-icon.png",
+        "/favicon.png",
+        "/icon-192-bg.png",
+        "/icon-192-black.png",
+        "/icon-192.png",
+        "/icon-512.png",
+        "/icon-symbol-838.png",
+        "/pwa/base-symbol.png"
+      ]
+    },
+    {
+      "number": 14,
+      "name": "Arquivo legado · logo-full-814.png",
+      "image": null,
+      "status": "Arquivo inválido",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/logo-full-814.png",
+        "/logo-full.png",
+        "/pwa/base-full.png",
+        "/pwa/full-dark-192.png",
+        "/pwa/full-dark-512.png",
+        "/pwa/full-light-192.png",
+        "/pwa/full-light-512.png",
+        "/pwa/full-transparent-192.png",
+        "/pwa/full-transparent-512.png"
+      ]
+    },
+    {
+      "number": 15,
+      "name": "Arquivo legado · logo-text-854.png",
+      "image": null,
+      "status": "Arquivo inválido",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/logo-text-854.png",
+        "/logo-text-backup.png",
+        "/logo-text.png",
+        "/pwa/base-text.png",
+        "/pwa/text-dark-192.png",
+        "/pwa/text-dark-512.png"
+      ]
+    },
+    {
+      "number": 16,
+      "name": "Arquivo legado · symbol-dark-192.png",
+      "image": "/pwa/symbol-dark-192.png",
+      "status": "Sem uso na interface atual",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/pwa/symbol-dark-192.png"
+      ]
+    },
+    {
+      "number": 17,
+      "name": "Arquivo legado · symbol-dark-512.png",
+      "image": "/pwa/symbol-dark-512.png",
+      "status": "Sem uso na interface atual",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/pwa/symbol-dark-512.png"
+      ]
+    },
+    {
+      "number": 18,
+      "name": "Arquivo legado · symbol-light-192.png",
+      "image": "/pwa/symbol-light-192.png",
+      "status": "Sem uso na interface atual",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/pwa/symbol-light-192.png"
+      ]
+    },
+    {
+      "number": 19,
+      "name": "Arquivo legado · symbol-light-512.png",
+      "image": "/pwa/symbol-light-512.png",
+      "status": "Sem uso na interface atual",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/pwa/symbol-light-512.png"
+      ]
+    },
+    {
+      "number": 20,
+      "name": "Arquivo legado · symbol-transparent-192.png",
+      "image": "/pwa/symbol-transparent-192.png",
+      "status": "Sem uso na interface atual",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/pwa/symbol-transparent-192.png"
+      ]
+    },
+    {
+      "number": 21,
+      "name": "Arquivo legado · symbol-transparent-512.png",
+      "image": "/pwa/symbol-transparent-512.png",
+      "status": "Sem uso na interface atual",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/pwa/symbol-transparent-512.png"
+      ]
+    },
+    {
+      "number": 22,
+      "name": "Arquivo legado · text-light-192.png",
+      "image": null,
+      "status": "Arquivo inválido",
+      "where": "Cópias antigas preservadas. Não usadas pelo cabeçalho, ícones ou abertura da nova prévia. Alguns manifestos alternativos antigos ainda apontam para elas.",
+      "files": [
+        "/pwa/text-light-192.png",
+        "/pwa/text-light-512.png",
+        "/pwa/text-transparent-192.png",
+        "/pwa/text-transparent-512.png"
+      ]
+    }
+  ]
+}

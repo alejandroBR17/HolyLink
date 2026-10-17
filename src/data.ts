@@ -36,6 +36,7 @@ export const MEETINGS: Meeting[] = [
 
   // Sábado
   { id: 'sab-07', day: 6, dayName: 'Sábado', theme: 'Jejum das Causas Impossíveis', time: '07:00', hours: 7, minutes: 0 },
+  {id:'sex-fju-19',day:5,dayName:'Sexta-feira',theme:'Algo a Mais',audience:'fju',time:'19:00',hours:19,minutes:0},
   { id: 'sab-15', day: 6, dayName: 'Sábado', theme: 'Encontro Jovem', time: '15:00', hours: 15, minutes: 0 },
 ];
 

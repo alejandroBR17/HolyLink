@@ -1,0 +1,32 @@
+import {FJU_MOMENTS} from './fju-moments.ts';
+
+export const FJU_CARDS:Record<string,{title:string;subtitle:string;label?:string;layout?:'welcome'|'statement'|'split';symbol:'hand'|'seat'|'door'|'phone'|'chat'|'mute'|'fire'|'social'|'people'|'music'|'book'|'trophy'|'ball'}>={
+ ...Object.fromEntries(FJU_MOMENTS.map(({id,name,...card})=>[id,card])),
+ fju_welcome:{title:'Bom ter você aqui',subtitle:'Chega junto. Este lugar também é seu.',label:'FJU / ENCONTRO JOVEM',layout:'welcome',symbol:'hand'},
+ fju_first_time:{title:'É sua primeira vez?',subtitle:'Pode chegar. Sinta-se à vontade.',label:'CHEGA JUNTO',symbol:'hand'},
+ fju_together:{title:'Ninguém fica de fora',subtitle:'Inclua quem está ao seu lado.',label:'JUNTOS NO ENCONTRO',layout:'statement',symbol:'people'},
+ fju_support:{title:'Quer conversar?',subtitle:'Se precisar, procure um obreiro.',label:'CONTE COM A GENTE',symbol:'chat'},
+ fju_goodbye:{title:'Valeu pela presença',subtitle:'Até o próximo Encontro Jovem!',label:'A GENTE SE ENCONTRA',layout:'welcome',symbol:'hand'},
+ social:{title:'Universal Jardim Osasco',subtitle:'@universaljardimosascooficial',label:'INSTAGRAM DA IGREJA',symbol:'social'},
+ seat:{title:'Escolha seu lugar',subtitle:'Acomode-se para aproveitar cada momento.',symbol:'hand'},
+ bathroom:{title:'Precisa ir ao banheiro?',subtitle:'Vá antes de começar.',symbol:'door'},
+ phone:{title:'Sem distração',subtitle:'Deixe o celular no silencioso.',symbol:'phone'},
+ no_chat:{title:'Foco no que importa',subtitle:'Evite conversas paralelas.',symbol:'mute'},
+ soon:{title:'Vem pro encontro',subtitle:'Acompanhe os avisos enquanto aguarda.',symbol:'fire'},
+};
+export const FJU_PRE_SLIDES=['fju_welcome','seat','verse_1','fju_first_time','bathroom','fju_together','phone','verse_2','fju_support','world_god','no_chat','fju_agenda'];
+export const FJU_POST_SLIDES=['fju_goodbye','fju_support','fju_agenda','fju_together'];
+
+export const FJU_PROJECTS = [
+ {id:'fju_project_sports',name:'Esportes',logo:'/brand/fju-project-esportes.png',description:'Futebol, vôlei e outras modalidades para quem gosta de jogar.',invitation:'Venha jogar com a FJU.',color:'#68df6a'},
+ {id:'fju_project_culture',name:'Cultura',logo:'/brand/fju-project-cultura.png',description:'Dança, canto e teatro: um espaço para se expressar pela arte.',invitation:'Coloque seu talento nas apresentações.',color:'#ffbd51'},
+ {id:'fju_project_media',name:'Mídia',logo:'/brand/fju-project-midia.png',description:'Fotografia, edição de vídeos e design para registrar e divulgar a FJU.',invitation:'Crie imagens e histórias que alcancem outros jovens.',color:'#90c4ff'},
+] as const;
+export const FJU_PROJECT_SLIDES=['fju_projects',...FJU_PROJECTS.map(p=>p.id)];
+export const isFjuProject=(id:string)=>FJU_PROJECT_SLIDES.includes(id);
+/** The project introduction always leads the three connected chapters. */
+export function connectFjuProjects(ids:readonly string[]):string[]{
+ const first=ids.findIndex(isFjuProject);if(first<0)return [...ids];
+ const result=ids.filter(id=>!isFjuProject(id));
+ result.splice(first,0,...FJU_PROJECT_SLIDES.filter(id=>ids.includes(id)));return result;
+}

@@ -1,0 +1,176 @@
+import {UsersThree as PhUsersThree} from '@phosphor-icons/react/dist/csr/UsersThree';
+import {Chair as PhChair} from '@phosphor-icons/react/dist/csr/Chair';
+import {DoorOpen as PhDoorOpen} from '@phosphor-icons/react/dist/csr/DoorOpen';
+import {ChatCircleSlash as PhChatCircleSlash} from '@phosphor-icons/react/dist/csr/ChatCircleSlash';
+import {Clock as PhClock} from '@phosphor-icons/react/dist/csr/Clock';
+import {InstagramLogo as PhInstagramLogo} from '@phosphor-icons/react/dist/csr/InstagramLogo';
+import {GlobeHemisphereWest as PhGlobeHemisphereWest} from '@phosphor-icons/react/dist/csr/GlobeHemisphereWest';
+import {Fire as PhFire} from '@phosphor-icons/react/dist/csr/Fire';
+import {HandHeart as PhHandHeart} from '@phosphor-icons/react/dist/csr/HandHeart';
+import {Info as PhInfo} from '@phosphor-icons/react/dist/csr/Info';
+import {WifiSlash as PhWifiSlash} from '@phosphor-icons/react/dist/csr/WifiSlash';
+import {HandsPraying as PhHandsPraying} from '@phosphor-icons/react/dist/csr/HandsPraying';
+import {SkipForward as PhSkipForward} from '@phosphor-icons/react/dist/csr/SkipForward';
+import {Lightning as PhLightning} from '@phosphor-icons/react/dist/csr/Lightning';
+import {Flask as PhFlask} from '@phosphor-icons/react/dist/csr/Flask';
+import {XCircle as PhXCircle} from '@phosphor-icons/react/dist/csr/XCircle';
+import {Pulse as PhPulse} from '@phosphor-icons/react/dist/csr/Pulse';
+import {Laptop as PhLaptop} from '@phosphor-icons/react/dist/csr/Laptop';
+import {UploadSimple as PhUploadSimple} from '@phosphor-icons/react/dist/csr/UploadSimple';
+import {Broom as PhBroom} from '@phosphor-icons/react/dist/csr/Broom';
+import {ArrowSquareUp as PhArrowSquareUp} from '@phosphor-icons/react/dist/csr/ArrowSquareUp';
+import type {Icon, IconProps} from '@phosphor-icons/react';
+import {ArrowClockwise as PhArrowClockwise} from '@phosphor-icons/react/dist/csr/ArrowClockwise';
+import {ArrowCounterClockwise as PhArrowCounterClockwise} from '@phosphor-icons/react/dist/csr/ArrowCounterClockwise';
+import {ArrowSquareOut as PhArrowSquareOut} from '@phosphor-icons/react/dist/csr/ArrowSquareOut';
+import {ArrowsLeftRight as PhArrowsLeftRight} from '@phosphor-icons/react/dist/csr/ArrowsLeftRight';
+import {Baby as PhBaby} from '@phosphor-icons/react/dist/csr/Baby';
+import {Bell as PhBell} from '@phosphor-icons/react/dist/csr/Bell';
+import {BookOpenText as PhBookOpenText} from '@phosphor-icons/react/dist/csr/BookOpenText';
+import {CalendarDots as PhCalendarDots} from '@phosphor-icons/react/dist/csr/CalendarDots';
+import {Car as PhCar} from '@phosphor-icons/react/dist/csr/Car';
+import {CaretDown as PhCaretDown} from '@phosphor-icons/react/dist/csr/CaretDown';
+import {CaretLeft as PhCaretLeft} from '@phosphor-icons/react/dist/csr/CaretLeft';
+import {CaretRight as PhCaretRight} from '@phosphor-icons/react/dist/csr/CaretRight';
+import {CaretUp as PhCaretUp} from '@phosphor-icons/react/dist/csr/CaretUp';
+import {CheckCircle as PhCheckCircle} from '@phosphor-icons/react/dist/csr/CheckCircle';
+import {CircleDashed as PhCircleDashed} from '@phosphor-icons/react/dist/csr/CircleDashed';
+import {CloudRain as PhCloudRain} from '@phosphor-icons/react/dist/csr/CloudRain';
+import {CornersIn as PhCornersIn} from '@phosphor-icons/react/dist/csr/CornersIn';
+import {CornersOut as PhCornersOut} from '@phosphor-icons/react/dist/csr/CornersOut';
+import {DeviceMobileCamera as PhDeviceMobileCamera} from '@phosphor-icons/react/dist/csr/DeviceMobileCamera';
+import {DownloadSimple as PhDownloadSimple} from '@phosphor-icons/react/dist/csr/DownloadSimple';
+import {Drop as PhDrop} from '@phosphor-icons/react/dist/csr/Drop';
+import {Eye as PhEye} from '@phosphor-icons/react/dist/csr/Eye';
+import {EyeSlash as PhEyeSlash} from '@phosphor-icons/react/dist/csr/EyeSlash';
+import {Gauge as PhGauge} from '@phosphor-icons/react/dist/csr/Gauge';
+import {HandWaving as PhHandWaving} from '@phosphor-icons/react/dist/csr/HandWaving';
+import {HardDrives as PhHardDrives} from '@phosphor-icons/react/dist/csr/HardDrives';
+import {Image as PhImage} from '@phosphor-icons/react/dist/csr/Image';
+import {Key as PhKey} from '@phosphor-icons/react/dist/csr/Key';
+import {Keyboard as PhKeyboard} from '@phosphor-icons/react/dist/csr/Keyboard';
+import {ArrowsClockwise as PhArrowsClockwise} from '@phosphor-icons/react/dist/csr/ArrowsClockwise';
+import {Megaphone as PhMegaphone} from '@phosphor-icons/react/dist/csr/Megaphone';
+import {Minus as PhMinus} from '@phosphor-icons/react/dist/csr/Minus';
+import {Monitor as PhMonitor} from '@phosphor-icons/react/dist/csr/Monitor';
+import {PaintBrush as PhPaintBrush} from '@phosphor-icons/react/dist/csr/PaintBrush';
+import {PaperPlaneTilt as PhPaperPlaneTilt} from '@phosphor-icons/react/dist/csr/PaperPlaneTilt';
+import {Pause as PhPause} from '@phosphor-icons/react/dist/csr/Pause';
+import {Play as PhPlay} from '@phosphor-icons/react/dist/csr/Play';
+import {Playlist as PhPlaylist} from '@phosphor-icons/react/dist/csr/Playlist';
+import {Plus as PhPlus} from '@phosphor-icons/react/dist/csr/Plus';
+import {Prohibit as PhProhibit} from '@phosphor-icons/react/dist/csr/Prohibit';
+import {ProjectorScreen as PhProjectorScreen} from '@phosphor-icons/react/dist/csr/ProjectorScreen';
+import {SelectionSlash as PhSelectionSlash} from '@phosphor-icons/react/dist/csr/SelectionSlash';
+import {ShieldCheck as PhShieldCheck} from '@phosphor-icons/react/dist/csr/ShieldCheck';
+import {SidebarSimple as PhSidebarSimple} from '@phosphor-icons/react/dist/csr/SidebarSimple';
+import {SlidersHorizontal as PhSlidersHorizontal} from '@phosphor-icons/react/dist/csr/SlidersHorizontal';
+import {Sparkle as PhSparkle} from '@phosphor-icons/react/dist/csr/Sparkle';
+import {SpeakerHigh as PhSpeakerHigh} from '@phosphor-icons/react/dist/csr/SpeakerHigh';
+import {SpeakerSlash as PhSpeakerSlash} from '@phosphor-icons/react/dist/csr/SpeakerSlash';
+import {SpinnerGap as PhSpinnerGap} from '@phosphor-icons/react/dist/csr/SpinnerGap';
+import {Textbox as PhTextbox} from '@phosphor-icons/react/dist/csr/Textbox';
+import {Timer as PhTimer} from '@phosphor-icons/react/dist/csr/Timer';
+import {Trash as PhTrash} from '@phosphor-icons/react/dist/csr/Trash';
+import {Warning as PhWarning} from '@phosphor-icons/react/dist/csr/Warning';
+import {Waves as PhWaves} from '@phosphor-icons/react/dist/csr/Waves';
+import {Wind as PhWind} from '@phosphor-icons/react/dist/csr/Wind';
+import {X as PhX} from '@phosphor-icons/react/dist/csr/X';
+// Shared visual weight; labels belong to controls, decorative symbols stay silent.
+function themed(Component: Icon) {
+  return function HolyIcon(props: IconProps) { return <Component weight="regular" aria-hidden="true" {...props}/>; };
+}
+export const ExternalLink = themed(PhArrowSquareOut);
+export const X = themed(PhX);
+export const EyeOff = themed(PhEyeSlash);
+export const Plus = themed(PhPlus);
+export const Minus = themed(PhMinus);
+export const Play = themed(PhPlay);
+export const Pause = themed(PhPause);
+export const SlidersHorizontal = themed(PhSlidersHorizontal);
+export const Eye = themed(PhEye);
+export const Eraser = themed(PhSelectionSlash);
+export const ListVideo = themed(PhPlaylist);
+export const Hand = themed(PhHandWaving);
+export const Timer = themed(PhTimer);
+export const RotateCcw = themed(PhArrowCounterClockwise);
+export const Waves = themed(PhWaves);
+export const MessageSquareText = themed(PhTextbox);
+export const Keyboard = themed(PhKeyboard);
+export const Bell = themed(PhBell);
+export const Trash2 = themed(PhTrash);
+export const Send = themed(PhPaperPlaneTilt);
+export const VolumeX = themed(PhSpeakerSlash);
+export const Volume2 = themed(PhSpeakerHigh);
+export const Megaphone = themed(PhMegaphone);
+export const Gauge = themed(PhGauge);
+export const HardDrive = themed(PhHardDrives);
+export const Monitor = themed(PhMonitor);
+export const Download = themed(PhDownloadSimple);
+export const Baby = themed(PhBaby);
+export const Car = themed(PhCar);
+export const Key = themed(PhKey);
+export const CloudRain = themed(PhCloudRain);
+export const Droplets = themed(PhDrop);
+export const ArrowRightLeft = themed(PhArrowsLeftRight);
+export const Wind = themed(PhWind);
+export const CircleDot = themed(PhCircleDashed);
+export const Sparkles = themed(PhSparkle);
+export const CircleOff = themed(PhProhibit);
+export const WandSparkles = themed(PhArrowsClockwise);
+export const CheckCircle2 = themed(PhCheckCircle);
+export const AlertTriangle = themed(PhWarning);
+export const ShieldCheck = themed(PhShieldCheck);
+export const RefreshCw = themed(PhArrowClockwise);
+export const Palette = themed(PhPaintBrush);
+export const ImageIcon = themed(PhImage);
+export const LoaderCircle = themed(PhSpinnerGap);
+export const Smartphone = themed(PhDeviceMobileCamera);
+export const Tv = themed(PhProjectorScreen);
+export const CalendarDays = themed(PhCalendarDots);
+export const BookOpen = themed(PhBookOpenText);
+export const Layout = themed(PhPlaylist);
+export const Settings = themed(PhSlidersHorizontal);
+export const Maximize = themed(PhCornersOut);
+export const Minimize = themed(PhCornersIn);
+export const ChevronDown = themed(PhCaretDown);
+export const ChevronUp = themed(PhCaretUp);
+export const ChevronLeft = themed(PhCaretLeft);
+export const ChevronRight = themed(PhCaretRight);
+export const PanelLeftClose = themed(PhSidebarSimple);
+export const PanelLeftOpen = themed(PhSidebarSimple);
+
+export const Share = themed(PhArrowSquareUp);
+
+export const Broom = themed(PhBroom);
+
+export const Upload = themed(PhUploadSimple);
+
+export const Laptop = themed(PhLaptop);
+
+export const Activity = themed(PhPulse);
+
+export const XCircle = themed(PhXCircle);
+
+export const FlaskConical = themed(PhFlask);
+
+export const Zap = themed(PhLightning);
+
+export const SkipForward=themed(PhSkipForward);
+
+export const Chair=themed(PhChair);
+export const Restroom=themed(PhDoorOpen);
+export const MessageSquareOff=themed(PhChatCircleSlash);
+export const Clock=themed(PhClock);
+export const Instagram=themed(PhInstagramLogo);
+export const Globe=themed(PhGlobeHemisphereWest);
+export const Flame=themed(PhFire);
+export const HeartHandshake=themed(PhHandHeart);
+export const Info=themed(PhInfo);
+export const WifiOff=themed(PhWifiSlash);
+export const PrayingHands=themed(PhHandsPraying);
+
+// A church pew: continuous back and seat, with solid ends rather than school-chair legs.
+export function ChurchBench({size=32,color='currentColor',className,style}:IconProps){return <svg width={size} height={size} viewBox="0 0 256 256" fill="none" stroke={color} strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" className={className} style={style} aria-hidden="true"><path d="M48 128V64a16 16 0 0 1 16-16h128a16 16 0 0 1 16 16v64M40 136h176v32H40zM24 104h16v104H24zM216 104h16v104h-16zM48 184h160"/></svg>;}
+
+export const UsersRound=themed(PhUsersThree);

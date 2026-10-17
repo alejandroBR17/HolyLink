@@ -1,46 +1,64 @@
 # HolyLink
 
-Aplicação web para controlar projeções, slides e mídias em eventos. Inclui comunicação entre janelas e pareamento entre dispositivos, além de recursos locais de armazenamento.
+Operador web para a projeção de avisos, Bíblia, agenda e mídias antes e depois de reuniões e encontros. O PC envia a composição 16:9 ao telão; um celular autorizado pode controlar a operação por PeerJS/WebRTC.
 
-[Versão publicada](https://holylink.vercel.app/)
+[Versão publicada](https://holylink.vercel.app/) · [Guia de operação](docs/operacao-biblia-efeitos.md) · [Conexão e backup](docs/sincronizacao-celular-pc.md)
 
-## Recursos e implementação
+A reformulação está na PR #1, em Preview. O link publicado pode continuar na versão anterior enquanto não houver merge e publicação autorizados.
 
-- Interface de operação e janela de projeção.
-- Comunicação local com BroadcastChannel e sincronização remota com PeerJS/WebRTC.
-- Armazenamento de mídias em IndexedDB e preferências no navegador.
-- Recursos de apresentação, temporização, tela cheia e efeitos visuais com Three.js.
+## Fluxo de uso
 
-O comportamento depende do navegador, da rede e do equipamento. A conexão entre dispositivos pode depender de serviços de sinalização e da configuração de rede; P2P não significa ausência de infraestrutura. Não foram publicados benchmarks que comprovem latência submilissegundo, taxa fixa de quadros ou funcionamento sem falhas.
+1. No PC, prepare a segunda tela e mova a janela para a saída desejada. Conecte o celular na aba Conexão e aprove o primeiro acesso no PC.
+2. Antes, use Pré-reunião ou Pré-encontro. No modo FJU, escolha os momentos que serão anunciados; eles passam juntos na fila automática. Projetos e eventos usam as escolhas e a agenda salvas.
+3. Durante, feche somente a janela de projeção do HolyLink para usar o Holyrics separadamente. O fim da contagem não fecha a janela nem afirma que a reunião começou.
+4. Depois, selecione Pós-reunião/Pós-encontro e reabra a saída. Celular autorizado pode solicitar abertura e fechamento ao PC, com confirmação ou indicação de bloqueio.
 
-Wake Lock é um pedido ao navegador para manter a tela ativa quando suportado; não impede todas as formas de suspensão do sistema. Armazenamento local pode ser removido pelo usuário ou pelo navegador. Verifique o funcionamento no equipamento do evento antes de usá-lo.
+Pop-ups precisam estar permitidos no PC. A primeira preparação, tela cheia, áudio e foco sobre outro programa podem exigir uma ação no computador. Reabrir tenta recuperar a posição anterior; o navegador não garante descoberta de HDMI nem controle nativo do Holyrics.
 
-## Execução local
+## Recursos
 
-Use Node.js compatível com Vite e os plugins, como Node.js 24.
+- Sequência com conteúdo atual, fixação, participação, ordem e biblioteca de mídias.
+- Bíblia com livros/capítulos, intervalos, rascunho, histórico, paginação e cache local limitado.
+- Agenda semanal/pontual com vínculos independentes Igreja/FJU/ambos.
+- Ajustes de operação, efeitos e desempenho; Monitor com prévia silenciosa e diagnóstico.
+- Pareamento com aprovação no PC, retomada entre aparelhos lembrados e revogação de acesso.
+- Transferência de mídias por blocos, comparação de conteúdo e preservação de arquivos exclusivos.
+- Backup validado antes de aplicar; armazenamento local em IndexedDB e preferências no navegador.
+- Instalação PWA, ícones locais, cache do aplicativo e atualização por ação explícita.
+- Vídeo com tratamento de áudio bloqueado, falha, tentativa de recuperação e leitura inicial de metadados limitada a 12 segundos.
+
+## Executar e verificar
+
+Use Node.js 24 (também indicado em `.nvmrc`) e npm. Não são exigidas chaves de IA nem credenciais de backend.
 
 ```sh
 git clone https://github.com/alejandroBR17/HolyLink.git
 cd HolyLink
-npm install
+npm ci
 npm run dev
 ```
 
-Abra `http://localhost:3000`. Para verificar tipos e gerar a interface:
+Abra `http://localhost:3000`. Verificações:
 
 ```sh
 npm run lint
+npm test
 npm run build
+npm audit
 ```
 
-O script `lint` executa TypeScript. O repositório não oferece atualmente um comando `npm test` nem um CI que comprove a entrega entre dispositivos; esses fluxos exigem verificação nos aparelhos.
+`lint` verifica os tipos TypeScript. Os testes nativos cobrem regras de agenda/contagem/fila, validação de comandos, Bíblia, mídia, autorização, backup e PWA. O workflow `Verificar HolyLink` executa instalação pelo lockfile, auditoria, tipos, testes e build nas PRs e em main; não publica nem usa credenciais de produção.
 
-## Decisões e participação
+Ensaios de navegador e limites da validação estão no [relatório de desenvolvimento](docs/relatorio-madrugada-2026-10-15.md). Testes automatizados não comprovam HDMI, som externo, foco do Windows/Holyrics ou instalação em todos os aparelhos.
 
-Projeto pessoal de Alejandro Cortes, desenvolvido com assistência de IA. A proposta reúne controle e projeção em uma interface web, usando APIs do navegador para comunicação e armazenamento. O código organiza telas, hooks e utilitários em `src`; a separação facilita revisar sincronização, mídia e apresentação de forma independente.
+## Dados e limites
 
-A implementação documenta recursos existentes, sem apresentar metas de desempenho como resultados medidos. Mídias e textos exibidos devem respeitar os direitos de seus titulares.
+Os dados ficam neste navegador/aparelho; apagar o armazenamento pode removê-los. Exporte backup e preserve os arquivos originais. P2P ainda depende de sinalização e condições de rede. Wake Lock é uma solicitação ao navegador, não uma garantia contra toda suspensão do sistema.
 
-## Licença
+Transferência remota e backup JSON têm limites explícitos de tamanho; consulte o guia antes de bibliotecas grandes. A ausência de um arquivo no celular não manda apagá-lo no PC. Exclusão remota exige conexão e confirmação; não é um diário de exclusões para aparelhos offline.
 
-Consulte [LICENSE](LICENSE) para o código e as condições próprias das dependências e mídias.
+## Projeto e licença
+
+Projeto de Alejandro Cortes, desenvolvido com assistência de IA. Código em `src`, verificações em `tests` e documentação em `docs`.
+
+O código segue a [licença Apache-2.0](LICENSE). Logotipos, marcas, versículos e mídias mantêm os direitos e condições dos seus respectivos titulares; a licença do código não concede direitos sobre esses materiais.

@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import {isYouthMeeting,isChurchMeeting} from '../../utils/projection-theme';
+import {ConsoleIntro} from './ConsoleIntro';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { 
+import {
   CalendarDays, Plus, X, ArrowDown, Edit2, Trash2, Globe, Flame, WifiOff, RefreshCw, AlertTriangle, Sparkles, Copy, Zap, Check
 } from 'lucide-react';
 import { Meeting } from '../../types';
+import {calendarDate,clockTime,localDateKey,meetingIsToday,WEEK_DAYS} from '../../utils/agenda';
 
 interface Campaign {
   id: string;
@@ -14,6 +17,7 @@ interface Campaign {
 }
 
 interface AgendaPanelProps {
+  youth?:boolean;
   customMeetings: Meeting[];
   customCampaigns: Campaign[];
   updateStateAndBroadcast: (key: string, value: any) => void;
@@ -24,12 +28,13 @@ interface AgendaPanelProps {
 }
 
 const DEFAULT_MEETING_PRESETS = [
+  {theme:"Algo a Mais",day:5,dayName:"Sexta-feira",time:"19:00",hours:19,minutes:0},
   { theme: "Santo Culto do Domingo", day: 0, dayName: "Domingo", time: "18:00", hours: 18, minutes: 0 },
   { theme: "Prosperidade com Deus", day: 1, dayName: "Segunda-feira", time: "19:30", hours: 19, minutes: 30 },
   { theme: "Escola da Fé & Salvação", day: 3, dayName: "Quarta-feira", time: "19:30", hours: 19, minutes: 30 },
   { theme: "Nação dos Casais & Família", day: 4, dayName: "Quinta-feira", time: "19:30", hours: 19, minutes: 30 },
   { theme: "Corrente de Libertação & Cura", day: 5, dayName: "Sexta-feira", time: "19:30", hours: 19, minutes: 30 },
-  { theme: "Encontro Força Jovem (FJU)", day: 6, dayName: "Sábado", time: "16:00", hours: 16, minutes: 0 },
+  { theme: "Encontro Força Jovem (FJU)", day: 6, dayName: "Sábado", time: "15:00", hours: 15, minutes: 0 },
 ];
 
 const DEFAULT_CAMPAIGN_PRESETS: Array<{ title: string; duration: string; iconType: 'flame' | 'wifi_off' | 'globe' | 'faith' }> = [
@@ -40,6 +45,7 @@ const DEFAULT_CAMPAIGN_PRESETS: Array<{ title: string; duration: string; iconTyp
 ];
 
 export const AgendaPanel = React.memo(function AgendaPanel({
+  youth=false,
   customMeetings,
   customCampaigns,
   updateStateAndBroadcast,
@@ -48,7 +54,9 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   showAlert,
   onResetCampaigns
 }: AgendaPanelProps) {
+  const latest=useRef({customMeetings,customCampaigns});latest.current={customMeetings,customCampaigns};
   const notify = showToast || showAlert;
+  const [newMeetAudience,setNewMeetAudience]=useState<'fju'|'church'|'both'>(youth?'fju':'church');
   const [newMeetTheme, setNewMeetTheme] = useState('');
   const [newMeetType, setNewMeetType] = useState<'weekly' | 'one_time'>('weekly');
   const [newMeetWeeklyDay, setNewMeetWeeklyDay] = useState(0);
@@ -56,6 +64,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const [newMeetTime, setNewMeetTime] = useState('19:30');
   const [showAddMeetingForm, setShowAddMeetingForm] = useState(false);
   const [editingMeetId, setEditingMeetId] = useState<string | null>(null);
+  const [meetingError,setMeetingError]=useState('');
+  const [meetingBase,setMeetingBase]=useState('');
 
   const [newCampTitle, setNewCampTitle] = useState('');
   const [newCampDuration, setNewCampDuration] = useState('');
@@ -63,45 +73,64 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const [newCampEndDate, setNewCampEndDate] = useState('');
   const [showAddCampaignForm, setShowAddCampaignForm] = useState(false);
   const [editingCampId, setEditingCampId] = useState<string | null>(null);
+  const [campaignError,setCampaignError]=useState('');
+  const [campaignBase,setCampaignBase]=useState('');
+  const meetingConflict=Boolean(editingMeetId&&meetingBase!==JSON.stringify(customMeetings.find(m=>m.id===editingMeetId)));
+  const campaignConflict=Boolean(editingCampId&&campaignBase!==JSON.stringify(customCampaigns.find(c=>c.id===editingCampId)));
 
-  const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(false);
-  const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(false);
+  const [isMeetingPanelOpen, setIsMeetingPanelOpen] = useState(true);
+  const [isCampaignPanelOpen, setIsCampaignPanelOpen] = useState(true);
+  const [meetingFilter,setMeetingFilter]=useState(youth?'fju':'church');
+  const [meetingSearch,setMeetingSearch]=useState('');
+  const revealForm=(id:string)=>{
+    const input=document.getElementById(id);
+    input?.focus({preventScroll:true});
+    input?.closest('form')?.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  };
+  useEffect(()=>{if(showAddMeetingForm)revealForm('meeting-theme');},[showAddMeetingForm,editingMeetId]);
+  useEffect(()=>{if(showAddCampaignForm)revealForm('campaign-title');},[showAddCampaignForm,editingCampId]);
 
-  const daysMap = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  const daysMap = WEEK_DAYS;
 
   // Current local date YYYY-MM-DD
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const todayStr = `${year}-${month}-${day}`;
+  const todayStr = localDateKey(now);
 
-  const expiredMeetings = (customMeetings || []).filter(m => m.date && m.date < todayStr);
+  const matchesAgenda=youth?isYouthMeeting:isChurchMeeting;
+  const contextMeetings=customMeetings.filter(matchesAgenda);
+  const expiredMeetings = contextMeetings.filter(m => m.date && m.date < todayStr);
+  const visibleMeetings=customMeetings.filter(meet=>{
+    const matches=`${meet.theme} ${meet.dayName} ${meet.time}`.toLocaleLowerCase('pt-BR').includes(meetingSearch.trim().toLocaleLowerCase('pt-BR'));
+    const scope=['all','fju','church'].includes(meetingFilter)||matchesAgenda(meet);
+    return matches&&scope&&(meetingFilter==='all'||meetingFilter==='church'&&isChurchMeeting(meet)||meetingFilter==='fju'&&isYouthMeeting(meet)||meetingFilter==='weekly'&&!meet.date||meetingFilter==='upcoming'&&Boolean(meet.date&&meet.date>=todayStr)||meetingFilter==='past'&&Boolean(meet.date&&meet.date<todayStr));
+  });
 
   const handleClearExpiredMeetings = () => {
     if (expiredMeetings.length === 0) return;
     if (showConfirm) {
       showConfirm(
-        'Limpar Eventos Passados?',
+        'Excluir eventos passados?',
         `Deseja remover ${expiredMeetings.length} evento(s) pontual(is) cuja data já passou?`,
         () => {
-          const updated = (customMeetings || []).filter(m => !(m.date && m.date < todayStr));
+          const updated = latest.current.customMeetings.filter(m => !(matchesAgenda(m)&&m.date && m.date < localDateKey(new Date())));
           updateStateAndBroadcast('customMeetings', updated);
         },
-        'info'
+        'danger'
       );
     } else {
-      const updated = (customMeetings || []).filter(m => !(m.date && m.date < todayStr));
+      const updated = customMeetings.filter(m => !(matchesAgenda(m)&&m.date && m.date < todayStr));
       updateStateAndBroadcast('customMeetings', updated);
     }
   };
 
   const handleAddMeetingPreset = (preset: typeof DEFAULT_MEETING_PRESETS[0]) => {
+    if(customMeetings.some(m=>!m.date&&m.day===preset.day&&m.time===preset.time&&m.theme===preset.theme)){notify('Este evento já está na agenda. Você pode editar o dia e o horário.', 'info');return;}
     const newM: Meeting = {
       id: `meet_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       day: preset.day,
       dayName: preset.dayName,
       theme: preset.theme,
+      audience:isYouthMeeting(preset)?'fju':'church',
       time: preset.time,
       hours: preset.hours,
       minutes: preset.minutes
@@ -142,12 +171,15 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   };
 
   const handleSaveMeeting = () => {
+    setMeetingError('');
+    if(meetingConflict){setMeetingError('Esta reunião mudou em outro controle. Cancele e abra a edição novamente.');return;}
     if (!newMeetTheme.trim()) {
-      if (notify) notify("Por favor, preencha o tema/título da reunião.", "error");
+      setMeetingError('Informe o nome do encontro ou evento.');document.getElementById('meeting-theme')?.focus();
       return;
     }
-    
-    const [hours, minutes] = newMeetTime.split(':').map(Number);
+    const time=clockTime(newMeetTime);
+    if(!time){setMeetingError('Informe um horário válido.');document.getElementById('meeting-time')?.focus();return;}
+    const {hours,minutes}=time;
     let finalDayName = '';
     let finalDay: number | undefined = undefined;
     let finalDate: string | undefined = undefined;
@@ -156,8 +188,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       finalDayName = daysMap[newMeetWeeklyDay];
       finalDay = newMeetWeeklyDay;
     } else {
-      if (!newMeetDate) {
-        if (notify) notify("Por favor, selecione a data do evento.", "error");
+      if (!calendarDate(newMeetDate)) {
+        setMeetingError('Escolha uma data válida para o evento.');document.getElementById('meeting-date')?.focus();
         return;
       }
       const dateParts = newMeetDate.split('-');
@@ -168,10 +200,11 @@ export const AgendaPanel = React.memo(function AgendaPanel({
     }
 
     const mObject: Meeting = {
-      id: editingMeetId || `meet_${Date.now()}`,
+      id: editingMeetId || `meet_${crypto.randomUUID()}`,
       day: finalDay,
       dayName: finalDayName,
       theme: newMeetTheme.trim(),
+      audience:newMeetAudience,
       time: newMeetTime,
       hours: hours,
       minutes: minutes,
@@ -188,7 +221,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       updateStateAndBroadcast('customMeetings', updated);
       if (notify) notify("Nova reunião adicionada à agenda!", "success");
     }
-    
+
     setShowAddMeetingForm(false);
     setNewMeetTheme('');
   };
@@ -196,7 +229,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const handleDeleteMeeting = (id: string) => {
     if (showConfirm) {
       showConfirm('Excluir Reunião?', 'Tem certeza que deseja remover esta reunião?', () => {
-        const updated = customMeetings.filter(m => m.id !== id);
+        const updated = latest.current.customMeetings.filter(m => m.id !== id);
         updateStateAndBroadcast('customMeetings', updated);
         if (notify) notify("Reunião removida.", "info");
       }, 'danger');
@@ -208,13 +241,16 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   };
 
   const handleSaveCampaign = () => {
+    setCampaignError('');
+    if(campaignConflict){setCampaignError('Esta campanha mudou em outro controle. Cancele e abra a edição novamente.');return;}
     if (!newCampTitle.trim()) {
-      if (notify) notify("Por favor, informe o título do propósito/campanha.", "error");
+      setCampaignError('Informe o nome da campanha.');document.getElementById('campaign-title')?.focus();
       return;
     }
-    
+    if(newCampEndDate&&!calendarDate(newCampEndDate)){setCampaignError('Escolha uma data limite válida ou deixe o campo vazio.');return;}
+
     const cObject: Campaign = {
-      id: editingCampId || `camp_${Date.now()}`,
+      id: editingCampId || `camp_${crypto.randomUUID()}`,
       title: newCampTitle.trim(),
       duration: newCampDuration.trim() || "Diariamente",
       iconType: newCampType,
@@ -231,7 +267,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
       updateStateAndBroadcast('customCampaigns', updated);
       if (notify) notify("Novo propósito/campanha adicionado!", "success");
     }
-    
+
     setShowAddCampaignForm(false);
     setNewCampTitle('');
     setNewCampDuration('');
@@ -241,7 +277,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   const handleDeleteCampaign = (id: string) => {
     if (showConfirm) {
       showConfirm('Excluir Campanha?', 'Tem certeza que deseja remover este propósito/campanha?', () => {
-        const updated = customCampaigns.filter(c => c.id !== id);
+        const updated = latest.current.customCampaigns.filter(c => c.id !== id);
         updateStateAndBroadcast('customCampaigns', updated);
       }, 'danger');
     } else {
@@ -251,45 +287,39 @@ export const AgendaPanel = React.memo(function AgendaPanel({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 w-full items-start animate-in fade-in duration-200">
-      
+    <div className="agenda-workspace console-area">
+      <ConsoleIntro icon={CalendarDays} title="Agenda" eyebrow="Semana e eventos" description="Encontro Jovem, Algo a Mais, reuniões e eventos pontuais. Dias e horários são editáveis." stats={[{label:'Semana',value:contextMeetings.filter(m => !m.date).length + ' eventos'},{label:'Pontuais',value:contextMeetings.filter(m => m.date).length + ' eventos'},{label:'Campanhas',value:customCampaigns.length}]}/>
+      <div className="agenda-columns">
+
       {/* MEETS COLUMN */}
-      <section aria-label="Agenda e Reuniões" className={`transition-all duration-300 bg-[#09090b] border border-[#27272a] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col h-fit ${
-        isMeetingPanelOpen && !isCampaignPanelOpen 
-          ? "w-full lg:flex-[3]" 
-          : !isMeetingPanelOpen && isCampaignPanelOpen 
-            ? "w-full lg:w-[325px] shrink-0" 
+      <section aria-label="Agenda e Reuniões" className={`transition-all duration-300 bg-hl-panel border border-hl-line rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col h-fit ${
+        isMeetingPanelOpen && !isCampaignPanelOpen
+          ? "w-full lg:flex-[3]"
+          : !isMeetingPanelOpen && isCampaignPanelOpen
+            ? "w-full lg:w-[325px] shrink-0"
             : "flex-1 w-full"
       }`}>
         <button
           type="button"
-          onClick={() => {
-            if (!isMeetingPanelOpen) {
-              setIsMeetingPanelOpen(true);
-              setIsCampaignPanelOpen(false);
-            } else {
-              setIsMeetingPanelOpen(false);
-            }
-          }}
-          className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#111113] transition-colors group"
+          onClick={() => setIsMeetingPanelOpen(value => !value)} aria-expanded={isMeetingPanelOpen} aria-controls="agenda-meetings-content" className="agenda-section-toggle w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-hl-raised transition-colors group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              <CalendarDays className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <div className="p-2.5 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <CalendarDays className="w-5 h-5 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
             </div>
             <div>
-              <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Agenda & Reuniões</h3>
-              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">{(customMeetings || []).length} reuniões registradas</p>
+              <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Agenda e eventos</h3>
+              <p className="text-[10px] text-hl-muted font-medium mt-0.5">{contextMeetings.length} eventos nesta agenda</p>
             </div>
           </div>
           <motion.div animate={{ rotate: isMeetingPanelOpen ? 180 : 0 }} transition={{ duration: 0.15 }}>
-            <ArrowDown className="w-4 h-4 text-zinc-400 group-hover:text-amber-500 transition-colors" />
+            <ArrowDown className="w-4 h-4 text-hl-muted group-hover:text-hl-gold transition-colors" />
           </motion.div>
         </button>
 
         {isMeetingPanelOpen && (
-          <div className="p-5 border-t border-[#222] bg-[#030303] flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
-            
+          <div id="agenda-meetings-content" className="p-5 border-t border-hl-line-soft bg-hl-canvas flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+
             {!showAddMeetingForm ? (
               <div className="flex flex-col gap-3">
                 <button
@@ -297,74 +327,78 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   onClick={() => {
                     setShowAddMeetingForm(true);
                     setEditingMeetId(null);
+                    setMeetingError('');setMeetingBase('');
                     setNewMeetTheme('');
+                    setNewMeetAudience(youth?'fju':'church');
                     setNewMeetType('weekly');
                     setNewMeetWeeklyDay(new Date().getDay());
-                    setNewMeetDate(new Date().toISOString().split('T')[0]);
+                    setNewMeetDate(todayStr);
                     setNewMeetTime('19:30');
                   }}
-                  className="w-full py-3 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-zinc-100 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px]"
+                  className="w-full py-3 bg-gradient-to-b from-hl-raised to-hl-raised border border-hl-line hover:border-hl-gold/50 text-hl-copy rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px]"
                 >
-                  <Plus className="w-4 h-4 text-amber-500 drop-shadow-[0_0_4px_rgba(245,158,11,0.6)]" />
-                  <span className="font-sans">Nova Reunião</span>
+                  <Plus className="w-4 h-4 text-hl-gold drop-shadow-[0_0_4px_rgba(255,211,79,0.6)]" />
+                  <span className="font-sans">Novo evento</span>
                 </button>
 
                 {/* Modelos Prontos de Reuniões */}
-                <div className="flex flex-col gap-2 pt-3 border-t border-[#222]">
-                  <span className="text-[10px] font-mono font-extrabold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Adicionar Rápido:
+                <details className="console-templates"><summary>Modelos da agenda</summary><div className="flex flex-col gap-2 pt-3 border-t border-hl-line-soft">
+                  <span className="text-[10px] font-mono font-extrabold text-hl-gold uppercase tracking-widest flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-hl-gold shrink-0" /> Adicionar Rápido:
                   </span>
                   <div className="grid grid-cols-2 gap-2">
-                    {DEFAULT_MEETING_PRESETS.map((preset, pIdx) => (
+                    {DEFAULT_MEETING_PRESETS.filter(preset=>youth?isYouthMeeting(preset):isChurchMeeting(preset)).map((preset, pIdx) => (
                       <button
                         key={pIdx}
                         type="button"
                         onClick={() => handleAddMeetingPreset(preset)}
-                        className="bg-[#09090b] border border-[#222] hover:border-amber-500/50 text-left p-2.5 rounded-xl text-[10px] text-zinc-300 hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
+                        className="bg-hl-panel border border-hl-line-soft hover:border-hl-gold/50 text-left p-2.5 rounded-xl text-[10px] text-hl-soft hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
                       >
-                        <span className="font-bold text-amber-400 group-hover:text-amber-300 font-sans truncate">{preset.theme}</span>
-                        <span className="text-zinc-500 text-[9px] font-mono mt-1">{preset.dayName} às {preset.time}</span>
+                        <span className="font-bold text-hl-gold-bright group-hover:text-hl-gold-bright font-sans truncate">{preset.theme}</span>
+                        <span className="text-hl-dim text-[9px] font-mono mt-1">{preset.dayName} às {preset.time}</span>
                       </button>
                     ))}
                   </div>
-                </div>
+                </div></details>
               </div>
             ) : (
-              <div className="bg-[#09090b] border border-[#27272a] p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
-                <div className="flex items-center justify-between border-b border-[#333] pb-2.5">
-                  <span className="text-xs font-extrabold text-amber-500 font-sans uppercase tracking-wider">
-                    {editingMeetId ? "Editar Reunião" : "Nova Reunião / Evento"}
+              <form aria-label="Formulário de reunião" onSubmit={event=>{event.preventDefault();handleSaveMeeting();}} className="bg-hl-panel border border-hl-line p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
+                <div className="flex items-center justify-between border-b border-hl-line pb-2.5">
+                  <span className="text-xs font-extrabold text-hl-gold font-sans uppercase tracking-wider">
+                    {editingMeetId ? "Editar evento" : "Novo evento"}
                   </span>
-                  <button 
+                  <button
                     type="button"
-                    onClick={() => setShowAddMeetingForm(false)}
-                    className="text-zinc-400 hover:text-white transition-colors p-1 cursor-pointer bg-[#111113] border border-[#333] rounded-lg"
+                    onClick={() => setShowAddMeetingForm(false)} aria-label="Fechar formulário de reunião"
+                    className="text-hl-muted hover:text-white transition-colors p-1 cursor-pointer bg-hl-raised border border-hl-line rounded-lg"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
+                <div className="flex flex-col gap-1.5"><label htmlFor="meeting-audience" className="text-xs text-hl-muted">Agenda de</label><select id="meeting-audience" value={newMeetAudience} onChange={e=>setNewMeetAudience(e.target.value as 'fju'|'church'|'both')} className="bg-hl-canvas border border-hl-line rounded-xl px-3 py-3 text-sm text-hl-copy"><option value="church">Igreja</option><option value="fju">FJU</option><option value="both">FJU e reuniões</option></select><p className="text-xs text-hl-muted">FJU aparece só no modo jovem. Para divulgar também nas reuniões, escolha FJU e reuniões.</p></div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Tema do Culto / Evento</label>
+                  <label htmlFor="meeting-theme" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Nome do encontro ou evento</label>
                   <input
                     type="text"
-                    value={newMeetTheme}
+                    id="meeting-theme" value={newMeetTheme} maxLength={2000}
                     onChange={(e) => setNewMeetTheme(e.target.value)}
                     placeholder="Ex: Noite da Salvação, Corrente da Vitória..."
-                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
+                    className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold focus:ring-1 focus:ring-hl-gold/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Frequência</label>
+                  <label className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Frequência</label>
                   <div className="grid grid-cols-2 gap-2 mt-0.5">
                     <button
                       type="button"
                       onClick={() => setNewMeetType('weekly')}
+                      aria-pressed={newMeetType==='weekly'}
                       className={`py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer font-sans active:translate-y-[1px] ${
                         newMeetType === 'weekly'
-                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
+                          ? "bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]"
+                          : "bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line text-hl-muted"
                       }`}
                     >
                       Semanal Fixo
@@ -372,10 +406,11 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     <button
                       type="button"
                       onClick={() => setNewMeetType('one_time')}
+                      aria-pressed={newMeetType==='one_time'}
                       className={`py-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer font-sans active:translate-y-[1px] ${
                         newMeetType === 'one_time'
-                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
+                          ? "bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]"
+                          : "bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line text-hl-muted"
                       }`}
                     >
                       Evento Pontual
@@ -385,46 +420,47 @@ export const AgendaPanel = React.memo(function AgendaPanel({
 
                 {newMeetType === 'weekly' ? (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Dia da Semana</label>
+                    <label htmlFor="meeting-day" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Dia da Semana</label>
                     <select
-                      value={newMeetWeeklyDay}
+                      id="meeting-day" value={newMeetWeeklyDay}
                       onChange={(e) => setNewMeetWeeklyDay(parseInt(e.target.value, 10))}
-                      className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
+                      className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                     >
                       {daysMap.map((d, i) => (
-                        <option key={i} value={i} className="bg-[#09090b] text-zinc-100">{d}</option>
+                        <option key={i} value={i} className="bg-hl-panel text-hl-copy">{d}</option>
                       ))}
                     </select>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Data Limite</label>
+                    <label htmlFor="meeting-date" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Data do evento</label>
                     <input
                       type="date"
-                      value={newMeetDate}
+                      id="meeting-date" value={newMeetDate}
                       onChange={(e) => setNewMeetDate(e.target.value)}
-                      className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
+                      className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                     />
                   </div>
                 )}
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Horário</label>
+                  <label htmlFor="meeting-time" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Horário</label>
                   <input
                     type="time"
-                    value={newMeetTime}
+                    id="meeting-time" value={newMeetTime}
                     onChange={(e) => setNewMeetTime(e.target.value)}
-                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
+                    className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
                 </div>
 
+                {(meetingError||meetingConflict)&&<p className="agenda-error" role="alert">{meetingConflict?'Esta reunião mudou em outro controle. Cancele e abra a edição novamente.':meetingError}</p>}
                 <div className="flex gap-2.5 mt-1">
                   <button
-                    type="button"
-                    onClick={handleSaveMeeting}
-                    className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] active:translate-y-[1px]"
+                    type="submit"
+                    disabled={meetingConflict}
+                    className="flex-1 py-2.5 bg-hl-gold hover:bg-hl-gold-bright text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(255,211,79,0.3)] active:translate-y-[1px]"
                   >
-                    Confirmar Cadastro
+                    {editingMeetId?'Salvar alterações':'Adicionar evento'}
                   </button>
                   <button
                     type="button"
@@ -432,19 +468,19 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       setShowAddMeetingForm(false);
                       setEditingMeetId(null);
                     }}
-                    className="px-4 py-2.5 bg-[#111113] border border-[#333] hover:border-[#444] text-zinc-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:translate-y-[1px]"
+                    className="px-4 py-2.5 bg-hl-raised border border-hl-line hover:border-hl-line-strong text-hl-soft rounded-xl text-xs font-bold cursor-pointer transition-all active:translate-y-[1px]"
                   >
                     Cancelar
                   </button>
                 </div>
-              </div>
+              </form>
             )}
 
             {/* EXPIRED MEETINGS NOTIFICATION BANNER */}
             {expiredMeetings.length > 0 && (
-              <div className="bg-amber-950/60 border border-amber-800/60 rounded-xl p-3 flex items-center justify-between gap-3 text-xs shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                <div className="flex items-center gap-2 text-amber-400 font-medium min-w-0">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 animate-pulse" />
+              <div className="bg-hl-gold-well/60 border border-hl-line-strong/60 rounded-xl p-3 flex items-center justify-between gap-3 text-xs shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                <div className="flex items-center gap-2 text-hl-gold-bright font-medium min-w-0">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-hl-gold animate-pulse" />
                   <span className="truncate">
                     {expiredMeetings.length === 1
                       ? `1 evento pontual ("${expiredMeetings[0].theme}") já passou.`
@@ -454,7 +490,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 <button
                   type="button"
                   onClick={handleClearExpiredMeetings}
-                  className="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-extrabold rounded-lg text-[11px] transition-all cursor-pointer flex items-center gap-1 shadow-sm active:translate-y-[1px]"
+                  className="shrink-0 px-3 py-1.5 bg-hl-gold hover:bg-hl-gold-bright text-black font-extrabold rounded-lg text-[11px] transition-all cursor-pointer flex items-center gap-1 shadow-sm active:translate-y-[1px]"
                   title="Remover eventos passados da agenda"
                 >
                   <Sparkles className="w-3.5 h-3.5" /> Limpar Passados
@@ -463,14 +499,17 @@ export const AgendaPanel = React.memo(function AgendaPanel({
             )}
 
             {/* MEETS LIST */}
+            <div className="agenda-list-tools"><label>Buscar reunião<input value={meetingSearch} onChange={event=>setMeetingSearch(event.target.value)} placeholder="Tema, dia ou horário"/></label><label>Mostrar<select aria-label="Filtrar reuniões" value={meetingFilter} onChange={event=>setMeetingFilter(event.target.value)}><option value="all">Todas</option><option value="church">Reuniões</option><option value="fju">FJU</option><option value="weekly">Semanais</option><option value="upcoming">Eventos futuros</option><option value="past">Eventos passados</option></select></label></div>
             <div className="flex flex-col gap-2.5 pr-1">
               {(customMeetings || []).length === 0 ? (
-                <div className="text-zinc-500 text-center py-6 text-xs italic bg-[#030303] border border-dashed border-[#222] rounded-xl font-medium">
+                <div className="text-hl-dim text-center py-6 text-xs italic bg-hl-canvas border border-dashed border-hl-line-soft rounded-xl font-medium">
                   Nenhuma reunião ou evento adicionado.
                 </div>
               ) : (
-                [...customMeetings]
+                [...visibleMeetings]
                   .sort((a, b) => {
+                    if(a.date&&b.date)return a.date.localeCompare(b.date)||a.time.localeCompare(b.time);
+                    if(Boolean(a.date)!==Boolean(b.date))return a.date?1:-1;
                     const dayA = a.day ?? 0;
                     const dayB = b.day ?? 0;
                     if (dayA !== dayB) return dayA - dayB;
@@ -480,16 +519,16 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                     const isExpired = !!(meet.date && meet.date < todayStr);
 
                     return (
-                      <div 
-                        key={meet.id}
+                      <div
+                        key={meet.id} data-meeting-id={meet.id}
                         className={`flex items-center justify-between p-3.5 rounded-xl border text-xs transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
-                          isExpired 
-                            ? "bg-red-950/20 border-red-900/40 opacity-60" 
-                            : meet.date 
-                              ? "bg-[#09090b] border-amber-900/40" 
+                          isExpired
+                            ? "bg-red-950/20 border-red-900/40 opacity-60"
+                            : meet.date
+                              ? "bg-hl-panel border-hl-line-strong/40"
                               : meet.day === now.getDay()
-                                ? "bg-[#111113] border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
-                                : "bg-[#09090b] border-[#222]"
+                                ? "bg-hl-raised border-hl-gold/60 shadow-[0_0_15px_rgba(255,211,79,0.1)]"
+                                : "bg-hl-panel border-hl-line-soft"
                         }`}
                       >
                         <div className="flex flex-col gap-1 max-w-[70%] text-left">
@@ -500,30 +539,30 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                               </span>
                             ) : (
                               <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase ${
-                                meet.date ? "bg-amber-500 text-black font-extrabold" : "bg-[#111113] text-zinc-400 border border-[#333]"
+                                meet.date ? "bg-hl-gold text-black font-extrabold" : "bg-hl-raised text-hl-muted border border-hl-line"
                               }`}>
                                 {meet.date ? "Único" : "Semanal"}
                               </span>
                             )}
-                            {meet.day === now.getDay() && !isExpired && (
+                            {meetingIsToday(meet,now) && !isExpired && (
                               <span className="text-[8px] px-1.5 py-0.5 rounded font-black uppercase bg-emerald-500 text-black animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]">
                                 Hoje!
                               </span>
                             )}
-                            <span className="text-zinc-200 font-bold font-sans">{meet.dayName}</span>
-                            <span className="text-amber-500 font-mono font-bold">às {meet.time}</span>
+                            <span className="text-hl-soft font-bold font-sans">{meet.dayName}</span>
+                            <span className="text-hl-gold font-mono font-bold">às {meet.time}</span>
                           </div>
-                          <span className="text-zinc-300 truncate font-semibold font-sans">{meet.theme}</span>
+                          <span className="text-hl-soft truncate font-semibold font-sans">{meet.theme}</span>
                           {isExpired && (
-                            <span className="text-[9px] text-zinc-500 italic">Encerrado (removido do telão)</span>
+                            <span className="text-[9px] text-hl-dim italic">Encerrado (removido do telão)</span>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             type="button"
                             onClick={() => handleDuplicateMeeting(meet)}
-                            className="p-2 bg-[#111113] border border-[#333] hover:border-amber-500/50 hover:bg-[#1a1a1d] rounded-lg text-zinc-400 hover:text-amber-400 transition-all cursor-pointer active:translate-y-[1px]"
+                            className="p-2 bg-hl-raised border border-hl-line hover:border-hl-gold/50 hover:bg-hl-raised rounded-lg text-hl-muted hover:text-hl-gold-bright transition-all cursor-pointer active:translate-y-[1px]"
                             title="Duplicar Reunião"
                           >
                             <Copy className="w-3.5 h-3.5" />
@@ -532,22 +571,24 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                             type="button"
                             onClick={() => {
                               setEditingMeetId(meet.id);
+                              setMeetingBase(JSON.stringify(meet));setMeetingError('');
                               setNewMeetTheme(meet.theme);
+                              setNewMeetAudience(meet.audience||(isYouthMeeting(meet)?'fju':'church'));
                               setNewMeetTime(meet.time);
                               setNewMeetType(meet.date ? 'one_time' : 'weekly');
                               if (meet.date) setNewMeetDate(meet.date);
                               if (meet.day !== undefined) setNewMeetWeeklyDay(meet.day);
                               setShowAddMeetingForm(true);
                             }}
-                            className="p-2 bg-[#111113] border border-[#333] hover:border-[#444] hover:bg-[#1a1a1d] rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer active:translate-y-[1px]"
-                            title="Editar Reunião"
+                            className="p-2 bg-hl-raised border border-hl-line hover:border-hl-line-strong hover:bg-hl-raised rounded-lg text-hl-muted hover:text-white transition-all cursor-pointer active:translate-y-[1px]"
+                            title="Editar evento"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteMeeting(meet.id)}
-                            className="p-2 bg-[#111113] border border-[#333] hover:border-red-800 hover:bg-red-950/40 rounded-lg text-zinc-500 hover:text-red-400 transition-all cursor-pointer active:translate-y-[1px]"
+                            className="p-2 bg-hl-raised border border-hl-line hover:border-red-800 hover:bg-red-950/40 rounded-lg text-hl-dim hover:text-red-400 transition-all cursor-pointer active:translate-y-[1px]"
                             title="Excluir Reunião"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -558,69 +599,63 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   })
               )}
             </div>
+            {customMeetings.length>0&&!visibleMeetings.length&&<p className="operator-muted" role="status">Nenhuma reunião corresponde à busca e ao filtro.</p>}
           </div>
         )}
       </section>
 
       {/* CAMPAIGNS COLUMN */}
-      <section aria-label="Campanhas e Propósitos" className={`transition-all duration-300 bg-[#09090b] border border-[#27272a] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col h-fit ${
-        isCampaignPanelOpen && !isMeetingPanelOpen 
-          ? "w-full lg:flex-[3]" 
-          : !isCampaignPanelOpen && isMeetingPanelOpen 
-            ? "w-full lg:w-[325px] shrink-0" 
+      <section aria-label="Campanhas e Propósitos" className={`transition-all duration-300 bg-hl-panel border border-hl-line rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] flex flex-col h-fit ${
+        isCampaignPanelOpen && !isMeetingPanelOpen
+          ? "w-full lg:flex-[3]"
+          : !isCampaignPanelOpen && isMeetingPanelOpen
+            ? "w-full lg:w-[325px] shrink-0"
             : "flex-1 w-full"
       }`}>
         <button
           type="button"
-          onClick={() => {
-            if (!isCampaignPanelOpen) {
-              setIsCampaignPanelOpen(true);
-              setIsMeetingPanelOpen(false);
-            } else {
-              setIsCampaignPanelOpen(false);
-            }
-          }}
-          className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-[#111113] transition-colors group"
+          onClick={() => setIsCampaignPanelOpen(value => !value)} aria-expanded={isCampaignPanelOpen} aria-controls="agenda-campaigns-content" className="agenda-section-toggle w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-hl-raised transition-colors group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              <Flame className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <div className="p-2.5 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <Flame className="w-5 h-5 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
             </div>
             <div>
-              <h3 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Campanhas & Propósitos</h3>
-              <p className="text-[10px] text-zinc-400 font-medium mt-0.5">{(customCampaigns || []).length} campanhas registradas</p>
+              <h3 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Campanhas & Propósitos</h3>
+              <p className="text-[10px] text-hl-muted font-medium mt-0.5">{(customCampaigns || []).length} campanhas registradas</p>
             </div>
           </div>
           <motion.div animate={{ rotate: isCampaignPanelOpen ? 180 : 0 }} transition={{ duration: 0.15 }}>
-            <ArrowDown className="w-4 h-4 text-zinc-400 group-hover:text-amber-500 transition-colors" />
+            <ArrowDown className="w-4 h-4 text-hl-muted group-hover:text-hl-gold transition-colors" />
           </motion.div>
         </button>
 
         {isCampaignPanelOpen && (
-          <div className="p-5 border-t border-[#222] bg-[#030303] flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
-            
+          <div id="agenda-campaigns-content" className="p-5 border-t border-hl-line-soft bg-hl-canvas flex flex-col gap-4 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+
             {!showAddCampaignForm ? (
               <div className="flex flex-col gap-3 w-full">
                 <button
                   type="button"
                   onClick={() => {
                     setEditingCampId(null);
+                    setCampaignBase('');setCampaignError('');
                     setShowAddCampaignForm(true);
                     setNewCampTitle('');
                     setNewCampDuration('');
                     setNewCampType('flame');
                     setNewCampEndDate('');
                   }}
-                  className="w-full py-3 bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-zinc-100 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px]"
+                  className="w-full py-3 bg-gradient-to-b from-hl-raised to-hl-raised border border-hl-line hover:border-hl-gold/50 text-hl-copy rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[1px]"
                 >
-                  <Plus className="w-4 h-4 text-amber-500 drop-shadow-[0_0_4px_rgba(245,158,11,0.6)]" />
+                  <Plus className="w-4 h-4 text-hl-gold drop-shadow-[0_0_4px_rgba(255,211,79,0.6)]" />
                   <span className="font-sans">Nova Campanha</span>
                 </button>
 
                 {/* Modelos Prontos de Campanhas */}
-                <div className="flex flex-col gap-2 pt-3 border-t border-[#222]">
-                  <span className="text-[10px] font-mono font-extrabold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Modelos Rápidos:
+                <details className="console-templates"><summary>Modelos de campanhas</summary><div className="flex flex-col gap-2 pt-3 border-t border-hl-line-soft">
+                  <span className="text-[10px] font-mono font-extrabold text-hl-gold uppercase tracking-widest flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-hl-gold shrink-0" /> Modelos Rápidos:
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     {DEFAULT_CAMPAIGN_PRESETS.map((preset, pIdx) => (
@@ -628,75 +663,75 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                         key={pIdx}
                         type="button"
                         onClick={() => handleAddCampaignPreset(preset)}
-                        className="bg-[#09090b] border border-[#222] hover:border-amber-500/50 text-left p-2.5 rounded-xl text-[10px] text-zinc-300 hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
+                        className="bg-hl-panel border border-hl-line-soft hover:border-hl-gold/50 text-left p-2.5 rounded-xl text-[10px] text-hl-soft hover:text-white font-medium flex flex-col justify-between transition-all cursor-pointer group shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] active:translate-y-[1px]"
                       >
-                        <span className="font-bold text-amber-400 group-hover:text-amber-300 font-sans truncate">{preset.title}</span>
-                        <span className="text-zinc-500 text-[9px] font-mono mt-1 truncate">{preset.duration}</span>
+                        <span className="font-bold text-hl-gold-bright group-hover:text-hl-gold-bright font-sans truncate">{preset.title}</span>
+                        <span className="text-hl-dim text-[9px] font-mono mt-1 truncate">{preset.duration}</span>
                       </button>
                     ))}
                   </div>
-                </div>
+                </div></details>
 
-                {onResetCampaigns && (
+                {onResetCampaigns && showConfirm && (
                   <button
                     type="button"
-                    onClick={onResetCampaigns}
-                    className="w-full py-2.5 bg-[#111113] hover:bg-[#1a1a1d] text-zinc-400 hover:text-amber-400 border border-[#222] hover:border-amber-500/40 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer mt-1 active:translate-y-[1px]"
+                    onClick={()=>{if(showConfirm)showConfirm('Restaurar campanhas padrão?','As campanhas cadastradas serão substituídas pelos modelos originais. Deseja continuar?',()=>onResetCampaigns(), 'danger');}}
+                    className="w-full py-2.5 bg-hl-raised hover:bg-hl-raised text-hl-muted hover:text-hl-gold-bright border border-hl-line-soft hover:border-hl-gold/40 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-2 transition-all cursor-pointer mt-1 active:translate-y-[1px]"
                   >
-                    <RefreshCw className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Restaurar Propósitos Padrão
+                    <RefreshCw className="w-3.5 h-3.5 shrink-0 text-hl-gold" /> Restaurar Propósitos Padrão
                   </button>
                 )}
               </div>
             ) : (
-              <div className="bg-[#09090b] border border-[#27272a] p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
-                <div className="flex items-center justify-between border-b border-[#333] pb-2.5">
-                  <span className="text-xs font-extrabold text-amber-500 font-sans uppercase tracking-wider">
+              <form aria-label="Formulário de campanha" onSubmit={event=>{event.preventDefault();handleSaveCampaign();}} className="bg-hl-panel border border-hl-line p-4 rounded-2xl flex flex-col gap-4 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
+                <div className="flex items-center justify-between border-b border-hl-line pb-2.5">
+                  <span className="text-xs font-extrabold text-hl-gold font-sans uppercase tracking-wider">
                     {editingCampId ? "Editar Propósito" : "Novo Propósito"}
                   </span>
-                  <button 
+                  <button
                     type="button"
-                    onClick={() => {
+                    aria-label="Fechar formulário de campanha" onClick={() => {
                       setShowAddCampaignForm(false);
                       setEditingCampId(null);
                     }}
-                    className="text-zinc-400 hover:text-white transition-colors p-1 cursor-pointer bg-[#111113] border border-[#333] rounded-lg"
+                    className="text-hl-muted hover:text-white transition-colors p-1 cursor-pointer bg-hl-raised border border-hl-line rounded-lg"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Nome da Campanha</label>
+                  <label htmlFor="campaign-title" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Nome da Campanha</label>
                   <input
                     type="text"
-                    value={newCampTitle}
+                    id="campaign-title" value={newCampTitle} maxLength={4000}
                     onChange={(e) => setNewCampTitle(e.target.value)}
                     placeholder="Ex: Jejum de Daniel, Fogueira Santa..."
-                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
+                    className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold focus:ring-1 focus:ring-hl-gold/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Duração (Exibição)</label>
+                  <label htmlFor="campaign-duration" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Duração (Exibição)</label>
                   <input
                     type="text"
-                    value={newCampDuration}
+                    id="campaign-duration" value={newCampDuration} maxLength={2000}
                     onChange={(e) => setNewCampDuration(e.target.value)}
                     placeholder="Ex: De 11 a 31 de Outubro, 21 Dias..."
-                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
+                    className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold focus:ring-1 focus:ring-hl-gold/20 font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Estilo Visual</label>
+                  <label className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Estilo Visual</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-0.5">
                     <button
                       type="button"
                       onClick={() => setNewCampType('wifi_off')}
                       className={`py-2 px-2 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1.5 active:translate-y-[1px] ${
                         newCampType === 'wifi_off'
-                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
+                          ? "bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]"
+                          : "bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line text-hl-muted"
                       }`}
                     >
                       <WifiOff className="w-4 h-4" />
@@ -707,8 +742,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       onClick={() => setNewCampType('flame')}
                       className={`py-2 px-2 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1.5 active:translate-y-[1px] ${
                         newCampType === 'flame'
-                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
+                          ? "bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]"
+                          : "bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line text-hl-muted"
                       }`}
                     >
                       <Flame className="w-4 h-4" />
@@ -719,8 +754,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       onClick={() => setNewCampType('globe')}
                       className={`py-2 px-2 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1.5 active:translate-y-[1px] ${
                         newCampType === 'globe'
-                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
+                          ? "bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]"
+                          : "bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line text-hl-muted"
                       }`}
                     >
                       <Globe className="w-4 h-4" />
@@ -731,8 +766,8 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       onClick={() => setNewCampType('faith')}
                       className={`py-2 px-2 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex flex-col items-center gap-1.5 active:translate-y-[1px] ${
                         newCampType === 'faith'
-                          ? "bg-amber-500 border-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                          : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] text-zinc-400"
+                          ? "bg-hl-gold border-hl-gold text-black shadow-[0_0_12px_rgba(255,211,79,0.4)]"
+                          : "bg-gradient-to-b from-hl-raised to-hl-raised border-hl-line text-hl-muted"
                       }`}
                     >
                       <CalendarDays className="w-4 h-4" />
@@ -742,23 +777,24 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Data Limite (Opcional)</label>
+                  <label htmlFor="campaign-end" className="text-[10px] font-mono font-bold text-hl-muted uppercase tracking-wider">Data Limite (Opcional)</label>
                   <input
                     type="date"
-                    value={newCampEndDate}
+                    id="campaign-end" value={newCampEndDate}
                     onChange={(e) => setNewCampEndDate(e.target.value)}
-                    className="bg-[#030303] border border-[#222] rounded-xl px-3.5 py-2.5 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
+                    className="bg-hl-canvas border border-hl-line-soft rounded-xl px-3.5 py-2.5 text-xs text-hl-copy focus:outline-none focus:border-hl-gold cursor-pointer font-sans shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
                   />
-                  <span className="text-[9px] text-zinc-500 font-mono mt-0.5">Sumiço automático dos slides ao passar da data</span>
+                  <span className="text-[11px] text-hl-dim mt-0.5">Exibe até o fim desse dia. Depois, sai do telão e permanece cadastrada para edição.</span>
                 </div>
 
+                {(campaignError||campaignConflict)&&<p className="agenda-error" role="alert">{campaignConflict?'Esta campanha mudou em outro controle. Cancele e abra a edição novamente.':campaignError}</p>}
                 <div className="flex gap-2.5 mt-1">
                   <button
-                    type="button"
-                    onClick={handleSaveCampaign}
-                    className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] active:translate-y-[1px]"
+                    type="submit"
+                    disabled={campaignConflict}
+                    className="flex-1 py-2.5 bg-hl-gold hover:bg-hl-gold-bright text-black font-black rounded-xl text-xs cursor-pointer transition-all shadow-[0_0_15px_rgba(255,211,79,0.3)] active:translate-y-[1px]"
                   >
-                    Confirmar Cadastro
+                    {editingCampId?'Salvar alterações':'Adicionar campanha'}
                   </button>
                   <button
                     type="button"
@@ -766,18 +802,18 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                       setShowAddCampaignForm(false);
                       setEditingCampId(null);
                     }}
-                    className="px-4 py-2.5 bg-[#111113] border border-[#333] hover:border-[#444] text-zinc-300 rounded-xl text-xs font-bold cursor-pointer transition-all active:translate-y-[1px]"
+                    className="px-4 py-2.5 bg-hl-raised border border-hl-line hover:border-hl-line-strong text-hl-soft rounded-xl text-xs font-bold cursor-pointer transition-all active:translate-y-[1px]"
                   >
                     Cancelar
                   </button>
                 </div>
-              </div>
+              </form>
             )}
 
             {/* CAMPAIGNS LIST */}
             <div className="flex flex-col gap-2.5 pr-1">
               {(customCampaigns || []).length === 0 ? (
-                <div className="text-zinc-500 text-center py-6 text-xs italic bg-[#030303] border border-dashed border-[#222] rounded-xl font-medium">
+                <div className="text-hl-dim text-center py-6 text-xs italic bg-hl-canvas border border-dashed border-hl-line-soft rounded-xl font-medium">
                   Nenhuma campanha cadastrada.
                 </div>
               ) : (
@@ -785,19 +821,18 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                   // Check if expired
                   let isExpired = false;
                   if (camp.endDate) {
-                    const end = new Date(camp.endDate + 'T23:59:59');
-                    if (new Date() > end) isExpired = true;
+                    if (camp.endDate < todayStr) isExpired = true;
                   }
 
                   return (
-                    <div 
-                      key={camp.id || `camp_${index}`}
-                      className={`flex items-center justify-between p-3.5 rounded-xl border text-xs bg-[#09090b] border-[#222] transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
+                    <div
+                      key={camp.id || `camp_${index}`} data-campaign-id={camp.id}
+                      className={`flex items-center justify-between p-3.5 rounded-xl border text-xs bg-hl-panel border-hl-line-soft transition-all shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] ${
                         isExpired ? "opacity-45" : ""
                       }`}
                     >
                       <div className="flex items-center gap-3 max-w-[65%] text-left">
-                        <div className="p-2 bg-[#111113] border border-amber-900/40 text-amber-500 rounded-lg shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
+                        <div className="p-2 bg-hl-raised border border-hl-line-strong/40 text-hl-gold rounded-lg shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]">
                           {camp.iconType === 'wifi_off' ? (
                             <WifiOff className="w-4 h-4" />
                           ) : camp.iconType === 'globe' ? (
@@ -809,14 +844,14 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                           )}
                         </div>
                         <div className="flex flex-col gap-0.5 min-w-0">
-                          <span className="text-zinc-200 font-bold font-sans truncate leading-snug">{camp.title}</span>
-                          <span className="text-zinc-400 text-[10px] truncate font-mono">{camp.duration}</span>
+                          <span className="text-hl-soft font-bold font-sans truncate leading-snug">{camp.title}</span>
+                          <span className="text-hl-muted text-[10px] truncate font-mono">{camp.duration}</span>
                           {camp.endDate && (
-                            <span className="text-[9px] text-zinc-500 font-mono">Oculta após: {camp.endDate.split('-').reverse().join('/')}</span>
+                            <span className="text-[9px] text-hl-dim font-mono">Oculta após: {camp.endDate.split('-').reverse().join('/')}</span>
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-1.5 shrink-0">
                         {isExpired ? (
                           <span className="text-[9px] bg-red-950 border border-red-800 text-red-400 px-2 py-0.5 rounded font-extrabold uppercase">Expirado</span>
@@ -826,7 +861,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                         <button
                           type="button"
                           onClick={() => handleDuplicateCampaign(camp)}
-                          className="p-2 bg-[#111113] border border-[#333] hover:border-amber-500/50 hover:bg-[#1a1a1d] rounded-lg text-zinc-400 hover:text-amber-400 transition-all cursor-pointer active:translate-y-[1px]"
+                          className="p-2 bg-hl-raised border border-hl-line hover:border-hl-gold/50 hover:bg-hl-raised rounded-lg text-hl-muted hover:text-hl-gold-bright transition-all cursor-pointer active:translate-y-[1px]"
                           title="Duplicar Propósito"
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -835,13 +870,14 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                           type="button"
                           onClick={() => {
                             setEditingCampId(camp.id);
+                            setCampaignBase(JSON.stringify(camp));setCampaignError('');
                             setNewCampTitle(camp.title);
                             setNewCampDuration(camp.duration);
                             setNewCampType(camp.iconType || 'flame');
                             setNewCampEndDate(camp.endDate || '');
                             setShowAddCampaignForm(true);
                           }}
-                          className="p-2 bg-[#111113] border border-[#333] hover:border-[#444] hover:bg-[#1a1a1d] rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer active:translate-y-[1px]"
+                          className="p-2 bg-hl-raised border border-hl-line hover:border-hl-line-strong hover:bg-hl-raised rounded-lg text-hl-muted hover:text-white transition-all cursor-pointer active:translate-y-[1px]"
                           title="Editar Propósito"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -849,7 +885,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
                         <button
                           type="button"
                           onClick={() => handleDeleteCampaign(camp.id)}
-                          className="p-2 bg-[#111113] border border-[#333] hover:border-red-800 hover:bg-red-950/40 rounded-lg text-zinc-500 hover:text-red-400 transition-all cursor-pointer active:translate-y-[1px]"
+                          className="p-2 bg-hl-raised border border-hl-line hover:border-red-800 hover:bg-red-950/40 rounded-lg text-hl-dim hover:text-red-400 transition-all cursor-pointer active:translate-y-[1px]"
                           title="Excluir Propósito"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -864,6 +900,7 @@ export const AgendaPanel = React.memo(function AgendaPanel({
         )}
       </section>
 
+      </div>
     </div>
   );
 });

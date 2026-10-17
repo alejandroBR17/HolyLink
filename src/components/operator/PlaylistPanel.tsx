@@ -1,10 +1,18 @@
+import {moveQueueBlock} from '../../utils/queue-blocks';
+import {connectFjuMoments,isFjuMoment,FJU_MOMENTS} from '../../utils/fju-moments';
+import {FjuMomentsControl} from './FjuMomentsControl';
+import {FJU_CARDS,FJU_PROJECT_SLIDES,FJU_PROJECTS,isFjuProject,connectFjuProjects} from '../../utils/fju-content';
+import {RemoteMediaLibrary} from './RemoteMediaLibrary';
+import type {MediaManifestItem} from '../../utils/media-manifest';
+import {useDialogFocus} from '../../hooks/useDialogFocus';
+import {ConsoleGroupTitle} from './ConsoleIntro';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2, 
+import {
+  BookOpen, RefreshCw, ArrowUp, ArrowDown, Film, Plus, VolumeX, Volume2,
   Maximize, Zap, Minimize, Send, Trash2, Image as ImageIcon, AlertTriangle,
   Eye, EyeOff, Search, Layers, ChevronsUp, ChevronsDown, Filter, Sparkles, Check,
-  LayoutGrid, List, Edit3, Maximize2, X, Clock, Pin, Layout
+  CalendarDays, LayoutGrid, List, Edit3, Maximize2, X, Clock, Pin, Layout
 } from 'lucide-react';
 
 interface CustomMedia {
@@ -20,12 +28,24 @@ interface CustomMedia {
 }
 
 interface PlaylistPanelProps {
+  youth?:boolean;
+  fjuProjectsEnabled?:boolean;
+  fjuMoments?:string[];
+  projectionMode?:'pre'|'post';
+  blackoutEnabled?:boolean;
+  clearContentEnabled?:boolean;
+  liveVerse?:{text:string;ref:string}|null;
+  currentVerse?:{text:string;ref:string}|null;
+  countdownMode?:string|null;
+  onOpenMonitor?:()=>void;
   currentSlideId: string;
   manualSlideOverride: string | null;
   activeSlides: string[];
+  slidesOrder?: string[];
   allAvailableSlides?: string[];
   disabledSlides?: string[];
   customMediaList: CustomMedia[];
+  remoteMediaList?:MediaManifestItem[];
   getSlideDuration: (id: string, list: CustomMedia[]) => number;
   updateStateAndBroadcast: (key: string, value: any) => void;
   handleMoveSlide: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => void;
@@ -37,7 +57,7 @@ interface PlaylistPanelProps {
   isUploading: boolean;
   uploadError: string | null;
   videoPinBehavior: 'loop' | 'unpin';
-  
+
   finalMinuteDisplayMode?: 'split' | 'full_video';
   verseDisplayPriority?: 'verse_over_video' | 'video_over_verse';
   handleMoveMedia: (id: string, direction: 'up' | 'down') => void;
@@ -54,12 +74,24 @@ interface PlaylistPanelProps {
 type QueueFilterMode = 'all' | 'active' | 'disabled' | 'media' | 'agenda';
 
 export const PlaylistPanel = React.memo(function PlaylistPanel({
+  youth=false,
+  fjuProjectsEnabled=false,
+  fjuMoments=[],
+  projectionMode='pre',
+  blackoutEnabled=false,
+  clearContentEnabled=false,
+  liveVerse=null,
+  currentVerse=null,
+  countdownMode=null,
+  onOpenMonitor,
   currentSlideId,
   manualSlideOverride,
   activeSlides,
+  slidesOrder = [],
   allAvailableSlides = [],
   disabledSlides = [],
   customMediaList,
+  remoteMediaList = [],
   getSlideDuration,
   updateStateAndBroadcast,
   handleMoveSlide,
@@ -71,7 +103,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   isUploading,
   uploadError,
   videoPinBehavior,
-  
+
   finalMinuteDisplayMode = 'split',
   verseDisplayPriority = 'verse_over_video',
   handleMoveMedia,
@@ -86,8 +118,13 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 }: PlaylistPanelProps) {
   const notify = showToast || showAlert;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const libraryRef = useRef<HTMLDetailsElement>(null);
   const [filterMode, setFilterMode] = useState<QueueFilterMode>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [changingQueueMedia, setChangingQueueMedia] = useState<string|null>(null);
+  const queueMediaBusy = useRef(false);
+  const [queueLimit, setQueueLimit] = useState(() => window.innerWidth < 600 ? 5 : 8);
+  useEffect(() => {if (!locateCurrent) setQueueLimit(window.innerWidth < 600 ? 5 : 8);}, [filterMode, searchTerm]);
 
   // Estados para a central de gestão de mídias
   const [mediaViewMode, setMediaViewMode] = useState<'list' | 'grid'>('list');
@@ -96,6 +133,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   const [editingMediaId, setEditingMediaId] = useState<string | null>(null);
   const [editingMediaName, setEditingMediaName] = useState('');
   const [previewMedia, setPreviewMedia] = useState<CustomMedia | null>(null);
+  const previewDialogRef = useDialogFocus(Boolean(previewMedia), () => setPreviewMedia(null));
   const [defaultImgSeconds, setDefaultImgSeconds] = useState<number>(() => {
     const customDefDur = Number(localStorage.getItem('projection_default_img_duration'));
     return (customDefDur && customDefDur >= 2000) ? Math.round(customDefDur / 1000) : 10;
@@ -145,21 +183,41 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
   // Combina todos os slides conhecidos respeitando a ordem atual de slidesOrder
   const fullSlideList = useMemo(() => {
-    const list = [...activeSlides];
-    allAvailableSlides.forEach((id) => {
-      if (!list.includes(id)) {
-        list.push(id);
-      }
-    });
-    return list;
-  }, [activeSlides, allAvailableSlides]);
+    const available = [...new Set([...activeSlides, ...allAvailableSlides])];
+    const ordered=[...slidesOrder.filter(id => available.includes(id)), ...available.filter(id => !slidesOrder.includes(id))];
+    return youth?connectFjuMoments(connectFjuProjects(ordered)):ordered;
+  }, [activeSlides, allAvailableSlides, slidesOrder,youth]);
+  const [draftOrder, setDraftOrder] = useState<string[] | null>(null);
+  const [editingBase, setEditingBase] = useState('');
+  const orderChangedElsewhere = draftOrder !== null && editingBase !== JSON.stringify(fullSlideList);
+  const beginEditing = () => {setDraftOrder([...fullSlideList]); setEditingBase(JSON.stringify(fullSlideList)); setFilterMode('all'); setSearchTerm('');};
+  const moveDraft = (id: string, direction: -1 | 1) => setDraftOrder(current => {
+    if (!current) return current;
+    if(youth)return moveQueueBlock(current,id,direction,[FJU_PROJECT_SLIDES,FJU_MOMENTS.map(moment=>moment.id)]);
+    const index = current.indexOf(id), target = index + direction;
+    if (index < 0 || target < 0 || target >= current.length) return current;
+    const next = [...current]; [next[index], next[target]] = [next[target], next[index]]; return next;
+  });
+  const applyOrder = () => {
+    if (!draftOrder || orderChangedElsewhere) return;
+    updateStateAndBroadcast('slidesOrder', JSON.stringify(youth?connectFjuMoments(connectFjuProjects(draftOrder)):draftOrder));
+    setDraftOrder(null); notify('Ordem aplicada neste operador.', 'success');
+  };
 
   const getSlideDetails = (slideId: string) => {
+    if(isFjuProject(slideId))return {name:slideId==='fju_projects'?'Conheça os projetos':FJU_PROJECTS.find(p=>p.id===slideId)!.name,desc:'Projetos FJU · apresentação conectada',category:'fixo' as const};
+    if((youth||slideId.startsWith('fju_'))&&FJU_CARDS[slideId])return{name:FJU_CARDS[slideId].title,desc:FJU_CARDS[slideId].subtitle,category:'fixo' as const};
+    if(youth&&slideId==='world_god')return{name:'Distrações / Conecte-se com Deus',desc:'Transição do encontro com mundo e fogo',category:'fixo' as const};
+    if(slideId==='fju_agenda')return{name:'Próximos eventos FJU',desc:'Encontro Jovem, Algo a Mais e eventos cadastrados, por proximidade',category:'agenda' as const};
+
     let name = slideId;
     let desc = "";
     let category: 'fixo' | 'agenda' | 'campanha' | 'midia' | 'evento' = 'fixo';
 
-    if (slideId.startsWith("agenda_day_")) {
+    if (slideId.startsWith('verse_')) {
+      name = `Versículo ${slideId.split('_')[1] || ''}`;
+      desc = 'Texto bíblico da sequência automática';
+    } else if (slideId.startsWith("agenda_day_")) {
       category = 'agenda';
       if (slideId === "agenda_day_6_causas") {
         name = "Agenda: Sábado (Causas Impossíveis)";
@@ -203,11 +261,21 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
     return { name, desc, category };
   };
 
+  const slideIsVisible = !blackoutEnabled && !liveVerse && !clearContentEnabled && !countdownMode;
+  const liveTitle = blackoutEnabled ? 'Tela preta' : liveVerse ? liveVerse.ref : countdownMode || (clearContentEnabled ? 'Conteúdo da fila oculto' : currentVerse?.ref || getSlideDetails(currentSlideId).name);
+  const [locateCurrent,setLocateCurrent] = useState(false);
+  useEffect(() => {
+    if (!locateCurrent) return;
+    const frame = requestAnimationFrame(() => {document.querySelector(`[data-slide-id="${CSS.escape(currentSlideId)}"]`)?.scrollIntoView({block:'center',behavior:'smooth'}); setLocateCurrent(false);});
+    return () => cancelAnimationFrame(frame);
+  },[locateCurrent,currentSlideId]);
+  const revealCurrent = () => {setFilterMode('all'); setSearchTerm(''); setQueueLimit(Math.max(8,fullSlideList.indexOf(currentSlideId)+1)); setLocateCurrent(true);};
+
   // Filtra e pesquisa a lista de slides
   const filteredSlides = useMemo(() => {
     return fullSlideList.filter((slideId) => {
       const { name, desc, category } = getSlideDetails(slideId);
-      const isDisabled = disabledSlides.includes(slideId);
+      const isDisabled = !activeSlides.includes(slideId);
       const isMedia = slideId.startsWith('custom_');
 
       if (searchTerm) {
@@ -223,7 +291,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
       if (filterMode === 'agenda') return category === 'agenda' || category === 'evento';
       return true;
     });
-  }, [fullSlideList, disabledSlides, searchTerm, filterMode, customMeetings, customMediaList]);
+  }, [fullSlideList, activeSlides, searchTerm, filterMode, customMeetings, customMediaList]);
 
   // Duração total do loop ativo
   const totalLoopDuration = useMemo(() => {
@@ -267,10 +335,34 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   };
 
   const handleToggleLoopEnable = async (media: CustomMedia, checked: boolean) => {
-    const updatedMedia = { ...media, enabledInLoop: checked };
-    await saveMediaItem(updatedMedia);
-    broadcastMediaSave(updatedMedia);
-    updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+    if (queueMediaBusy.current) return;
+    queueMediaBusy.current = true; setChangingQueueMedia(media.id);
+    try {
+      const updatedMedia = { ...media, enabledInLoop: checked };
+      await saveMediaItem(updatedMedia);
+      broadcastMediaSave(updatedMedia);
+      if (checked && disabledSlides.includes(media.id)) handleToggleDisableSlide?.(media.id);
+      updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
+    } catch {notify('Não foi possível alterar a participação da mídia na sequência.', 'error');}
+    finally {queueMediaBusy.current = false; setChangingQueueMedia(null);}
+  };
+
+  const resumeSequence = () => {
+    updateStateAndBroadcast('customVerseText', null);
+    updateStateAndBroadcast('customVerseRef', null);
+    updateStateAndBroadcast('activeVerseIndex', null);
+    updateStateAndBroadcast('manualSlideOverride', null);
+  };
+  const projectSlide = (id: string) => {
+    updateStateAndBroadcast('customVerseText', null);
+    updateStateAndBroadcast('customVerseRef', null);
+    updateStateAndBroadcast('activeVerseIndex', null);
+    updateStateAndBroadcast('manualSlideOverride', id);
+  };
+  const toggleQueueSlide = (id: string) => {
+    const media = customMediaList.find(item => item.id === id);
+    if (media) void handleToggleLoopEnable(media, !activeSlides.includes(id));
+    else if(!isFjuMoment(id))handleToggleDisableSlide?.(id);
   };
 
   // Exclusão segura de mídia sincronizada em tempo real
@@ -315,432 +407,76 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full animate-in fade-in duration-200">
-      
-      {/* SEÇÃO DA FILA DE REPRODUÇÃO */}
-      <section aria-label="Playlists e Fila de Slides" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-        
-        {/* CABEÇALHO DA FILA */}
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#333] pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              <Layers className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-zinc-100 font-extrabold text-sm uppercase tracking-wider font-sans">Fila e Sequência de Projeção</h2>
-                <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded uppercase tracking-wider shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                  {activeSlides.length} ATIVOS • {formatTotalTime(totalLoopDuration)}
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Organize a sequência de exibição na projeção</p>
-            </div>
-          </div>
+    <div className="playlist-workspace flex flex-col gap-6 w-full">
 
-          {/* CONTROLES DE MODO DE PROJEÇÃO */}
-          <div className="flex flex-wrap items-center gap-2">
-            {handleReorderInterleaved && (
-              <button
-                type="button"
-                onClick={() => {
-                  handleReorderInterleaved();
-                  showAlert("Fila intercalada dinamicamente (1 slide por categoria por vez)", "success");
-                }}
-                title="Intercalar dinamicamente: 1 de cada categoria por vez"
-                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-amber-500/50 text-amber-400 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Intercalar Categoria</span>
-              </button>
-            )}
-
-            {handleReorderGrouped && (
-              <button
-                type="button"
-                onClick={() => {
-                  handleReorderGrouped();
-                  showAlert("Fila reorganizada por categoria com sucesso", "info");
-                }}
-                title="Agrupar por categoria"
-                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-300 hover:text-white text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Agrupar por Tipo</span>
-              </button>
-            )}
-
-            {handleResetSlidesOrder && (
-              <button
-                type="button"
-                onClick={() => {
-                  showConfirm(
-                    "Restaurar Ordem Padrão",
-                    "Deseja restaurar a sequência recomendada original dos slides?",
-                    () => {
-                      handleResetSlidesOrder();
-                      showAlert("Ordem original restaurada", "success");
-                    }
-                  );
-                }}
-                title="Restaurar a sequência padrão de fábrica"
-                className="bg-gradient-to-b from-[#1c1c1f] to-[#121214] border border-[#333] hover:border-[#444] text-zinc-400 hover:text-zinc-200 text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 font-bold transition-all cursor-pointer shadow-[0_5px_15px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] active:translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[38px]"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Restaurar Padrão</span>
-              </button>
-            )}
-
-            {manualSlideOverride ? (
-              <button
-                type="button"
-                onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
-                title="Clique para destravar e voltar ao carrossel automático"
-                className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] active:translate-y-[1px] cursor-pointer min-h-[38px] shrink-0"
-              >
-                <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0" />
-                <span className="hidden sm:inline">Desfixar Slide</span>
-                <span className="sm:hidden">Voltar</span>
-              </button>
-            ) : (
-              <span className="bg-emerald-950/80 border border-emerald-900/50 text-emerald-400 text-[10px] font-mono font-bold px-3 py-1.5 rounded uppercase tracking-wider flex items-center gap-2 min-h-[32px] shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0" />
-                <span className="hidden sm:inline">LOOP AUTOMÁTICO ATIVO</span>
-                <span className="sm:hidden">LOOP ATIVO</span>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* BANNER INFORMATIVO QUANDO CONTEÚDO ESTÁ FIXADO */}
-        {manualSlideOverride && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg animate-in fade-in duration-200">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-amber-500/20 border border-amber-500/30 rounded-lg text-amber-400 shrink-0">
-                <Pin className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
-                    Conteúdo Fixado Manualmente no Telão
-                  </span>
-                  <span className="bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold px-2 py-0.5 rounded border border-amber-500/30 uppercase">
-                    Carrossel Pausado
-                  </span>
-                </div>
-                <p className="text-[11px] text-zinc-300 mt-0.5">
-                  Carrossel pausado. Clique ao lado para destravar e retomar a projeção automática.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => updateStateAndBroadcast('manualSlideOverride', null)}
-              className="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-amber-500/10 shrink-0 cursor-pointer w-full sm:w-auto active:scale-95"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Voltar ao Carrossel</span>
-            </button>
-          </div>
-        )}
-
-        {/* FERRAMENTAS DE BUSCA E FILTROS DA FILA */}
-        <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#030303] p-2.5 rounded-xl border border-[#222] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
-          
-          {/* CAMPO DE BUSCA */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar slide na fila..."
-              className="w-full bg-[#09090b] border border-[#27272a] text-zinc-100 text-xs font-sans font-medium pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/40 placeholder:text-zinc-600 transition-all"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs font-bold px-1 flex items-center justify-center"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* BOTÕES DE FILTRO */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 shrink-0">
-            <button
-              type="button"
-              onClick={() => setFilterMode('all')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'all'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Todos ({fullSlideList.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterMode('active')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'active'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Ativos ({activeSlides.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterMode('disabled')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'disabled'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Ocultos ({disabledSlides.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterMode('media')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'media'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Mídias ({customMediaList.length})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilterMode('agenda')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-sans font-bold transition-all cursor-pointer whitespace-nowrap ${
-                filterMode === 'agenda'
-                  ? "bg-amber-500 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)] font-black"
-                  : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-zinc-200 hover:border-[#333]"
-              }`}
-            >
-              Agendas
-            </button>
-          </div>
-        </div>
-
-        {/* CARDS DOS SLIDES NA FILA */}
-        {filteredSlides.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 text-zinc-400 text-xs text-center py-10 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
-            <Filter className="w-8 h-8 text-zinc-600 stroke-[1.5]" />
-            <p className="font-semibold text-zinc-300">Nenhum slide encontrado com este filtro.</p>
-            <p className="text-[11px] text-zinc-500">Tente ajustar o termo de pesquisa ou trocar de categoria.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {filteredSlides.map((slideId) => {
-              const isActiveInLoop = activeSlides.includes(slideId);
-              const isCurrentOnAir = currentSlideId === slideId;
-              const isFixedOverride = manualSlideOverride === slideId;
-              const isDisabled = disabledSlides.includes(slideId);
-              const activeIndexInQueue = activeSlides.indexOf(slideId);
-              const { name, desc, category } = getSlideDetails(slideId);
-
-              // Cores das badges por tipo
-              const getCategoryBadge = () => {
-                switch (category) {
-                  case 'agenda':
-                  case 'evento':
-                    return <span className="bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase">Agenda</span>;
-                  case 'campanha':
-                    return <span className="bg-purple-500/15 border border-purple-500/30 text-purple-400 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase">Campanha</span>;
-                  case 'midia':
-                    return <span className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase">Mídia Local</span>;
-                  default:
-                    return <span className="bg-zinc-800 border border-zinc-700 text-zinc-400 text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase">Slide Fixo</span>;
-                }
-              };
-
-              return (
-                <div
-                  key={slideId}
-                  className={`p-4 rounded-xl border transition-all relative overflow-hidden flex flex-col justify-between min-h-[140px] ${
-                    isDisabled
-                      ? "bg-[#050507] border-[#1f1f22] opacity-50"
-                      : isCurrentOnAir
-                        ? "bg-[#09090b] border-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.25)] ring-1 ring-amber-500/50"
-                        : "bg-[#030303] border-[#222] hover:border-[#333] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]"
-                  }`}
-                >
-                  <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-zinc-700/30 to-transparent"></div>
-                  
-                  {/* FLAG DE STATUS NO AR OU FIXADO */}
-                  <div className="flex items-center justify-between gap-2 border-b border-[#222] pb-2.5 mb-2.5">
-                    <div className="flex items-center gap-2">
-                      {/* POSIÇÃO NA FILA */}
-                      {isActiveInLoop ? (
-                        <span className="font-mono text-[10px] font-bold bg-amber-950/80 border border-amber-900/50 text-amber-500 px-2 py-0.5 rounded shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                          #{activeIndexInQueue + 1} NA FILA
-                        </span>
-                      ) : (
-                        <span className="font-mono text-[10px] font-bold bg-[#111113] border border-[#222] text-zinc-600 px-2 py-0.5 rounded shrink-0">
-                          OFF
-                        </span>
-                      )}
-
-                      {getCategoryBadge()}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {isCurrentOnAir && (
-                        <span className="bg-amber-500 text-black text-[9px] font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.6)] flex items-center gap-1 shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
-                          NO AR
-                        </span>
-                      )}
-                      
-                      {isFixedOverride && (
-                        <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase shrink-0">
-                          FIXADO
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* INFO DO SLIDE */}
-                  <div className="pr-2">
-                    <h3 className={`font-sans font-bold text-sm leading-snug ${isCurrentOnAir ? "text-amber-400 drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" : isDisabled ? "text-zinc-600 line-through" : "text-zinc-100"}`}>
-                      {name}
-                    </h3>
-                    <p className="text-xs text-zinc-400 mt-1 leading-normal font-sans line-clamp-1">{desc}</p>
-                  </div>
-
-                  {/* CONTROLES E BOTÕES DE REORDENAÇÃO */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-[#222]">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono bg-[#111113] px-2.5 py-1 rounded border border-[#27272a] text-amber-400 text-[11px] font-bold shrink-0">
-                        {getSlideDuration(slideId, customMediaList) / 1000}s
-                      </span>
-
-                      {/* TOGGLE VISIBILIDADE / DESATIVAR SLIDE */}
-                      {handleToggleDisableSlide && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleDisableSlide(slideId)}
-                          aria-label={isDisabled ? "Ativar slide na fila" : "Ocultar slide da fila"}
-                          title={isDisabled ? "Ativar e incluir no loop" : "Ocultar e desativar do loop"}
-                          className={`p-1.5 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none ${
-                            isDisabled
-                              ? "bg-[#111113] border-[#222] text-zinc-600 hover:text-zinc-300"
-                              : "bg-[#111113] border-amber-900/50 text-amber-500 hover:bg-amber-950/50"
-                          }`}
-                        >
-                          {isDisabled ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* BOTÕES DE DIREÇÃO E PROJEÇÃO */}
-                    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                      
-                      {/* BOTÃO PROJETAR DADOS FIXOS */}
-                      <button
-                        type="button"
-                        onClick={() => updateStateAndBroadcast('manualSlideOverride', isFixedOverride ? null : slideId)}
-                        title={isFixedOverride ? "Desafixar e voltar ao automático" : "Projetar este slide imediatamente"}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold border transition-all flex items-center gap-1.5 cursor-pointer focus-visible:outline-none ${
-                          isFixedOverride
-                            ? "bg-amber-500 border-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(245,158,11,0.5)]"
-                            : "bg-gradient-to-b from-[#1c1c1f] to-[#121214] border-[#333] hover:border-amber-500/50 text-amber-400 shadow-[0_2px_8px_rgba(0,0,0,0.5)] active:translate-y-[1px]"
-                        }`}
-                      >
-                        <Send className="w-3 h-3" />
-                        <span className="hidden sm:inline">{isFixedOverride ? "Desafixar" : "Projetar"}</span>
-                      </button>
-
-                      {/* SUBIR AO TOPO */}
-                      <button
-                        type="button"
-                        onClick={() => handleMoveSlide(slideId, 'top')}
-                        title="Subir para a 1ª Posição da Fila"
-                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
-                      >
-                        <ChevronsUp className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* SUBIR 1 */}
-                      <button
-                        type="button"
-                        onClick={() => handleMoveSlide(slideId, 'up')}
-                        title="Mover para Cima"
-                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
-                      >
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* DESCER 1 */}
-                      <button
-                        type="button"
-                        onClick={() => handleMoveSlide(slideId, 'down')}
-                        title="Mover para Baixo"
-                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
-                      >
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* ENVIAR PRO FIM */}
-                      <button
-                        type="button"
-                        onClick={() => handleMoveSlide(slideId, 'bottom')}
-                        title="Enviar para o Fim da Fila"
-                        className="w-8 h-8 rounded-lg border border-[#333] bg-[#111113] text-zinc-300 hover:bg-[#1a1a1e] hover:text-white transition-all flex items-center justify-center active:translate-y-[1px] cursor-pointer"
-                      >
-                        <ChevronsDown className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+      <section className="operator-card sequence-console" aria-labelledby="sequence-title">
+        <header className="sequence-heading">
+          <div><span className="operator-eyebrow"><Layers size={16}/>{youth?'Controle do encontro':'Controle da reunião'}</span><h2 id="sequence-title">Sequência</h2><p>{activeSlides.length} slides ativos · ciclo de {formatTotalTime(totalLoopDuration)}</p></div>
+          {!draftOrder ? <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => {if (libraryRef.current) libraryRef.current.open = true; fileInputRef.current?.click();}}><Plus size={17}/>Adicionar mídia</button><button className="sequence-secondary" onClick={beginEditing}><Edit3 size={17}/>Editar ordem</button></div> : <div className="sequence-edit-actions"><button className="sequence-secondary" onClick={() => setDraftOrder(null)}>Cancelar</button><button className="sequence-primary" disabled={orderChangedElsewhere || JSON.stringify(draftOrder) === editingBase} onClick={applyOrder}><Check size={17}/>Salvar ordem</button></div>}
+        </header>
+        {youth&&<FjuMomentsControl selected={fjuMoments} mode={projectionMode} onChange={ids=>{updateStateAndBroadcast('fjuMoments',ids);if(manualSlideOverride&&isFjuMoment(manualSlideOverride)&&!ids.includes(manualSlideOverride))resumeSequence();}}/>}
+        {youth&&<section className="fju-program-choice" aria-label="Preparar encontro"><div><h3>Projetos neste encontro</h3><p>Apresentação → Esportes → Cultura → Mídia. O bloco permanece junto na fila.</p><small>A escolha fica salva. Confira antes de cada encontro.</small></div><label><input type="checkbox" checked={fjuProjectsEnabled} onChange={e=>{updateStateAndBroadcast('fjuProjectsEnabled',e.target.checked);if(!e.target.checked&&manualSlideOverride&&isFjuProject(manualSlideOverride))resumeSequence();}}/>Incluir projetos na sequência</label></section>}
+        <div className="sequence-status"><span className="sequence-status-light"/><span>{liveVerse ? 'Passagem bíblica sobre a fila' : manualSlideOverride ? `Fixado: ${getSlideDetails(manualSlideOverride).name}` : 'Sequência automática'}</span>{(manualSlideOverride || liveVerse) && <button onClick={resumeSequence}><RefreshCw size={15}/>Retomar</button>}</div>
+        {changingQueueMedia && <p className="operator-notice" role="status">Salvando participação na sequência…</p>}
+        <section className="sequence-now" aria-label="Conteúdo atual do operador">
+          <span className={blackoutEnabled ? 'sequence-now-dot is-blackout' : 'sequence-now-dot'} aria-hidden="true"/>
+          <div className="sequence-now-brief"><span>Agora{manualSlideOverride ? ' · fixado' : ''}</span><h3>{liveTitle}</h3></div>
+          <div className="sequence-now-actions">{!draftOrder && fullSlideList.includes(currentSlideId) && <button onClick={revealCurrent} aria-label="Localizar na fila" title="Localizar na fila"><Eye size={18}/></button>}{onOpenMonitor && <button onClick={onOpenMonitor} aria-label="Ver no Monitor" title="Ver no Monitor"><Maximize2 size={18}/></button>}</div>
+        </section>
+        {draftOrder ? <p className="sequence-guidance" role="status">{orderChangedElsewhere ? 'A sequência mudou em outro controle. Cancele e abra a edição novamente para usar a versão atual.' : 'Use as setas para mudar a ordem. O telão só recebe a nova ordem quando você salvar.'}</p> : <div className="sequence-tools"><label><Search size={17}/><input aria-label="Buscar na sequência" placeholder="Buscar na sequência" value={searchTerm} onChange={event => setSearchTerm(event.target.value)}/></label><select aria-label="Filtrar sequência" value={filterMode} onChange={event => setFilterMode(event.target.value as QueueFilterMode)}><option value="all">Todos</option><option value="active">Ativos</option><option value="disabled">Ocultos</option><option value="media">Mídias</option><option value="agenda">Agenda</option></select></div>}
+        <ol className="sequence-list" aria-label={draftOrder ? 'Editar ordem dos slides' : 'Slides da sequência'}>
+          {(draftOrder || filteredSlides.slice(0, queueLimit)).map((slideId, index, list) => {
+            const {name, desc, category} = getSlideDetails(slideId);
+            const media = customMediaList.find(item => item.id === slideId);
+            const Icon = slideId.startsWith('verse_') ? BookOpen : category === 'agenda' || category === 'evento' ? CalendarDays : category === 'midia' ? Film : category === 'campanha' ? Sparkles : Layout;
+            const isDisabled = !activeSlides.includes(slideId), isCurrent = slideIsVisible && currentSlideId === slideId, isFixed = manualSlideOverride === slideId;
+            return <li className={`sequence-item ${isCurrent ? 'sequence-item-current' : ''} ${isDisabled ? 'sequence-item-hidden' : ''}`} key={slideId} data-slide-id={slideId}>
+              <span className={`sequence-art sequence-art-${category}`} aria-hidden="true">{media?.type === 'image' ? <img src={media.url} alt="" loading="lazy"/> : <Icon size={24}/>}<span className="sequence-position">{draftOrder ? index + 1 : fullSlideList.indexOf(slideId) + 1}</span></span>
+              <div className="sequence-item-text"><h3>{name}{isCurrent && <span className="sequence-live-label"><span aria-hidden="true"/>Exibindo</span>}</h3><p className="sequence-description">{desc}</p><p>{draftOrder ? 'Editando a posição' : `${getSlideDuration(slideId, customMediaList) / 1000}s${isDisabled ? ' · Fora da sequência' : ''}`}</p></div>
+              <div className="sequence-item-actions">{draftOrder ? <><button disabled={index === 0 || orderChangedElsewhere} aria-label={`Subir ${name}`} onClick={() => moveDraft(slideId, -1)}><ArrowUp size={18}/></button><button disabled={index === list.length - 1 || orderChangedElsewhere} aria-label={`Descer ${name}`} onClick={() => moveDraft(slideId, 1)}><ArrowDown size={18}/></button></> : <>
+                {handleToggleDisableSlide && !isFjuProject(slideId) && !isFjuMoment(slideId) && <button disabled={changingQueueMedia!==null} aria-label={`${isDisabled ? 'Ativar' : 'Ocultar'} ${name}`} title={isDisabled ? 'Incluir na sequência' : 'Retirar da sequência'} onClick={() => toggleQueueSlide(slideId)}>{isDisabled ? <EyeOff size={17}/> : <Eye size={17}/>}</button>}
+                <button className={isFixed ? 'sequence-primary' : 'sequence-project'} aria-label={`${isFixed ? 'Desafixar' : 'Projetar'} ${name}`} onClick={() => isFixed ? resumeSequence() : projectSlide(slideId)}><Send size={16}/><span>{isFixed ? 'Retomar' : 'Projetar'}</span></button>
+              </>}</div>
+            </li>;
+          })}
+        </ol>
+        {!draftOrder && filteredSlides.length === 0 && <p className="operator-muted">Nenhum slide encontrado. Tente outra busca ou filtro.</p>}
+        {!draftOrder && filteredSlides.length > queueLimit && <button className="queue-more" onClick={() => setQueueLimit(queueLimit + 8)}>Mostrar mais slides ({queueLimit} de {filteredSlides.length})</button>}
       </section>
 
+<details ref={libraryRef} open={customMediaList.length > 0 || remoteMediaList.length>0} className="holy-disclosure media-library console-settings-group"><summary><ConsoleGroupTitle icon={Film} title="Biblioteca de mídias" description="Suas imagens e vídeos, com enquadramento, som e duração." badge={`${customMediaList.length} arquivos`}/></summary>
       {/* GERENCIADOR DE MÍDIAS CUSTOMIZADAS */}
-      <section aria-label="Gerenciador de Mídias Customizadas" className="relative bg-[#09090b] border border-[#27272a] rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
+      <section aria-label="Gerenciador de Mídias Customizadas" className="relative bg-hl-panel border border-hl-line rounded-2xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.03)] overflow-hidden flex flex-col gap-5 group">
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-        
+
         {/* CABEÇALHO DA SEÇÃO DE MÍDIAS */}
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#333] pb-3.5">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hl-line pb-3.5">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl text-amber-500 shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-              <Film className="w-5 h-5 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            <div className="p-2.5 bg-hl-raised border border-hl-line-strong/50 rounded-xl text-hl-gold shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+              <Film className="w-5 h-5 drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
             </div>
             <div>
-              <h2 className="text-zinc-100 font-extrabold text-xs uppercase tracking-wider font-sans">Central de Mídias & Arquivos</h2>
-              <p className="text-[11px] text-zinc-400 font-medium mt-0.5">Envio, enquadramento e gestão de vídeos e imagens</p>
+              <h2 className="text-hl-copy font-extrabold text-xs uppercase tracking-wider font-sans">Central de Mídias & Arquivos</h2>
+              <p className="text-[11px] text-hl-muted font-medium mt-0.5">Envio, enquadramento e gestão de vídeos e imagens</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {/* BADGE COM CONTAGEM */}
-            <span className="bg-amber-950/80 border border-amber-900/50 text-amber-500 text-[10px] font-mono font-bold px-3 py-1.5 rounded uppercase tracking-wider shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+            <span className="bg-hl-gold-well/80 border border-hl-line-strong/50 text-hl-gold text-[10px] font-mono font-bold px-3 py-1.5 rounded uppercase tracking-wider shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
               {customMediaList.length} MÍDIAS ({customMediaList.filter(m => m.type === 'image').length} IMG • {customMediaList.filter(m => m.type === 'video').length} VID)
             </span>
 
             {/* SELETOR DE MODO DE VISÃO (GRADE X LISTA) */}
-            <div className="bg-[#030303] p-1 rounded-xl border border-[#222] flex items-center gap-1 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
+            <div className="bg-hl-canvas p-1 rounded-xl border border-hl-line-soft flex items-center gap-1 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8)]">
               <button
                 type="button"
                 onClick={() => setMediaViewMode('list')}
                 title="Modo de exibição em Lista detalhada"
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   mediaViewMode === 'list'
-                    ? "bg-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-hl-gold text-black font-bold shadow-[0_0_10px_rgba(255,211,79,0.5)]"
+                    : "text-hl-muted hover:text-hl-soft"
                 }`}
               >
                 <List className="w-4 h-4" />
@@ -751,8 +487,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                 title="Modo de exibição em Grade (Galeria)"
                 className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   mediaViewMode === 'grid'
-                    ? "bg-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-hl-gold text-black font-bold shadow-[0_0_10px_rgba(255,211,79,0.5)]"
+                    : "text-hl-muted hover:text-hl-soft"
                 }`}
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -761,11 +497,12 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           </div>
         </div>
 
+        <RemoteMediaLibrary items={remoteMediaList.filter(item=>!customMediaList.some(local=>local.id===item.id || item.sourceIds?.includes(local.id)))} showConfirm={showConfirm} notify={notify}/>
         {/* CONTROLES DE DURAÇÃO PADRÃO & DROPZONE */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-3">
-          
+
           {/* DROPZONE DE UPLOAD */}
-          <div 
+          <div
             tabIndex={0}
             role="button"
             aria-label="Adicionar arquivos de mídia"
@@ -775,7 +512,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                 fileInputRef.current?.click();
               }
             }}
-            className="lg:col-span-2 relative border-2 border-dashed border-[#333] hover:border-amber-500/60 focus-visible:border-amber-500 focus-visible:outline-none rounded-2xl p-4 sm:p-5 transition-all bg-[#030303] text-center group cursor-pointer flex flex-col items-center justify-center min-h-[110px] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]"
+            className="lg:col-span-2 relative border-2 border-dashed border-hl-line hover:border-hl-gold/60 focus-visible:border-hl-gold focus-visible:outline-none rounded-2xl p-4 sm:p-5 transition-all bg-hl-canvas text-center group cursor-pointer flex flex-col items-center justify-center min-h-[110px] shadow-[inset_0_2px_10px_rgba(0,0,0,1)]"
           >
             <input
               ref={fileInputRef}
@@ -787,20 +524,20 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               aria-label="Upload de imagem ou vídeo"
             />
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-[#111113] border border-amber-900/50 rounded-xl group-hover:scale-105 transition-transform shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
-                <Plus className="w-5 h-5 text-amber-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+              <div className="p-2.5 bg-hl-raised border border-hl-line-strong/50 rounded-xl group-hover:scale-105 transition-transform shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]">
+                <Plus className="w-5 h-5 text-hl-gold drop-shadow-[0_0_6px_rgba(255,211,79,0.6)]" />
               </div>
               <div className="text-left">
-                <p className="text-xs font-sans font-bold text-zinc-100">Clique ou arraste Imagens e Vídeos para adicionar</p>
-                <p className="text-[11px] text-zinc-400 mt-0.5">PNG, JPG, WEBP, MP4, WEBM (salvo localmente e sincronizado via PeerJS)</p>
+                <p className="text-xs font-sans font-bold text-hl-copy">Clique ou arraste Imagens e Vídeos para adicionar</p>
+                <p className="text-[11px] text-hl-muted mt-0.5">PNG, JPG, WEBP, MP4, WEBM (salvo localmente e sincronizado via PeerJS)</p>
               </div>
             </div>
           </div>
 
           {/* DURAÇÃO PADRÃO NOVAS IMAGENS */}
-          <div className="bg-[#030303] p-3.5 rounded-2xl border border-[#222] flex flex-col justify-between gap-2 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
-            <div className="flex items-center gap-1.5 text-zinc-300 text-[11px] font-sans font-bold uppercase tracking-wider">
-              <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <div className="bg-hl-canvas p-3.5 rounded-2xl border border-hl-line-soft flex flex-col justify-between gap-2 shadow-[inset_0_2px_10px_rgba(0,0,0,1)]">
+            <div className="flex items-center gap-1.5 text-hl-soft text-[11px] font-sans font-bold uppercase tracking-wider">
+              <Clock className="w-3.5 h-3.5 text-hl-gold shrink-0" />
               <span>Duração Padrão (Imagens):</span>
             </div>
 
@@ -812,8 +549,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   onClick={() => handleDefaultImgDurationChange(sec)}
                   className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     defaultImgSeconds === sec
-                      ? "bg-amber-500 text-black shadow-[0_0_10px_rgba(245,158,11,0.5)] font-black"
-                      : "bg-[#111113] border border-[#222] text-zinc-400 hover:text-white"
+                      ? "bg-hl-gold text-black shadow-[0_0_10px_rgba(255,211,79,0.5)] font-black"
+                      : "bg-hl-raised border border-hl-line-soft text-hl-muted hover:text-white"
                   }`}
                 >
                   {sec}s
@@ -824,8 +561,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         </div>
 
         {isUploading && (
-          <div className="flex items-center justify-center gap-2.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl font-medium animate-pulse">
-            <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
+          <div className="flex items-center justify-center gap-2.5 text-xs text-hl-gold-bright bg-hl-gold/10 border border-hl-gold/20 p-3.5 rounded-xl font-medium animate-pulse">
+            <RefreshCw className="w-4 h-4 animate-spin text-hl-gold-bright" />
             <span>Processando, salvando e enviando arquivo de mídia...</span>
           </div>
         )}
@@ -838,23 +575,23 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         )}
 
         {/* FERRAMENTAS DE BUSCA E FILTROS DE MÍDIA */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
-          
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-hl-canvas/60 p-2.5 rounded-xl border border-hl-line/80">
+
           {/* BUSCA DE MÍDIAS POR NOME */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-hl-dim absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={mediaSearchTerm}
               onChange={(e) => setMediaSearchTerm(e.target.value)}
               placeholder="Buscar mídia por nome..."
-              className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-amber-500 placeholder-zinc-500 transition-all"
+              className="w-full bg-hl-panel border border-hl-line text-hl-copy text-xs pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:border-hl-gold placeholder-zinc-500 transition-all"
             />
             {mediaSearchTerm && (
               <button
                 type="button"
                 onClick={() => setMediaSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-xs font-bold px-1 flex items-center justify-center"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hl-dim hover:text-hl-soft text-xs font-bold px-1 flex items-center justify-center"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -868,8 +605,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               onClick={() => setMediaTypeFilter('all')}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 mediaTypeFilter === 'all'
-                  ? "bg-amber-500 text-black font-extrabold shadow-sm"
-                  : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-hl-gold text-black font-extrabold shadow-sm"
+                  : "bg-hl-panel border border-hl-line text-hl-muted hover:text-hl-soft"
               }`}
             >
               Todas ({customMediaList.length})
@@ -879,8 +616,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               onClick={() => setMediaTypeFilter('image')}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 mediaTypeFilter === 'image'
-                  ? "bg-amber-500 text-black font-extrabold shadow-sm"
-                  : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-hl-gold text-black font-extrabold shadow-sm"
+                  : "bg-hl-panel border border-hl-line text-hl-muted hover:text-hl-soft"
               }`}
             >
               Imagens
@@ -890,8 +627,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               onClick={() => setMediaTypeFilter('video')}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 mediaTypeFilter === 'video'
-                  ? "bg-amber-500 text-black font-extrabold shadow-sm"
-                  : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  ? "bg-hl-gold text-black font-extrabold shadow-sm"
+                  : "bg-hl-panel border border-hl-line text-hl-muted hover:text-hl-soft"
               }`}
             >
               Vídeos
@@ -899,17 +636,18 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           </div>
         </div>
 
+<details className="holy-disclosure"><summary>Comportamento de vídeos e textos</summary><div>
         {/* COMPORTAMENTO VÍDEO FIXO */}
-        <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Ação ao Término de Vídeos Fixados:</span>
+        <div className="bg-hl-canvas/70 p-3 rounded-xl border border-hl-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <span className="text-hl-soft text-[11px] font-bold uppercase tracking-wider">Ação ao Término de Vídeos Fixados:</span>
           <div className="grid grid-cols-2 gap-2 max-w-sm w-full">
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('videoPinBehavior', 'loop')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 videoPinBehavior === 'loop'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
             >
               <RefreshCw className="w-3.5 h-3.5 shrink-0" />
@@ -918,10 +656,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('videoPinBehavior', 'unpin')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 videoPinBehavior === 'unpin'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
             >
               <Minimize className="w-3.5 h-3.5 shrink-0" />
@@ -931,19 +669,19 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         </div>
 
         {/* MODO DOS 60 SEGUNDOS FINAIS */}
-        <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="bg-hl-canvas/70 p-3 rounded-xl border border-hl-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex flex-col">
-            <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Últimos 60s (Vídeo em Reprodução):</span>
-            <span className="text-zinc-500 text-[10px] font-normal">Exibir dividindo tela ou apenas o vídeo</span>
+            <span className="text-hl-soft text-[11px] font-bold uppercase tracking-wider">Últimos 60s (Vídeo em Reprodução):</span>
+            <span className="text-hl-dim text-[10px] font-normal">Exibir dividindo tela ou apenas o vídeo</span>
           </div>
           <div className="grid grid-cols-2 gap-2 max-w-sm w-full">
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('finalMinuteDisplayMode', 'split')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 finalMinuteDisplayMode === 'split'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
               title="Exibe a contagem de 60s em um lado e o vídeo rodando ao lado"
             >
@@ -953,10 +691,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('finalMinuteDisplayMode', 'full_video')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 finalMinuteDisplayMode === 'full_video'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
               title="Mantém o vídeo em tela cheia ignorando o cronômetro do último minuto"
             >
@@ -967,19 +705,19 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         </div>
 
         {/* PRIORIDADE QUANDO VERSÍCULO É EXIBIDO */}
-        <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="bg-hl-canvas/70 p-3 rounded-xl border border-hl-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex flex-col">
-            <span className="text-zinc-300 text-[11px] font-bold uppercase tracking-wider">Versículos Durante o Cronômetro:</span>
-            <span className="text-zinc-500 text-[10px] font-normal">Prioridade de exibição se um versículo for clicado</span>
+            <span className="text-hl-soft text-[11px] font-bold uppercase tracking-wider">Versículos Durante o Cronômetro:</span>
+            <span className="text-hl-dim text-[10px] font-normal">Prioridade de exibição se um versículo for clicado</span>
           </div>
           <div className="grid grid-cols-2 gap-2 max-w-sm w-full">
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('verseDisplayPriority', 'verse_over_video')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 verseDisplayPriority === 'verse_over_video'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
               title="Aparece sobre o vídeo/cronômetro se selecionado"
             >
@@ -989,10 +727,10 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             <button
               type="button"
               onClick={() => updateStateAndBroadcast('verseDisplayPriority', 'video_over_verse')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 min-h-[36px] ${
+              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold min-h-[36px] ${
                 verseDisplayPriority === 'video_over_verse'
-                  ? "bg-amber-500 text-black font-extrabold shadow-md shadow-amber-500/20"
-                  : "bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white"
+                  ? "bg-hl-gold text-black font-extrabold shadow-md shadow-amber-500/20"
+                  : "bg-hl-panel border border-hl-line hover:border-hl-line text-hl-soft hover:text-white"
               }`}
               title="Aparece apenas após o término do cronômetro"
             >
@@ -1002,18 +740,20 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
           </div>
         </div>
 
+</div></details>
         {/* LISTA OU GRADE DE MÍDIAS LOCAIS */}
         {filteredCustomMedia.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 text-zinc-400 text-xs text-center py-10 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
-            <ImageIcon className="w-8 h-8 text-zinc-600 stroke-[1.5]" />
-            <p className="font-semibold text-zinc-300">Nenhuma mídia encontrada nesta busca ou categoria.</p>
-            <p className="text-[11px] text-zinc-500">Envie novos arquivos acima para utilizá-los no telão.</p>
+          <div className="flex flex-col items-center justify-center gap-2 text-hl-muted text-xs text-center py-10 border border-dashed border-hl-line rounded-xl bg-hl-canvas/30">
+            <ImageIcon className="w-8 h-8 text-hl-dim stroke-[1.5]" />
+            <p className="font-semibold text-hl-soft">Nenhuma mídia encontrada nesta busca ou categoria.</p>
+            <p className="text-[11px] text-hl-dim">Envie novos arquivos acima para utilizá-los no telão.</p>
           </div>
         ) : mediaViewMode === 'grid' ? (
           /* EXIBIÇÃO EM GRADE (GALERIA) */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {filteredCustomMedia.map((media, index) => {
-              const isSlideActive = currentSlideId === media.id;
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filteredCustomMedia.map((media) => {
+              const mediaIndex = customMediaList.findIndex(item => item.id === media.id);
+              const isSlideActive = slideIsVisible && currentSlideId === media.id;
               const isSlideOverridden = manualSlideOverride === media.id;
               const isEditing = editingMediaId === media.id;
 
@@ -1022,8 +762,8 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   key={media.id}
                   className={`rounded-xl border transition-all flex flex-col justify-between overflow-hidden relative group ${
                     isSlideActive
-                      ? "bg-amber-950/20 border-amber-500/80 shadow-md ring-1 ring-amber-500/40"
-                      : "bg-zinc-950/80 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900"
+                      ? "bg-hl-gold-well/20 border-hl-gold/80 shadow-md ring-1 ring-hl-gold/40"
+                      : "bg-hl-canvas/80 border-hl-line hover:border-hl-line hover:bg-hl-panel"
                   }`}
                 >
                   {/* PREVIEW EM DESTAQUE NA GRADE */}
@@ -1034,44 +774,45 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       <img src={media.url} alt={media.name} className={`w-full h-full object-${media.fit || 'contain'}`} />
                     )}
 
-                    {/* OVERLAY COM BOTÃO DE PRÉ-VISUALIZAR */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                    {/* BADGES NO TOPO DA MINIATURA */}
+                    <div className="absolute top-2 left-2 flex items-center gap-1">
+                      <span className="bg-black/75 backdrop-blur-md text-[9px] font-black uppercase px-2 py-0.5 rounded text-hl-gold-bright border border-hl-line">
+                        {media.type}
+                      </span>
+                    </div>
+
+                    <div className="absolute top-2 right-2 flex items-center gap-1">
+                      <span className="bg-black/75 backdrop-blur-md text-[10px] font-mono font-bold text-hl-soft px-2 py-0.5 rounded border border-hl-line">
+                        {media.duration / 1000}s
+                      </span>
+                    </div>
+                  </div>
+
+                    {/* AÇÕES SEM SOBREPOR A MINIATURA */}
+                    <div className="flex items-center justify-center gap-2 p-2 border-b border-hl-line bg-hl-panel">
                       <button
                         type="button"
                         onClick={() => setPreviewMedia(media)}
                         title="Pré-visualizar Mídia em Tela Cheia"
-                        className="p-2 rounded-xl bg-amber-500 text-black hover:bg-amber-400 font-bold transition-transform hover:scale-105 cursor-pointer"
+                        className="min-h-11 min-w-11 p-2 rounded-xl bg-hl-gold text-black hover:bg-hl-gold-bright font-bold transition-transform hover:scale-105 cursor-pointer"
                       >
                         <Maximize2 className="w-4 h-4" />
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => updateStateAndBroadcast('manualSlideOverride', isSlideOverridden ? null : media.id)}
+                        onClick={() => isSlideOverridden ? resumeSequence() : projectSlide(media.id)}
+                        aria-label={isSlideOverridden ? 'Desafixar mídia' : 'Projetar esta mídia'}
                         title={isSlideOverridden ? "Desafixar do Telão" : "Projetar no Telão Agora"}
-                        className={`p-2 rounded-xl font-bold transition-transform hover:scale-105 cursor-pointer ${
+                        className={`min-h-11 min-w-11 p-2 rounded-xl font-bold transition-transform hover:scale-105 cursor-pointer ${
                           isSlideOverridden
-                            ? "bg-amber-500 text-black"
-                            : "bg-zinc-900 border border-zinc-700 text-amber-400 hover:bg-amber-500/20"
+                            ? "bg-hl-gold text-black"
+                            : "bg-hl-panel border border-hl-line text-hl-gold-bright hover:bg-hl-gold/20"
                         }`}
                       >
                         <Send className="w-4 h-4" />
                       </button>
                     </div>
-
-                    {/* BADGES NO TOPO DA MINIATURA */}
-                    <div className="absolute top-2 left-2 flex items-center gap-1">
-                      <span className="bg-black/75 backdrop-blur-md text-[9px] font-black uppercase px-2 py-0.5 rounded text-amber-400 border border-zinc-800">
-                        {media.type}
-                      </span>
-                    </div>
-
-                    <div className="absolute top-2 right-2 flex items-center gap-1">
-                      <span className="bg-black/75 backdrop-blur-md text-[10px] font-mono font-bold text-zinc-200 px-2 py-0.5 rounded border border-zinc-800">
-                        {media.duration / 1000}s
-                      </span>
-                    </div>
-                  </div>
 
                   {/* CONTEÚDO E RENOMEAÇÃO NA GRADE */}
                   <div className="p-3 flex flex-col gap-2">
@@ -1086,26 +827,26 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                             if (e.key === 'Escape') setEditingMediaId(null);
                           }}
                           autoFocus
-                          className="w-full bg-zinc-900 border border-amber-500 text-zinc-100 text-xs px-2 py-1 rounded focus:outline-none"
+                          className="w-full bg-hl-panel border border-hl-gold text-hl-copy text-xs px-2 py-1 rounded focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => handleSaveRename(media)}
-                          className="p-1 bg-amber-500 text-black rounded hover:bg-amber-400 font-bold shrink-0"
+                          className="p-1 bg-hl-gold text-black rounded hover:bg-hl-gold-bright font-bold shrink-0"
                         >
                           <Check className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between gap-1">
-                        <h4 className="text-zinc-100 font-bold text-xs truncate max-w-[140px]" title={media.name}>
+                        <h4 className="text-hl-copy font-bold text-xs truncate max-w-[140px]" title={media.name}>
                           {media.name}
                         </h4>
                         <button
                           type="button"
                           onClick={() => handleStartRename(media)}
                           title="Renomear mídia"
-                          className="text-zinc-500 hover:text-amber-400 p-0.5 cursor-pointer"
+                          className="text-hl-dim hover:text-hl-gold-bright p-0.5 cursor-pointer"
                         >
                           <Edit3 className="w-3 h-3" />
                         </button>
@@ -1113,11 +854,11 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                     )}
 
                     {/* CONTROLES RÁPIDOS */}
-                    <div className="flex items-center justify-between gap-1 pt-2 border-t border-zinc-800/80 text-[10px]">
+                    <div className="flex items-center justify-between gap-1 pt-2 border-t border-hl-line/80 text-[10px]">
                       <button
                         type="button"
                         onClick={() => handleCycleFit(media)}
-                        className="bg-zinc-900 border border-zinc-800 px-2 py-1 rounded text-zinc-300 hover:text-white uppercase font-bold"
+                        className="bg-hl-panel border border-hl-line px-2 py-1 rounded text-hl-soft hover:text-white uppercase font-bold"
                       >
                         {media.fit || 'contain'}
                       </button>
@@ -1126,23 +867,26 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         <button
                           type="button"
                           onClick={() => handleMoveMedia(media.id, 'up')}
-                          disabled={index === 0}
-                          className="p-1 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 rounded"
+                          aria-label={`Subir mídia ${media.name}`}
+                          disabled={mediaIndex === 0}
+                          className="p-1 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded"
                         >
                           <ArrowUp className="w-3 h-3" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleMoveMedia(media.id, 'down')}
-                          disabled={index === customMediaList.length - 1}
-                          className="p-1 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 rounded"
+                          aria-label={`Descer mídia ${media.name}`}
+                          disabled={mediaIndex === customMediaList.length - 1}
+                          className="p-1 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded"
                         >
                           <ArrowDown className="w-3 h-3" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleRemoveMedia(media)}
-                          className="p-1 bg-zinc-900 border border-zinc-800 hover:bg-red-950 hover:text-red-400 text-zinc-400 rounded"
+                          aria-label={`Excluir mídia ${media.name}`}
+                          className="p-1 bg-hl-panel border border-hl-line hover:bg-red-950 hover:text-red-400 text-hl-muted rounded"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -1156,8 +900,9 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
         ) : (
           /* EXIBIÇÃO EM LISTA DETALHADA */
           <div className="flex flex-col gap-3">
-            {filteredCustomMedia.map((media, index) => {
-              const isSlideActive = currentSlideId === media.id;
+            {filteredCustomMedia.map((media) => {
+              const mediaIndex = customMediaList.findIndex(item => item.id === media.id);
+              const isSlideActive = slideIsVisible && currentSlideId === media.id;
               const isSlideOverridden = manualSlideOverride === media.id;
               const isEditing = editingMediaId === media.id;
 
@@ -1166,16 +911,16 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                   key={media.id}
                   className={`p-3.5 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
                     isSlideActive
-                      ? "bg-amber-950/20 border-amber-500/80 shadow-md"
-                      : "bg-zinc-950/70 border-zinc-800 hover:bg-zinc-850"
+                      ? "bg-hl-gold-well/20 border-hl-gold/80 shadow-md"
+                      : "bg-hl-canvas/70 border-hl-line hover:bg-hl-raised"
                   }`}
                 >
                   <div className="flex items-center gap-3 overflow-hidden w-full sm:w-auto">
                     {/* PREVIEW DA MÍDIA COM AÇÃO DE PREVIEW EXPANDIDO */}
-                    <div 
+                    <div
                       onClick={() => setPreviewMedia(media)}
                       title="Clique para ver o preview em tela cheia"
-                      className="w-14 h-14 rounded-lg bg-black border border-zinc-800 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer"
+                      className="w-14 h-14 rounded-lg bg-black border border-hl-line overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer"
                     >
                       {media.type === 'video' ? (
                         <video src={media.url} className={`w-full h-full object-${media.fit || 'contain'}`} muted />
@@ -1183,7 +928,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                         <img src={media.url} alt={media.name} className={`w-full h-full object-${media.fit || 'contain'}`} />
                       )}
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Maximize2 className="w-4 h-4 text-amber-400" />
+                        <Maximize2 className="w-4 h-4 text-hl-gold-bright" />
                       </div>
                     </div>
 
@@ -1200,61 +945,61 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                               if (e.key === 'Escape') setEditingMediaId(null);
                             }}
                             autoFocus
-                            className="bg-zinc-900 border border-amber-500 text-zinc-100 text-xs px-2 py-1 rounded focus:outline-none max-w-xs"
+                            className="bg-hl-panel border border-hl-gold text-hl-copy text-xs px-2 py-1 rounded focus:outline-none max-w-xs"
                           />
                           <button
                             type="button"
                             onClick={() => handleSaveRename(media)}
-                            className="p-1 bg-amber-500 text-black rounded hover:bg-amber-400 font-bold shrink-0"
+                            className="p-1 bg-hl-gold text-black rounded hover:bg-hl-gold-bright font-bold shrink-0"
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <h4 className="text-zinc-100 font-bold text-xs truncate max-w-[200px] sm:max-w-xs" title={media.name}>
+                          <h4 className="text-hl-copy font-bold text-xs truncate max-w-[200px] sm:max-w-xs" title={media.name}>
                             {media.name}
                           </h4>
                           <button
                             type="button"
                             onClick={() => handleStartRename(media)}
                             title="Renomear mídia"
-                            className="text-zinc-500 hover:text-amber-400 p-0.5 cursor-pointer"
+                            className="text-hl-dim hover:text-hl-gold-bright p-0.5 cursor-pointer"
                           >
                             <Edit3 className="w-3 h-3" />
                           </button>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-amber-400 shrink-0">
+                          <span className="text-[9px] font-black uppercase px-2 py-0.5 bg-hl-panel border border-hl-line rounded text-hl-gold-bright shrink-0">
                             {media.type}
                           </span>
                         </div>
                       )}
 
                       {/* AJUSTES RÁPIDOS DE DURAÇÃO, FIT E ÁUDIO */}
-                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-zinc-400">
+                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-hl-muted">
                         {/* DURAÇÃO */}
                         {media.type === 'video' ? (
-                          <div 
-                            className="flex items-center gap-1 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 text-[10px] text-zinc-400 font-bold"
+                          <div
+                            className="flex items-center gap-1 bg-hl-panel px-2 py-0.5 rounded border border-hl-line text-[10px] text-hl-muted font-bold"
                             title="O carrossel avança automaticamente assim que o vídeo termina de tocar"
                           >
-                            <Clock className="w-3 h-3 text-amber-500" />
+                            <Clock className="w-3 h-3 text-hl-gold" />
                             <span>Duração Nativa (Auto)</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800" title="Tempo em segundos que esta imagem permanece na tela no carrossel automático">
-                            <span className="text-[10px] uppercase text-zinc-500 font-bold">Tempo:</span>
+                          <div className="flex items-center gap-1.5 bg-hl-panel px-2 py-0.5 rounded border border-hl-line" title="Tempo em segundos que esta imagem permanece na tela no carrossel automático">
+                            <span className="text-[10px] uppercase text-hl-dim font-bold">Tempo:</span>
                             <button
                               type="button"
                               onClick={() => handleAdjustDuration(media, -1000)}
-                              className="w-4 h-4 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                              className="w-4 h-4 rounded bg-hl-raised hover:bg-hl-raised text-white flex items-center justify-center text-xs font-bold cursor-pointer"
                             >
                               -
                             </button>
-                            <span className="font-mono text-zinc-200 font-bold">{media.duration / 1000}s</span>
+                            <span className="font-mono text-hl-soft font-bold">{media.duration / 1000}s</span>
                             <button
                               type="button"
                               onClick={() => handleAdjustDuration(media, 1000)}
-                              className="w-4 h-4 rounded bg-zinc-800 hover:bg-zinc-700 text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                              className="w-4 h-4 rounded bg-hl-raised hover:bg-hl-raised text-white flex items-center justify-center text-xs font-bold cursor-pointer"
                             >
                               +
                             </button>
@@ -1266,9 +1011,9 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                           type="button"
                           onClick={() => handleCycleFit(media)}
                           title="Alternar enquadramento (contain, cover, fill)"
-                          className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-[10px] font-bold text-zinc-300 hover:text-white uppercase flex items-center gap-1 cursor-pointer"
+                          className="bg-hl-panel border border-hl-line px-2 py-0.5 rounded text-[10px] font-bold text-hl-soft hover:text-white uppercase flex items-center gap-1 cursor-pointer"
                         >
-                          <Maximize className="w-3 h-3 text-amber-500" />
+                          <Maximize className="w-3 h-3 text-hl-gold" />
                           <span>{media.fit || 'contain'}</span>
                         </button>
 
@@ -1293,13 +1038,13 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
 
                   {/* AÇÕES DA MÍDIA */}
                   <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    
+
                     {/* BOTAO DE PRÉ-VISUALIZAR */}
                     <button
                       type="button"
                       onClick={() => setPreviewMedia(media)}
                       title="Pré-visualizar em Tela Cheia"
-                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg border border-hl-line bg-hl-panel text-hl-soft hover:bg-hl-raised hover:text-white transition-all flex items-center justify-center cursor-pointer"
                     >
                       <Maximize2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
@@ -1307,25 +1052,25 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                     {/* ENVIAR / PROJETAR */}
                     <button
                       type="button"
-                      onClick={() => updateStateAndBroadcast('manualSlideOverride', isSlideOverridden ? null : media.id)}
+                      onClick={() => isSlideOverridden ? resumeSequence() : projectSlide(media.id)}
                       aria-label={isSlideOverridden ? "Desafixar mídia" : "Projetar esta mídia"}
                       title={isSlideOverridden ? "Desafixar mídia do telão" : "Projetar esta mídia imediatamente"}
-                      className={`w-9 h-9 sm:w-8 sm:h-8 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                      className={`w-9 h-9 sm:w-8 sm:h-8 rounded-lg border transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hl-gold ${
                         isSlideOverridden
-                          ? "bg-amber-500 border-amber-500 text-black hover:bg-amber-400 font-bold"
-                          : "bg-zinc-900 border-zinc-800 hover:bg-amber-500/20 hover:border-amber-500/40 text-amber-400"
+                          ? "bg-hl-gold border-hl-gold text-black hover:bg-hl-gold-bright font-bold"
+                          : "bg-hl-panel border-hl-line hover:bg-hl-gold/20 hover:border-hl-gold/40 text-hl-gold-bright"
                       }`}
                     >
                       <Send className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
-                    
+
                     {/* MOVER PRA CIMA */}
                     <button
                       type="button"
                       onClick={() => handleMoveMedia(media.id, 'up')}
-                      disabled={index === 0}
+                      disabled={mediaIndex === 0}
                       title="Mover mídia para cima na lista"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded-lg transition-all flex items-center justify-center cursor-pointer"
                     >
                       <ArrowUp className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
@@ -1334,9 +1079,9 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                     <button
                       type="button"
                       onClick={() => handleMoveMedia(media.id, 'down')}
-                      disabled={index === customMediaList.length - 1}
+                      disabled={mediaIndex === customMediaList.length - 1}
                       title="Mover mídia para baixo na lista"
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-zinc-300 rounded-lg transition-all flex items-center justify-center cursor-pointer"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-hl-panel border border-hl-line hover:bg-hl-raised disabled:opacity-30 text-hl-soft rounded-lg transition-all flex items-center justify-center cursor-pointer"
                     >
                       <ArrowDown className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
@@ -1347,7 +1092,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
                       aria-label={`Excluir mídia ${media.name}`}
                       title="Excluir mídia permanentemente"
                       onClick={() => handleRemoveMedia(media)}
-                      className="w-9 h-9 sm:w-8 sm:h-8 bg-zinc-900 border border-zinc-800 hover:bg-red-950/60 hover:border-red-800/60 text-zinc-400 hover:text-red-400 rounded-lg transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                      className="w-9 h-9 sm:w-8 sm:h-8 bg-hl-panel border border-hl-line hover:bg-red-950/60 hover:border-red-800/60 text-hl-muted hover:text-red-400 rounded-lg transition-all flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                     >
                       <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     </button>
@@ -1357,24 +1102,25 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
             })}
           </div>
         )}
-      </section>
+      </section></details>
+
 
       {/* MODAL DE PRÉ-VISUALIZAÇÃO EXPANDIDA */}
       {previewMedia && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+        <div
+          className="holy-theme holy-overlay fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setPreviewMedia(null)}
         >
-          <div 
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-w-4xl w-full max-h-[90vh] flex flex-col gap-4 shadow-2xl relative overflow-hidden"
+          <div
+            ref={previewDialogRef} role="dialog" aria-modal="true" aria-label="Prévia da mídia" tabIndex={-1} className="holy-dialog bg-hl-panel border border-hl-line rounded-2xl p-4 max-w-4xl w-full max-h-[90vh] flex flex-col gap-4 shadow-2xl relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+            <div className="flex items-center justify-between border-b border-hl-line pb-3">
               <div className="flex items-center gap-2">
-                {previewMedia.type === 'video' ? <Film className="w-5 h-5 text-amber-500" /> : <ImageIcon className="w-5 h-5 text-amber-500" />}
+                {previewMedia.type === 'video' ? <Film className="w-5 h-5 text-hl-gold" /> : <ImageIcon className="w-5 h-5 text-hl-gold" />}
                 <div>
-                  <h3 className="font-extrabold text-sm text-zinc-100">{previewMedia.name}</h3>
-                  <span className="text-[10px] text-zinc-400 font-mono">
+                  <h3 className="font-extrabold text-sm text-hl-copy">{previewMedia.name}</h3>
+                  <span className="text-[10px] text-hl-muted font-mono">
                     {previewMedia.type.toUpperCase()} • {previewMedia.duration / 1000}s • Enquadramento: {previewMedia.fit || 'contain'}
                   </span>
                 </div>
@@ -1382,40 +1128,40 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
               <button
                 type="button"
                 onClick={() => setPreviewMedia(null)}
-                className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer"
+                aria-label="Fechar prévia" className="p-2 rounded-xl bg-hl-raised hover:bg-hl-raised text-hl-soft hover:text-white transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 bg-zinc-950 rounded-xl border border-zinc-800/80 overflow-hidden flex items-center justify-center p-3 min-h-[300px] max-h-[60vh] relative shadow-inner">
+            <div className="flex-1 bg-hl-canvas rounded-xl border border-hl-line/80 overflow-hidden flex items-center justify-center p-3 min-h-[300px] max-h-[60vh] relative shadow-inner">
               {previewMedia.type === 'video' ? (
-                <video 
-                  src={previewMedia.url} 
-                  controls 
-                  autoPlay 
+                <video
+                  src={previewMedia.url}
+                  controls
+                  autoPlay
                   playsInline
-                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl" 
+                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl"
                 />
               ) : (
-                <img 
-                  src={previewMedia.url} 
-                  alt={previewMedia.name} 
-                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl" 
+                <img
+                  src={previewMedia.url}
+                  alt={previewMedia.name}
+                  className="max-w-full max-h-[58vh] object-contain rounded-lg shadow-2xl"
                 />
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-zinc-800/80">
-              <span className="text-xs text-zinc-400">Pré-visualização técnica do operador (não afeta o telão ao vivo)</span>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-hl-line/80">
+              <span className="text-xs text-hl-muted">Pré-visualização técnica do operador (não afeta o telão ao vivo)</span>
               <button
                 type="button"
                 onClick={() => {
-                  updateStateAndBroadcast('manualSlideOverride', previewMedia.id);
+                  projectSlide(previewMedia.id);
                   setPreviewMedia(null);
-                  showAlert(`Mídia "${previewMedia.name}" projetada no telão`, 'success');
+                  showAlert(`Mídia "${previewMedia.name}" enviada. Confira o telão.`, 'success');
                 }}
-                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                className="w-full sm:w-auto bg-hl-gold hover:bg-hl-gold-bright text-black font-extrabold text-xs px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
               >
                 <Send className="w-4 h-4" />
                 <span>Projetar Agora no Telão</span>

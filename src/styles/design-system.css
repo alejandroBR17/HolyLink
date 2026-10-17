@@ -1,0 +1,66 @@
+@theme static {
+  --color-hl-canvas:#030305;
+  --color-hl-panel:#0d0b12;
+  --color-hl-raised:#19151f;
+  --color-hl-line-soft:#28232f;
+  --color-hl-line:#403747;
+  --color-hl-line-strong:#776133;
+  --color-hl-gold:#ffd34f;
+  --color-hl-gold-bright:#ffe797;
+  --color-hl-gold-strong:#dba824;
+  --color-hl-gold-muted:#c6ac67;
+  --color-hl-gold-well:#292009;
+  --color-hl-copy:#faf7ee;
+  --color-hl-soft:#d8d1df;
+  --color-hl-muted:#b5aebe;
+  --color-hl-dim:#978da4;
+  --color-hl-ink:#181000;
+}
+.holy-theme { color-scheme:dark; --hl-radius-panel:16px; --hl-radius-control:10px; }
+.holy-theme :is(button,input,select,textarea,summary):not(.holy-projection *) { border-radius:var(--hl-radius-control); font-family:var(--font-sans); }
+.holy-theme :is(button,summary):not(.holy-projection *) { transition:background-color .18s,border-color .18s,box-shadow .18s; }
+.holy-theme button:not(:disabled):not(.holy-projection *):hover { box-shadow:inset 0 1px 0 #ffe39914,0 0 16px #eac34110; }
+.holy-theme :is(button,input,select,textarea,summary):focus-visible { outline:2px solid var(--color-hl-gold); outline-offset:3px; }
+.holy-theme :is(h1,h2,h3,h4):not(.holy-projection *) { letter-spacing:0; text-transform:none; }
+.holy-theme [class~="bg-hl-panel"]:not(.holy-projection *) { background:radial-gradient(at 0 0,#ffd34f08,transparent 65%),linear-gradient(150deg,#151019,var(--color-hl-panel)); border-color:var(--color-hl-line); box-shadow:inset 0 1px 0 #ffe3990d; }
+.holy-theme [class~="bg-hl-raised"]:not(.holy-projection *) { background-image:linear-gradient(#ffffff05,transparent); }
+.holy-theme button[class~="bg-hl-gold"],.holy-theme button[class~="bg-hl-gold-strong"] { background:linear-gradient(150deg,var(--color-hl-gold-bright),var(--color-hl-gold) 65%,var(--color-hl-gold-strong)); color:var(--color-hl-ink); border-color:var(--color-hl-gold); box-shadow:inset 0 1px 0 #fff5,0 3px 16px #ffcf4f10; }
+.holy-theme :is(input,textarea,select):not(.holy-projection *) { border-color:var(--color-hl-line); color:var(--color-hl-copy); accent-color:var(--color-hl-gold); }
+.holy-theme input[type="range"] { appearance:none; height:6px; min-height:6px; background:#3a3040; border-radius:99px; cursor:pointer; }
+.holy-theme input[type="range"]::-webkit-slider-thumb { appearance:none; width:20px; height:20px; border-radius:50%; background:linear-gradient(#fff0b7,#ffd34f); border:2px solid #dca92b; box-shadow:0 0 12px #ffd34f35; }
+.holy-theme input[type="range"]::-moz-range-thumb { width:17px; height:17px; border-radius:50%; background:#ffd34f; border:2px solid #dca92b; }
+.holy-theme input[type="checkbox"] { accent-color:var(--color-hl-gold); }
+.holy-theme select { appearance:none; padding-right:32px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23e6c56c' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E"); background-position:right 10px center; background-repeat:no-repeat; background-size:16px; }
+.holy-theme input::file-selector-button { border:1px solid var(--color-hl-line-strong); border-radius:8px; padding:10px 14px; background:var(--color-hl-raised); color:var(--color-hl-gold); margin-right:12px; cursor:pointer; }
+.holy-theme input::-webkit-calendar-picker-indicator { opacity:.8; filter:sepia(1) saturate(3); }
+.holy-theme ::selection { background:#ffd34f40; color:#fff9dd; }
+.holy-theme ::-webkit-scrollbar-thumb { background:#71603f; border-color:var(--color-hl-panel); }
+.holy-fullscreen-prompt { background:radial-gradient(ellipse at 50% 30%,#7a5c0829,transparent 70%),#030305dd; }
+.holy-fullscreen-prompt > div { border:1px solid #ffe08770; background:linear-gradient(145deg,#ffeb9e,#ffd34f); box-shadow:0 0 90px #ffd34f1c; }
+.holy-fullscreen-prompt h2 { font-size:clamp(24px,3vw,40px); }
+.holy-fullscreen-prompt p { font-size:clamp(14px,1.6vw,20px); max-width:720px; line-height:1.7; }
+.holy-sync-progress { background:radial-gradient(ellipse at 50% 40%,#5f460c24,transparent 65%),#030305ee; }
+.holy-error-screen { background:radial-gradient(at 50% 0,#ffd34f0d,transparent 65%),var(--color-hl-canvas); min-height:100dvh; overflow:auto; }
+.holy-error-screen > div { border-color:var(--color-hl-line-strong); background:linear-gradient(145deg,#17121c,#09080c); box-shadow:inset 0 1px #fff1,0 25px 80px #0008; }
+.holy-projection :is(h1,h2,h3,h4) { font-family:var(--font-sans); letter-spacing:-.015em; }
+.holy-projection [class~="bg-hl-panel"],.holy-projection [class~="bg-hl-raised"] { background-image:linear-gradient(140deg,#ffd34f08,transparent 75%); border-color:#ffd34f40; }
+@media(max-width:600px) { .holy-fullscreen-prompt { padding:22px; } .holy-error-screen { padding:16px; } }
+@media(prefers-reduced-motion:reduce) { .holy-theme :is(button,input,select,textarea,summary) { transition:none; } }
+.holy-theme input[type="range"] { height:44px; min-height:44px; background:transparent; }
+.holy-theme input[type="range"]::-webkit-slider-runnable-track { height:6px; background:#3a3040; border-radius:99px; }
+.holy-theme input[type="range"]::-webkit-slider-thumb { margin-top:-7px; }
+.holy-theme input[type="range"]::-moz-range-track { height:6px; background:#3a3040; border-radius:99px; }
+.atmosphere-fallback-host>canvas{display:none!important}
+.atmosphere-compatible{position:absolute;inset:0;overflow:hidden;background:#040306;opacity:.95}
+.atmosphere-compatible i{position:absolute;display:block;width:140%;height:90%;left:-20%;top:5%;background:radial-gradient(ellipse,#d79a27a0,transparent 65%);filter:blur(12px);animation:holy-atmosphere-drift 12s ease-in-out infinite alternate;transform:rotate(-15deg)}
+.atmosphere-compatible i:nth-child(2){top:30%;left:0;background:radial-gradient(ellipse,#a8402060,transparent 65%);animation-delay:-6s;animation-duration:17s}
+.atmosphere-compatible i:nth-child(3){width:80%;height:60%;top:0;left:-10%;background:radial-gradient(ellipse,#ffe79760,transparent 65%);animation-delay:-3s;animation-duration:14s}
+.atmosphere-veil i{width:45%;height:160%;top:-30%;left:20%;background:linear-gradient(105deg,transparent,#ffe79760,transparent);transform:rotate(20deg)}
+/* Legacy preset id retained so existing preferences select the replacement. */
+.atmosphere-fju_aura i{width:150%;height:45%;left:-25%;top:70%;border-radius:0;background:linear-gradient(transparent,#c7923155 45%,#f5d58b66 55%,transparent);animation-name:holy-golden-drift;animation-duration:24s;filter:blur(22px)}
+.atmosphere-fju_aura i:nth-child(2){top:-20%;left:-15%;height:45%;background:linear-gradient(transparent,#f5d58b44 50%,transparent);animation-duration:30s;animation-delay:-12s}
+.atmosphere-fju_aura i:nth-child(3){display:none}
+@keyframes holy-golden-drift{from{transform:translate(-2%,-4%) rotate(-10deg)}to{transform:translate(2%,4%) rotate(-6deg)}}
+.atmosphere-intensity-low{opacity:.6}.atmosphere-intensity-medium{opacity:.8}
+@keyframes holy-atmosphere-drift{from{transform:translate(-6%,-8%) rotate(-12deg) scale(.92)}to{transform:translate(8%,12%) rotate(16deg) scale(1.15)}}
+@media(prefers-reduced-motion:reduce){.atmosphere-compatible i{animation:none}}

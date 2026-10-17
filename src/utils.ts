@@ -3,91 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {mergeMediaRecord} from './utils/media-record';
 import { Meeting } from './types';
 import { MEETINGS } from './data';
 
-/**
- * Calculates the next meeting and any currently ongoing meeting.
- * Meetings are assumed to last 90 minutes.
- */
-export function getNextMeeting(now: Date, meetingsList: Meeting[] = MEETINGS): {
-  nextMeeting: Meeting;
-  nextMeetingDate: Date;
-  ongoingMeeting: Meeting | null;
-} {
-  let ongoingMeeting: Meeting | null = null;
-  
-  const formatDateStr = (d: Date) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const todayStr = formatDateStr(now);
-
-  // 1. Check if there is an ongoing meeting (started within last 90 minutes)
-  for (const m of meetingsList) {
-    const isOngoingToday = m.date 
-      ? m.date === todayStr
-      : m.day === now.getDay();
-
-    if (isOngoingToday) {
-      const mStart = new Date(now);
-      mStart.setHours(m.hours, m.minutes, 0, 0);
-      const mEnd = new Date(mStart.getTime() + 90 * 60 * 1000); // 90 minutes later
-      
-      if (now >= mStart && now < mEnd) {
-        ongoingMeeting = m;
-        break;
-      }
-    }
-  }
-
-  // 2. Find the absolute next meeting
-  for (let d = 0; d <= 7; d++) {
-    const candidateDate = new Date(now.getTime() + d * 24 * 60 * 60 * 1000);
-    const dayOfWeek = candidateDate.getDay();
-    const candidateStr = formatDateStr(candidateDate);
-    
-    // Filter meetings on this candidate day
-    const dayMeetings = meetingsList.filter(m => {
-      if (m.date) {
-        return m.date === candidateStr;
-      }
-      return m.day === dayOfWeek;
-    });
-    
-    // Sort meetings by time of day
-    const sorted = [...dayMeetings].sort((a, b) => {
-      return (a.hours * 60 + a.minutes) - (b.hours * 60 + b.minutes);
-    });
-    
-    for (const m of sorted) {
-      const mTime = new Date(candidateDate);
-      mTime.setHours(m.hours, m.minutes, 0, 0);
-      
-      // If we are looking at today, the meeting must be in the future
-      if (mTime > now) {
-        return {
-          nextMeeting: m,
-          nextMeetingDate: mTime,
-          ongoingMeeting
-        };
-      }
-    }
-  }
-
-  // Fallback
-  const defaultMeeting = meetingsList[0] || MEETINGS[0];
-  const fallbackDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  fallbackDate.setHours(defaultMeeting.hours, defaultMeeting.minutes, 0, 0);
-  return {
-    nextMeeting: defaultMeeting,
-    nextMeetingDate: fallbackDate,
-    ongoingMeeting
-  };
-}
+import {findMeetingSchedule} from './utils/agenda';
+export function getNextMeeting(now:Date,meetingsList:Meeting[]=MEETINGS){return findMeetingSchedule(now,meetingsList);}
 
 // ==========================================
 // INDEXEDDB STORAGE FOR CUSTOM MEDIA & CONFIGS
@@ -104,6 +25,7 @@ export interface DBMediaItem {
   duration: number; // in milliseconds
   enabledInLoop: boolean;
   blob?: Blob;
+  localBlobVersion?:string;
   muted?: boolean;
   order?: number;
   fit?: 'contain' | 'cover' | 'fill';
@@ -174,63 +96,64 @@ export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
   }
 }
 
-export async function saveMediaItem(item: DBMediaItem): Promise<void> {
+export async function saveMediaItem(item: DBMediaItem, signal?: AbortSignal): Promise<void> {
+  signal?.throwIfAborted();
   const db = await openDB();
+  if (signal?.aborted) {db.close(); signal.throwIfAborted();}
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
-    
-    // Get existing item from store to preserve the blob if not provided in 'item'
-    const getRequest = store.get(item.id);
-    
-    getRequest.onsuccess = () => {
-      const existing = getRequest.result;
-      let finalItem = item;
-      if (existing) {
-        finalItem = {
-          ...existing,
-          ...item,
-          blob: (item.blob !== undefined && item.blob !== null) ? item.blob : existing.blob
-        };
-      }
-      
-      const putRequest = store.put(finalItem);
-      putRequest.onsuccess = () => resolve();
-      putRequest.onerror = () => reject(putRequest.error);
-    };
-    
-    getRequest.onerror = () => {
-      const putRequest = store.put(item);
-      putRequest.onsuccess = () => resolve();
-      putRequest.onerror = () => reject(putRequest.error);
+    const abort = () => {try {transaction.abort();} catch {}};
+    const cleanup = () => {signal?.removeEventListener('abort', abort); db.close();};
+    signal?.addEventListener('abort', abort, {once:true});
+    transaction.oncomplete = () => {cleanup(); resolve();};
+    transaction.onerror = () => {cleanup(); reject(signal?.reason || transaction.error || new Error('Falha ao salvar mídia.'));};
+    transaction.onabort = () => {cleanup(); reject(signal?.reason || transaction.error || new Error('Gravação de mídia cancelada.'));};
+    const request = store.get(item.id);
+    request.onsuccess = () => {
+      if (signal?.aborted) {abort(); return;}
+      const existing = request.result;
+      try {store.put(mergeMediaRecord(existing,item));} catch {abort();}
     };
   });
 }
 
-export async function getAllMediaItems(): Promise<DBMediaItem[]> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result || []);
-      request.onerror = () => reject(request.error);
-    });
-  } catch (e) {
-    console.warn("IndexedDB not supported or accessible in this environment:", e);
-    return [];
-  }
+/** All restored files commit together; an aborted batch leaves the old library intact. */
+export async function saveMediaBatch(items:DBMediaItem[]):Promise<void> {
+  if(!items.length)return;
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction(STORE_NAME,'readwrite');const store=transaction.objectStore(STORE_NAME);
+    transaction.oncomplete=()=>{db.close();resolve();};
+    transaction.onabort=()=>{db.close();reject(transaction.error||new Error('Restauração de mídias cancelada.'));};
+    transaction.onerror=()=>{ /* IndexedDB aborts the entire transaction. */ };
+    for(const item of items){const request=store.get(item.id);request.onsuccess=()=>{try{const current=request.result;store.put(mergeMediaRecord(current,item));}catch{transaction.abort();}};}
+  });
 }
 
-export async function deleteMediaItem(id: string): Promise<void> {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(id);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+/** A failed read is not an empty library. Callers keep their last good snapshot. */
+export async function getAllMediaItems(): Promise<DBMediaItem[]> {
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction(STORE_NAME,'readonly');
+    let items:DBMediaItem[]=[];
+    const request=transaction.objectStore(STORE_NAME).getAll();
+    request.onsuccess=()=>{items=request.result||[];};
+    transaction.oncomplete=()=>{db.close();resolve(items);};
+    transaction.onerror=()=>{db.close();reject(transaction.error||request.error||new Error('Não foi possível ler a biblioteca local.'));};
+    transaction.onabort=()=>{db.close();reject(transaction.error||new Error('Leitura da biblioteca cancelada.'));};
+  });
+}
+
+export async function deleteMediaItem(id:string,signal?:AbortSignal):Promise<void> {
+  signal?.throwIfAborted();const db=await openDB();if(signal?.aborted){db.close();signal.throwIfAborted();}
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction(STORE_NAME,'readwrite');
+    const abort=()=>{try{transaction.abort();}catch{}};const cleanup=()=>{signal?.removeEventListener('abort',abort);db.close();};
+    signal?.addEventListener('abort',abort,{once:true});transaction.oncomplete=()=>{cleanup();resolve();};
+    transaction.onabort=()=>{cleanup();reject(signal?.reason||transaction.error||new Error('Exclusão cancelada.'));};
+    transaction.onerror=()=>{ /* Default IndexedDB abort rolls this operation back. */ };
+    if(signal?.aborted){abort();return;}transaction.objectStore(STORE_NAME).delete(id);
   });
 }
 
