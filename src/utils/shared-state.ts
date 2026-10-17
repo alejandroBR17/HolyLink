@@ -1,3 +1,4 @@
+import {validWindowCommand,validWindowResult,isWindowMessage} from './projection-window.ts';
 import {isFjuMomentSelection} from './fju-moments.ts';
 import {calendarDate} from './agenda.ts';
 type Validator = (value: unknown) => boolean;
@@ -34,6 +35,7 @@ const campaign: Validator = value => record(value) && Object.keys(value).every(k
 
 // Explicit application state only: device identity and arbitrary storage keys are never transferable.
 const validators: Record<string, Validator> = {
+  projectionWindowCommand:validWindowCommand, projectionWindowResult:validWindowResult,
   manualSlideOverride: nullable(text(200)), slidesOrder: array(text(200)), disabledSlides: array(text(200)),
   customVerseText: nullable(text(100_000)), customVerseRef: nullable(text(500)), activeVerseIndex: nullable(number(0, 10_000, true)),
   projectionMode: oneOf('pre', 'post'), projectionTheme: oneOf('auto','fju','regular'), fjuProjectsEnabled: oneOf(true,false,'true','false'),
@@ -64,7 +66,7 @@ export function readSharedStorage(value: unknown): Record<string, string> {
   for (const [key, val] of Object.entries(value)) {
     if (!key.startsWith('projection_')) continue;
     const name = key.slice('projection_'.length);
-    if (!Object.hasOwn(validators, name) || ['isProjectionOpen', 'projectionCloseTrigger', 'mediaUpdateTrigger'].includes(name)) continue;
+    if (isWindowMessage(name) || !Object.hasOwn(validators, name) || ['isProjectionOpen', 'projectionCloseTrigger', 'mediaUpdateTrigger'].includes(name)) continue;
     if (typeof val !== 'string' || !isSharedStateUpdate(name, val)) throw new Error('Configuração inválida: ' + name);
     total += val.length;
     if (total > 1_000_000) throw new Error('Configurações de sincronização excedem o limite.');

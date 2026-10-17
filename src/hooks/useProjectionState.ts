@@ -1,3 +1,4 @@
+import {isWindowMessage} from '../utils/projection-window';
 import {readFjuMoments} from '../utils/fju-moments';
 import type {ProjectionThemeMode} from '../utils/projection-theme';
 import {isSharedStateUpdate} from '../utils/shared-state';
@@ -232,7 +233,8 @@ export function useProjectionState() {
 
   // Update local state and sync across tabs (BroadcastChannel) & remote peers (PeerJS)
   const updateStateAndBroadcast = useCallback((key: string, value: any) => {
-    if (value === null || value === undefined) {
+    if(isWindowMessage(key)){if(!isSharedStateUpdate(key,value))return;window.dispatchEvent(new CustomEvent('holylink_window_message',{detail:{key,value}}));}
+    else if (value === null || value === undefined) {
       localStorage.removeItem(`projection_${key}`);
     } else {
       const stringValue = (typeof value === 'object') ? JSON.stringify(value) : value.toString();
@@ -338,6 +340,7 @@ export function useProjectionState() {
 
     const updateStateLocalOnly = (key: string, value: any) => {
       if (!isSharedStateUpdate(key, value)) return;
+      if(isWindowMessage(key)){window.dispatchEvent(new CustomEvent('holylink_window_message',{detail:{key,value}}));return;}
       const stringValue = (value === null || value === undefined) ? null : (typeof value === 'object' ? JSON.stringify(value) : value.toString());
       if (localStorage.getItem(`projection_${key}`) !== stringValue) {
         if (stringValue === null) {

@@ -1,4 +1,5 @@
-import {availablePreparedMoment} from './utils/fju-moments';
+import {useProjectionWindow} from './hooks/useProjectionWindow';
+import {availablePreparedMoment,connectFjuMoments,preparedMomentSlides,isFjuMoment} from './utils/fju-moments';
 import {FJU_PRE_SLIDES,FJU_POST_SLIDES,FJU_PROJECT_SLIDES,isFjuProject,connectFjuProjects} from './utils/fju-content';
 import {deriveCountdown} from './utils/countdown';
 import {ProjectionStage} from './components/ProjectionStage';
@@ -89,7 +90,8 @@ export default function App() {
   const {
     state,
     updateStateAndBroadcast: baseUpdateStateAndBroadcast,
-    setProjectionWin
+    setProjectionWin,
+    projectionWinRef
   } = useProjectionState();
 
   const {
@@ -242,7 +244,7 @@ export default function App() {
 
   const originalSchedule=getNextMeeting(currentTime,customMeetings);
   const isFJUProjection=isYouthProjection(originalSchedule.ongoingMeeting,originalSchedule.nextMeeting,originalSchedule.nextMeetingDate,currentTime,projectionTheme);
-  const manualSlideOverride=storedManualSlideOverride&&availablePreparedMoment(storedManualSlideOverride,fjuMoments)&&(!isFjuProject(storedManualSlideOverride)||fjuProjectsEnabled)&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):availableInChurchLoop(storedManualSlideOverride,customMeetings))?storedManualSlideOverride:null;
+  const manualSlideOverride=storedManualSlideOverride&&!(isFjuMoment(storedManualSlideOverride)&&projectionMode==='post')&&availablePreparedMoment(storedManualSlideOverride,fjuMoments)&&(!isFjuProject(storedManualSlideOverride)||fjuProjectsEnabled)&&(isFJUProjection?availableInYouthLoop(storedManualSlideOverride,customMeetings):availableInChurchLoop(storedManualSlideOverride,customMeetings))?storedManualSlideOverride:null;
   const projectionMeetings=customMeetings.filter(isFJUProjection?isYouthMeeting:isChurchMeeting);
   const {ongoingMeeting}=getNextMeeting(currentTime,projectionMeetings);
   const countdown=deriveCountdown(currentTime,projectionMeetings,countdownOffset,countdownPaused,pausedSeconds,countdownAnchor,dismissedJustStarted);
@@ -302,7 +304,7 @@ export default function App() {
     if (id === 'campaigns' && !hasActiveCampaigns) return false;
     return true;
   });
-  const allAvailableSlides: string[] = [...defaultBaseSlides,...(isFJUProjection&&fjuProjectsEnabled?FJU_PROJECT_SLIDES:[])];
+  const allAvailableSlides: string[] = [...defaultBaseSlides,...(isFJUProjection?preparedMomentSlides(fjuMoments,projectionMode):[]),...(isFJUProjection&&fjuProjectsEnabled?FJU_PROJECT_SLIDES:[])];
   customMediaList.forEach((media) => {
     if (!allAvailableSlides.includes(media.id)) {
       allAvailableSlides.push(media.id);
@@ -321,7 +323,7 @@ export default function App() {
   }
 
   const baseActiveSlides: SlideType[] = allAvailableSlides.filter((id) => {
-    if (!isFjuProject(id)&&disabledSlides && disabledSlides.includes(id)) return false;
+    if (!isFjuProject(id)&&!isFjuMoment(id)&&disabledSlides && disabledSlides.includes(id)) return false;
     if (id.startsWith('custom_')) {
       const media = customMediaList.find((m) => m.id === id);
       return media ? media.enabledInLoop : false;
@@ -336,7 +338,7 @@ export default function App() {
     }
   });
 
-  if(isFJUProjection)activeSlides=connectFjuProjects(activeSlides);
+  if(isFJUProjection)activeSlides=connectFjuMoments(connectFjuProjects(activeSlides));
   const totalDuration = activeSlides.reduce((sum, id) => sum + getSlideDuration(id, customMediaList), 0);
   const adjustedTime = currentTime.getTime() - carouselStartTimeOffset;
   const timeInLoop = ((adjustedTime % (totalDuration || 1)) + (totalDuration || 1)) % (totalDuration || 1);
@@ -379,6 +381,10 @@ export default function App() {
 
     baseUpdateStateAndBroadcast(key, value);
   }, [activeSlides, customMediaList, baseUpdateStateAndBroadcast]);
+
+  useEffect(()=>{if(!localStorage.getItem('holylink_fju_moments_queue_v1')){localStorage.setItem('holylink_fju_moments_queue_v1','true');if(isFjuMoment(localStorage.getItem('projection_manualSlideOverride')||''))baseUpdateStateAndBroadcast('manualSlideOverride',null);}},[baseUpdateStateAndBroadcast]);
+
+  const outputControl=useProjectionWindow({view:isProjectionView,windowRef:projectionWinRef,setWindow:setProjectionWin,update:baseUpdateStateAndBroadcast});
 
   // Preload static assets on boot
   useEffect(() => {
@@ -473,6 +479,7 @@ export default function App() {
       updateStateAndBroadcast('isProjectionOpen', true);
 
       const handleBeforeUnload = () => {
+        try{localStorage.setItem('holylink_projection_bounds',JSON.stringify({left:window.screenX,top:window.screenY,width:window.outerWidth,height:window.outerHeight}));}catch{}
         updateStateAndBroadcast('isProjectionOpen', false);
       };
 
@@ -624,12 +631,7 @@ export default function App() {
         <header className="holy-topbar">
           <div className="holy-brand"><img src={LOGO_URLS.symbol} alt="Símbolo HolyLink" width={44} height={44} /><div><h1>HolyLink</h1><span>Projeção · 16:9</span></div></div>
           <div className="holy-header-actions">
-            <button type="button" className="holy-output-button" onClick={() => {
-              if (isProjectionOpen) {setProjectionWin(null); updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString()); updateStateAndBroadcast('isProjectionOpen', false); return;}
-              const win = window.open(window.location.origin + window.location.pathname + '?projection', 'projection_window', 'width=1280,height=720,menubar=no,status=no,titlebar=no');
-              if (!win) {showAlert('Permita a abertura de janelas para usar o telão.', 'error'); return;}
-              setProjectionWin(win); updateStateAndBroadcast('isProjectionOpen', true); updateStateAndBroadcast('projectionCloseTrigger', null);
-            }}><ExternalLink size={18} aria-hidden="true" /><span>{isProjectionOpen ? 'Fechar telão' : 'Abrir telão'}</span></button>
+            <button type="button" className="holy-output-button" onClick={()=>outputControl.request(isProjectionOpen?'close':'open')}><ExternalLink size={18} aria-hidden="true"/><span>{isProjectionOpen?'Fechar telão':'Abrir telão'}</span></button>
             <details className="holy-options"><summary aria-label="Mais opções">Opções<ChevronDown size={16} aria-hidden="true" /></summary><div>
               <button type="button" onClick={event => {setIsLocalProjection(true); event.currentTarget.closest('details')?.removeAttribute('open');}}><Maximize size={18} />Projetar neste aparelho</button>
               <button type="button" onClick={event => {setActiveMobileTab('sync'); event.currentTarget.closest('details')?.removeAttribute('open');}}><Smartphone size={18} />Conectar celular</button>
@@ -696,6 +698,7 @@ export default function App() {
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
           </nav>          <main onWheelCapture={event=>headerScrollRef.current.userIntent(event.deltaY,performance.now())} onTouchStartCapture={event=>{touchYRef.current=event.touches[0]?.clientY??null;}} onTouchMoveCapture={event=>{const y=event.touches[0]?.clientY;if(y!==undefined&&touchYRef.current!==null)headerScrollRef.current.userIntent(touchYRef.current-y,performance.now());touchYRef.current=y??null;}} onKeyDownCapture={event=>{if((event.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]'))return;const direction=['ArrowDown','PageDown','End'].includes(event.key)?1:['ArrowUp','PageUp','Home'].includes(event.key)?-1:0;headerScrollRef.current.userIntent(direction,performance.now());}} onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">
 
+            {outputControl.message&&<div className="operator-notice" role="status">{outputControl.message}</div>}
             {mediaLoadError&&<div className="operator-notice" role="alert"><p>{mediaLoadError} Os arquivos já carregados foram mantidos.</p><button type="button" className="sequence-secondary" onClick={()=>baseUpdateStateAndBroadcast('mediaUpdateTrigger',Date.now().toString())}><RefreshCw size={17}/>Tentar ler biblioteca</button></div>}
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (
@@ -709,6 +712,7 @@ export default function App() {
                 onOpenMonitor={() => setActiveMobileTab('monitor')}
                 fjuProjectsEnabled={fjuProjectsEnabled}
                 fjuMoments={fjuMoments}
+                projectionMode={projectionMode}
                 slidesOrder={slidesOrder}
                 currentSlideId={currentSlideId}
                 manualSlideOverride={manualSlideOverride}
@@ -770,8 +774,7 @@ export default function App() {
 
             {activeMobileTab === 'controls' && (
               <ControlsPanel
-                projectionWin={null}
-                setProjectionWin={setProjectionWin}
+                onToggleOutput={()=>outputControl.request(isProjectionOpen?'close':'open')}
                 blackoutEnabled={blackoutEnabled}
                 clearContentEnabled={clearContentEnabled}
                 nextMeeting={nextMeeting}

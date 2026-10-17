@@ -79,8 +79,6 @@ function AudioVolumeControl({
 }
 
 interface ControlsPanelProps {
-  projectionWin: Window | null;
-  setProjectionWin: (w: Window | null) => void;
   blackoutEnabled: boolean;
   clearContentEnabled: boolean;
   nextMeeting: Meeting|null;
@@ -104,13 +102,12 @@ interface ControlsPanelProps {
   updateStateAndBroadcast: (key: string, value: any) => void;
   currentTime: Date;
   isProjectionOpen?: boolean;
+  onToggleOutput:()=>void;
   showToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
   showAlert?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 export function ControlsPanel({
-  projectionWin,
-  setProjectionWin,
   blackoutEnabled,
   clearContentEnabled,
   nextMeeting,
@@ -134,6 +131,7 @@ export function ControlsPanel({
   updateStateAndBroadcast,
   currentTime,
   isProjectionOpen = false,
+  onToggleOutput,
   showToast,
   showAlert
 }: ControlsPanelProps) {
@@ -162,56 +160,6 @@ export function ControlsPanel({
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-
-  const handleOpenMonitor = async () => {
-    const projectionUrl = `${window.location.origin}${window.location.pathname}?projection`;
-    try {
-      let windowFeatures = 'width=1280,height=720,menubar=no,status=no,titlebar=no';
-
-      // Attempt to use Window Management API (Screen Details)
-      if ('getScreenDetails' in window) {
-        try {
-          const screenDetails = await (window as any).getScreenDetails();
-          // Find the first screen that is NOT the current internal/primary screen
-          const secondaryScreen = screenDetails.screens.find((s: any) => s !== screenDetails.currentScreen);
-
-          if (secondaryScreen) {
-            // Position the window on the secondary screen
-            windowFeatures = `left=${secondaryScreen.availLeft},top=${secondaryScreen.availTop},width=${secondaryScreen.availWidth},height=${secondaryScreen.availHeight},menubar=no,status=no,titlebar=no,fullscreen=yes`;
-          }
-        } catch (err) {
-          console.warn("Screen Details API permission denied or error:", err);
-        }
-      }
-
-      const newWin = window.open(projectionUrl, 'holyrics_projection', windowFeatures);
-      if (newWin) {
-        setProjectionWin(newWin);
-        if (newWin.document) {
-          newWin.onload = () => {
-            if (newWin.document.documentElement.requestFullscreen) {
-              newWin.document.documentElement.requestFullscreen().catch(() => {});
-            }
-          };
-        }
-      } else {
-        if (notify) notify('Janela do monitor foi bloqueada. Permita pop-ups no seu navegador.', 'error');
-        return;
-      }
-    } catch (e) {
-      console.warn("Could not open projection window:", e);
-      if (notify) notify('Erro ao tentar abrir janela do monitor.', 'error');
-      return;
-    }
-    updateStateAndBroadcast('isProjectionOpen', true);
-    updateStateAndBroadcast('projectionCloseTrigger', null);
-  };
-
-  const handleCloseMonitor = () => {
-    setProjectionWin(null);
-    updateStateAndBroadcast('projectionCloseTrigger', Date.now().toString());
-    updateStateAndBroadcast('isProjectionOpen', false);
-  };
 
   const handleToggleTimerPlayPause = () => {
     if(!nextMeetingDate)return;
@@ -345,7 +293,8 @@ export function ControlsPanel({
       <details open className="holy-disclosure console-settings-group"><summary><ConsoleGroupTitle icon={Monitor} title={youth?'Operação do encontro':'Operação da reunião'} description="Saída, fila e contagem regressiva." badge={projectionMode === 'post' ? (youth?'Pós-encontro':'Pós-reunião') : (youth?'Pré-encontro':'Pré-reunião')}/></summary><div className="settings-section-body">
         <section className="settings-card"><header><Eye size={19}/><div><h3>Visibilidade da saída</h3><p>Altera o que aparece no telão.</p></div></header>
           <div className="settings-choice-pair"><button aria-pressed={blackoutEnabled} onClick={() => updateStateAndBroadcast('blackoutEnabled',!blackoutEnabled)}><EyeOff size={20}/><span><strong>Blackout</strong><small>Oculta toda a imagem</small></span></button><button aria-pressed={clearContentEnabled} onClick={() => updateStateAndBroadcast('clearContentEnabled',!clearContentEnabled)}><Eraser size={20}/><span><strong>Limpar tela</strong><small>Mantém o fundo animado</small></span></button></div>
-          <div className="settings-output-actions"><button className="settings-primary" onClick={isProjectionOpen ? handleCloseMonitor : handleOpenMonitor}>{isProjectionOpen ? <X size={18}/> : <ExternalLink size={18}/>} {isProjectionOpen ? 'Fechar segunda tela' : 'Abrir segunda tela'}</button><button onClick={() => setShowPwaModal(true)}><Download size={18}/>Instalar HolyLink</button></div>
+          <div className="settings-output-actions"><button className="settings-primary" onClick={onToggleOutput}>{isProjectionOpen ? <X size={18}/> : <ExternalLink size={18}/>} {isProjectionOpen ? 'Fechar segunda tela' : 'Abrir segunda tela'}</button><button onClick={() => setShowPwaModal(true)}><Download size={18}/>Instalar HolyLink</button></div>
+          <p className="settings-hint">Pelo celular, a abertura e o fechamento são enviados ao PC autorizado. Prepare a saída uma vez no PC e permita pop-ups. Ao reabrir, o HolyLink tenta recuperar a posição anterior; a tela cheia pode exigir um clique no PC.</p>
           <p className="settings-hint">{isOnline ? 'Navegador com conexão à internet.' : 'Navegador sem conexão à internet.'} No celular, abra a segunda tela pelo PC. Uma janela aberta não confirma o HDMI.</p>
         </section>
         <section className="settings-card"><header><ListVideo size={19}/><div><h3>Fila e momentos especiais</h3><p>Escolha a sequência ou fixe um momento.</p></div></header>

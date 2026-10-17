@@ -204,8 +204,13 @@ O redesenho das reuniões de 16/10 foi revertido a pedido do responsável; compo
 
 Nos cartões individuais de Esportes/Cultura/Mídia, a paleta acompanha a identidade do projeto no fundo, cabeçalho, efeitos, avisos e contagem. Não há filtros sobre os PNGs. Mudanças de paleta mantêm o mesmo renderer e respeitam movimento reduzido, efeitos desligados e perda de WebGL; nenhum controle adicional é necessário. Overview mantém azul FJU. Para comparar a identidade normal na prévia, use Ajustes → FJU desligado.
 
-### Momentos preparados do Encontro Jovem
-Em Sequência com FJU ligado, escolha os momentos de Música, Palavra, Gincana e Esportes após o encontro. A escolha fica salva e acompanha os dispositivos sincronizados; confira antes de cada encontro. Cada botão exibe um cartão fixado. Use Retomar sequência (ou toque no momento fixado) para voltar. Desmarcar o momento ao vivo também retoma. São cartões manuais, fora da fila automática; não reproduzem música/vídeo e não programam atividades. Blackout e limpar tela continuam tendo prioridade.
+### Programação anunciada antes do Encontro Jovem
+Em Sequência com FJU ligado, escolha Música, Palavra, Gincana e Esportes após o encontro. Os cartões anunciam o que vai acontecer, juntos na fila automática de pré-encontro; não conduzem atividades ao vivo e não iniciam áudio/vídeo. Desmarcar remove o anúncio da fila. A escolha fica salva e acompanha os dispositivos sincronizados; confira antes de cada encontro. No pós-encontro esses anúncios ficam fora, preservando a seleção para a próxima preparação.
+
+### HolyLink antes/depois, Holyrics durante
+Antes: preparar a segunda tela no PC e usar pré-encontro/pré-reunião. Durante: Fechar telão encerra somente a janela do HolyLink, deixando o operador disponível; o Holyrics é operado separadamente. Depois: selecionar Pós-encontro/Pós-reunião e Abrir telão. O fim da contagem não fecha janela nem afirma que o encontro começou.
+
+No celular autorizado, Abrir/Fechar telão envia um comando transitório ao PC e aguarda sua confirmação. Sem conexão, há orientação; pop-up bloqueado informa a necessidade de permitir janelas e abrir uma vez pelo PC. Na primeira saída é necessário preparar a janela no computador. Depois, reabrir tenta recuperar a posição anterior e retoma a saída preparada, após carregar a biblioteca. O navegador pode exigir gesto no PC para tela cheia, áudio ou foco sobre outro programa. Não há controle nativo do Holyrics, descoberta garantida de HDMI nem promessa de minimizar programas pelo navegador. Comandos expiram, são deduplicados e não entram em backup/sincronização completa.
 
 ### Biblioteca durante a operação
 Se o armazenamento falhar temporariamente, o operador mantém a última biblioteca carregada e oferece Tentar ler biblioteca. A falha não equivale a uma biblioteca vazia. Substituir um arquivo com o mesmo ID atualiza sua fonte local; mudar apenas nome, ordem ou som preserva a fonte para não interromper reprodução. Arquivos antigos são liberados da memória após a transição. O botão Tentar mídia novamente continua relendo a fonte quando necessário.
