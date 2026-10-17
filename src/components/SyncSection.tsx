@@ -807,7 +807,7 @@ export const SyncSection = React.memo(function SyncSection({
               if(!conn.open||!session.approved)return;
               const local=localMap.get(item.id);
               if(!local?.blob||local.blob.size!==item.size||!item.contentHash||localHashes.get(item.id)!==item.contentHash)missingIds.push(item.id);
-              else {const {size:_size,contentHash:_hash,...safe}=item;await saveMediaItem({...safe,blob:local.blob},connectionAbort.signal);}
+              else {const {size:_size,contentHash:_hash,...safe}=item;await saveMediaItem(safe,connectionAbort.signal);}
             }
             if(!conn.open||!session.approved||pendingPullRef.current!==pending)return;
             for(const[key,value]of Object.entries(storage)){

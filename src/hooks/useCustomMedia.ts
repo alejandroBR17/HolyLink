@@ -1,8 +1,9 @@
+import {MediaUrlPool} from '../utils/media-urls';
 import {readTransferMetadata} from '../utils/chunk-assembler';
 import {readMediaCatalog, describeMedia} from '../utils/media-manifest';
 import type {MediaManifestItem} from '../utils/media-manifest';
 import {sendPeerChunk} from '../utils/peer-send';
-import { useState, useEffect, useCallback, ChangeEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
 import { saveMediaItem, getAllMediaItems, deleteMediaItem } from '../utils';
 import { broadcastToPeers, getApprovedPeerConnections } from '../components/SyncSection';
 import { sendMediaInChunks } from '../utils/webrtcChunking';
@@ -32,109 +33,34 @@ export function useCustomMedia(
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Load custom media files from IndexedDB and safely manage Blob Object URLs
-  useEffect(() => {
-    let active = true;
-    const objectUrlsToRevoke: string[] = [];
+  const urlPool=useRef<MediaUrlPool|null>(null);
+  useEffect(()=>()=>{urlPool.current?.dispose();urlPool.current=null;},[]);
 
-    const loadMedia = async () => {
-      try {
-        const items = await getAllMediaItems();
-        if (!active) return;
-        
-        setCustomMediaList((prevList) => {
-          const prevMap = new Map(prevList.map(m => [m.id, m]));
-          const currentIds = new Set(items.map(i => i.id));
-
-          // Revoke URLs for deleted items only
-          prevList.forEach((m) => {
-            if (!currentIds.has(m.id) && m.url && m.url.startsWith('blob:')) {
-              objectUrlsToRevoke.push(m.url);
-            }
-          });
-          
-          const sortedItems = [...items].sort((a, b) => {
-            if (a.order !== undefined && b.order !== undefined) {
-              return a.order - b.order;
-            }
-            if (a.order !== undefined) return -1;
-            if (b.order !== undefined) return 1;
-            
-            const aMatch = a.id.match(/\d+$/);
-            const bMatch = b.id.match(/\d+$/);
-            if (aMatch && bMatch) {
-              return parseInt(aMatch[0], 10) - parseInt(bMatch[0], 10);
-            }
-            return a.id.localeCompare(b.id);
-          });
-
-          const finalMediaList = sortedItems.map((item) => {
-            const existing = prevMap.get(item.id);
-            let itemUrl = '';
-
-            // Reuse existing Object URL if valid
-            const forceReload = mediaUpdateTrigger.startsWith(`retry:${item.id}:`);
-            if (existing && existing.url && existing.url.startsWith('blob:') && !forceReload) {
-              itemUrl = existing.url;
-            } else if (item.blob instanceof Blob) {
-              try {
-                itemUrl = URL.createObjectURL(item.blob);
-                if(existing?.url?.startsWith('blob:'))objectUrlsToRevoke.push(existing.url);
-              } catch (e) {
-                console.error("Error creating Object URL for item:", item.id, e);
-              }
-            } else if (item.blob && typeof item.blob === 'object') {
-              try {
-                const anyBlob = item.blob as any;
-                if (anyBlob.buffer && (anyBlob.buffer instanceof ArrayBuffer || anyBlob.buffer instanceof Uint8Array)) {
-                  const b = new Blob([anyBlob.buffer], { type: anyBlob.type || 'application/octet-stream' });
-                  itemUrl = URL.createObjectURL(b);
-                } else if (anyBlob.bytes) {
-                  const b = new Blob([anyBlob.bytes], { type: anyBlob.type || 'application/octet-stream' });
-                  itemUrl = URL.createObjectURL(b);
-                }
-              } catch (e) {
-                console.error("Error reconstructing blob for item:", item.id, e);
-              }
-            }
-
-            return {
-              id: item.id,
-              type: item.type,
-              name: item.name,
-              duration: item.duration,
-              enabledInLoop: item.enabledInLoop,
-              url: itemUrl,
-              muted: item.muted !== undefined ? item.muted : true,
-              order: item.order,
-              fit: item.fit
-            };
-          });
-
-          return finalMediaList;
-        });
-
-        // Revoke replaced URLs asynchronously after DOM update
-        setTimeout(() => {
-          objectUrlsToRevoke.forEach(url => {
-            try {
-              URL.revokeObjectURL(url);
-            } catch (e) {}
-          });
-        }, 1000);
-        if (active) {setMediaLoadError(null);setIsMediaLoaded(true);}
-      } catch (err) {
-        console.error("Failed to load custom media from DB", err);
-        if (active) {setMediaLoadError('Não foi possível ler a biblioteca local.');setIsMediaLoaded(true);}
-      }
-    };
-
-    loadMedia();
-
-    return () => {
-      active = false;
-    };
-  }, [mediaUpdateTrigger]);
+  // Reads may finish out of order; only the latest effect publishes a snapshot.
+  useEffect(()=>{
+    let active=true;
+    void getAllMediaItems().then(items=>{
+      if(!active)return;
+      const pool=urlPool.current??(urlPool.current=new MediaUrlPool());
+      const retryId=mediaUpdateTrigger.startsWith('retry:')?mediaUpdateTrigger.slice(6,mediaUpdateTrigger.lastIndexOf(':')):undefined;
+      const urls=pool.update(items,retryId);
+      const sorted=[...items].sort((a,b)=>{
+        if(a.order!==undefined&&b.order!==undefined)return a.order-b.order;
+        if(a.order!==undefined)return -1;if(b.order!==undefined)return 1;
+        const ai=a.id.match(/\d+$/),bi=b.id.match(/\d+$/);
+        return ai&&bi?Number(ai[0])-Number(bi[0]):a.id.localeCompare(b.id);
+      });
+      setCustomMediaList(sorted.map(item=>({id:item.id,type:item.type,name:item.name,
+        duration:item.duration,enabledInLoop:item.enabledInLoop,url:urls.get(item.id)||'',
+        muted:item.muted??true,order:item.order,fit:item.fit})));
+      setMediaLoadError(null);setIsMediaLoaded(true);
+    }).catch(error=>{
+      if(!active)return;
+      console.error('Failed to load custom media from DB',error);
+      setMediaLoadError('Não foi possível ler a biblioteca local.');setIsMediaLoaded(true);
+    });
+    return()=>{active=false;};
+  },[mediaUpdateTrigger]);
 
   const broadcastMediaSave = useCallback(async (item: any, includeFile = false) => {
     // Snapshot the recipients: a phone joining midway must not receive orphaned blocks.
@@ -354,7 +280,8 @@ export function useCustomMedia(
 
       for (let i = 0; i < sortedItems.length; i++) {
         sortedItems[i].order = i;
-        await saveMediaItem(sortedItems[i]);
+        const {blob:_blob,localBlobVersion:_version,...metadata}=sortedItems[i];
+        await saveMediaItem(metadata);
         broadcastMediaSave(sortedItems[i]);
       }
 

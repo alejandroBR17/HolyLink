@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {mergeMediaRecord} from './utils/media-record';
 import { Meeting } from './types';
 import { MEETINGS } from './data';
 
@@ -24,6 +25,7 @@ export interface DBMediaItem {
   duration: number; // in milliseconds
   enabledInLoop: boolean;
   blob?: Blob;
+  localBlobVersion?:string;
   muted?: boolean;
   order?: number;
   fit?: 'contain' | 'cover' | 'fill';
@@ -111,8 +113,7 @@ export async function saveMediaItem(item: DBMediaItem, signal?: AbortSignal): Pr
     request.onsuccess = () => {
       if (signal?.aborted) {abort(); return;}
       const existing = request.result;
-      const finalItem = existing ? {...existing, ...item, blob:item.blob ?? existing.blob} : item;
-      store.put(finalItem);
+      try {store.put(mergeMediaRecord(existing,item));} catch {abort();}
     };
   });
 }
@@ -126,24 +127,22 @@ export async function saveMediaBatch(items:DBMediaItem[]):Promise<void> {
     transaction.oncomplete=()=>{db.close();resolve();};
     transaction.onabort=()=>{db.close();reject(transaction.error||new Error('Restauração de mídias cancelada.'));};
     transaction.onerror=()=>{ /* IndexedDB aborts the entire transaction. */ };
-    for(const item of items){const request=store.get(item.id);request.onsuccess=()=>{try{const current=request.result;store.put(current?{...current,...item,blob:item.blob??current.blob}:item);}catch{transaction.abort();}};}
+    for(const item of items){const request=store.get(item.id);request.onsuccess=()=>{try{const current=request.result;store.put(mergeMediaRecord(current,item));}catch{transaction.abort();}};}
   });
 }
 
+/** A failed read is not an empty library. Callers keep their last good snapshot. */
 export async function getAllMediaItems(): Promise<DBMediaItem[]> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result || []);
-      request.onerror = () => reject(request.error);
-    });
-  } catch (e) {
-    console.warn("IndexedDB not supported or accessible in this environment:", e);
-    return [];
-  }
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const transaction=db.transaction(STORE_NAME,'readonly');
+    let items:DBMediaItem[]=[];
+    const request=transaction.objectStore(STORE_NAME).getAll();
+    request.onsuccess=()=>{items=request.result||[];};
+    transaction.oncomplete=()=>{db.close();resolve(items);};
+    transaction.onerror=()=>{db.close();reject(transaction.error||request.error||new Error('Não foi possível ler a biblioteca local.'));};
+    transaction.onabort=()=>{db.close();reject(transaction.error||new Error('Leitura da biblioteca cancelada.'));};
+  });
 }
 
 export async function deleteMediaItem(id:string,signal?:AbortSignal):Promise<void> {

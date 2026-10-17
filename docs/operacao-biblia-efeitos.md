@@ -206,3 +206,6 @@ Nos cartões individuais de Esportes/Cultura/Mídia, a paleta acompanha a identi
 
 ### Momentos preparados do Encontro Jovem
 Em Sequência com FJU ligado, escolha os momentos de Música, Palavra, Gincana e Esportes após o encontro. A escolha fica salva e acompanha os dispositivos sincronizados; confira antes de cada encontro. Cada botão exibe um cartão fixado. Use Retomar sequência (ou toque no momento fixado) para voltar. Desmarcar o momento ao vivo também retoma. São cartões manuais, fora da fila automática; não reproduzem música/vídeo e não programam atividades. Blackout e limpar tela continuam tendo prioridade.
+
+### Biblioteca durante a operação
+Se o armazenamento falhar temporariamente, o operador mantém a última biblioteca carregada e oferece Tentar ler biblioteca. A falha não equivale a uma biblioteca vazia. Substituir um arquivo com o mesmo ID atualiza sua fonte local; mudar apenas nome, ordem ou som preserva a fonte para não interromper reprodução. Arquivos antigos são liberados da memória após a transição. O botão Tentar mídia novamente continua relendo a fonte quando necessário.

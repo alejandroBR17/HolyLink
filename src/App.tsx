@@ -696,6 +696,7 @@ export default function App() {
             <button type="button" disabled={!activeSlides.length} onClick={() => navigateOutput(1)}><ChevronRight size={18} aria-hidden="true" />Próximo slide</button>
           </nav>          <main onWheelCapture={event=>headerScrollRef.current.userIntent(event.deltaY,performance.now())} onTouchStartCapture={event=>{touchYRef.current=event.touches[0]?.clientY??null;}} onTouchMoveCapture={event=>{const y=event.touches[0]?.clientY;if(y!==undefined&&touchYRef.current!==null)headerScrollRef.current.userIntent(touchYRef.current-y,performance.now());touchYRef.current=y??null;}} onKeyDownCapture={event=>{if((event.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]'))return;const direction=['ArrowDown','PageDown','End'].includes(event.key)?1:['ArrowUp','PageUp','Home'].includes(event.key)?-1:0;headerScrollRef.current.userIntent(direction,performance.now());}} onScroll={handleMainScroll} className="operator-main flex-1 overflow-y-auto flex flex-col gap-5 min-h-0">
 
+            {mediaLoadError&&<div className="operator-notice" role="alert"><p>{mediaLoadError} Os arquivos já carregados foram mantidos.</p><button type="button" className="sequence-secondary" onClick={()=>baseUpdateStateAndBroadcast('mediaUpdateTrigger',Date.now().toString())}><RefreshCw size={17}/>Tentar ler biblioteca</button></div>}
             {/* Render selected panels */}
             {activeMobileTab === 'slides' && (
               <PlaylistPanel

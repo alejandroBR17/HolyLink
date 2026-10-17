@@ -33,7 +33,7 @@ test('icon variants preserve application identity and point to their actual loca
  }
 });
 test('offline navigation tries the root fallback and returns an explicit failure if no shell exists',async()=>{
- const w=worker(async()=>{throw Error('offline');},{'holylink-pwa-v36-fju-moments':new Map([['/',new Response('shell')]])});
+ const w=worker(async()=>{throw Error('offline');},{'holylink-pwa-v37-media-recovery':new Map([['/',new Response('shell')]])});
  const request={method:'GET',url:'https://holy.test/operator',mode:'navigate'};
  assert.equal(await (await w.dispatch('fetch',{request}))!.text(),'shell');
  const empty=worker(async()=>{throw Error('offline');});
@@ -58,7 +58,7 @@ test('navigation caching never retains query strings or share tokens',async()=>{
 
 test('runtime cache remains bounded even when icon requests carry changing queries',async()=>{
  const entries=new Map(Array.from({length:135},(_,i)=>[`https://holy.test/pwa/local-symbol-dark-192.png?v=${i}`,new Response('old')] as [string,Response]));
- const w=worker(async()=>new Response('new'),{'holylink-pwa-v36-fju-moments':entries});
+ const w=worker(async()=>new Response('new'),{'holylink-pwa-v37-media-recovery':entries});
  await w.dispatch('fetch',{request:{method:'GET',mode:'cors',url:'https://holy.test/pwa/local-symbol-dark-192.png?v=next'}});
  assert.ok([...w.stores.values()][0].size<=120);
 });
@@ -86,7 +86,7 @@ test('actual installer files have rounded any corners and opaque adaptive/Apple 
 test('the local globe map is installed for offline use without caching arbitrary media',async()=>{
  const requested:string[]=[];const w=worker(async request=>{requested.push(request);return new Response('<svg/>');});
  await w.dispatch('install');assert.ok(requested.includes('/media/earth-land.svg'));assert.ok(requested.includes('/brand/fju-white-v2.png'));
- const url='https://holy.test/media/earth-land.svg';const offline=worker(async()=>{throw Error('offline');},{'holylink-pwa-v36-fju-moments':new Map([[url,new Response('<svg/>')]])});
+ const url='https://holy.test/media/earth-land.svg';const offline=worker(async()=>{throw Error('offline');},{'holylink-pwa-v37-media-recovery':new Map([[url,new Response('<svg/>')]])});
  assert.equal(await (await offline.dispatch('fetch',{request:{method:'GET',mode:'cors',url}}))!.text(),'<svg/>');
  assert.equal(await offline.dispatch('fetch',{request:{method:'GET',mode:'cors',url:'https://holy.test/media/private-upload.mp4'}}),undefined);
  const svg=readFileSync('public/media/earth-land.svg','utf8');assert.match(svg,/viewBox="0 0 1024 512"/);assert.doesNotMatch(svg,/<script|<image|href=/i);
