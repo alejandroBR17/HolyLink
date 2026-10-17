@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {WindowCommandGate,validWindowCommand,validWindowResult} from '../src/utils/projection-window.ts';
+import {WindowCommandGate,projectionWindowFeatures,validWindowCommand,validWindowResult} from '../src/utils/projection-window.ts';
 import {isSharedStateUpdate,readSharedStorage} from '../src/utils/shared-state.ts';
 const id='e24d7212-adce-4a41-a726-4f93dca2982c',command={id,action:'open' as const,at:100_000};
 test('window control validates bounded transient messages and never restores them from backup',()=>{
@@ -12,4 +12,17 @@ test('window control validates bounded transient messages and never restores the
 test('duplicate delivery and stale commands cannot reopen a window later',()=>{
   const gate=new WindowCommandGate();assert.equal(gate.accept(command,100_000),true);assert.equal(gate.accept(command,100_001),false);
   assert.equal(new WindowCommandGate().accept(command,116_000),false);assert.equal(new WindowCommandGate().accept(command,94000),false);
+});
+
+test('saved window geometry supports a second monitor but rejects corrupted or unsafe bounds', () => {
+  const defaults = projectionWindowFeatures(null);
+  assert.equal(projectionWindowFeatures('{broken'), defaults);
+  for (const bounds of [null, [], {}, {left: 0, top: 0, width: '1280', height: 720},
+    {left: 32001, top: 0, width: 1280, height: 720},
+    {left: 0, top: 0, width: 319, height: 720},
+    {left: 0, top: 0, width: 1280, height: 8193}]) {
+    assert.equal(projectionWindowFeatures(JSON.stringify(bounds)), defaults);
+  }
+  assert.equal(projectionWindowFeatures(JSON.stringify({left: -1920.3, top: 0.2, width: 1920, height: 1080})),
+    `${defaults},left=-1920,top=0,width=1920,height=1080`);
 });

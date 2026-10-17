@@ -4,7 +4,7 @@ Operador web para a projeção de avisos, Bíblia, agenda e mídias antes e depo
 
 [Versão publicada](https://holylink.vercel.app/) · [Guia de operação](docs/operacao-biblia-efeitos.md) · [Conexão e backup](docs/sincronizacao-celular-pc.md)
 
-A reformulação está na PR #1, em Preview. O link publicado pode continuar na versão anterior enquanto não houver merge e publicação autorizados.
+A reformulação foi integrada na [PR #1](https://github.com/alejandroBR17/HolyLink/pull/1) e publicada. O teste físico de som, HDMI e foco sobre o Holyrics permanece separado dos testes automatizados.
 
 ## Fluxo de uso
 
@@ -59,6 +59,6 @@ Transferência remota e backup JSON têm limites explícitos de tamanho; consult
 
 ## Projeto e licença
 
-Projeto de Alejandro Cortes, desenvolvido com assistência de IA. Código em `src`, verificações em `tests` e documentação em `docs`.
+Projeto de Alejandro Cortes, desenvolvido com assistência de IA. Código em `src`, verificações em `tests` e documentação em `docs`. Consulte o [mapa da arquitetura](docs/arquitetura.md) e o [guia de contribuição](CONTRIBUTING.md) para entender as responsabilidades e preparar alterações.
 
 O código segue a [licença Apache-2.0](LICENSE). Logotipos, marcas, versículos e mídias mantêm os direitos e condições dos seus respectivos titulares; a licença do código não concede direitos sobre esses materiais.
