@@ -34,3 +34,7 @@ Leia o Git antes de agir. Não refaça publicação inicial nem os testes já ap
 - Produção inicial também passou leitura de 18 cartões em 390/1920 pixels, sem erro de página nos contextos isolados.
 - Não afirmar refatoração integral: ainda existem módulos grandes. A licença permaneceu Apache-2.0; README, arquitetura e CONTRIBUTING estão no GitHub.
 - Publicação da PR #2 confirmada READY em `dpl_EQCKhNmrQEqkGaEiEjKnctH1VHiw`, target production, main `084d24c`. Domínio holylink.vercel.app confirmado no mesmo deploy. Fluxo de janela repetido com sucesso na versão de produção e `/sw.js` confirmou cache v42. Registro pós-publicação fica em commit documental local para não gerar deploy redundante; preservá-lo na próxima rodada.
+
+## Disparo antecipado — 16/10 às 22h54 de Brasília
+
+A automação da madrugada foi entregue com timestamp 17/10 01h54 UTC, equivalente a 16/10 22h54 America/Sao_Paulo. Ainda não era a rodada de 00h50. Git limpo em `3efa453`, registros lidos e próximo candidato `useSlideManager` conferido, sem alteração de código ou nova publicação nesta passagem antecipada. Mantidos os agendamentos e acrescentada guarda explícita para não começar uma rodada da madrugada antes de 00h50 local. A entrega das 23h40 continua separada. Não há evidência suficiente para atribuir o disparo a uma causa específica do agendador.
