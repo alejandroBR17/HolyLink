@@ -22,4 +22,15 @@ Adicionados mapa da arquitetura e guia de contribuição; licença Apache-2.0 ma
 
 ## Próxima rodada
 
-Leia o Git antes de agir. Termine a validação e a PR da refatoração, se ainda pendente. Não refaça publicação inicial nem os testes já aprovados sem mudança relacionada. Se houver saldo, priorize tornar `useProjectionWindow` legível sem alterar o protocolo; depois avaliar pequenas extrações de componentes grandes, com testes e commits separados. Nada de redesenhar o visual das reuniões já revertido a pedido do usuário. Atualize este relatório com commit/CI/deploy e pendências reais. Não crie trabalho apenas para ocupar todas as rodadas.
+Leia o Git antes de agir. Não refaça publicação inicial nem os testes já aprovados sem mudança relacionada. A extração e expansão do hook `useProjectionWindow` já foram realizadas nesta rodada. Avalie agora pequenas extrações de regras e tipagem de `useSlideManager`, antes de decompor componentes grandes, com testes e commits separados. `SyncSection`, `PlaylistPanel` e `App` permanecem candidatos a manutenção gradual. Nada de redesenhar o visual das reuniões já revertido a pedido do usuário. Atualize este relatório com commit/CI/deploy e pendências reais. Não crie trabalho apenas para ocupar todas as rodadas.
+
+## Fechamento da primeira refatoração
+
+- Código `ca9b443d72680ad4c7e2a07a4b051299f3e031fd`, PR #2: https://github.com/alejandroBR17/HolyLink/pull/2 .
+- Validações locais: 108 testes aprovados, TypeScript e build aprovados, auditoria sem vulnerabilidades conhecidas. Testes de janela/PWA repetidos após atualizar cache v42, todos aprovados. Ensaio local do controle de janela também aprovado após extração.
+- CI remoto aprovado: https://github.com/alejandroBR17/HolyLink/actions/runs/38992663147 .
+- PR #2 integrada em main: `084d24cc44158b680a05051e672d147586a698c8`.
+- Hook de janela expandido para leitura, tipos de opções e limites de espera/poll nomeados. Regras de momentos, blocos de fila e mesclagem de registro de mídia tiveram somente expansão de formatação, sem alteração intencional de comportamento.
+- Produção inicial também passou leitura de 18 cartões em 390/1920 pixels, sem erro de página nos contextos isolados.
+- Não afirmar refatoração integral: ainda existem módulos grandes. A licença permaneceu Apache-2.0; README, arquitetura e CONTRIBUTING estão no GitHub.
+- Publicação da PR #2 confirmada READY em `dpl_EQCKhNmrQEqkGaEiEjKnctH1VHiw`, target production, main `084d24c`. Domínio holylink.vercel.app confirmado no mesmo deploy. Fluxo de janela repetido com sucesso na versão de produção e `/sw.js` confirmou cache v42. Registro pós-publicação fica em commit documental local para não gerar deploy redundante; preservá-lo na próxima rodada.
