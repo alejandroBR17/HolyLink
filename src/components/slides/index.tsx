@@ -347,7 +347,7 @@ export const WorldGodSlide = ({ variant, backgroundStyle='auto',fps=30,detail='m
     return () => clearTimeout(t);
   }, []);
 
-  if(isFJU)return <FjuSlide title={phase==='world'?'Deixe as distrações':'Conecte-se com Deus'} subtitle={phase==='world'?'Fique ligado no que acontece aqui.':'Use a sua fé. Participe do encontro.'} symbol={phase==='world'?<ProjectionGlobe {...symbolSettings} youth/>:<ProjectionFire {...symbolSettings} youth/>}/>;
+  if(isFJU)return <FjuSlide title={phase==='world'?'Deixe as distrações':'Conecte-se com Deus'} subtitle={phase==='world'?'Concentre-se no que acontece aqui.':'Use a sua fé.'} symbol={phase==='world'?<ProjectionGlobe {...symbolSettings} youth/>:<ProjectionFire {...symbolSettings} youth/>}/>;
 
   return (
     <div className="flex flex-col items-center justify-center text-center max-w-6xl h-full w-full relative select-none">

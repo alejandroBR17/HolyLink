@@ -321,7 +321,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           <IconSlide
             icon={ChurchBench}
             title="Fique à vontade"
-            subtitle="Procure um assento e acomode-se para o início da reunião."
+            subtitle="Escolha um assento e acomode-se."
             layout="split-left"
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
@@ -332,7 +332,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           <IconSlide
             icon={Restroom}
             title="Vá ao banheiro"
-            subtitle="Aproveite para ir antes da reunião começar."
+            subtitle="Se precisar, vá antes do início."
             layout="split-right"
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
@@ -343,7 +343,7 @@ export const ProjectionContent: React.FC<ProjectionContentProps> = ({
           <IconSlide
             icon={Smartphone}
             title="Celular no Silencioso"
-            subtitle="Mantenha o celular no silencioso para evitar interrupções."
+            subtitle="Evite sons e chamadas durante a reunião."
             layout="center"
             effectiveMode={effectiveMode}
             isLightModeActive={isLightModeActive}
