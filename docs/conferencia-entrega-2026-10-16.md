@@ -35,3 +35,7 @@ O workflow instala pelo lockfile e executa auditoria, tipos, testes e build com 
 Não foi identificada nesta revisão necessidade de outro redesign ou funcionalidade obrigatória para o fluxo confirmado. A correção técnica pendente do upload está resolvida. A revisão final fica condicionada ao build/deploy/CI da rodada passarem; seus resultados são registrados no relatório.
 
 O próximo passo operacional é testar no PC da igreja: preparar uma vez, fechar HolyLink pelo celular, operar Holyrics, selecionar o pós e reabrir HolyLink, conferindo posição, tela cheia e som. Se esse teste continuar adiado, a entrega técnica pode ser encerrada com essa limitação documentada, sem chamá-la de validação física completa. Produção depende de autorização posterior; a PR segue em rascunho.
+
+## Fechamento confirmado
+
+Código af66319fea97e22c94e40ee8375d8a653f305442. Preview READY dpl_EYGTs3Ar9TnnJk48ZboqF1yVwqox, alias confirmado. CI Verificar HolyLink #1 aprovado integralmente em instalação limpa no GitHub: https://github.com/alejandroBR17/HolyLink/actions/runs/38990652719 . Upload e controle da janela também passaram na versão online. Não foi encontrado outro bloqueador de código nesta revisão. Entrega técnica pronta para avaliação final/publicação autorizada, mantendo a pendência física declarada acima. Produção/main preservadas.
