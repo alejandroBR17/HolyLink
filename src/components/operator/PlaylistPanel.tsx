@@ -48,11 +48,7 @@ interface PlaylistPanelProps {
   remoteMediaList?:MediaManifestItem[];
   getSlideDuration: (id: string, list: CustomMedia[]) => number;
   updateStateAndBroadcast: (key: string, value: any) => void;
-  handleMoveSlide: (id: string, direction: 'up' | 'down' | 'top' | 'bottom') => void;
   handleToggleDisableSlide?: (id: string) => void;
-  handleReorderGrouped?: () => void;
-  handleReorderInterleaved?: () => void;
-  handleResetSlidesOrder?: () => void;
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isUploading: boolean;
   uploadError: string | null;
@@ -94,11 +90,7 @@ export const PlaylistPanel = React.memo(function PlaylistPanel({
   remoteMediaList = [],
   getSlideDuration,
   updateStateAndBroadcast,
-  handleMoveSlide,
   handleToggleDisableSlide,
-  handleReorderGrouped,
-  handleReorderInterleaved,
-  handleResetSlidesOrder,
   handleFileUpload,
   isUploading,
   uploadError,

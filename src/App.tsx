@@ -400,18 +400,10 @@ export default function App() {
 
   const {
     handleToggleDisableSlide,
-    handleResetCampaigns,
-    handleMoveSlide,
-    handleReorderGrouped,
-    handleReorderInterleaved,
-    handleResetSlidesOrder
+    handleResetCampaigns
   } = useSlideManager(
     updateStateAndBroadcast,
     disabledSlides || [],
-    slidesOrder || DEFAULT_SLIDES,
-    DEFAULT_SLIDES,
-    allAvailableSlides,
-    customMediaList,
     CAMPAIGNS
   );
 
@@ -723,11 +715,7 @@ export default function App() {
                 remoteMediaList={remoteMediaList}
                 getSlideDuration={getSlideDuration}
                 updateStateAndBroadcast={updateStateAndBroadcast}
-                handleMoveSlide={handleMoveSlide}
                 handleToggleDisableSlide={handleToggleDisableSlide}
-                handleReorderGrouped={handleReorderGrouped}
-                handleReorderInterleaved={handleReorderInterleaved}
-                handleResetSlidesOrder={handleResetSlidesOrder}
                 handleFileUpload={handleFileUpload}
                 isUploading={isUploading}
                 uploadError={uploadError}
