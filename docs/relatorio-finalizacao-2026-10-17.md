@@ -52,3 +52,7 @@ Fechamento da refatoração: código `e190efca3304aeec70eb423f775a45584f4e2365`,
 Próximo foco de manutenção: `useSlideManager` já está simplificado, não refazer esta extração. Avaliar uma fronteira pequena de composição da fila em App ou tipagem de transporte, somente se houver benefício e validação independentes. Não iniciar uma decomposição extensa com a cota semanal baixa. Arquitetura e documentação já existem; produção já foi publicada. Testes físicos continuam adiados.
 
 Produção confirmada: `dpl_8KbvAeZFY1CKCrrELgSEGH28Rd5k` READY, target production, commit main `85baa30`; alias holylink.vercel.app no mesmo deploy. `/sw.js` confirmou v43. Ensaio de participação, cancelamento e recarga repetido online em 390/1440 passou, sem erros de página. Nenhum dado legítimo alterado (contextos isolados). Encerrada a rodada e excluído o agendamento avulso das 23h40; mantida a automação da madrugada. Registro pós-publicação somente local para não gerar implantação documental redundante.
+
+## Novo disparo antecipado — 16/10 às 23h51 de Brasília
+
+Relógio confirmado: 17/10 02h51 UTC, equivalente a 16/10 23h51 America/Sao_Paulo. Aplicada a guarda anterior a 00h50 local: nenhuma nova etapa de código, teste repetido ou publicação. Git estava limpo em `99886fb`; agendamento da madrugada preservado. A próxima rodada válida começa a partir de 00h50 local.
