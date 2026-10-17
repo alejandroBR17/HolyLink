@@ -1,3 +1,4 @@
+import {readVideoDuration,VideoMetadataError} from '../utils/video-metadata';
 import {MediaUrlPool} from '../utils/media-urls';
 import {readTransferMetadata} from '../utils/chunk-assembler';
 import {readMediaCatalog, describeMedia} from '../utils/media-manifest';
@@ -33,6 +34,8 @@ export function useCustomMedia(
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  const uploadBusy=useRef(false),uploadController=useRef<AbortController|null>(null),mounted=useRef(false);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;uploadController.current?.abort();};},[]);
   const urlPool=useRef<MediaUrlPool|null>(null);
   useEffect(()=>()=>{urlPool.current?.dispose();urlPool.current=null;},[]);
 
@@ -156,10 +159,9 @@ export function useCustomMedia(
   }, []);
 
   const handleFileUpload = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
+    const input=e.target;
+    const file=input.files?.[0];
+    if(!file||uploadBusy.current)return;
     setUploadError(null);
 
     const isVideo = file.type.startsWith('video/');
@@ -167,10 +169,12 @@ export function useCustomMedia(
 
     if (!isImage && !isVideo) {
       setUploadError("Por favor, selecione apenas arquivos de imagem ou vídeo.");
-      setIsUploading(false);
+      input.value='';
       return;
     }
 
+    if(!file.size){setUploadError('O arquivo está vazio. Escolha outro arquivo.');input.value='';return;}
+    const controller=new AbortController();uploadController.current=controller;uploadBusy.current=true;setIsUploading(true);
     try {
       let duration = 10000;
       if (isImage) {
@@ -181,28 +185,12 @@ export function useCustomMedia(
       }
 
       if (isVideo) {
-        duration = await new Promise<number>((resolve) => {
-          const video = document.createElement('video');
-          video.preload = 'metadata';
-          const objectUrl = URL.createObjectURL(file);
-          video.src = objectUrl;
-          video.onloadedmetadata = () => {
-            URL.revokeObjectURL(objectUrl);
-            const d = video.duration;
-            if (typeof d === 'number' && !isNaN(d) && isFinite(d) && d > 0) {
-              resolve(Math.round(d * 1000));
-            } else {
-              resolve(10000);
-            }
-          };
-          video.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            resolve(10000);
-          };
-        });
+        duration=await readVideoDuration(file,{signal:controller.signal});
       }
+      controller.signal.throwIfAborted();
 
       const currentItems = await getAllMediaItems();
+      controller.signal.throwIfAborted();
       const maxOrder = currentItems.reduce((max, item) => Math.max(max, item.order ?? 0), -1);
       const order = maxOrder + 1;
 
@@ -217,7 +205,8 @@ export function useCustomMedia(
         muted: isVideo ? true : undefined,
         order
       };
-      await saveMediaItem(mediaItemPayload);
+      await saveMediaItem(mediaItemPayload,controller.signal);
+      controller.signal.throwIfAborted();
       void broadcastMediaSave(mediaItemPayload, true);
 
       try {
@@ -236,11 +225,13 @@ export function useCustomMedia(
 
       updateStateAndBroadcast('mediaUpdateTrigger', Date.now().toString());
     } catch (err: any) {
-      console.error("Error saving uploaded file:", err);
-      setUploadError("Não foi possível salvar o arquivo. Limite de armazenamento pode ter sido excedido.");
+      if(!controller.signal.aborted&&mounted.current){
+        console.error("Error saving uploaded file:", err);
+        setUploadError(err instanceof VideoMetadataError?err.message:'Não foi possível salvar o arquivo. Confira o armazenamento e tente novamente.');
+      }
     } finally {
-      setIsUploading(false);
-      e.target.value = '';
+      if(uploadController.current===controller){uploadController.current=null;uploadBusy.current=false;if(mounted.current)setIsUploading(false);}
+      input.value='';
     }
   }, [broadcastMediaSave, updateStateAndBroadcast]);
 

@@ -214,3 +214,6 @@ No celular autorizado, Abrir/Fechar telão envia um comando transitório ao PC e
 
 ### Biblioteca durante a operação
 Se o armazenamento falhar temporariamente, o operador mantém a última biblioteca carregada e oferece Tentar ler biblioteca. A falha não equivale a uma biblioteca vazia. Substituir um arquivo com o mesmo ID atualiza sua fonte local; mudar apenas nome, ordem ou som preserva a fonte para não interromper reprodução. Arquivos antigos são liberados da memória após a transição. O botão Tentar mídia novamente continua relendo a fonte quando necessário.
+
+### Envio de vídeos
+A leitura inicial da duração espera no máximo12 segundos. Arquivo vazio, inválido, sem duração identificável ou que não responde exibe erro e fica fora da biblioteca/fila; escolha outro arquivo ou exporte novamente em formato compatível. O controle é liberado para tentar novamente, inclusive com o mesmo nome. Fechar a aplicação cancela a leitura e libera a fonte temporária. O vídeo só entra na fila depois de ser lido e salvo.
