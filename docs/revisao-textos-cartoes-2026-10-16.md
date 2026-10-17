@@ -40,3 +40,15 @@ Contagem sobre títulos e descrições do catálogo FJU (incluindo momentos, pro
 Nos cartões das reuniões: acomodação ficou “Escolha um assento e acomode-se”; banheiro, “Se precisar, vá antes do início”; celular, “Evite sons e chamadas durante a reunião”. Títulos, composição, fé, horários, versículos e programação foram preservados.
 
 Os nomes Encontro Jovem/FJU e outros termos necessários continuam presentes; variedade não muda o nome do evento nem inventa atividades.
+
+## Ajuste posterior: projetos explicados pelas atividades
+
+O responsável rejeitou as duas ocorrências de turma e os convites ainda abstratos da primeira revisão. A versão vigente dos projetos é:
+
+| Projeto | Descrição | Convite |
+|---|---|---|
+| Esportes | Futebol, vôlei e outras modalidades para quem gosta de jogar. | Venha jogar com a FJU. |
+| Cultura | Dança, canto e teatro: um espaço para se expressar pela arte. | Coloque seu talento nas apresentações. |
+| Mídia | Fotografia, edição de vídeos e design para registrar e divulgar a FJU. | Crie imagens e histórias que alcancem outros jovens. |
+
+No anúncio de esporte após o encontro: Depois tem esporte — Fique para jogar após o encontro. Exemplos de atividades seguem a orientação humana, sem criar horários, aulas ou eventos. A comparação anterior fica como histórico; esta seção contém os textos atuais dos projetos.

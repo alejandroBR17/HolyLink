@@ -3,7 +3,7 @@ export const FJU_MOMENTS = [
   {id:'fju_moment_music',name:'Música',title:'Vai ter música',subtitle:'Um momento para cantar juntos.',label:'MÚSICA',symbol:'music'},
   {id:'fju_moment_word',name:'Palavra',title:'Uma Palavra para você',subtitle:'Mensagem de fé para levar à vida.',label:'PALAVRA',symbol:'book'},
   {id:'fju_moment_games',name:'Gincana',title:'Desafio à vista',subtitle:'A gincana está na programação.',label:'GINCANA',symbol:'trophy'},
-  {id:'fju_moment_sports',name:'Esportes após o encontro',title:'Depois tem esporte',subtitle:'Continue com a turma após o encontro.',label:'ESPORTES',symbol:'ball'},
+  {id:'fju_moment_sports',name:'Esportes após o encontro',title:'Depois tem esporte',subtitle:'Fique para jogar após o encontro.',label:'ESPORTES',symbol:'ball'},
 ] as const;
 
 export const isFjuMoment = (id:string) => FJU_MOMENTS.some(moment => moment.id===id);

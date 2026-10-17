@@ -18,9 +18,9 @@ export const FJU_PRE_SLIDES=['fju_welcome','seat','verse_1','fju_first_time','ba
 export const FJU_POST_SLIDES=['fju_goodbye','fju_support','fju_agenda','fju_together'];
 
 export const FJU_PROJECTS = [
- {id:'fju_project_sports',name:'Esportes',logo:'/brand/fju-project-esportes.png',description:'Movimento, união e superação.',invitation:'Encare um novo desafio com a turma.',color:'#68df6a'},
- {id:'fju_project_culture',name:'Cultura',logo:'/brand/fju-project-cultura.png',description:'Arte, expressão e criatividade.',invitation:'Dê forma ao seu talento.',color:'#ffbd51'},
- {id:'fju_project_media',name:'Mídia',logo:'/brand/fju-project-midia.png',description:'Criatividade para registrar e compartilhar.',invitation:'Ajude a contar a história da FJU.',color:'#90c4ff'},
+ {id:'fju_project_sports',name:'Esportes',logo:'/brand/fju-project-esportes.png',description:'Futebol, vôlei e outras modalidades para quem gosta de jogar.',invitation:'Venha jogar com a FJU.',color:'#68df6a'},
+ {id:'fju_project_culture',name:'Cultura',logo:'/brand/fju-project-cultura.png',description:'Dança, canto e teatro: um espaço para se expressar pela arte.',invitation:'Coloque seu talento nas apresentações.',color:'#ffbd51'},
+ {id:'fju_project_media',name:'Mídia',logo:'/brand/fju-project-midia.png',description:'Fotografia, edição de vídeos e design para registrar e divulgar a FJU.',invitation:'Crie imagens e histórias que alcancem outros jovens.',color:'#90c4ff'},
 ] as const;
 export const FJU_PROJECT_SLIDES=['fju_projects',...FJU_PROJECTS.map(p=>p.id)];
 export const isFjuProject=(id:string)=>FJU_PROJECT_SLIDES.includes(id);
